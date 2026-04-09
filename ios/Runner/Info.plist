@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+		<true/>
+		<key>CFBundleDevelopmentRegion</key>
+		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleDisplayName</key>
+		<string>TradexPro</string>
+		<key>CFBundleExecutable</key>
+		<string>$(EXECUTABLE_NAME)</string>
+		<key>CFBundleIdentifier</key>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>CFBundleInfoDictionaryVersion</key>
+		<string>6.0</string>
+		<key>CFBundleName</key>
+		<string>TradexPro</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
+		<key>CFBundleShortVersionString</key>
+		<string>$(MARKETING_VERSION)</string>
+		<key>CFBundleSignature</key>
+		<string>????</string>
+		<key>CFBundleVersion</key>
+		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>LSRequiresIPhoneOS</key>
+		<true/>
+		<key>NSCameraUsageDescription</key>
+		<string>$(EXECUTABLE_NAME) wants to access your camera for take user profile picture or scan QR codes.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>$(EXECUTABLE_NAME) wants to access your microphone.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>$(EXECUTABLE_NAME) wants to access your photo library for get user profile picture.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+        <string>$(EXECUTABLE_NAME) wants to access your photo library for media message.</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>This app does not use the microphone, but the SDK requires this entry.</string>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>This app does not use location services, but the SDK requires this entry.</string>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UILaunchStoryboardName</key>
+		<string>LaunchScreen</string>
+		<key>UIMainStoryboardFile</key>
+		<string>Main</string>
+		<key>UISupportedInterfaceOrientations</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UISupportedInterfaceOrientations~ipad</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationPortraitUpsideDown</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UIViewControllerBasedStatusBarAppearance</key>
+		<false/>
+		<key>FacebookAppID</key>
+		<string>323617104150483</string>
+		<key>FacebookClientToken</key>
+		<string>37c77dd17cfea6436a18e5d6f6a2ab09</string>
+		<key>FacebookDisplayName</key>
+		<string>TradexPro</string>
+		<key>FacebookAdvertiserIDCollectionEnabled</key>
+		<string>FALSE</string>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>fbapi</string>
+			<string>fb-messenger-share-api</string>
+			<string>fbauth2</string>
+			<string>https</string>
+		</array>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>fb323617104150483</string>
+					<string>com.googleusercontent.apps.666405532600-hjjft0venordt0561im4ju2bknug85bm</string>
+				</array>
+			</dict>
+		</array>
+		<key>GIDClientID</key>
+		<string>666405532600-hjjft0venordt0561im4ju2bknug85bm.apps.googleusercontent.com</string>
+		<key>UIStatusBarHidden</key>
+		<false/>
+		<key>io.flutter.embedded_views_preview</key>
+        <true/>
+	</dict>
+</plist>

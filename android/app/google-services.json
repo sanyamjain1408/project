@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "666405532600",
+    "project_id": "tradexpro-dffb6",
+    "storage_bucket": "tradexpro-dffb6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:666405532600:android:701d9b2b512a2d691b954d",
+        "android_client_info": {
+          "package_name": "com.itechsoftsolution.tradexpro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "666405532600-gungpk6kb0mergtep2n2l5e0ok3d3s7g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.itechsoftsolution.tradexpro",
+            "certificate_hash": "5c2fd64cb45a7c9b1227527568f745877371ed82"
+          }
+        },
+        {
+          "client_id": "666405532600-jk2t6uju2f0cqsbjhg0t4e8add8uhufl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoUR7XRfiGawSPQGvNbSlYIQn397EQi44"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "666405532600-jk2t6uju2f0cqsbjhg0t4e8add8uhufl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
