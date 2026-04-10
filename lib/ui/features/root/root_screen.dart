@@ -9,6 +9,9 @@ import 'package:tradexpro_flutter/data/models/settings.dart';
 import 'package:tradexpro_flutter/helper/bottom_nav_helper.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
+// ── FIX: Correct import path for HomeDashboardScreen ──
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/home_dashboard_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_screen.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
@@ -22,10 +25,8 @@ import '../bottom_navigation/market/market_screen.dart';
 import '../bottom_navigation/trades/future_trade/future_trade_screen.dart';
 import '../bottom_navigation/trades/trade_screen.dart';
 import '../side_navigation/activity/activity_screen.dart';
-
 import '../side_navigation/fiat/fiat_screen.dart';
 import '../bottom_navigation/wallet/wallet_screen.dart';
-import '../bottom_navigation/landing/landing_screen.dart';
 import '../side_navigation/news/news_screen.dart';
 import '../side_navigation/staking/staking_screen.dart';
 import '../side_navigation/blog/blog_screen.dart';
@@ -35,7 +36,7 @@ import '../side_navigation/settings/settings_screen.dart';
 import 'root_controller.dart';
 import 'root_widgets.dart';
 
-const _green     = Color(0xFFB5F000);
+const _green = Color(0xFFB5F000);
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -76,40 +77,31 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
         extendBody: true,
         drawer: _getDrawerNew(),
         bottomNavigationBar: _getBottomNavigationBar(),
-        body: SafeArea(child: _getBody()),
+        body: SafeArea(
+          child: Obx(() => _getBody()),
+        ),
       ),
     );
   }
 
-       // Function ka return type 'Widget' kar diya gaya hai (BottomNavigationBar ki jagah)
-     Widget _getBottomNavigationBar() {
+  Widget _getBottomNavigationBar() {
     navList = AppBottomNavHelper.getBottomNavList();
-    
+
     return Container(
-      margin: const EdgeInsets.only(
-        left: 0, 
-        right: 0, 
-        bottom: 0,
-        top: 0, 
-      ),
+      margin: const EdgeInsets.only(left: 0, right: 0, bottom: 0, top: 0),
       decoration: BoxDecoration(
         color: Theme.of(context).secondaryHeaderColor,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(25),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
       ),
       child: Padding(
-        // Outer padding thoda kam kar diya hai taaki item fit ho jaye
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0), 
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
         child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(25),
-          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
           child: BottomNavigationBar(
             elevation: 0,
-            iconSize: 24, // Icon size wapas default kiya (32/32 padding ki wajah se bada ho raha tha)
+            iconSize: 24,
             backgroundColor: Colors.transparent,
-            selectedItemColor: const Color(0xFFB5F000), 
+            selectedItemColor: const Color(0xFFB5F000),
             unselectedItemColor: Theme.of(context).primaryColorLight,
             selectedLabelStyle: Theme.of(context).textTheme.displaySmall,
             unselectedLabelStyle: Theme.of(context).textTheme.displaySmall,
@@ -118,15 +110,10 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
             onTap: (index) => changeBottomNavTab(navList[index].id),
             items: List.generate(navList.length, (index) {
               return BottomNavigationBarItem(
-                
-                // Icon wapas simple rakha (Extra padding hata diya)
                 icon: SizedBox(
                   width: 18,
                   height: 18,
-                  child: Image.asset(
-                    navList[index].imagePath,
-                    fit: BoxFit.contain,
-                  ),
+                  child: Image.asset(navList[index].imagePath, fit: BoxFit.contain),
                 ),
                 activeIcon: SizedBox(
                   width: 24,
@@ -136,11 +123,8 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     fit: BoxFit.contain,
                     gaplessPlayback: true,
                   ),
-                ), 
-                
-                // --- YAHAN GAP BADHANE KA TRICK HAI ---
+                ),
                 label: navList[index].name,
-                
               );
             }),
           ),
@@ -149,13 +133,15 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-
   Widget _getBody() {
     final id = navList[_controller.bottomNavIndex].id;
+    final bool isLoggedIn = gUserRx.value.id > 0;
+
     switch (id) {
       case AppBottomNavKey.home:
-        final isLoggedIn = gUserRx.value.id > 0;
-        return const LandingScreen();
+        return isLoggedIn
+            ? const HomeDashboardScreen()
+            : const LandingScreen();
       case AppBottomNavKey.market:
         return const MarketScreen();
       case AppBottomNavKey.trade:
@@ -171,31 +157,35 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
 
   Drawer _getDrawerNew() {
     return Drawer(
-        elevation: 0,
-        width: context.width * 0.9,
-        backgroundColor: context.theme.scaffoldBackgroundColor,
-        child: SafeArea(
-          child: Obx(() {
-            final hasUser = gUserRx.value.id > 0;
-            return ListView(
-              padding: const EdgeInsets.only(top: Dimens.paddingMainViewTop),
-              shrinkWrap: true,
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: buttonOnlyIcon(
-                      iconData: Icons.arrow_back, iconColor: context.theme.primaryColor, onPress: () => Get.back()),
+      elevation: 0,
+      width: context.width * 0.9,
+      backgroundColor: context.theme.scaffoldBackgroundColor,
+      child: SafeArea(
+        child: Obx(() {
+          final hasUser = gUserRx.value.id > 0;
+          return ListView(
+            padding: const EdgeInsets.only(top: Dimens.paddingMainViewTop),
+            shrinkWrap: true,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: buttonOnlyIcon(
+                  iconData: Icons.arrow_back,
+                  iconColor: context.theme.primaryColor,
+                  onPress: () => Get.back(),
                 ),
-                vSpacer20(),
-                DrawerProfileView(user: gUserRx.value),
-                vSpacer10(),
-                DrawerReferralView(hasUser: hasUser),
-                vSpacer20(),
-                _drawerMenusView(hasUser),
-              ],
-            );
-          }),
-        ));
+              ),
+              vSpacer20(),
+              DrawerProfileView(user: gUserRx.value),
+              vSpacer10(),
+              DrawerReferralView(hasUser: hasUser),
+              vSpacer20(),
+              _drawerMenusView(hasUser),
+            ],
+          );
+        }),
+      ),
+    );
   }
 
   Column _drawerMenusView(bool hasUser) {
@@ -204,74 +194,120 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
       children: [
         if (hasUser)
           DrawerMenuItemView(
-              navTitle: 'Reports'.tr, icon: Icons.history, navAction: () => Get.to(() => const ActivityScreen())),
+            navTitle: 'Reports'.tr,
+            icon: Icons.history,
+            navAction: () => Get.to(() => const ActivityScreen()),
+          ),
         if (hasUser)
           DrawerMenuItemView(
-              navTitle: 'Fiat'.tr, icon: Icons.paid_outlined, navAction: () => Get.to(() => const FiatScreen())),
+            navTitle: 'Fiat'.tr,
+            icon: Icons.paid_outlined,
+            navAction: () => Get.to(() => const FiatScreen()),
+          ),
         if (hasUser)
           DrawerMenuItemView(
-              navTitle: 'Settings'.tr,
-              icon: Icons.settings_outlined,
-              navAction: () => Get.to(() => const SettingsScreen())),
+            navTitle: 'Settings'.tr,
+            icon: Icons.settings_outlined,
+            navAction: () => Get.to(() => const SettingsScreen()),
+          ),
         if (hasUser && settings?.liveChatStatus == 1)
           DrawerMenuItemView(
-              navTitle: 'Support'.tr,
-              icon: Icons.support_agent_outlined,
-              navAction: () {
-                Get.back();
-                openCrispChatView();
-              }),
+            navTitle: 'Support'.tr,
+            icon: Icons.support_agent_outlined,
+            navAction: () {
+              Get.back();
+              openCrispChatView();
+            },
+          ),
         if (settings?.enableStaking == 1)
-          DrawerMenuItemView(navTitle: 'Staking'.tr, icon: Icons.punch_clock_outlined, navAction: () => Get.to(() => const StakingScreen())),
+          DrawerMenuItemView(
+            navTitle: 'Staking'.tr,
+            icon: Icons.punch_clock_outlined,
+            navAction: () => Get.to(() => const StakingScreen()),
+          ),
         if (settings?.enableGiftCard == 1)
-          DrawerMenuItemView(navTitle: 'Gift Cards'.tr, icon: Icons.card_giftcard_outlined, navAction: () => Get.to(() => const GiftCardsScreen())),
+          DrawerMenuItemView(
+            navTitle: 'Gift Cards'.tr,
+            icon: Icons.card_giftcard_outlined,
+            navAction: () => Get.to(() => const GiftCardsScreen()),
+          ),
         if (settings?.navbar?["ico"]?.status == true)
-          DrawerMenuItemView(navTitle: 'ICO'.tr, icon: Icons.local_atm, navAction: () => Get.to(() => const ICOScreen())),
+          DrawerMenuItemView(
+            navTitle: 'ICO'.tr,
+            icon: Icons.local_atm,
+            navAction: () => Get.to(() => const ICOScreen()),
+          ),
         if (settings?.p2pModule == 1)
           DrawerMenuItemView(
-              navTitle: "P2P".tr,
-              icon: Icons.people,
-              navAction: () {
-                TemporaryData.changingPageId = 1;
-                Get.back();
-                getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
-              }),
+            navTitle: "P2P".tr,
+            icon: Icons.people,
+            navAction: () {
+              TemporaryData.changingPageId = 1;
+              Get.back();
+              getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
+            },
+          ),
         if (settings?.blogNewsModule == 1)
           DrawerMenuItemView(
-              navTitle: 'Blog'.tr, icon: Icons.rss_feed_outlined, navAction: () => Get.to(() => const BlogScreen())),
+            navTitle: 'Blog'.tr,
+            icon: Icons.rss_feed_outlined,
+            navAction: () => Get.to(() => const BlogScreen()),
+          ),
         if (settings?.blogNewsModule == 1)
           DrawerMenuItemView(
-              navTitle: 'News'.tr, icon: Icons.newspaper_outlined, navAction: () => Get.to(() => const NewsScreen())),
+            navTitle: 'News'.tr,
+            icon: Icons.newspaper_outlined,
+            navAction: () => Get.to(() => const NewsScreen()),
+          ),
         DrawerMenuItemView(
-            navTitle: 'FAQ'.tr, icon: Icons.help_outline, navAction: () => Get.to(() => const FAQPage())),
+          navTitle: 'FAQ'.tr,
+          icon: Icons.help_outline,
+          navAction: () => Get.to(() => const FAQPage()),
+        ),
         if (hasUser)
-          DrawerMenuItemView(navTitle: 'Log out'.tr, icon: Icons.logout_outlined, navAction: () => _showLogOutAlert()),
+          DrawerMenuItemView(
+            navTitle: 'Log out'.tr,
+            icon: Icons.logout_outlined,
+            navAction: () => _showLogOutAlert(),
+          ),
         _bottomView(settings),
       ],
     );
   }
 
   void _showLogOutAlert() {
-    alertForAction(context, title: "Log out".tr, subTitle: "Are you want to logout from app".tr, buttonTitle: "YES".tr,
-        onOkAction: () {
-      Get.back();
-      _controller.logOut();
-    });
+    alertForAction(
+      context,
+      title: "Log out".tr,
+      subTitle: "Are you want to logout from app".tr,
+      buttonTitle: "YES".tr,
+      onOkAction: () {
+        Get.back();
+        _controller.logOut();
+      },
+    );
   }
 
   Container _bottomView(CommonSettings? cSettings) {
     final socialView = _socialMediaView();
     return Container(
       margin: const EdgeInsets.all(Dimens.paddingLarge),
-      padding: const EdgeInsets.symmetric(vertical: Dimens.paddingLarge, horizontal: Dimens.paddingMid),
+      padding: const EdgeInsets.symmetric(
+        vertical: Dimens.paddingLarge,
+        horizontal: Dimens.paddingMid,
+      ),
       decoration: boxDecorationRoundCorner(),
       child: Column(
         children: [
           if (socialView != null) socialView,
           if (socialView != null) vSpacer10(),
           if (cSettings?.copyrightText.isValid ?? false)
-            textSpanWithAction(cSettings?.copyrightText ?? "", " ${cSettings?.appTitle ?? ""}",
-                onTap: () => openUrlInBrowser(URLConstants.website), maxLines: 2),
+            textSpanWithAction(
+              cSettings?.copyrightText ?? "",
+              " ${cSettings?.appTitle ?? ""}",
+              onTap: () => openUrlInBrowser(URLConstants.website),
+              maxLines: 2,
+            ),
         ],
       ),
     );
@@ -281,24 +317,28 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     final objMap = GetStorage().read(PreferenceKey.mediaList);
     if (objMap != null) {
       try {
-        final mList = List<SocialMedia>.from(objMap.map((element) => SocialMedia.fromJson(element)));
+        final mList = List<SocialMedia>.from(
+          objMap.map((element) => SocialMedia.fromJson(element)),
+        );
         if (mList.isValid) {
           return Wrap(
-              crossAxisAlignment: WrapCrossAlignment.start,
-              spacing: Dimens.paddingMid,
-              runSpacing: Dimens.paddingMid,
-              children: List.generate(mList.length, (index) {
-                final item = mList[index];
-                final isValid = item.mediaIcon.isValid && item.mediaLink.isValid;
-                return isValid
-                    ? showImageNetwork(
-                        imagePath: item.mediaIcon,
-                        height: Dimens.iconSizeMid,
-                        width: Dimens.iconSizeMid,
-                        bgColor: Colors.transparent,
-                        onPressCallback: () => openUrlInBrowser(item.mediaLink ?? ""))
-                    : vSpacer0();
-              }));
+            crossAxisAlignment: WrapCrossAlignment.start,
+            spacing: Dimens.paddingMid,
+            runSpacing: Dimens.paddingMid,
+            children: List.generate(mList.length, (index) {
+              final item = mList[index];
+              final isValid = item.mediaIcon.isValid && item.mediaLink.isValid;
+              return isValid
+                  ? showImageNetwork(
+                      imagePath: item.mediaIcon,
+                      height: Dimens.iconSizeMid,
+                      width: Dimens.iconSizeMid,
+                      bgColor: Colors.transparent,
+                      onPressCallback: () => openUrlInBrowser(item.mediaLink ?? ""),
+                    )
+                  : vSpacer0();
+            }),
+          );
         }
       } catch (_) {
         printFunction("_socialMediaView error", "");
@@ -307,5 +347,3 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     return null;
   }
 }
-
-

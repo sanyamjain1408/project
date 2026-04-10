@@ -190,24 +190,27 @@ class _ResetPasswordContent extends StatelessWidget {
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            height: 1, // Line height for better spacing
           ),
         ),
-        const SizedBox(height: 5),
+        
         const Text(
           "Back to",
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            height: 1, // Line height for better spacing
           ),
         ),
-        const SizedBox(height: 5),
+        SizedBox(height: 5),
         const Text(
           "Trapix",
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Color(0xFFB5F000),
+            height: 1, // Line height for better spacing
           ),
         ),
         const SizedBox(height: 40),
@@ -364,7 +367,7 @@ class _ResetPasswordContent extends StatelessWidget {
           ),
         ),
         
-        const SizedBox(height: 60),
+        const SizedBox(height: 120),
       ],
     );
   }

@@ -107,6 +107,7 @@ class _ForgotPasswordContent extends StatelessWidget {
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            height: 1, // Line height for better spacing
           ),
         ),
         const SizedBox(height: 5),
@@ -116,6 +117,7 @@ class _ForgotPasswordContent extends StatelessWidget {
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            height: 1, // Line height for better spacing
           ),
         ),
         const SizedBox(height: 5),
@@ -124,7 +126,8 @@ class _ForgotPasswordContent extends StatelessWidget {
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
-            color: Color(0xFFB5F000), // Accent Green
+            color: Color(0xFFB5F000),
+            height: 1, // Line height for better spacing
           ),
         ),
         const SizedBox(height: 49),
@@ -231,7 +234,7 @@ class _ForgotPasswordContent extends StatelessWidget {
           ),
         ),
         
-        const SizedBox(height: 120), // Extra bottom space
+        const SizedBox(height: 180), // Extra bottom space
       ],
     );
   }

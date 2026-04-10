@@ -119,24 +119,27 @@ class _SignInContent extends StatelessWidget {
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            height: 1,
           ),
         ),
-        const SizedBox(height: 1),
+        SizedBox(height: 5),
         const Text(
           "Back to",
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            height: 1,
           ),
         ),
-        const SizedBox(height: 1),
+       SizedBox(height: 5),
         const Text(
           "Trapix",
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Color(0xFFCCFF00),
+            height: 1,
           ),
         ),
         const SizedBox(height: 49),
@@ -254,7 +257,7 @@ class _SignInContent extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 80),
       ],
     );
   }
