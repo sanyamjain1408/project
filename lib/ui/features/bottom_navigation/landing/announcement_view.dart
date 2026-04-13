@@ -52,14 +52,15 @@ class AnnouncementItemView extends StatelessWidget {
     return InkWell(
       onTap: () => showBottomSheetDynamic(context, AnnouncementDetailsView(announcement: announcement)),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          showImageAsset(icon: Icons.campaign_outlined, iconSize: Dimens.iconSizeMid),
-          hSpacer5(),
+          
+          
           Expanded(
             child: Text(
               announcement.title ?? "",
-              style: context.textTheme.displaySmall?.copyWith(color: context.theme.primaryColor),
+              style: context.textTheme.displaySmall?.copyWith(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300, fontFamily: "DMSans"),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

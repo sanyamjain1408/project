@@ -62,13 +62,15 @@ class _LandingMarketViewState extends State<LandingMarketView> with SingleTicker
             ),
             fontSize: Dimens.fontSizeMid,
             isScrollable: true,
+
+            labelPadding: const EdgeInsets.symmetric(horizontal: 12.0),
           ),
           dividerHorizontal(height: 0),
           vSpacer10(),
           Row(
             children: [
               hSpacer10(),
-              Expanded(flex: 2, child: TextRobotoAutoNormal("Pair".tr)),
+              Expanded(flex: 3, child: TextRobotoAutoNormal("Pair".tr)),
               hSpacer5(),
               Expanded(flex: 3, child: TextRobotoAutoNormal("Price".tr, textAlign: TextAlign.center)),
               hSpacer5(),
