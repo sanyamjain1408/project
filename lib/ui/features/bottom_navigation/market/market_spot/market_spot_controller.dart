@@ -10,14 +10,18 @@ import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/data/remote/socket_provider.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 
-import '../market_widgets.dart';
+// CHANGED: Prefix 'spot' added to import MarketSort from local widgets
+import 'market_spot_widgets.dart' as spot; 
 
 class MarketSpotController extends GetxController implements SocketListener {
   RxBool isLoading = true.obs;
   RxInt selectedTab = 0.obs;
   RxList<MarketCoin> marketList = <MarketCoin>[].obs;
   List<MarketCoin> marketFullList = <MarketCoin>[];
-  Rx<MarketSort> marketSort = MarketSort().obs;
+  
+  // CHANGED: Using spot.MarketSort here
+  Rx<spot.MarketSort> marketSort = spot.MarketSort().obs;
+  
   final searchController = TextEditingController();
   int loadedPage = 0;
   bool hasMoreData = false;
@@ -38,7 +42,8 @@ class MarketSpotController extends GetxController implements SocketListener {
     _searchTimer = Timer(const Duration(seconds: 1), () => getMarketOverviewTopCoinList(false));
   }
 
-  void onSortChanged(MarketSort sort) {
+  // CHANGED: Parameter type to spot.MarketSort
+  void onSortChanged(spot.MarketSort sort) {
     marketSort.value = sort;
     marketSort.refresh();
     sortMarketList();
@@ -74,6 +79,8 @@ class MarketSpotController extends GetxController implements SocketListener {
 
   void sortMarketList() {
     final List<MarketCoin> currentList = List.from(marketFullList);
+    
+    // CHANGED: Accessing sort.value properties which is now spot.MarketSort
     if (marketSort.value.pair != null) {
       if (marketSort.value.pair == true) {
         currentList.sort((a, b) => (a.coinType ?? '').compareTo(b.coinType ?? ''));

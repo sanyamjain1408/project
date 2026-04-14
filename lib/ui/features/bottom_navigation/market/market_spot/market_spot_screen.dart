@@ -8,9 +8,9 @@ import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:tradexpro_flutter/utils/text_field_util.dart';
 
-import '../market_widgets.dart';
+import '../market_widgets.dart'; // General imports
 import 'market_spot_controller.dart';
-import 'market_spot_widgets.dart';
+import 'market_spot_widgets.dart' as spot; // Local imports with prefix
 
 class MarketSpotScreen extends StatefulWidget {
   const MarketSpotScreen({super.key});
@@ -63,7 +63,10 @@ class MarketSpotState extends State<MarketSpotScreen> with SingleTickerProviderS
                   borderRadius: Dimens.radiusCornerMid,
                   onTextChange: _controller.onTextChanged),
             ),
-            Obx(() => SpotMarketHeaderView(sort: _controller.marketSort.value, onTap: (sort) => _controller.onSortChanged(sort))),
+            Obx(() => spot.SpotMarketHeaderView(
+              sort: _controller.marketSort.value, 
+              onTap: (sort) => _controller.onSortChanged(sort)
+            )),
             Obx(() {
               return _controller.marketList.isEmpty
                   ? handleEmptyViewWithLoading(_controller.isLoading.value)
@@ -76,8 +79,14 @@ class MarketSpotState extends State<MarketSpotScreen> with SingleTickerProviderS
                           if (_controller.hasMoreData && index == _controller.marketList.length - 1) {
                             WidgetsBinding.instance.addPostFrameCallback((t) => _controller.getMarketOverviewTopCoinList(true));
                           }
-                          return MarketCoinItemViewBottom(
-                              coin: _controller.marketList[index], onFavChange: (message) => showToast(message, isError: false));
+                          return Builder(
+                            builder: (BuildContext newContext) {
+                              return spot.MarketCoinItemViewBottom(
+                                coin: _controller.marketList[index],
+                                onFavChange: (message) => showToast(message, isError: false),
+                              );
+                            },
+                          );
                         },
                       ),
                     );
