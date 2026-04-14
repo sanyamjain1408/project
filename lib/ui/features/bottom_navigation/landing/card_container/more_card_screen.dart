@@ -24,7 +24,11 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
         backgroundColor: const Color(0xFF111111),
         title: const Text(
           "More",
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
@@ -39,7 +43,7 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
           children: [
             SizedBox(height: 10),
             _buildSectionTitle("Homepage"),
-            
+
             // ── NEW SECTION: ADD TO HOMEPAGE ──
             _buildAddToHomepageSection(),
 
@@ -47,7 +51,9 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
 
             // ── CATEGORY 1: RECOMMEND ──
             _buildSectionTitle("Recommend"),
-            const SizedBox(height: 5), // <--- CHANGE: Pehle 10 tha, ab 5 kar diya (Gap kam)
+            const SizedBox(
+              height: 5,
+            ), // <--- CHANGE: Pehle 10 tha, ab 5 kar diya (Gap kam)
             _buildGridview([
               _buildGridItem("assets/images/swap.png", "Swap"),
               _buildGridItem("assets/images/earn.png", "Earn"),
@@ -58,7 +64,7 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
               _buildGridItem("assets/images/buy.png", "Buy"),
             ]),
 
-             // <--- CHANGE: Pehle 0 tha, thoda gap add kiya taaki categories alag lagen
+            // <--- CHANGE: Pehle 0 tha, thoda gap add kiya taaki categories alag lagen
 
             // ── CATEGORY 2: COMMON ──
             _buildSectionTitle("Common"),
@@ -66,13 +72,11 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
               _buildGridItem("assets/icons/security.png", "Security"),
               _buildGridItem("assets/icons/kyc.png", "KYC"),
               _buildGridItem("assets/icons/price.png", "Price Alert"),
-              _buildGridItem("assets/icons/deposit.png", "Deposit\nFiat"),
+              _buildGridItem("assets/icons/deposit.png", "Deposit Fiat"),
               _buildGridItem("assets/icons/p2p.png", "P2P"),
               _buildGridItem("assets/icons/referals.png", "Referals"),
               _buildGridItem("assets/icons/history.png", "History"),
             ]),
-
-            
 
             // ── CATEGORY 3: TRADE ──
             _buildSectionTitle("Trade"),
@@ -84,8 +88,6 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
               _buildGridItem("assets/images/funds.png", "Funds"),
             ]),
 
-            
-
             // ── CATEGORY 4: OTHER ──
             _buildSectionTitle("Other"),
             _buildGridview([
@@ -96,26 +98,35 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
               _buildGridItem("assets/icons/help.png", "Help"),
               _buildGridItem("assets/icons/airdrop.png", "Airdrop"),
               _buildGridItem("assets/icons/self.png", "Self Service"),
-              _buildGridItem("assets/icons/deposit_withdraw.png", "Deposit &\nWithdraw"),
+              _buildGridItem(
+                "assets/icons/deposit_withdraw.png",
+                "Withdraw ",
+              ),
             ]),
-
           ],
         ),
       ),
     );
   }
+
   // ── NEW WIDGET: ADD TO HOMEPAGE SECTION (CORRECTED ASPECT RATIO) ──
   Widget _buildAddToHomepageSection() {
     return Container(
       constraints: const BoxConstraints(minHeight: 100, maxHeight: 150),
-      padding: const EdgeInsets.only(top: 5, left: 5, right: 5, bottom: 0),
-      margin: EdgeInsets.only(left: 10, right: 10, top: 0), // <--- CHANGE: Top margin 10 se 0 kar diya
+      padding: const EdgeInsets.only(top: 15, left: 5, right: 15, bottom: 0),
+      margin: EdgeInsets.only(
+        left: 15,
+        right: 15,
+        top: 0,
+        bottom: 0,
+      ), // <--- CHANGE: Top margin 10 se 0 kar diya
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
+          SizedBox(width: 15),
           Expanded(
             child: Obx(() {
               if (_gridController.selectedIcons.isEmpty) {
@@ -127,44 +138,50 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
                 );
               }
 
+              final icons = _gridController.selectedIcons;
+              final int count = icons.length;
+
               return GridView.count(
-                crossAxisCount: 5,
+                crossAxisCount: count < 5
+                    ? count
+                    : 5, // <--- Jitne icons utne columns, max 5
                 shrinkWrap: true,
-                physics: const AlwaysScrollableScrollPhysics(),
-                mainAxisSpacing: 8, // Vertical gap rakhna theek hai
-                crossAxisSpacing: 0, // Horizontal gap 0
-                
-                // <--- CHANGE: 2.5 ko HATAKE 1 kar diya.
-                // Square cells ban jayengi, width tight ho jayegi.
-                childAspectRatio: 1, 
-                
-                children: _gridController.selectedIcons.map((item) {
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+
+                crossAxisSpacing: 0,
+                childAspectRatio: 1.5, // <--- CHANGE: Aspect ratio thoda adjust kiya taaki icons aur text dono fit ho jayeinr
+                children: icons.map((item) {
                   return GestureDetector(
                     onTap: () => _gridController.removeIcon(item['title']),
-                    child: _buildSmallIcon(item['image']), 
+                    child: _buildSmallIcon(item['image']),
                   );
                 }).toList(),
               );
             }),
           ),
-          const SizedBox(width: 30),
+          const SizedBox(width: 50),
 
           // Edit Button
-          TextButton(
-            onPressed: () {
+           GestureDetector(
+            onTap: () {
               setState(() {
-                _isEditMode = !_isEditMode; 
+                _isEditMode = !_isEditMode;
               });
             },
-            child: Text(
-              _isEditMode ? "Done" : "Edit",
-              style: const TextStyle(
-                color: Color(0xFFB5F000), 
-                fontSize: 14, 
-                fontWeight: FontWeight.bold
-              ),
+            child: Image.asset(
+              // Condition: Edit hai to Edit icon, nahi to Done icon
+              _isEditMode ? 'assets/icons/done.png' : 'assets/icons/edit.png', 
+              // Apni actual asset path yahan check kar lena
+              height: 25, 
+              width: 25,
+              // Agar icon load na ho to default color ke liye:
+              
             ),
           ),
+
+
+          SizedBox(width: 10),
         ],
       ),
     );
@@ -175,15 +192,16 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
     return Container(
       child: Center(
         child: Image.asset(
-          image, 
-          height: 20, 
-          width: 20, 
-          errorBuilder: (c, o, s) => const Icon(Icons.error, size: 20, color: Colors.grey),
+          image,
+          height: 20,
+          width: 20,
+          errorBuilder: (c, o, s) =>
+              const Icon(Icons.error, size: 20, color: Colors.grey),
         ),
       ),
     );
   }
-  
+
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 5, bottom: 10, top: 0),
@@ -201,7 +219,6 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
 
   Widget _buildGridview(List<Widget> children) {
     return GridView.count(
-      
       crossAxisCount: 5,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -226,7 +243,8 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
               imagePath,
               height: 25,
               width: 25,
-              errorBuilder: (c, o, s) => const Icon(Icons.error_outline, color: Colors.grey, size: 24),
+              errorBuilder: (c, o, s) =>
+                  const Icon(Icons.error_outline, color: Colors.grey, size: 24),
             ),
           ),
           const SizedBox(height: 8),
