@@ -16,7 +16,7 @@ bool gIsDarkMode = false;
 bool gIsLandingScreenShowed = false;
 String gUserAgent = "";
 Color gBuyColor = _green;
-Color gSellColor = Colors.red;
+Color gSellColor = Color(0xD73C3C);
 BuildContext? currentContext;
 RxBool gIsBalanceHide = false.obs;
 int tradeDecimal = DefaultValue.decimal;

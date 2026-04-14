@@ -166,11 +166,9 @@ class TabBarPlain extends StatelessWidget {
       isScrollable: isScrollable,
       tabAlignment: isScrollable ? TabAlignment.start : TabAlignment.center,
       labelColor: context.theme.primaryColor,
-      labelStyle: context.textTheme.labelMedium?.copyWith(fontSize: fontSize),
+      labelStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700),
       unselectedLabelColor: context.theme.primaryColorLight,
-      unselectedLabelStyle: context.textTheme.labelMedium?.copyWith(
-        fontSize: fontSize,
-      ),
+      unselectedLabelStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w400),
       labelPadding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
       indicator: const BoxDecoration(),
       dividerHeight: 0,

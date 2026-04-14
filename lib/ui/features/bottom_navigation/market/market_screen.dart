@@ -8,6 +8,9 @@ import 'favorites_pair/favorites_pair_screen.dart';
 import 'market_future/market_future_screen.dart';
 import 'market_spot/market_spot_screen.dart';
 
+
+const _bgcolor =  Color(0xFF111111);
+
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
 
@@ -27,17 +30,20 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TabBarPlain(
-            titles: getMarketTabs(),
-            controller: _tabController,
-            isScrollable: true,
-            fontSize: Dimens.fontSizeLarge,
-            onTap: (index) => selectedTab.value = index),
-        Obx(() => _getBody(selectedTab.value))
-      ],
+    return Container(
+      color: _bgcolor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TabBarPlain(
+              titles: getMarketTabs(),
+              controller: _tabController,
+              isScrollable: true,
+              fontSize: 16,
+              onTap: (index) => selectedTab.value = index),
+          Obx(() => _getBody(selectedTab.value))
+        ],
+      ),
     );
   }
 

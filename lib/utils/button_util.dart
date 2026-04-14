@@ -74,7 +74,7 @@ Widget buttonText(String text,
       style: ButtonStyle(
           visualDensity: visualDensity,
           elevation: WidgetStateProperty.all<double>(0),
-          padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 20, vertical: 0)),
+          padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 10, vertical: 0)),
           foregroundColor: WidgetStateProperty.all<Color>(bgColor),
           backgroundColor: WidgetStateProperty.all<Color>(bgColor),
           shape: WidgetStateProperty.all<RoundedRectangleBorder>(RoundedRectangleBorder(

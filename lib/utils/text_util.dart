@@ -24,7 +24,7 @@ class TextRobotoAutoBold extends StatelessWidget {
         minFontSize: minFontSize ?? 10,
         overflow: TextOverflow.ellipsis,
         textAlign: textAlign ?? TextAlign.start,
-        style: Get.theme.textTheme.labelMedium!.copyWith(color: color, fontSize: fontSize));
+        style: Get.theme.textTheme.labelMedium!.copyWith(color: color, fontSize: fontSize, fontFamily: "DM Sans", fontWeight: FontWeight.w500));
   }
 }
 
@@ -124,4 +124,49 @@ Size getTextSize(String text, TextStyle style, {int? maxLine, double? width, Tex
       textScaler: scale ?? const TextScaler.linear(1))
     ..layout(minWidth: 0, maxWidth: width ?? Get.width);
   return textPainter.size;
+}
+
+
+
+class TextRobotoFixedWidth extends StatelessWidget {
+  const TextRobotoFixedWidth(
+    this.text, {
+    super.key,
+    required this.width,     // Yahan aap fixed width denge
+    this.maxFontSize = 14,   // Default max size
+    this.minFontSize = 10,   // Default min size (text itna chota hoga)
+    this.color,
+    this.fontWeight = FontWeight.w400,
+    this.textAlign = TextAlign.start,
+    this.maxLines = 1,
+  });
+
+  final String text;
+  final double width;
+  final double maxFontSize;
+  final double minFontSize;
+  final Color? color;
+  final FontWeight? fontWeight;
+  final TextAlign? textAlign;
+  final int? maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width, // <--- Yahi fixed width lag rahi hai
+      child: AutoSizeText(
+        text,
+        maxLines: maxLines,
+        minFontSize: minFontSize,
+        maxFontSize: maxFontSize,
+        overflow: TextOverflow.ellipsis, // Agar text min size se bhi bada hai to '...' aayega
+        textAlign: textAlign ?? TextAlign.start,
+        style: Get.theme.textTheme.labelMedium!.copyWith(
+          color: color,
+          fontFamily: "DM Sans",
+          fontWeight: fontWeight ?? FontWeight.normal,
+        ),
+      ),
+    );
+  }
 }

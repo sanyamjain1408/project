@@ -113,49 +113,77 @@ Container textFieldWithWidget(
       ));
 }
 
-Container textFieldSearch(
-    {TextEditingController? controller,
-    double? borderRadius = 7,
-    Function()? onSearch,
-    Function(String)? onTextChange,
-    double? height,
-    double? width,
-    double? margin}) {
-  height = height ?? 50;
-  return Container(
-      margin: EdgeInsets.all(margin ?? 10),
+
+
+    // Basic Search Bar with Interactive Icon Color
+  Container textFieldSearch(
+      {TextEditingController? controller,
+      double? borderRadius = 7,
+      Function()? onSearch,
+      Function(String)? onTextChange,
+      double? height,
+      double? width,
+      double? margin}) {
+    height =  30;
+
+    // Basic Gray Colors
+    final Color bgColor = const Color(0xFF1A1A1A); // Dark Gray Background
+    final Color borderColor = Colors.transparent; // Border nahi chahiye (Basic look)
+    final Color defaultIconColor = Colors.white54; // Icon ka default color
+    final Color activeIconColor = const Color.fromARGB(255, 180, 154, 8); // Type karne par Yellow color
+
+    return Container(
+      margin: EdgeInsets.only(left: 10,right: 10),
       height: height,
       width: width,
+      decoration: BoxDecoration(
+        color: bgColor, // Gray Background
+        borderRadius: BorderRadius.circular(10),
+        // Agar border chahiye toh yahan uncomment kar sakte hain:
+        // border: Border.all(color: Colors.grey, width: 1),
+      ),
       child: TextField(
         controller: controller,
         keyboardType: TextInputType.text,
         textInputAction: TextInputAction.search,
-        cursorColor: Get.theme.primaryColor,
-        style: Get.theme.textTheme.displaySmall?.copyWith(color: Get.theme.primaryColor),
+        cursorColor: Colors.white,
+        style: const TextStyle(color: Colors.white, fontSize: 15),
         decoration: InputDecoration(
-            filled: false,
-            isDense: true,
-            hintText: "Search".tr,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-            enabledBorder: _textFieldBorder(borderRadius: borderRadius!),
-            disabledBorder: _textFieldBorder(borderRadius: borderRadius),
-            focusedBorder: _textFieldBorder(isFocus: true, borderRadius: borderRadius),
-            suffixIcon: _buildTextFieldIcon(
-              iconPath: AssetConstants.icSearch,
-              color: Get.theme.primaryColorLight,
-              size: height - 20,
-              action: () {
-                if (onSearch != null) onSearch();
-              },
-            )),
+          filled: false,
+          isDense: true,
+          hintText: "Search".tr,
+          hintStyle: const TextStyle(color: Colors.white54, fontSize: 15),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+          border: InputBorder.none, // Border hata diya basic look ke liye
+          
+          // Right Side Icon
+          suffixIcon: IconButton(
+            padding: const EdgeInsets.only(right: 8), // Right side padding
+            icon: SvgPicture.asset(
+              AssetConstants.icSearch,
+              height: 20, // Icon size
+              width: 20,
+              colorFilter: ColorFilter.mode(defaultIconColor, BlendMode.srcIn),
+            ),
+            onPressed: () {
+              if (onSearch != null) onSearch();
+            },
+          ),
+        ),
         onSubmitted: (value) {
           if (onSearch != null) onSearch();
         },
         onChanged: (value) {
           if (onTextChange != null) onTextChange(value);
+          // (Optional) Agar aap chahte hain ki type karte hi icon color change ho,
+          // toh aapko controller ya state update karna hoga.
+          // Basic TextField mein automatically focus color change hota hai.
         },
-      ));
-}
+      ),
+    );
+  }
+
+
 
 SizedBox textFieldWithPrefixSuffixText(
     {TextEditingController? controller,

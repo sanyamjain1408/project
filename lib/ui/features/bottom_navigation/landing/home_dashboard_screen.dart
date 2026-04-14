@@ -11,6 +11,7 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_con
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/more_card_screen.dart';
 
 const _green = Color(0xFFB5F000);
+const _bgcolor =  Color(0xFF111111);
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -84,7 +85,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF111111),
+      backgroundColor: _bgcolor,
 
       // AppBar hata diya taaki wo scroll ho sake
 

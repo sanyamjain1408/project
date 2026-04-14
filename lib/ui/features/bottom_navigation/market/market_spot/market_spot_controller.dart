@@ -10,22 +10,24 @@ import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/data/remote/socket_provider.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 
-// CHANGED: Prefix 'spot' added to import MarketSort from local widgets
 import 'market_spot_widgets.dart' as spot; 
 
 class MarketSpotController extends GetxController implements SocketListener {
   RxBool isLoading = true.obs;
   RxInt selectedTab = 0.obs;
+  RxInt selectedFilterIndex = 0.obs; 
+  
   RxList<MarketCoin> marketList = <MarketCoin>[].obs;
-  List<MarketCoin> marketFullList = <MarketCoin>[];
-  
-  // CHANGED: Using spot.MarketSort here
+  List<MarketCoin> marketFullList = <MarketCoin>[]; // Ye saara data store karega
   Rx<spot.MarketSort> marketSort = spot.MarketSort().obs;
-  
   final searchController = TextEditingController();
   int loadedPage = 0;
   bool hasMoreData = false;
   Timer? _searchTimer;
+
+  List<String> getFilterList() {
+    return ["All", "USDT", "USDC", "BTC"];
+  }
 
   Map<int, String> getTypeMap() {
     var map = {1: "All Crypto".tr, 2: "Spot Markets".tr, 3: "New Listing".tr};
@@ -37,16 +39,21 @@ class MarketSpotController extends GetxController implements SocketListener {
     getMarketOverviewTopCoinList(false);
   }
 
-  void onTextChanged(String text) {
-    if (_searchTimer?.isActive ?? false) _searchTimer?.cancel();
-    _searchTimer = Timer(const Duration(seconds: 1), () => getMarketOverviewTopCoinList(false));
+  void onFilterChanged(int index) {
+    selectedFilterIndex.value = index;
+    // Filter change hone par list refresh karein
+    applyFiltersAndSort();
   }
 
-  // CHANGED: Parameter type to spot.MarketSort
+  void onTextChanged(String text) {
+    if (_searchTimer?.isActive ?? false) _searchTimer?.cancel();
+    _searchTimer = Timer(const Duration(seconds: 1), () => applyFiltersAndSort());
+  }
+
   void onSortChanged(spot.MarketSort sort) {
     marketSort.value = sort;
     marketSort.refresh();
-    sortMarketList();
+    applyFiltersAndSort();
   }
 
   Future<void> getMarketOverviewTopCoinList(bool isLoadMore) async {
@@ -58,8 +65,11 @@ class MarketSpotController extends GetxController implements SocketListener {
     }
     isLoading.value = true;
     loadedPage++;
+    
+    // API call se sirf data layenge, search/filter nahi bhejenge
     final type = getTypeMap().keys.toList()[selectedTab.value];
     final query = searchController.text.trim();
+    
     APIRepository().getMarketOverviewTopCoinList(loadedPage, DefaultValue.currency, type, search: query).then((resp) {
       isLoading.value = false;
       if (resp.success) {
@@ -67,7 +77,9 @@ class MarketSpotController extends GetxController implements SocketListener {
         hasMoreData = listResp.nextPageUrl != null;
         final list = List<MarketCoin>.from(listResp.data.map((x) => MarketCoin.fromJson(x)));
         marketFullList.addAll(list);
-        sortMarketList();
+        
+        // Data milne ke baad filters apply karein
+        applyFiltersAndSort();
       } else {
         showToast(resp.message);
       }
@@ -77,10 +89,27 @@ class MarketSpotController extends GetxController implements SocketListener {
     });
   }
 
-  void sortMarketList() {
-    final List<MarketCoin> currentList = List.from(marketFullList);
-    
-    // CHANGED: Accessing sort.value properties which is now spot.MarketSort
+  // --- NEW FUNCTION: Filter and Sort Logic ---
+  void applyFiltersAndSort() {
+    List<MarketCoin> currentList = List.from(marketFullList);
+
+    // 1. Apply Filter (All, USDT, USDC, BTC)
+    if (selectedFilterIndex.value > 0) {
+      String selectedFilter = getFilterList()[selectedFilterIndex.value];
+      // baseCoinType ke hisaab se filter karein
+      currentList = currentList.where((coin) => coin.baseCoinType == selectedFilter).toList();
+    }
+
+    // 2. Apply Search (Optional text search)
+    String query = searchController.text.trim().toLowerCase();
+    if (query.isNotEmpty) {
+      currentList = currentList.where((coin) => 
+        (coin.coinType?.toLowerCase().contains(query) ?? false) || 
+        (coin.baseCoinType?.toLowerCase().contains(query) ?? false)
+      ).toList();
+    }
+
+    // 3. Apply Sorting
     if (marketSort.value.pair != null) {
       if (marketSort.value.pair == true) {
         currentList.sort((a, b) => (a.coinType ?? '').compareTo(b.coinType ?? ''));
@@ -145,7 +174,8 @@ class MarketSpotController extends GetxController implements SocketListener {
       if (index != -1) {
         coin.baseCoinType = marketFullList[index].baseCoinType;
         marketFullList[index] = coin;
-        sortMarketList();
+        // Update hone par bhi filters apply karein
+        applyFiltersAndSort();
       }
     }
   }
