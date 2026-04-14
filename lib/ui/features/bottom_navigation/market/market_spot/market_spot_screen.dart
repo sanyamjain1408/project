@@ -13,7 +13,8 @@ import '../market_widgets.dart';
 import 'market_spot_controller.dart';
 import 'market_spot_widgets.dart' as spot; 
 
-const _bgcolor =  Colors.black;
+
+const _bgcolor =  Colors.transparent;
 
 class MarketSpotScreen extends StatefulWidget {
   const MarketSpotScreen({super.key});
@@ -129,10 +130,8 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
     
     // Yahan IMPORTANT FIX: Bottom border ko Black set kar rahe hain
     decoration: const BoxDecoration(
-      color: Colors.black,
-      border: Border(
-        bottom: BorderSide(color: Colors.black, width: 4), // Black border line ko chupayega
-      ),
+      color: Colors.transparent,
+      
     ),
     
     child: TabBar(
@@ -144,6 +143,7 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
       labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       unselectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
       indicator: const BoxDecoration(), // Indicator hata diya
+      dividerColor: Colors.transparent,
       
       tabs: _controller.getFilterList().map((title) {
         return Tab(text: title);
@@ -153,12 +153,13 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
 }
 
   Widget _buildStaticCategoryList() {
-    final categories = ["All", "AI", "Meme", "RWA"];
+    final categories = ["All", "AI", "Meme", "RWA", "DeFi", "NFT", "Layer 1", "Layer 2"];
     
     return Container(
       height: 35,
       padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
-      color: Colors.black,
+      
+      color: Colors.transparent,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
@@ -196,7 +197,7 @@ class MarketHeaderRow extends StatelessWidget {
     return Container(
       height: 20, // Header ki height
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      color: Colors.black, // Background color (Black)
+      color: Colors.transparent, // Background color (Black)
       child: const Row(
         children: [
           // Column 1: Pair / Vol (Left Side - takes more space)

@@ -94,6 +94,7 @@ class _LandingMarketViewState extends State<LandingMarketView> with SingleTicker
                   )
                 : showEmptyView(height: Dimens.btnHeightMain);
           }),
+          SizedBox(height: 20),
         ],
       ),
     );
@@ -117,6 +118,7 @@ class MarketTrendItemView extends StatelessWidget {
     String formattedPrice = coinFormat(coin.lastPrice);
 
     return InkWell(
+      
       onTap: () {
         coin.coinPair = coin.getCoinPairKey();
         coin.coinPairName = coin.getCoinPairName();
@@ -206,20 +208,49 @@ class MarketTrendItemView extends StatelessWidget {
           hSpacer20(),
           
           // --- 3. BUTTON SECTION ---
+          // Expanded(
+          //   flex: 2,
+          //   child: buttonText(
+          //     "$sign${coinFormat(coin.priceChange, fixed: 2)}%",
+          //     radius: Dimens.radiusCorner,
+          //     bgColor: color,
+          //     textColor: Colors.white,
+          //     visualDensity: VisualDensity.compact,
+          //   ),
+          // ),
+
           Expanded(
-            flex: 2,
-            child: buttonText(
-              "$sign${coinFormat(coin.priceChange, fixed: 2)}%",
-              radius: Dimens.radiusCorner,
-              bgColor: color,
-              textColor: Colors.white,
-              visualDensity: VisualDensity.compact,
+              flex: 2,
+              child: SizedBox(
+                height: 30,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(Dimens.radiusCorner),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "$sign${coinFormat(coin.priceChange, fixed: 2)}%",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
           
           hSpacer15(),
         ],
       ),
+      
     );
   }
 }

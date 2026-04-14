@@ -11,7 +11,7 @@ import 'package:tradexpro_flutter/utils/image_util.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:tradexpro_flutter/utils/text_util.dart';
-
+import 'package:auto_size_text/auto_size_text.dart';
 import '../../../currency_pair_details/currency_pair_details_screen.dart';
 
 class MarketSort {
@@ -172,7 +172,6 @@ class SpotMarketHeaderView extends StatelessWidget {
     );
   }
 }
-
 class MarketCoinItemViewBottom extends StatelessWidget {
   const MarketCoinItemViewBottom({
     super.key,
@@ -186,6 +185,8 @@ class MarketCoinItemViewBottom extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (sign, cColor) = getNumberData(coin.change);
+    String formattedPrice = coinFormat(coin.price); // LandingMarketView jaisa
+
     return GestureDetector(
       onTap: () =>
           Get.to(() => CurrencyPairDetailsScreen(pair: coin.convertCoinPair())),
@@ -201,109 +202,124 @@ class MarketCoinItemViewBottom extends StatelessWidget {
         color: Colors.transparent,
         child: Row(
           children: [
-            showImageNetwork(
-              imagePath: coin.coinIcon,
-              width: 30,
-              height: 30,
-              bgColor: Colors.transparent,
-            ),
+            // ── 1. LEFT SPACER (LandingMarketView jaisa) ──
             hSpacer10(),
 
+            // ── 2. ICON + COIN NAME + VOLUME COLUMN ──
             Expanded(
               flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                         fit: FlexFit.loose,
-                        child: Text(
-                          coin.coinType ?? "",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
+                  // Icon (same size as LandingMarketView)
+                  showImageNetwork(
+                    imagePath: coin.coinIcon,
+                    width: Dimens.iconSizeMin,
+                    height: Dimens.iconSizeMin,
+                    bgColor: Colors.transparent,
+                  ),
+                  hSpacer5(),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // ── Coin Name: BTC/USDT (AutoSizeText.rich — LandingMarketView jaisa) ──
+                        AutoSizeText.rich(
+                          TextSpan(
+                            text: coin.coinType ?? '',
+                            style: Get.theme.textTheme.labelMedium!.copyWith(
+                              fontSize: Dimens.fontSizeMidExtra,
+                            ),
+                            children: <TextSpan>[
+                              if ((coin.baseCoinType ?? '').isNotEmpty)
+                                TextSpan(
+                                  text: "/${coin.baseCoinType}",
+                                  style: Get.theme.textTheme.displaySmall!.copyWith(
+                                    fontSize: Dimens.fontSizeSmall,
+                                  ),
+                                ),
+                            ],
                           ),
                           maxLines: 1,
-                          overflow: TextOverflow.clip,
                         ),
 
-                        ///  TextRobotoAutoBold(coin.coinType ?? "", maxLines: 1),
-                      ),
-                      if ((coin.baseCoinType ?? '').isNotEmpty)
-                        TextRobotoAutoNormal(
-                          "/${coin.baseCoinType}",
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF6B7280),
+                        // ── Volume (grey, 11px — LandingMarketView jaisa) ──
+                        Text(
+                          "\$${numberFormatCompact(coin.volume, decimals: 2)}",
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280), // _textDim — same as LandingMarketView
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
                         ),
-                    ],
-                  ),
-                  TextRobotoAutoNormal(
-                    "\$${numberFormatCompact(coin.volume, decimals: 2)}",
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF6B7280),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const Spacer(),
+            hSpacer5(),
 
+            // ── 3. PRICE COLUMN (LandingMarketView jaisa — end aligned) ──
             Expanded(
               flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // ── Upar: Bold Price ──
                   TextRobotoAutoBold(
-                    currencyFormat(coin.price),
-                    textAlign: TextAlign.end,
+                    formattedPrice,
                     maxLines: 1,
-                  ),
-                  TextRobotoAutoNormal(
-                    "\$${coinFormat(coin.price, fixed: 6)}",
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF6B7280),
                     textAlign: TextAlign.end,
+                  ),
+                  // ── Niche: $ price (grey, 11px) ──
+                  Text(
+                    "\$${coinFormat(coin.price, fixed: 6)}",
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280), // _textDim — same as LandingMarketView
+                      fontSize: 11,
+                    ),
+                    maxLines: 1,
                   ),
                 ],
               ),
             ),
 
-            hSpacer30(),
+            hSpacer20(), // LandingMarketView me hSpacer20 hai
 
-            SizedBox(
-              width: 93,
-              height: 30,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: cColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                margin: EdgeInsets.only(right: 9),
-                child: Center(
-                  child: FittedBox(
-                    fit: BoxFit
-                        .scaleDown, // <--- Text ko shrink karega agar bada ho
-                    child: Text(
-                      "$sign${coinFormat(coin.change, fixed: 2)}%",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
+            // ── 4. CHANGE BUTTON (LandingMarketView jaisa — Expanded flex:2) ──
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 30,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: cColor,
+                    borderRadius: BorderRadius.circular(Dimens.radiusCorner),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "$sign${coinFormat(coin.change, fixed: 2)}%",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
                       ),
-                      maxLines: 1,
                     ),
                   ),
                 ),
               ),
             ),
-            // ... baaki ka code
+
+            hSpacer15(), // LandingMarketView me hSpacer15 hai
           ],
         ),
       ),

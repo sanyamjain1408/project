@@ -9,7 +9,7 @@ import 'market_future/market_future_screen.dart';
 import 'market_spot/market_spot_screen.dart';
 
 
-const _bgcolor =  Color(0xFF111111);
+const _bgcolor =  Colors.black54;
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/home_grid_controller.dart';
 
+const _bgcolor =Color(0xFF111111);
+
+
 class MoreCardScreen extends StatefulWidget {
   const MoreCardScreen({super.key});
 
@@ -19,7 +22,7 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF111111),
+      backgroundColor: _bgcolor,
       appBar: AppBar(
         backgroundColor: const Color(0xFF111111),
         title: const Text(
