@@ -87,12 +87,14 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
 
             const MarketHeaderRow(),
 
+            SizedBox(height: 7),
+
             Obx(() {
               return _controller.marketList.isEmpty
                   ? handleEmptyViewWithLoading(_controller.isLoading.value)
                   : Expanded(
                       child: ListView.separated(
-                        padding: const EdgeInsets.all(Dimens.paddingMid),
+                        padding: const EdgeInsets.all(5),
                         separatorBuilder: (context, index) => const SizedBox.shrink(),
                         itemCount: _controller.marketList.length,
                         itemBuilder: (context, index) {
@@ -119,39 +121,54 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
     );
   }
 
-  // ── FILTER TAB BAR ──
-  Widget _buildFilterTabBar() {
-    return Container(
-      height: 35,
-      padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
-      alignment: Alignment.centerLeft,
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-      ),
-      child: TabBar(
-        controller: _filterTabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.white38,
-        labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
-        indicator: const BoxDecoration(),
-        dividerColor: Colors.transparent, // White line hata di
-        tabs: _controller.getFilterList().map((title) {
-          return Tab(text: title);
-        }).toList(),
-      ),
-    );
-  }
+Widget _buildFilterTabBar() {
+  final filterList = _controller.getFilterList();
+
+  return Obx(() => Container(
+    height: 35,
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    color: Colors.transparent,
+    child: Row(
+      children: filterList.asMap().entries.map((entry) {
+        final index = entry.key;
+        final title = entry.value;
+        final isSelected = _controller.selectedFilterIndex.value == index;
+
+        return GestureDetector(
+          onTap: () {
+            _filterTabController.animateTo(index);
+            _controller.onFilterChanged(index);
+          },
+          child: Container(
+            height: 35,
+            color: Colors.transparent,
+            margin: const EdgeInsets.only(right: 20), // <--- Yahan gap do apne hisaab se
+            alignment: Alignment.center,
+           
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontFamily: "DMSans",
+                fontWeight: isSelected ? FontWeight.w400 : FontWeight.w400,
+                color: isSelected ? Colors.white : Colors.white54,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    ),
+  ));
+}
 
   // ── STATIC CATEGORY LIST ──
   Widget _buildStaticCategoryList() {
-    final categories = ["All", "AI", "Meme", "RWA", "DeFi", "NFT", "Layer 1", "Layer 2"];
+    final categories = ["All", "🔥 AI", "Meme", "RWA", "DeFi", "NFT", "Layer 1", "Layer 2"];
 
     return Container(
-      height: 25,
+      height: 20,
       padding: const EdgeInsets.symmetric(horizontal: 20),
+      margin: EdgeInsets.only(top: 10, bottom: 10),
       color: Colors.transparent,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
@@ -166,21 +183,19 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
               });
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFB5F000) : Colors.transparent,
+                color: isSelected ? const Color(0xFFB5F000) : Color( 0xFF1A1A1A), // "All" ke liye thoda different color
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isSelected ? const Color(0xFFB5F000) : const Color(0xFF1E2128),
-                  width: 1,
-                ),
+                
               ),
               child: Text(
                 categories[index],
                 style: TextStyle(
-                  color: isSelected ? Colors.black : const Color(0xFF6B7280),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  color: isSelected ? const Color(0xFF000000) : const Color(0xFFFFFFFF),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: "DMSans",
                 ),
               ),
             ),
