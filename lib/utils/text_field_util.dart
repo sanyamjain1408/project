@@ -151,7 +151,7 @@ Container textFieldSearch({
   height = 30;
 
   // Basic Gray Colors
-  final Color bgColor = const Color(0xFF1A1A1A); // Dark Gray Background
+  final Color bgColor = const Color.fromARGB(255, 14, 14, 14); // Dark Gray Background
   final Color borderColor =
       Colors.transparent; // Border nahi chahiye (Basic look)
   final Color defaultIconColor = Colors.white54; // Icon ka default color

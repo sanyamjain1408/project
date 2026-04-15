@@ -9,7 +9,11 @@ import 'market_future/market_future_screen.dart';
 import 'market_spot/market_spot_screen.dart';
 
 
-const _bgcolor =  Colors.black12;
+// RGBA(17, 17, 17, 1) ko Flutter Color mein convert karna hai
+// Format: Color.fromARGB(Alpha, Red, Green, Blue)
+const  _bgcolor = Colors.black26;  ///background: #111111;background: var(--Primary, rgba(17, 17, 17, 1));
+
+
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
