@@ -25,12 +25,13 @@ import 'package:decimal/decimal.dart';
 final setSelectedPrice = ValueNotifier<double?>(null);
 
 class TradePairTopView extends StatelessWidget {
-  const TradePairTopView({super.key, required this.coinPair, this.onTap, this.total, this.onTapIcon});
+  const TradePairTopView({super.key, required this.coinPair, this.onTap, this.total, this.onTapIcon, this.onTapDetails});
 
   final CoinPair coinPair;
   final Total? total;
   final VoidCallback? onTap;
-  final VoidCallback? onTapIcon;
+  final VoidCallback? onTapIcon;     // middle icon — toggles chart
+  final VoidCallback? onTapDetails;  // last icon — opens details screen
 
   @override
   Widget build(BuildContext context) {
@@ -49,11 +50,41 @@ class TradePairTopView extends StatelessWidget {
           ),
         ),
         hSpacer5(),
-        buttonText("$sing${coinFormat(total?.tradeWallet?.priceChange, fixed: 2)}%",
-            textColor: color, bgColor: color.withValues(alpha:0.2), visualDensity: VisualDensity.compact, radius: Dimens.radiusCorner),
+        // ── Plain inline text — no badge, no background ──────────────────────
+        Text(
+          "$sing${coinFormat(total?.tradeWallet?.priceChange, fixed: 2)}%",
+          style: TextStyle(
+            color: color,
+            fontSize: Dimens.fontSizeSmall,
+          ),
+        ),
         const Spacer(),
-        InkWell(onTap: onTapIcon, child: const Padding(padding: EdgeInsets.all(Dimens.paddingMin), child: Icon(Icons.candlestick_chart_rounded))),
-        hSpacer10(),
+        // ── Star / Grid / Chart icons matching Image 2 ──────────────────────
+        InkWell(
+          onTap: () {}, // favourite toggle — wire up FavoriteHelper if needed
+          child: Padding(
+            padding: const EdgeInsets.all(Dimens.paddingMin),
+            child: Icon(Icons.star_border_rounded,
+                color: context.theme.primaryColorLight, size: Dimens.iconSizeMin),
+          ),
+        ),
+        InkWell(
+          onTap: onTapIcon, // toggles inline chart
+          child: Padding(
+            padding: const EdgeInsets.all(Dimens.paddingMin),
+            child: Icon(Icons.candlestick_chart_rounded,
+                color: context.theme.primaryColorLight, size: Dimens.iconSizeMin),
+          ),
+        ),
+        InkWell(
+          onTap: onTapDetails,
+          child: Padding(
+            padding: const EdgeInsets.all(Dimens.paddingMin),
+            child: Icon(Icons.bar_chart_rounded,
+                color: context.theme.primaryColorLight, size: Dimens.iconSizeMin),
+          ),
+        ),
+        hSpacer5(),
       ],
     );
   }

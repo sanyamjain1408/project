@@ -43,56 +43,50 @@ class UserBankController extends GetxController {
   }
 
   void getBankDetails(int bankID, Function(DynamicBank) onSuccess) {
-    APIRepository()
-        .userUserBank(bankID)
-        .then(
-          (resp) {
-            if (resp.success) {
-              onSuccess(DynamicBank.fromJson(resp.data));
-            } else {
-              showToast(resp.message);
-            }
-          },
-          onError: (err) {
-            showToast(err.toString());
-          },
-        );
+    APIRepository().userUserBank(bankID).then(
+      (resp) {
+        if (resp.success) {
+          onSuccess(DynamicBank.fromJson(resp.data));
+        } else {
+          showToast(resp.message);
+        }
+      },
+      onError: (err) {
+        showToast(err.toString());
+      },
+    );
   }
 
   void userBankSave(BankForm bank) {
     showLoadingDialog();
-    APIRepository()
-        .userBankSubmit(bank)
-        .then(
-          (resp) {
-            hideLoadingDialog();
-            showToast(resp.message, isError: !resp.success);
-            if (resp.success) {
-              Get.back();
-              getUserBankList();
-            }
-          },
-          onError: (err) {
-            hideLoadingDialog();
-            showToast(err.toString());
-          },
-        );
+    APIRepository().userBankSubmit(bank).then(
+      (resp) {
+        hideLoadingDialog();
+        showToast(resp.message, isError: !resp.success);
+        if (resp.success) {
+          Get.back();
+          getUserBankList();
+        }
+      },
+      onError: (err) {
+        hideLoadingDialog();
+        showToast(err.toString());
+      },
+    );
   }
 
   void userBankDelete(int bankID) {
     showLoadingDialog();
-    APIRepository()
-        .userBankDelete(bankID)
-        .then(
-          (resp) {
-            hideLoadingDialog();
-            showToast(resp.message, isError: !resp.success);
-            if (resp.success) getUserBankList();
-          },
-          onError: (err) {
-            hideLoadingDialog();
-            showToast(err.toString());
-          },
-        );
+    APIRepository().userBankDelete(bankID).then(
+      (resp) {
+        hideLoadingDialog();
+        showToast(resp.message, isError: !resp.success);
+        if (resp.success) getUserBankList();
+      },
+      onError: (err) {
+        hideLoadingDialog();
+        showToast(err.toString());
+      },
+    );
   }
 }

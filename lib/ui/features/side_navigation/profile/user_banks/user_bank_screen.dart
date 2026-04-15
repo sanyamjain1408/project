@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../../../../ui_helper/app_widgets.dart';
 import '../../../../../utils/alert_util.dart';
-import '../../../../../utils/button_util.dart';
 import '../../../../../utils/common_utils.dart';
 import '../../../../../utils/date_util.dart';
 import '../../../../../utils/dimens.dart';
@@ -14,6 +13,9 @@ import '../../../../../data/local/constants.dart';
 import '../../../../../data/models/bank_data.dart';
 import 'bank_input_page.dart';
 import 'user_bank_controller.dart';
+
+const _bankGreen  = Color(0xFFCCFF00);
+const _bankDmSans = 'DMSans';
 
 class UserBankScreen extends StatefulWidget {
   const UserBankScreen({super.key});
@@ -28,24 +30,45 @@ class _UserBankScreenState extends State<UserBankScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _controller.getUserBankList());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _controller.getUserBankList());
   }
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
+    return Column(
+      children: [
           Padding(
-            padding: const EdgeInsets.all(Dimens.paddingMid),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                TextRobotoAutoBold("Bank List".tr),
-                buttonText(
-                  "Add Bank".tr,
-                  onPress: () => Get.to(() => BankInputPage()),
-                  visualDensity: VisualDensity.compact,
+                const Text(
+                  "Bank List",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: _bankDmSans,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Get.to(() => BankInputPage()),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _bankGreen,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      "Add Bank",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: _bankDmSans,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -54,23 +77,25 @@ class _UserBankScreenState extends State<UserBankScreen> {
           Obx(() {
             return _controller.userBanks.isEmpty
                 ? handleEmptyViewWithLoading(
-                  _controller.isDataLoading.value,
-                  message: "Your bank list will appear here".tr,
-                )
+                    _controller.isDataLoading.value,
+                    message: "Your bank list will appear here".tr,
+                  )
                 : Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
-                    itemCount: _controller.userBanks.length,
-                    separatorBuilder: (context, index) => dividerHorizontal(),
-                    itemBuilder: (BuildContext context, int index) {
-                      return UserBankItemView(bank: _controller.userBanks[index], onTap: _handleButtonAction);
-                    },
-                  ),
-                );
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+                      itemCount: _controller.userBanks.length,
+                      separatorBuilder: (context, index) => dividerHorizontal(),
+                      itemBuilder: (BuildContext context, int index) {
+                        return UserBankItemView(
+                          bank: _controller.userBanks[index],
+                          onTap: _handleButtonAction,
+                        );
+                      },
+                    ),
+                  );
           }),
         ],
-      ),
-    );
+      );
   }
 
   void _handleButtonAction(int action, DynamicBank bank) {
@@ -87,7 +112,7 @@ class _UserBankScreenState extends State<UserBankScreen> {
       title: "Delete Bank".tr,
       subTitle: "bank delete message".tr,
       buttonTitle: "Delete".tr,
-      buttonColor: Theme.of(context).colorScheme.error,
+      buttonColor: Colors.red,
       onOkAction: () {
         Get.back();
         _controller.userBankDelete(bankId);
@@ -116,17 +141,30 @@ class UserBankItemView extends StatelessWidget {
             children: [
               SizedBox(
                 height: Dimens.btnHeightMin,
-                child: buttonTextBordered(
-                  "Delete".tr,
-                  true,
-                  onPress: () => onTap(ActionType.delete, bank),
-                  color: Colors.red,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.withOpacity(0.15),
+                    foregroundColor: Colors.red,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () => onTap(ActionType.delete, bank),
+                  child: Text("Delete".tr, style: const TextStyle(fontFamily: _bankDmSans)),
                 ),
               ),
               hSpacer5(),
               SizedBox(
                 height: Dimens.btnHeightMin,
-                child: buttonTextBordered("Edit".tr, true, onPress: () => onTap(ActionType.edit, bank)),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _bankGreen.withOpacity(0.15),
+                    foregroundColor: _bankGreen,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () => onTap(ActionType.edit, bank),
+                  child: Text("Edit".tr, style: const TextStyle(fontFamily: _bankDmSans)),
+                ),
               ),
             ],
           ),

@@ -341,11 +341,13 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
-                              Image.asset(
-                                'assets/images/spin_wheel.png',
-                                width: 38,
-                                height: 38,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.monetization_on, color: _green, size: 36),
+                              Container(
+                                width: 38, height: 38,
+                                decoration: BoxDecoration(
+                                  color: _green.withOpacity(0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.monetization_on, color: _green, size: 22),
                               ),
                             ],
                           ),
@@ -382,11 +384,13 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
-                              Image.asset(
-                                'assets/images/refer_person.png',
-                                width: 38,
-                                height: 38,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.people_alt_outlined, color: Colors.purpleAccent, size: 36),
+                              Container(
+                                width: 38, height: 38,
+                                decoration: BoxDecoration(
+                                  color: Colors.purpleAccent.withOpacity(0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.people_alt_outlined, color: Colors.purpleAccent, size: 22),
                               ),
                             ],
                           ),
