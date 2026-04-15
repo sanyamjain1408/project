@@ -5,6 +5,7 @@ import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
 import 'package:tradexpro_flutter/utils/extensions.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
+import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/data/models/user.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import '../../../../helper/app_checker.dart';
@@ -13,6 +14,8 @@ import 'my_profile_controller.dart';
 import 'my_profile_edit_screen.dart';
 import 'security_screen.dart';
 import 'user_banks/user_bank_screen.dart';
+import 'user_banks/user_bank_controller.dart';
+import 'user_banks/bank_input_page.dart';
 
 const _bg      = Color(0xFF121212);
 const _cardBg  = Color(0xFF1E1E1E);
@@ -205,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       case 1:  return _wrapScreen(const ProfileEditScreen());
       case 2:  return _wrapScreen(const SecurityScreen());
       case 3:  return _wrapScreen(const KYCScreen());
-      case 4:  return _wrapScreen(const UserBankScreen());
+      case 4:  return const UserBankScreen();
       default: return Container();
     }
   }
@@ -257,9 +260,17 @@ class _ProfileScreenState extends State<ProfileScreen>
         // ── BANK DETAILS CARD ────────────────────────────────────────
         _infoCard(
           title: "Bank Details",
-          onEdit: () {
-            _tabController.animateTo(4);
-            _controller.selectedType.value = 4;
+          onEdit: () async {
+            final bankController = Get.put(UserBankController());
+            showLoadingDialog();
+            bankController.getUserBankList();
+            await Future.delayed(const Duration(seconds: 2));
+            hideLoadingDialog();
+            if (bankController.userBanks.isNotEmpty) {
+              Get.to(() => BankInputPage(preBank: bankController.userBanks.first));
+            } else {
+              Get.to(() => BankInputPage());
+            }
           },
           children: [
             // FIXED: "Bank Name" on both sides like Figma
@@ -423,7 +434,6 @@ class _ProfileEditPage extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      // ProfileEditScreen returns Expanded — wrap in Column to satisfy it
       body: Column(
         children: const [
           ProfileEditScreen(),
@@ -432,3 +442,5 @@ class _ProfileEditPage extends StatelessWidget {
     );
   }
 }
+
+// end of file
