@@ -46,86 +46,160 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
       controller: _controller.refreshController,
       refreshOnStart: true,
       onRefresh: _getOverviewData,
-      header: ClassicHeader(showText: false, iconTheme: const IconThemeData().copyWith(color: context.theme.focusColor)),
+      header: ClassicHeader(
+          showText: false,
+          iconTheme: const IconThemeData().copyWith(color: Colors.white)),
       child: Obx(() {
         final data = wOverview.value;
         final settings = getSettingsLocal();
         return ListView(
-          padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid, vertical: Dimens.paddingMin),
+          padding: EdgeInsets.zero,
           shrinkWrap: true,
           children: [
-            Obx(() => TotalBalanceView(
-                  gIsBalanceHide.value,
-                  data.total,
-                  title: 'Estimated Balance'.tr,
-                  totalUsd: data.totalUsd,
-                  onHistoryTap: () => Get.to(() => const ActivityScreen()),
-                  coins: data.coins,
-                  selectedCoin: selectedCoin.value,
-                  onSelectCoin: (selected) {
-                    selectedCoin.value = selected;
-                    _getOverviewData();
-                  },
-                )),
-            vSpacer10(),
-            const WalletTopButtonsView(),
-            dividerHorizontal(height: Dimens.paddingLargeDouble),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // ── TOP HERO CARD with green wave ──
+            Stack(
               children: [
-                TextRobotoAutoNormal('Asset'.tr, fontSize: Dimens.fontSizeMid),
-                TextRobotoAutoNormal('Available Balance'.tr, fontSize: Dimens.fontSizeMid)
-              ],
-            ),
-            vSpacer5(),
-            if (data.spotWallet != null)
-              AssetItemView(
-                  icon: Icons.dashboard_outlined,
-                  name: "Spot".tr,
-                  amount: data.spotWallet,
-                  amountCurrency: data.spotWalletUsd,
-                  coinType: data.selectedCoin,
-                  isBalanceHide: gIsBalanceHide.value,
-                  onTap: () => _controller.changeWalletTab(WalletViewType.spot)),
-            if (settings?.enableFutureTrade == 1 && data.futureWallet != null)
-              AssetItemView(
-                  icon: Icons.update_outlined,
-                  name: "Future".tr,
-                  amount: data.futureWallet,
-                  amountCurrency: data.futureWalletUsd,
-                  coinType: data.selectedCoin,
-                  isBalanceHide: gIsBalanceHide.value,
-                  onTap: () => _controller.changeWalletTab(WalletViewType.future)),
-            if (settings?.p2pModule == 1 && data.p2PWallet != null)
-              AssetItemView(
-                  icon: Icons.people_outline,
-                  name: "P2P".tr,
-                  amount: data.p2PWallet,
-                  amountCurrency: data.p2PWalletUsd,
-                  coinType: data.selectedCoin,
-                  isBalanceHide: gIsBalanceHide.value,
-                  onTap: () => _controller.changeWalletTab(WalletViewType.p2p)),
-            dividerHorizontal(height: Dimens.paddingLargeDouble),
-            if (data.spotWallet != null)
-              Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // green wave background
+                Positioned.fill(
+                  child: ClipRect(
+                    child: CustomPaint(
+                      painter: _GreenWavePainter(),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextRobotoAutoBold('Recent Transactions'.tr),
-                      buttonTextBordered("View All".tr, false, onPress: () {
-                        TemporaryData.activityType = HistoryType.transaction;
-                        Get.to(() => const ActivityScreen());
-                      }, radius: Dimens.radiusCorner, visualDensity: VisualDensity.compact),
+                      // "Overview" label + history icon
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Overview'.tr,
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 13)),
+                          GestureDetector(
+                            onTap: () => Get.to(() => const ActivityScreen()),
+                            child: const Icon(Icons.history,
+                                color: Colors.white70, size: 22),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Big balance
+                      Obx(() => TotalBalanceView(
+                            gIsBalanceHide.value,
+                            data.total,
+                            title: 'Estimated Balance'.tr,
+                            totalUsd: data.totalUsd,
+                            onHistoryTap: () =>
+                                Get.to(() => const ActivityScreen()),
+                            coins: data.coins,
+                            selectedCoin: selectedCoin.value,
+                            onSelectCoin: (selected) {
+                              selectedCoin.value = selected;
+                              _getOverviewData();
+                            },
+                          )),
+                      const SizedBox(height: 20),
+                      // Action buttons
+                      const WalletTopButtonsView(),
                     ],
                   ),
-                  vSpacer5(),
-                  if (data.withdraw.isValid)
-                    for (final withdraw in data.withdraw!) HistoryItemView(history: withdraw, isWithdraw: true, coinType: data.selectedCoin),
-                  if (data.deposit.isValid)
-                    for (final deposit in data.withdraw!) HistoryItemView(history: deposit, isWithdraw: false, coinType: data.selectedCoin),
-                  if (!data.deposit.isValid && !data.withdraw.isValid) const EmptyView(),
+                ),
+              ],
+            ),
+
+            // ── ASSET LIST ──
+            Container(
+              color: const Color(0xFF0F0F0F),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (data.spotWallet != null)
+                    AssetItemView(
+                        icon: Icons.dashboard_outlined,
+                        name: "Spot".tr,
+                        amount: data.spotWallet,
+                        amountCurrency: data.spotWalletUsd,
+                        coinType: data.selectedCoin,
+                        isBalanceHide: gIsBalanceHide.value,
+                        onTap: () =>
+                            _controller.changeWalletTab(WalletViewType.spot)),
+                  if (settings?.enableFutureTrade == 1 &&
+                      data.futureWallet != null)
+                    AssetItemView(
+                        icon: Icons.update_outlined,
+                        name: "Future".tr,
+                        amount: data.futureWallet,
+                        amountCurrency: data.futureWalletUsd,
+                        coinType: data.selectedCoin,
+                        isBalanceHide: gIsBalanceHide.value,
+                        onTap: () => _controller
+                            .changeWalletTab(WalletViewType.future)),
+                  if (settings?.p2pModule == 1 && data.p2PWallet != null)
+                    AssetItemView(
+                        icon: Icons.people_outline,
+                        name: "P2P".tr,
+                        amount: data.p2PWallet,
+                        amountCurrency: data.p2PWalletUsd,
+                        coinType: data.selectedCoin,
+                        isBalanceHide: gIsBalanceHide.value,
+                        onTap: () =>
+                            _controller.changeWalletTab(WalletViewType.p2p)),
                 ],
+              ),
+            ),
+
+            // ── WAVE DIVIDER ──
+            CustomPaint(
+              size: const Size(double.infinity, 50),
+              painter: _BottomWavePainter(),
+            ),
+
+            // ── RECENT TRANSACTIONS ──
+            if (data.spotWallet != null)
+              Container(
+                color: const Color(0xFF0F0F0F),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Report'.tr,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold)),
+                        buttonTextBordered("View All".tr, false, onPress: () {
+                          TemporaryData.activityType =
+                              HistoryType.transaction;
+                          Get.to(() => const ActivityScreen());
+                        },
+                            radius: Dimens.radiusCorner,
+                            visualDensity: VisualDensity.compact),
+                      ],
+                    ),
+                    vSpacer5(),
+                    if (data.withdraw.isValid)
+                      for (final withdraw in data.withdraw!)
+                        HistoryItemView(
+                            history: withdraw,
+                            isWithdraw: true,
+                            coinType: data.selectedCoin),
+                    if (data.deposit.isValid)
+                      for (final deposit in data.deposit!)
+                        HistoryItemView(
+                            history: deposit,
+                            isWithdraw: false,
+                            coinType: data.selectedCoin),
+                    if (!data.deposit.isValid && !data.withdraw.isValid)
+                      const EmptyView(),
+                  ],
+                ),
               ),
           ],
         );
@@ -134,9 +208,98 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
   }
 }
 
+// ── GREEN WAVE PAINTER (top hero bg) ──
+class _GreenWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // dark base
+    canvas.drawRect(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Paint()..color = const Color(0xFF0F0F0F));
+
+    // right-side glowing green blob
+    final paint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF7FFF00).withOpacity(0.55),
+          const Color(0xFF39FF14).withOpacity(0.18),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.45, 1.0],
+      ).createShader(Rect.fromCircle(
+          center: Offset(size.width * 0.85, size.height * 0.25),
+          radius: size.height * 0.65));
+    canvas.drawCircle(
+        Offset(size.width * 0.85, size.height * 0.25),
+        size.height * 0.65,
+        paint);
+
+    // wave curve at bottom
+    final wavePaint = Paint()
+      ..color = const Color(0xFF1A1A1A)
+      ..style = PaintingStyle.fill;
+    final path = Path();
+    path.moveTo(0, size.height * 0.78);
+    path.cubicTo(
+      size.width * 0.25, size.height * 0.65,
+      size.width * 0.75, size.height * 0.92,
+      size.width, size.height * 0.78,
+    );
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    canvas.drawPath(path, wavePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ── SMALL WAVE between sections ──
+class _BottomWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height),
+        Paint()..color = const Color(0xFF0F0F0F));
+
+    final paint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          const Color(0xFF39FF14).withOpacity(0.15),
+          Colors.transparent,
+        ],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    final path = Path();
+    path.moveTo(0, size.height * 0.6);
+    path.cubicTo(
+      size.width * 0.3, size.height * 0.1,
+      size.width * 0.7, size.height * 0.9,
+      size.width, size.height * 0.4,
+    );
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ── ASSET ITEM ──
 class AssetItemView extends StatelessWidget {
   const AssetItemView(
-      {super.key, required this.icon, required this.name, this.amount, this.amountCurrency, this.coinType, required this.onTap, this.isBalanceHide});
+      {super.key,
+      required this.icon,
+      required this.name,
+      this.amount,
+      this.amountCurrency,
+      this.coinType,
+      required this.onTap,
+      this.isBalanceHide});
 
   final IconData icon;
   final String name;
@@ -148,37 +311,54 @@ class AssetItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String currencyName = getSettingsLocal()?.currency ?? DefaultValue.currency;
-    return Container(
-      decoration: boxDecorationRoundCorner(),
-      padding: const EdgeInsets.all(Dimens.paddingMid),
-      margin: const EdgeInsets.symmetric(vertical: Dimens.paddingMin),
-      child: InkWell(
-        onTap: onTap,
+    String currencyName =
+        getSettingsLocal()?.currency ?? DefaultValue.currency;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
-            Expanded(
-              flex: 1,
-              child: Row(
-                children: [
-                  showImageAsset(icon: icon, width: Dimens.iconSizeMid, height: Dimens.iconSizeMid, color: context.theme.primaryColorLight),
-                  hSpacer5(),
-                  Expanded(child: TextRobotoAutoBold(name, fontSize: Dimens.fontSizeLarge, color: context.theme.primaryColorLight)),
-                ],
+            // icon circle
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(10),
               ),
+              child: Icon(icon,
+                  color: const Color(0xFF39FF14), size: 20),
             ),
+            const SizedBox(width: 12),
+            // name
             Expanded(
-              flex: 2,
-              child: isBalanceHide == true
-                  ? const TextRobotoAutoBold("******", fontSize: Dimens.fontSizeMid)
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        TextRobotoAutoBold("${coinFormat(amount)} $coinType", fontSize: Dimens.fontSizeMid),
-                        TextRobotoAutoNormal(currencyFormat(amountCurrency, name: currencyName)),
-                      ],
-                    ),
-            )
+              child: Text(name,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600)),
+            ),
+            // balance
+            isBalanceHide == true
+                ? const Text("******",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text("${coinFormat(amount)} $coinType",
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold)),
+                      Text(currencyFormat(amountCurrency, name: currencyName),
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 12)),
+                    ],
+                  ),
           ],
         ),
       ),
@@ -186,8 +366,13 @@ class AssetItemView extends StatelessWidget {
   }
 }
 
+// ── HISTORY ITEM ──
 class HistoryItemView extends StatelessWidget {
-  const HistoryItemView({super.key, required this.history, required this.isWithdraw, this.coinType});
+  const HistoryItemView(
+      {super.key,
+      required this.history,
+      required this.isWithdraw,
+      this.coinType});
 
   final History history;
   final bool isWithdraw;
@@ -195,43 +380,58 @@ class HistoryItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = isWithdraw ? Icons.file_upload_outlined : Icons.file_download_outlined;
+    final icon =
+        isWithdraw ? Icons.file_upload_outlined : Icons.file_download_outlined;
     final title = isWithdraw ? "Withdraw".tr : "Deposit".tr;
     final sign = isWithdraw ? "-" : "+";
-    return Container(
-      decoration: boxDecorationRoundBorder(),
-      padding: const EdgeInsets.all(Dimens.paddingMid),
-      margin: const EdgeInsets.symmetric(vertical: Dimens.paddingMin),
-      child: InkWell(
-        // onTap: () => showModalSheetFullScreen(context, _walletDetailsView(wallet)),
-        child: Row(
-          children: [
-            showImageAsset(icon: icon, width: Dimens.iconSizeMid, height: Dimens.iconSizeMid),
-            hSpacer5(),
-            Expanded(
-              flex: 1,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextRobotoAutoBold(title, fontSize: Dimens.fontSizeMid),
-                  vSpacer5(),
-                  TextRobotoAutoNormal(formatDate(history.createdAt)),
-                ],
-              ),
+    final amountColor =
+        isWithdraw ? Colors.redAccent : const Color(0xFF39FF14);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(10),
             ),
-            Expanded(
-              flex: 1,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  TextRobotoAutoBold("$sign${coinFormat(history.amount)} $coinType", fontSize: Dimens.fontSizeMid),
-                  vSpacer5(),
-                  TextRobotoAutoNormal("Completed".tr, color: Colors.green),
-                ],
-              ),
-            )
-          ],
-        ),
+            child: Icon(icon, color: const Color(0xFF39FF14), size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(height: 3),
+                Text(formatDate(history.createdAt),
+                    style: const TextStyle(
+                        color: Colors.white54, fontSize: 12)),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text("$sign${coinFormat(history.amount)} $coinType",
+                  style: TextStyle(
+                      color: amountColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 3),
+              Text("Completed".tr,
+                  style: const TextStyle(
+                      color: Colors.green, fontSize: 12)),
+            ],
+          ),
+        ],
       ),
     );
   }
