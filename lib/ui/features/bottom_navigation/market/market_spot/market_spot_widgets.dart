@@ -233,7 +233,7 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                             text: coin.coinType ?? '',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.w400,
                               fontFamily: formattedPrice.length > 9
                                   ? "DMSans"
@@ -245,8 +245,8 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                                   text: "/${coin.baseCoinType}",
                                   style: TextStyle(
                                     color: Colors.white54,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w400,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w300,
                                     fontFamily: formattedPrice.length > 9
                                         ? "DMSans"
                                         : "DMSans", // Font size ke hisaab se font family switch kar sakte hain agar needed ho toh (LandingMarketView me aisa hai)
@@ -286,10 +286,16 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // ── Upar: Bold Price ──
-                  TextRobotoAutoBold(
+                  Text(
                     formattedPrice,
                     maxLines: 1,
                     textAlign: TextAlign.end,
+                    style: const TextStyle(
+                      color: Colors.white, // _textDim — same as LandingMarketView
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: "DMSans",
+                    ),
                   ),
                   // ── Niche: $ price (grey, 11px) ──
                   Text(

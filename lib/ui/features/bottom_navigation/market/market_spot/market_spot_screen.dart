@@ -148,9 +148,9 @@ Widget _buildFilterTabBar() {
             child: Text(
               title,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 fontFamily: "DMSans",
-                fontWeight: isSelected ? FontWeight.w400 : FontWeight.w400,
+                fontWeight: isSelected ? FontWeight.w400 : FontWeight.w300,
                 color: isSelected ? Colors.white : Colors.white54,
               ),
             ),
@@ -185,7 +185,7 @@ Widget _buildFilterTabBar() {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFB5F000) : Color( 0xFF1A1A1A), // "All" ke liye thoda different color
+                color: isSelected ? const Color(0xFFB5F000) : Color.fromARGB(255, 43, 43, 43), // "All" ke liye thoda different color
                 borderRadius: BorderRadius.circular(6),
                 
               ),
