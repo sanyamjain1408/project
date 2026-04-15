@@ -199,6 +199,7 @@ class MarketCoinItemViewBottom extends StatelessWidget {
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 5),
+        margin: const EdgeInsets.only(bottom: 5),
         color: Colors.transparent,
         child: Row(
           children: [
@@ -228,16 +229,22 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                         AutoSizeText.rich(
                           TextSpan(
                             text: coin.coinType ?? '',
-                            style: Get.theme.textTheme.labelMedium!.copyWith(
-                              fontSize: Dimens.fontSizeMidExtra,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: formattedPrice.length > 9 ? "DMSans" : "DMSans", // Font size ke hisaab se font family switch kar sakte hain agar needed ho toh (LandingMarketView me aisa hai)
                             ),
                             children: <TextSpan>[
                               if ((coin.baseCoinType ?? '').isNotEmpty)
                                 TextSpan(
                                   text: "/${coin.baseCoinType}",
-                                  style: Get.theme.textTheme.displaySmall!.copyWith(
-                                    fontSize: Dimens.fontSizeSmall,
-                                  ),
+                                   style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: formattedPrice.length > 9 ? "DMSans" : "DMSans", // Font size ke hisaab se font family switch kar sakte hain agar needed ho toh (LandingMarketView me aisa hai)
+                            ),
                                 ),
                             ],
                           ),

@@ -6,229 +6,279 @@ import 'package:tradexpro_flutter/utils/extensions.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'dimens.dart';
 
-Container textFieldWithSuffixIcon(
-    {Widget? countryPick,
-    TextEditingController? controller,
-    String? hint,
-    String? text,
-    String? labelText,
-    TextInputType? type,
-    String? iconPath,
-    VoidCallback? iconAction,
-    bool isObscure = false,
-    bool isEnable = true,
-    int maxLines = 1,
-    double? width,
-    double height = 50,
-    double? borderRadius = 7,
-    FocusNode? focusNode,
-    EdgeInsets? contentPadding,
-    Function(String)? onTextChange}) {
+Container textFieldWithSuffixIcon({
+  Widget? countryPick,
+  TextEditingController? controller,
+  String? hint,
+  String? text,
+  String? labelText,
+  TextInputType? type,
+  String? iconPath,
+  VoidCallback? iconAction,
+  bool isObscure = false,
+  bool isEnable = true,
+  int maxLines = 1,
+  double? width,
+  double height = 50,
+  double? borderRadius = 7,
+  FocusNode? focusNode,
+  EdgeInsets? contentPadding,
+  Function(String)? onTextChange,
+}) {
   if (controller != null && text != null && text.isNotEmpty) {
     controller.text = text;
   }
   return Container(
-      height: height,
-      width: width,
-      padding: const EdgeInsets.only(left: 0, right: 0, top: 0),
-      child: TextField(
-        focusNode: focusNode,
-        controller: controller,
-        keyboardType: type,
-        maxLines: maxLines,
-        cursorColor: Get.theme.primaryColor,
-        obscureText: isObscure,
-        enabled: isEnable,
-        style: Get.theme.textTheme.displaySmall?.copyWith(color: Get.theme.primaryColor),
-        onChanged: (value) {
-          if (onTextChange != null) onTextChange(value);
-        },
-        decoration: InputDecoration(
-            prefixIcon: countryPick,
-            labelText: labelText,
-            labelStyle: Get.theme.textTheme.displaySmall?.copyWith(color: Get.theme.primaryColor),
-            filled: false,
-            isDense: true,
-            hintText: hint,
-            contentPadding: contentPadding,
-            hintStyle: Get.theme.textTheme.displaySmall,
-            enabledBorder: _textFieldBorder(borderRadius: borderRadius!),
-            disabledBorder: _textFieldBorder(borderRadius: borderRadius),
-            focusedBorder: _textFieldBorder(isFocus: true, borderRadius: borderRadius),
-            suffixIcon: iconPath == null
-                ? null
-                : _buildTextFieldIcon(iconPath: iconPath, action: iconAction, color: Get.theme.primaryColorLight, size: Dimens.iconSizeMid)),
-      ));
-}
-
-Container textFieldWithWidget(
-    {TextEditingController? controller,
-    String? hint,
-    String? text,
-    String? labelText,
-    Widget? suffixWidget,
-    Widget? prefixWidget,
-    TextInputType? type,
-    bool isObscure = false,
-    bool isEnable = true,
-    bool readOnly = false,
-    int maxLines = 1,
-    double? width,
-    double? height,
-    double? borderRadius = 7,
-    TextAlign textAlign = TextAlign.start,
-    Function(String)? onTextChange}) {
-  if (controller != null && text != null && text.isNotEmpty) {
-    controller.text = text;
-  }
-  return Container(
-      height: height ?? 50,
-      width: width,
-      padding: const EdgeInsets.only(left: 0, right: 0, top: 0),
-      child: TextField(
-        controller: controller,
-        keyboardType: type,
-        maxLines: maxLines,
-        cursorColor: Get.theme.primaryColor,
-        obscureText: isObscure,
-        enabled: isEnable,
-        readOnly: readOnly,
-        textAlign: textAlign,
-        style: Get.theme.textTheme.displaySmall?.copyWith(color: Get.theme.primaryColor),
-        onChanged: (value) {
-          if (onTextChange != null) onTextChange(value);
-        },
-        decoration: InputDecoration(
-            labelText: labelText,
-            labelStyle: Get.theme.textTheme.displaySmall?.copyWith(color: Get.theme.primaryColor),
-            hintStyle: Get.theme.textTheme.displaySmall,
-            filled: false,
-            isDense: true,
-            hintText: hint,
-            enabledBorder: _textFieldBorder(borderRadius: borderRadius!),
-            disabledBorder: _textFieldBorder(borderRadius: borderRadius),
-            focusedBorder: _textFieldBorder(isFocus: true, borderRadius: borderRadius),
-            prefixIcon: prefixWidget,
-            suffixIcon: suffixWidget),
-      ));
-}
-
-
-
-    // Basic Search Bar with Interactive Icon Color
-  Container textFieldSearch(
-      {TextEditingController? controller,
-      double? borderRadius = 7,
-      Function()? onSearch,
-      Function(String)? onTextChange,
-      double? height,
-      double? width,
-      double? margin}) {
-    height =  30;
-
-    // Basic Gray Colors
-    final Color bgColor = const Color(0xFF1A1A1A); // Dark Gray Background
-    final Color borderColor = Colors.transparent; // Border nahi chahiye (Basic look)
-    final Color defaultIconColor = Colors.white54; // Icon ka default color
-    final Color activeIconColor = const Color.fromARGB(255, 180, 154, 8); // Type karne par Yellow color
-
-    return Container(
-      margin: EdgeInsets.only(left: 10,right: 10),
-      height: height,
-      width: width,
-      decoration: BoxDecoration(
-        color: bgColor, // Gray Background
-        borderRadius: BorderRadius.circular(10),
-        // Agar border chahiye toh yahan uncomment kar sakte hain:
-        // border: Border.all(color: Colors.grey, width: 1),
+    height: height,
+    width: width,
+    padding: const EdgeInsets.only(left: 0, right: 0, top: 0),
+    child: TextField(
+      focusNode: focusNode,
+      controller: controller,
+      keyboardType: type,
+      maxLines: maxLines,
+      cursorColor: Get.theme.primaryColor,
+      obscureText: isObscure,
+      enabled: isEnable,
+      style: Get.theme.textTheme.displaySmall?.copyWith(
+        color: Get.theme.primaryColor,
       ),
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.text,
-        textInputAction: TextInputAction.search,
-        cursorColor: Colors.white,
-        style: const TextStyle(color: Colors.white, fontSize: 15),
-        decoration: InputDecoration(
-          filled: false,
-          isDense: true,
-          hintText: "Search".tr,
-          hintStyle: const TextStyle(color: Colors.white54, fontSize: 15),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-          border: InputBorder.none, // Border hata diya basic look ke liye
-          
-          // Right Side Icon
-          suffixIcon: IconButton(
-            padding: const EdgeInsets.only(right: 8), // Right side padding
-            icon: SvgPicture.asset(
-              AssetConstants.icSearch,
-              height: 20, // Icon size
-              width: 20,
-              colorFilter: ColorFilter.mode(defaultIconColor, BlendMode.srcIn),
-            ),
-            onPressed: () {
-              if (onSearch != null) onSearch();
-            },
-          ),
+      onChanged: (value) {
+        if (onTextChange != null) onTextChange(value);
+      },
+      decoration: InputDecoration(
+        prefixIcon: countryPick,
+        labelText: labelText,
+        labelStyle: Get.theme.textTheme.displaySmall?.copyWith(
+          color: Get.theme.primaryColor,
         ),
-        onSubmitted: (value) {
-          if (onSearch != null) onSearch();
-        },
-        onChanged: (value) {
-          if (onTextChange != null) onTextChange(value);
-          // (Optional) Agar aap chahte hain ki type karte hi icon color change ho,
-          // toh aapko controller ya state update karna hoga.
-          // Basic TextField mein automatically focus color change hota hai.
-        },
+        filled: false,
+        isDense: true,
+        hintText: hint,
+        contentPadding: contentPadding,
+        hintStyle: Get.theme.textTheme.displaySmall,
+        enabledBorder: _textFieldBorder(borderRadius: borderRadius!),
+        disabledBorder: _textFieldBorder(borderRadius: borderRadius),
+        focusedBorder: _textFieldBorder(
+          isFocus: true,
+          borderRadius: borderRadius,
+        ),
+        suffixIcon: iconPath == null
+            ? null
+            : _buildTextFieldIcon(
+                iconPath: iconPath,
+                action: iconAction,
+                color: Get.theme.primaryColorLight,
+                size: Dimens.iconSizeMid,
+              ),
       ),
-    );
+    ),
+  );
+}
+
+Container textFieldWithWidget({
+  TextEditingController? controller,
+  String? hint,
+  String? text,
+  String? labelText,
+  Widget? suffixWidget,
+  Widget? prefixWidget,
+  TextInputType? type,
+  bool isObscure = false,
+  bool isEnable = true,
+  bool readOnly = false,
+  int maxLines = 1,
+  double? width,
+  double? height,
+  double? borderRadius = 7,
+  TextAlign textAlign = TextAlign.start,
+  Function(String)? onTextChange,
+}) {
+  if (controller != null && text != null && text.isNotEmpty) {
+    controller.text = text;
   }
+  return Container(
+    height: height ?? 50,
+    width: width,
+    padding: const EdgeInsets.only(left: 0, right: 0, top: 0),
+    child: TextField(
+      controller: controller,
+      keyboardType: type,
+      maxLines: maxLines,
+      cursorColor: Get.theme.primaryColor,
+      obscureText: isObscure,
+      enabled: isEnable,
+      readOnly: readOnly,
+      textAlign: textAlign,
+      style: Get.theme.textTheme.displaySmall?.copyWith(
+        color: Get.theme.primaryColor,
+      ),
+      onChanged: (value) {
+        if (onTextChange != null) onTextChange(value);
+      },
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: Get.theme.textTheme.displaySmall?.copyWith(
+          color: Get.theme.primaryColor,
+        ),
+        hintStyle: Get.theme.textTheme.displaySmall,
+        filled: false,
+        isDense: true,
+        hintText: hint,
+        enabledBorder: _textFieldBorder(borderRadius: borderRadius!),
+        disabledBorder: _textFieldBorder(borderRadius: borderRadius),
+        focusedBorder: _textFieldBorder(
+          isFocus: true,
+          borderRadius: borderRadius,
+        ),
+        prefixIcon: prefixWidget,
+        suffixIcon: suffixWidget,
+      ),
+    ),
+  );
+}
 
+// Basic Search Bar with Interactive Icon Color
+Container textFieldSearch({
+  TextEditingController? controller,
+  double? borderRadius = 7,
+  Function()? onSearch,
+  Function(String)? onTextChange,
+  double? height,
+  double? width,
+  double? margin,
+}) {
+  height = 30;
 
+  // Basic Gray Colors
+  final Color bgColor = const Color(0xFF1A1A1A); // Dark Gray Background
+  final Color borderColor =
+      Colors.transparent; // Border nahi chahiye (Basic look)
+  final Color defaultIconColor = Colors.white54; // Icon ka default color
+  final Color activeIconColor = const Color.fromARGB(
+    255,
+    180,
+    154,
+    8,
+  ); // Type karne par Yellow color
 
-SizedBox textFieldWithPrefixSuffixText(
-    {TextEditingController? controller,
-    String? text,
-    String? hint,
-    String? prefixText,
-    String? suffixText,
-    Color? suffixColor,
-    bool isEnable = true,
-    TextAlign textAlign = TextAlign.end,
-    double? width,
-    Function(String)? onTextChange}) {
+  return Container(
+    margin: EdgeInsets.only(left: 10, right: 10),
+    height: height,
+    width: width,
+    decoration: BoxDecoration(
+      color: bgColor, // Gray Background
+      borderRadius: BorderRadius.circular(10),
+      // Agar border chahiye toh yahan uncomment kar sakte hain:
+      // border: Border.all(color: Colors.grey, width: 1),
+    ),
+    child: TextField(
+      controller: controller,
+      keyboardType: TextInputType.text,
+      textInputAction: TextInputAction.search,
+      cursorColor: Colors.white,
+      style: const TextStyle(color: Colors.white, fontSize: 15),
+      decoration: InputDecoration(
+        filled: false,
+        isDense: true,
+        hintText: "Search".tr,
+        hintStyle: const TextStyle(color: Colors.white54, fontSize: 15),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+        border: InputBorder.none, // Border hata diya basic look ke liye
+        // Right Side Icon
+        suffixIcon: IconButton(
+          padding: const EdgeInsets.only(right: 2), // Right side padding
+          icon: Image.asset(
+            'assets/icons/search.png', // Yahan apni image ka full path likhein
+            height: 15, // Icon size
+            width: 15,
+             // Icon ka color set karein
+            ),
+          onPressed: () {
+            if (onSearch != null) onSearch();
+          },
+        ),
+      ),
+      onSubmitted: (value) {
+        if (onSearch != null) onSearch();
+      },
+      onChanged: (value) {
+        if (onTextChange != null) onTextChange(value);
+        // (Optional) Agar aap chahte hain ki type karte hi icon color change ho,
+        // toh aapko controller ya state update karna hoga.
+        // Basic TextField mein automatically focus color change hota hai.
+      },
+    ),
+  );
+}
+
+SizedBox textFieldWithPrefixSuffixText({
+  TextEditingController? controller,
+  String? text,
+  String? hint,
+  String? prefixText,
+  String? suffixText,
+  Color? suffixColor,
+  bool isEnable = true,
+  TextAlign textAlign = TextAlign.end,
+  double? width,
+  Function(String)? onTextChange,
+}) {
   if (controller != null && text != null) controller.text = text;
   return SizedBox(
-      height: 50,
-      width: width,
-      child: TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        cursorColor: Get.theme.primaryColor,
-        enabled: isEnable,
-        style: Get.theme.textTheme.displaySmall?.copyWith(color: Get.theme.primaryColor),
-        textAlign: textAlign,
-        textAlignVertical: TextAlignVertical.center,
-        onChanged: (value) {
-          if (onTextChange != null) onTextChange(value);
-        },
-        decoration: InputDecoration(
-          prefixIcon: prefixText.isValid ? textFieldTextWidget(prefixText!) : hSpacer10(),
-          prefixIconConstraints: const BoxConstraints(minWidth: 10, minHeight: 50),
-          suffixIconConstraints: const BoxConstraints(minWidth: 10, minHeight: 50),
-          filled: false,
-          isDense: true,
-          hintText: hint,
-          contentPadding: EdgeInsets.zero,
-          enabledBorder: _textFieldBorder(borderRadius: 7),
-          disabledBorder: _textFieldBorder(borderRadius: 7),
-          focusedBorder: _textFieldBorder(isFocus: true, borderRadius: 7),
-          suffixIcon: suffixText.isValid ? textFieldTextWidget(suffixText!, color: suffixColor ?? Get.theme.focusColor) : hSpacer10(),
+    height: 50,
+    width: width,
+    child: TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      cursorColor: Get.theme.primaryColor,
+      enabled: isEnable,
+      style: Get.theme.textTheme.displaySmall?.copyWith(
+        color: Get.theme.primaryColor,
+      ),
+      textAlign: textAlign,
+      textAlignVertical: TextAlignVertical.center,
+      onChanged: (value) {
+        if (onTextChange != null) onTextChange(value);
+      },
+      decoration: InputDecoration(
+        prefixIcon: prefixText.isValid
+            ? textFieldTextWidget(prefixText!)
+            : hSpacer10(),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 10,
+          minHeight: 50,
         ),
-      ));
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 10,
+          minHeight: 50,
+        ),
+        filled: false,
+        isDense: true,
+        hintText: hint,
+        contentPadding: EdgeInsets.zero,
+        enabledBorder: _textFieldBorder(borderRadius: 7),
+        disabledBorder: _textFieldBorder(borderRadius: 7),
+        focusedBorder: _textFieldBorder(isFocus: true, borderRadius: 7),
+        suffixIcon: suffixText.isValid
+            ? textFieldTextWidget(
+                suffixText!,
+                color: suffixColor ?? Get.theme.focusColor,
+              )
+            : hSpacer10(),
+      ),
+    ),
+  );
 }
 
 class TextFieldNoBorder extends StatelessWidget {
-  const TextFieldNoBorder({super.key, this.controller, this.hint, this.inputType, this.onTextChange});
+  const TextFieldNoBorder({
+    super.key,
+    this.controller,
+    this.hint,
+    this.inputType,
+    this.onTextChange,
+  });
 
   final TextEditingController? controller;
   final String? hint;
@@ -242,7 +292,9 @@ class TextFieldNoBorder extends StatelessWidget {
       controller: controller,
       enabled: enabled,
       keyboardType: inputType,
-      style: Get.theme.textTheme.displaySmall?.copyWith(color: Get.theme.primaryColor),
+      style: Get.theme.textTheme.displaySmall?.copyWith(
+        color: Get.theme.primaryColor,
+      ),
       maxLines: 1,
       cursorColor: Get.theme.primaryColor,
       onChanged: onTextChange,
@@ -252,41 +304,67 @@ class TextFieldNoBorder extends StatelessWidget {
         border: InputBorder.none,
         filled: false,
         hintText: hint,
-        hintStyle: Get.theme.textTheme.displaySmall?.copyWith(fontSize: Dimens.fontSizeSmall),
+        hintStyle: Get.theme.textTheme.displaySmall?.copyWith(
+          fontSize: Dimens.fontSizeSmall,
+        ),
       ),
     );
   }
 }
 
-OutlineInputBorder _textFieldBorder({bool isFocus = false, double borderRadius = 5}) {
+OutlineInputBorder _textFieldBorder({
+  bool isFocus = false,
+  double borderRadius = 5,
+}) {
   return OutlineInputBorder(
-      borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-      borderSide: BorderSide(width: 1, color: isFocus ? Get.theme.focusColor : Get.theme.dividerColor));
-}
-
-InkWell _buildTextFieldIcon({String? iconPath, VoidCallback? action, Color? color, double? size}) {
-  return InkWell(
-    onTap: action,
-    child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-        child: SvgPicture.asset(
-          iconPath!,
-          colorFilter: color == null ? null : ColorFilter.mode(color, BlendMode.srcIn),
-          height: size,
-          width: size,
-        )),
+    borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+    borderSide: BorderSide(
+      width: 1,
+      color: isFocus ? Get.theme.focusColor : Get.theme.dividerColor,
+    ),
   );
 }
 
-OutlineInputBorder textFieldBorder({bool isFocus = false, double borderRadius = 5}) => _textFieldBorder(isFocus: isFocus, borderRadius: borderRadius);
+InkWell _buildTextFieldIcon({
+  String? iconPath,
+  VoidCallback? action,
+  Color? color,
+  double? size,
+}) {
+  return InkWell(
+    onTap: action,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: SvgPicture.asset(
+        iconPath!,
+        colorFilter: color == null
+            ? null
+            : ColorFilter.mode(color, BlendMode.srcIn),
+        height: size,
+        width: size,
+      ),
+    ),
+  );
+}
 
-FittedBox textFieldTextWidget(String text, {Color? color, double? hMargin}) => FittedBox(
+OutlineInputBorder textFieldBorder({
+  bool isFocus = false,
+  double borderRadius = 5,
+}) => _textFieldBorder(isFocus: isFocus, borderRadius: borderRadius);
+
+FittedBox textFieldTextWidget(String text, {Color? color, double? hMargin}) =>
+    FittedBox(
       fit: BoxFit.scaleDown,
       alignment: Alignment.centerLeft,
       child: Row(
         children: [
           hMargin == null ? hSpacer10() : SizedBox(width: hMargin),
-          Text(text, style: Get.textTheme.labelMedium?.copyWith(color: color ?? Get.theme.primaryColor)),
+          Text(
+            text,
+            style: Get.textTheme.labelMedium?.copyWith(
+              color: color ?? Get.theme.primaryColor,
+            ),
+          ),
           hMargin == null ? hSpacer10() : SizedBox(width: hMargin),
         ],
       ),
