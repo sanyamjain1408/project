@@ -325,6 +325,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       child: GestureDetector(
                         onTap: () {},
                         child: Container(
+                          
                           height: 70,
                           padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
                           decoration: BoxDecoration(

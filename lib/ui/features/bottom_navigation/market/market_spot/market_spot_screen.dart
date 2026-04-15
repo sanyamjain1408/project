@@ -24,7 +24,7 @@ class MarketSpotScreen extends StatefulWidget {
 
 class MarketSpotState extends State<MarketSpotScreen>
     with TickerProviderStateMixin {
-  final _controller = Get.put(MarketSpotController());
+  final _controller = Get.put(MarketSpotController(), permanent: true);
 
   late final TabController _oldTabController;
   late final TabController _filterTabController;
@@ -96,6 +96,7 @@ class MarketSpotState extends State<MarketSpotScreen>
             const MarketHeaderRow(),
 
             SizedBox(height: 7),
+
 
             Obx(() {
               return _controller.marketList.isEmpty
