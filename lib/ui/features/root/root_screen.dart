@@ -103,11 +103,12 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
 
   return Container(
     height: 76,
-    padding: const EdgeInsets.symmetric(horizontal: 15),
+    padding: const EdgeInsets.only(left: 18,right: 18,bottom: 10),
     decoration: const BoxDecoration(
       color: Color(0xFF111111),
     ),
     child: Row(
+      
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: List.generate(navList.length, (index) {
         final isSelected = _controller.bottomNavIndex == index;
@@ -116,26 +117,31 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
           onTap: () => changeBottomNavTab(navList[index].id),
           child: Container(
             color: Colors.transparent,
-            padding: const EdgeInsets.symmetric(horizontal: 0), // <--- Yahan gap control karo
+            padding: EdgeInsets.all(4),
+            margin: EdgeInsets.only(bottom: 10,top: 0,left: 10, right: 10),
+            // <--- Yahan gap control karo
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              
+              
               children: [
                 // ── ICON — same for selected & unselected ──
-                SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: Image.asset(
-                    navList[index].imagePath,
-                    // koi color filter nahi — icon same rahega
+                 SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: Image.asset(
+                      navList[index].imagePath,
+                      // koi color filter nahi — icon same rahega
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
+                
+                const SizedBox(height: 0),
                 // ── LABEL — green if selected, white54 if not ──
                 Text(
                   navList[index].name ?? "",
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
                     color: isSelected ? const Color(0xFFCCFF00) : Colors.white54,
                   ),
                 ),

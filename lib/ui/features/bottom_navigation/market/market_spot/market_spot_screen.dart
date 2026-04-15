@@ -13,6 +13,7 @@ import 'market_spot_controller.dart';
 import 'market_spot_widgets.dart' as spot;
 
 const _bgcolor = Colors.transparent;
+const _green = Color(0xFFB5F000);
 
 class MarketSpotScreen extends StatefulWidget {
   const MarketSpotScreen({super.key});
@@ -98,7 +99,14 @@ class MarketSpotState extends State<MarketSpotScreen>
 
             Obx(() {
               return _controller.marketList.isEmpty
-                  ? handleEmptyViewWithLoading(_controller.isLoading.value)
+                  ? _controller.isLoading.value
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: _green, // Green color
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : showEmptyView(height: 100)
                   : Expanded(
                       child: ListView.separated(
                         padding: const EdgeInsets.all(5),
@@ -263,7 +271,7 @@ class MarketHeaderRow extends StatelessWidget {
             child: Text(
               "Price",
               textAlign: TextAlign.right,
-             style: TextStyle(
+              style: TextStyle(
                 color: Colors.white30, // ✅ 50% white
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
