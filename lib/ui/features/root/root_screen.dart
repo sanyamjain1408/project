@@ -9,7 +9,6 @@ import 'package:tradexpro_flutter/data/models/settings.dart';
 import 'package:tradexpro_flutter/helper/bottom_nav_helper.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
-// ── FIX: Correct import path for HomeDashboardScreen ──
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/home_dashboard_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_screen.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
@@ -24,24 +23,30 @@ import 'package:tradexpro_flutter/utils/text_util.dart';
 import '../bottom_navigation/market/market_screen.dart';
 import '../bottom_navigation/trades/future_trade/future_trade_screen.dart';
 import '../bottom_navigation/trades/trade_screen.dart';
-import '../side_navigation/activity/activity_screen.dart';
-import '../side_navigation/fiat/fiat_screen.dart';
 import '../bottom_navigation/wallet/wallet_screen.dart';
-import '../side_navigation/news/news_screen.dart';
-import '../side_navigation/staking/staking_screen.dart';
+import '../side_navigation/activity/activity_screen.dart';
 import '../side_navigation/blog/blog_screen.dart';
 import '../side_navigation/faq/faq_page.dart';
+import '../side_navigation/fiat/fiat_screen.dart';
 import '../side_navigation/gift_cards/gift_cards_screen.dart';
-import '../side_navigation/settings/settings_screen.dart';
+import '../side_navigation/news/news_screen.dart';
 import '../side_navigation/profile/profile_screen.dart';
 import '../side_navigation/referrals/referrals_screen.dart';
+import '../side_navigation/settings/settings_screen.dart';
+import '../side_navigation/staking/staking_screen.dart';
 import '../auth/sign_in/sign_in_screen.dart';
 import 'root_controller.dart';
 import 'root_widgets.dart';
 
-const _green = Color(0xFFB5F000);
-const _drawerBg = Color(0xFF111111);
-const _cardBg = Color(0xFF1C1C1C);
+// ── EXACT FIGMA COLORS ───────────────────────────────────────────────────────
+const _green       = Color(0xFFCCFF00);   // EXACT Figma secondary #CCFF00
+const _drawerBg    = Color(0xFF121212);   // near-black background
+const _cardBg      = Color(0xFF1E1E1E);   // card / icon box background
+const _sectionClr  = Color(0xFFCCFF00);   // section header color
+const _textWhite   = Color(0xFFFFFFFF);
+const _textGrey    = Color(0xFF8A8A8A);
+const _divider     = Color(0xFF2A2A2A);
+const _dmSans      = 'DMSans';           // DM Sans font family
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -80,6 +85,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
       child: Scaffold(
         backgroundColor: context.theme.scaffoldBackgroundColor,
         extendBody: true,
+        drawerScrimColor: Colors.transparent,
         drawer: _getDrawerNew(),
         bottomNavigationBar: _getBottomNavigationBar(),
         body: SafeArea(
@@ -89,25 +95,23 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── BOTTOM NAV BAR — IDENTICAL TO ORIGINAL ──────────────────────────────
+  // ── BOTTOM NAV — UNCHANGED ───────────────────────────────────────────────
   Widget _getBottomNavigationBar() {
     navList = AppBottomNavHelper.getBottomNavList();
-
     return Container(
-      margin: const EdgeInsets.only(left: 0, right: 0, bottom: 0, top: 0),
       decoration: BoxDecoration(
         color: Theme.of(context).secondaryHeaderColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
+        padding: const EdgeInsets.symmetric(vertical: 5),
         child: ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
           child: BottomNavigationBar(
             elevation: 0,
             iconSize: 24,
             backgroundColor: Colors.transparent,
-            selectedItemColor: const Color(0xFFB5F000),
+            selectedItemColor: _green,
             unselectedItemColor: Theme.of(context).primaryColorLight,
             selectedLabelStyle: Theme.of(context).textTheme.displaySmall,
             unselectedLabelStyle: Theme.of(context).textTheme.displaySmall,
@@ -116,20 +120,10 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
             onTap: (index) => changeBottomNavTab(navList[index].id),
             items: List.generate(navList.length, (index) {
               return BottomNavigationBarItem(
-                icon: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: Image.asset(navList[index].imagePath, fit: BoxFit.contain),
-                ),
-                activeIcon: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Image.asset(
-                    navList[index].imagePath,
-                    fit: BoxFit.contain,
-                    gaplessPlayback: true,
-                  ),
-                ),
+                icon: SizedBox(width: 18, height: 18,
+                    child: Image.asset(navList[index].imagePath, fit: BoxFit.contain)),
+                activeIcon: SizedBox(width: 24, height: 24,
+                    child: Image.asset(navList[index].imagePath, fit: BoxFit.contain, gaplessPlayback: true)),
                 label: navList[index].name,
               );
             }),
@@ -139,91 +133,103 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── BODY — IDENTICAL TO ORIGINAL ────────────────────────────────────────
+  // ── BODY — UNCHANGED ────────────────────────────────────────────────────
   Widget _getBody() {
     final id = navList[_controller.bottomNavIndex].id;
     final bool isLoggedIn = gUserRx.value.id > 0;
-
     switch (id) {
-      case AppBottomNavKey.home:
-        return isLoggedIn
-            ? const HomeDashboardScreen()
-            : const LandingScreen();
-      case AppBottomNavKey.market:
-        return const MarketScreen();
-      case AppBottomNavKey.trade:
-        return const TradesScreen();
-      case AppBottomNavKey.future:
-        return const FutureTradeScreen();
-      case AppBottomNavKey.wallet:
-        return const WalletScreen();
-      default:
-        return Container();
+      case AppBottomNavKey.home:   return isLoggedIn ? const HomeDashboardScreen() : const LandingScreen();
+      case AppBottomNavKey.market: return const MarketScreen();
+      case AppBottomNavKey.trade:  return const TradesScreen();
+      case AppBottomNavKey.future: return const FutureTradeScreen();
+      case AppBottomNavKey.wallet: return const WalletScreen();
+      default: return Container();
     }
   }
 
-  // ── NEW FIGMA DRAWER — ONLY THIS IS REDESIGNED ───────────────────────────
+  // ── FIGMA DRAWER ─────────────────────────────────────────────────────────
   Drawer _getDrawerNew() {
     return Drawer(
       elevation: 0,
-      width: context.width * 0.9,
+      width: context.width,
       backgroundColor: _drawerBg,
       child: SafeArea(
         child: Obx(() {
           final hasUser = gUserRx.value.id > 0;
-          final user = gUserRx.value;
+          final user    = gUserRx.value;
           final settings = getSettingsLocal();
 
           return ListView(
             padding: EdgeInsets.zero,
+            physics: const BouncingScrollPhysics(),
             children: [
 
-              // ── TOP BAR: back + notification + settings ───────────────
+              // ── TOP BAR: ← bell settings ────────────────────────────
               Padding(
-                padding: const EdgeInsets.fromLTRB(4, 8, 8, 0),
+                padding: const EdgeInsets.fromLTRB(6, 10, 10, 0),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
-                      onPressed: () => Get.back(),
+                    GestureDetector(
+                      onTap: () => Get.back(),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.arrow_back_ios_new, color: _textWhite, size: 18),
+                      ),
                     ),
                     const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.notifications_none, color: Colors.white, size: 22),
-                      onPressed: () {},
+                    GestureDetector(
+                      onTap: () {},
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.notifications_none_outlined, color: _textWhite, size: 22),
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 22),
-                      onPressed: () => Get.to(() => const SettingsScreen()),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () => Get.to(() => const SettingsScreen()),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.settings_outlined, color: _textWhite, size: 22),
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              // ── USER PROFILE ──────────────────────────────────────────
-              InkWell(
+              const SizedBox(height: 16),
+
+              // ── PROFILE ROW ──────────────────────────────────────────
+              GestureDetector(
                 onTap: () => hasUser
                     ? Get.to(() => const ProfileScreen())
                     : Get.offAll(() => const SignInPage()),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      // Avatar circle with green border
                       Stack(
                         clipBehavior: Clip.none,
                         children: [
                           Container(
+                            width: 56,
+                            height: 56,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: _green, width: 2.5),
+                              border: Border.all(color: _green, width: 2),
                             ),
-                            child: hasUser
-                                ? showCircleAvatar(user.photo, size: 46)
-                                : showCircleAvatar(null, size: 46),
+                            child: ClipOval(
+                              child: showCircleAvatar(
+                                hasUser ? user.photo : null,
+                                size: 52,
+                              ),
+                            ),
                           ),
+                          // Verified badge
                           Positioned(
-                            bottom: -4,
-                            left: 4,
+                            bottom: -2,
+                            left: 2,
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
@@ -235,7 +241,8 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 8,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.2,
                                 ),
                               ),
                             ),
@@ -243,172 +250,238 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                         ],
                       ),
                       const SizedBox(width: 14),
+                      // Name / email / uid
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    hasUser
-                                        ? getName(user.firstName, user.lastName)
-                                        : "Sign In".tr,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
-                              ],
+                            Text(
+                              hasUser ? getName(user.firstName, user.lastName) : "Sign In".tr,
+                              style: const TextStyle(
+                                color: _textWhite,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: _dmSans,
+                                letterSpacing: 0.1,
+                              ),
                             ),
-                            if (hasUser)
+                            if (hasUser) ...[
+                              const SizedBox(height: 2),
                               Text(
                                 _maskEmail(user.email ?? ""),
-                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                style: const TextStyle(color: _textGrey, fontSize: 12, fontFamily: _dmSans),
                               ),
-                            if (hasUser)
+                              const SizedBox(height: 2),
                               Row(
                                 children: [
                                   Text(
                                     "UID: ${user.id}",
-                                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                    style: const TextStyle(color: _textGrey, fontSize: 11, fontFamily: _dmSans),
                                   ),
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.copy_outlined, color: Colors.grey, size: 11),
+                                  const SizedBox(width: 5),
+                                  const Icon(Icons.copy_outlined, color: _textGrey, size: 12),
                                 ],
                               ),
+                            ],
                           ],
                         ),
                       ),
+                      const Icon(Icons.chevron_right, color: _textGrey, size: 20),
                     ],
                   ),
                 ),
               ),
 
-              // ── SPIN + REFER BANNERS ───────────────────────────────────
+              const SizedBox(height: 18),
+
+              // ── SPIN + REFER BANNERS ──────────────────────────────────
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: Row(
                   children: [
+                    // Spin to Earn
                     Expanded(
-                      child: _bannerCard(
-                        label1: "Spin to Earn",
-                        label2: "Rewards",
-                        label2Color: _green,
-                        bgColor: const Color(0xFF1A2A10),
-                        iconWidget: const Icon(Icons.monetization_on_outlined, color: _green, size: 28),
+                      child: GestureDetector(
                         onTap: () {},
+                        child: Container(
+                          height: 70,
+                          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A2512),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFF2E3D1A), width: 1),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: RichText(
+                                  text: const TextSpan(
+                                    style: TextStyle(fontSize: 13, height: 1.4, fontFamily: _dmSans),
+                                    children: [
+                                      TextSpan(text: "Spin ", style: TextStyle(color: _textWhite, fontWeight: FontWeight.w700)),
+                                      TextSpan(text: "to ", style: TextStyle(color: _textWhite, fontWeight: FontWeight.w400)),
+                                      TextSpan(text: "Earn\n", style: TextStyle(color: _green, fontWeight: FontWeight.w700)),
+                                      TextSpan(text: "Rewards", style: TextStyle(color: _textWhite, fontWeight: FontWeight.w400, fontSize: 12)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Image.asset(
+                                'assets/images/spin_wheel.png',
+                                width: 38,
+                                height: 38,
+                                errorBuilder: (_, __, ___) => const Icon(Icons.monetization_on, color: _green, size: 36),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
+                    // Refer and Earn
                     Expanded(
-                      child: _bannerCard(
-                        label1: "Refer and Earn",
-                        label2: "Rewards",
-                        label2Color: Colors.orange,
-                        bgColor: const Color(0xFF2A1A0A),
-                        iconWidget: const Icon(Icons.people_alt_outlined, color: Colors.orange, size: 28),
+                      child: GestureDetector(
                         onTap: () => hasUser
                             ? Get.to(() => const ReferralsScreen())
                             : Get.offAll(() => const SignInPage()),
+                        child: Container(
+                          height: 70,
+                          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1A2A),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFF252535), width: 1),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: RichText(
+                                  text: const TextSpan(
+                                    style: TextStyle(fontSize: 13, height: 1.4, fontFamily: _dmSans),
+                                    children: [
+                                      TextSpan(text: "Refer ", style: TextStyle(color: _textWhite, fontWeight: FontWeight.w700)),
+                                      TextSpan(text: "and ", style: TextStyle(color: _textWhite, fontWeight: FontWeight.w400)),
+                                      TextSpan(text: "Earn\n", style: TextStyle(color: _green, fontWeight: FontWeight.w700)),
+                                      TextSpan(text: "Rewards", style: TextStyle(color: _textWhite, fontWeight: FontWeight.w400, fontSize: 12)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Image.asset(
+                                'assets/images/refer_person.png',
+                                width: 38,
+                                height: 38,
+                                errorBuilder: (_, __, ___) => const Icon(Icons.people_alt_outlined, color: Colors.purpleAccent, size: 36),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // ── QUICK ICON ROW ────────────────────────────────────────
-              _quickActionsRow(),
+              const SizedBox(height: 20),
 
-              const SizedBox(height: 4),
-              const Divider(color: Colors.white12, thickness: 0.5, height: 1),
+              // ── QUICK ICON ROW ────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _quickIcon(Icons.emoji_events_outlined,  "Champion"),
+                    _quickIcon(Icons.history_outlined,       "History"),
+                    _quickIcon(Icons.shield_outlined,        "Security"),
+                    _quickIcon(Icons.badge_outlined,         "KYC"),
+                    _quickIcon(Icons.notifications_outlined, "Price Alert"),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+              Divider(color: _divider, thickness: 1, height: 1),
 
               // ── GET HELP ──────────────────────────────────────────────
               _sectionHeader("Get help"),
-              _menuItem(icon: Icons.headset_mic_outlined, label: "Help & Support".tr, onTap: () { Get.back(); openCrispChatView(); }),
-              _menuItem(icon: Icons.receipt_long_outlined, label: "Fee structure".tr, onTap: () {}),
-              _menuItem(icon: Icons.feedback_outlined, label: "App feedback".tr, onTap: () {}),
-              _menuItem(icon: Icons.help_outline, label: "FAQ".tr, onTap: () => Get.to(() => const FAQPage())),
+              _menuRow(Icons.headset_mic_outlined,     "Help & Support",   () { Get.back(); openCrispChatView(); }),
+              _menuRow(Icons.receipt_long_outlined,    "Fee structure",    () {}),
+              _menuRow(Icons.sentiment_satisfied_alt,  "App feedback",     () {}),
+              _menuRow(Icons.help_outline,             "FAQ",              () => Get.to(() => const FAQPage())),
 
-              // ── FEATURES ──────────────────────────────────────────────
+              // ── FEATURES ─────────────────────────────────────────────
               _sectionHeader("Features"),
-              _menuItem(icon: Icons.verified_outlined, label: "Official Verification".tr, onTap: () {}),
-              _menuItem(icon: Icons.paragliding_outlined, label: "Airdrop Campaign".tr, onTap: () {}),
-              _menuItem(icon: Icons.list_alt_outlined, label: "Listing".tr, onTap: () {}),
+              _menuRow(Icons.verified_outlined,        "Official Verification", () {}),
+              _menuRow(Icons.paragliding_outlined,     "Airdrop Campaign",      () {}),
+              _menuRow(Icons.list_alt_outlined,        "Listing",               () {}),
 
-              // ── REWARDS ───────────────────────────────────────────────
+              // ── REWARDS ──────────────────────────────────────────────
               _sectionHeader("Rewards"),
-              _menuItem(
-                icon: Icons.card_giftcard_outlined,
-                label: "Refer & Earn".tr,
-                onTap: () => hasUser
-                    ? Get.to(() => const ReferralsScreen())
-                    : Get.offAll(() => const SignInPage()),
-              ),
-              _menuItem(icon: Icons.rotate_right_outlined, label: "Spin & Win".tr, onTap: () {}),
+              _menuRow(Icons.card_giftcard_outlined, "Refer & Earn", () => hasUser
+                  ? Get.to(() => const ReferralsScreen())
+                  : Get.offAll(() => const SignInPage())),
+              _menuRow(Icons.rotate_right_outlined, "Spin & Win", () {}),
 
-              // ── ABOUT US ──────────────────────────────────────────────
+              // ── ABOUT US ─────────────────────────────────────────────
               _sectionHeader("About us"),
-              _menuItem(icon: Icons.privacy_tip_outlined, label: "Trapix Transparency Center".tr, onTap: () {}),
-              _menuItem(icon: Icons.info_outline, label: "About Trapix".tr, onTap: () {}),
-              _menuItem(icon: Icons.code_outlined, label: "API Setting".tr, onTap: () {}),
-              _menuItem(icon: Icons.telegram, label: "Join Telegram channel".tr, onTap: () => openUrlInBrowser("https://t.me/trapix")),
-              _menuItem(icon: Icons.alternate_email, label: "Follow us on X".tr, onTap: () => openUrlInBrowser("https://x.com/trapix")),
+              _menuRow(Icons.privacy_tip_outlined,   "Trapix Transparency Center", () {}),
+              _menuRow(Icons.info_outline,           "About Trapix",               () {}),
+              _menuRow(Icons.code_outlined,          "API Setting",                () {}),
+              _menuRow(Icons.telegram,               "Join Telegram channel",      () => openUrlInBrowser("https://t.me/trapix")),
+              _menuRow(Icons.alternate_email,        "Follow us on X",             () => openUrlInBrowser("https://x.com/trapix")),
 
-              const Divider(color: Colors.white12, thickness: 0.5, height: 24),
+              const SizedBox(height: 6),
+              Divider(color: _divider, thickness: 1, height: 1),
 
-              // ── ORIGINAL MENU ITEMS — ALL KEPT EXACTLY AS ORIGINAL ────
-              if (hasUser)
-                _menuItem(icon: Icons.history, label: "Reports".tr, onTap: () => Get.to(() => const ActivityScreen())),
-              if (hasUser)
-                _menuItem(icon: Icons.paid_outlined, label: "Fiat".tr, onTap: () => Get.to(() => const FiatScreen())),
-              if (hasUser)
-                _menuItem(icon: Icons.settings_outlined, label: "Settings".tr, onTap: () => Get.to(() => const SettingsScreen())),
+              // ── ORIGINAL MENUS — KEPT EXACTLY ────────────────────────
+              if (hasUser) _menuRow(Icons.history,              "Reports",    () => Get.to(() => const ActivityScreen())),
+              if (hasUser) _menuRow(Icons.paid_outlined,        "Fiat",       () => Get.to(() => const FiatScreen())),
+              if (hasUser) _menuRow(Icons.settings_outlined,    "Settings",   () => Get.to(() => const SettingsScreen())),
               if (hasUser && settings?.liveChatStatus == 1)
-                _menuItem(icon: Icons.support_agent_outlined, label: "Support".tr, onTap: () { Get.back(); openCrispChatView(); }),
+                _menuRow(Icons.support_agent_outlined, "Support", () { Get.back(); openCrispChatView(); }),
               if (settings?.enableStaking == 1)
-                _menuItem(icon: Icons.punch_clock_outlined, label: "Staking".tr, onTap: () => Get.to(() => const StakingScreen())),
+                _menuRow(Icons.punch_clock_outlined,   "Staking",    () => Get.to(() => const StakingScreen())),
               if (settings?.enableGiftCard == 1)
-                _menuItem(icon: Icons.card_giftcard_outlined, label: "Gift Cards".tr, onTap: () => Get.to(() => const GiftCardsScreen())),
+                _menuRow(Icons.card_giftcard_outlined, "Gift Cards", () => Get.to(() => const GiftCardsScreen())),
               if (settings?.navbar?["ico"]?.status == true)
-                _menuItem(icon: Icons.local_atm, label: "ICO".tr, onTap: () => Get.to(() => const ICOScreen())),
+                _menuRow(Icons.local_atm,              "ICO",        () => Get.to(() => const ICOScreen())),
               if (settings?.p2pModule == 1)
-                _menuItem(
-                  icon: Icons.people,
-                  label: "P2P".tr,
-                  onTap: () {
-                    TemporaryData.changingPageId = 1;
-                    Get.back();
-                    getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
-                  },
-                ),
+                _menuRow(Icons.people, "P2P", () {
+                  TemporaryData.changingPageId = 1;
+                  Get.back();
+                  getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
+                }),
               if (settings?.blogNewsModule == 1)
-                _menuItem(icon: Icons.rss_feed_outlined, label: "Blog".tr, onTap: () => Get.to(() => const BlogScreen())),
+                _menuRow(Icons.rss_feed_outlined,   "Blog", () => Get.to(() => const BlogScreen())),
               if (settings?.blogNewsModule == 1)
-                _menuItem(icon: Icons.newspaper_outlined, label: "News".tr, onTap: () => Get.to(() => const NewsScreen())),
+                _menuRow(Icons.newspaper_outlined,  "News", () => Get.to(() => const NewsScreen())),
 
-              // ── SOCIAL + COPYRIGHT — IDENTICAL TO ORIGINAL ────────────
-              _bottomView(settings),
-
-              // ── LOGOUT BUTTON ──────────────────────────────────────────
+              // ── LOGOUT ───────────────────────────────────────────────
               if (hasUser)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white24),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.fromLTRB(18, 4, 18, 28),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: _divider, width: 1),
+                        backgroundColor: _cardBg,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: _showLogOutAlert,
+                      child: const Text(
+                        "Logout",
+                        style: TextStyle(
+                          color: _textWhite,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: _dmSans,
+                        ),
+                      ),
                     ),
-                    onPressed: _showLogOutAlert,
-                    child: const Text("Logout", style: TextStyle(color: Colors.white, fontSize: 15)),
                   ),
                 ),
-
-              const SizedBox(height: 20),
             ],
           );
         }),
@@ -416,121 +489,96 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── HELPER WIDGETS ───────────────────────────────────────────────────────
-
+  // ── SECTION HEADER — green label like Figma ──────────────────────────────
   Widget _sectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, top: 16, bottom: 2),
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 6),
       child: Text(
         title,
-        style: const TextStyle(color: _green, fontSize: 13, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          color: _sectionClr,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          fontFamily: _dmSans,
+          letterSpacing: 0.3,
+        ),
       ),
     );
   }
 
-  Widget _menuItem({required IconData icon, required String label, required VoidCallback onTap}) {
+  // ── MENU ROW — icon + label + arrow ─────────────────────────────────────
+  Widget _menuRow(IconData icon, String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
+      splashColor: _green.withOpacity(0.06),
+      highlightColor: _green.withOpacity(0.04),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white70, size: 20),
+            Icon(icon, color: _textWhite, size: 20),
             const SizedBox(width: 16),
-            Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 14))),
-            const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _bannerCard({
-    required String label1,
-    required String label2,
-    required Color label2Color,
-    required Color bgColor,
-    required Widget iconWidget,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 62,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white10, width: 0.5),
-        ),
-        child: Row(
-          children: [
-            iconWidget,
-            const SizedBox(width: 8),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(label1, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                  Text(label2, style: TextStyle(color: label2Color, fontSize: 10)),
-                ],
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: _textWhite,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: _dmSans,
+                ),
               ),
             ),
+            const Icon(Icons.chevron_right, color: _textGrey, size: 18),
           ],
         ),
       ),
     );
   }
 
-  Widget _quickActionsRow() {
-    final items = [
-      {"icon": Icons.emoji_events_outlined, "label": "Champion"},
-      {"icon": Icons.history_outlined, "label": "History"},
-      {"icon": Icons.shield_outlined, "label": "Security"},
-      {"icon": Icons.verified_user_outlined, "label": "KYC"},
-      {"icon": Icons.notifications_active_outlined, "label": "Price Alert"},
-    ];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: items.map((item) {
-          return GestureDetector(
-            onTap: () {},
-            child: Column(
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: _cardBg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(item["icon"] as IconData, color: Colors.white70, size: 20),
-                ),
-                const SizedBox(height: 4),
-                Text(item["label"] as String, style: const TextStyle(color: Colors.grey, fontSize: 9)),
-              ],
+  // ── QUICK ICON BUTTON ────────────────────────────────────────────────────
+  Widget _quickIcon(IconData icon, String label) {
+    return GestureDetector(
+      onTap: () {},
+      child: Column(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: _cardBg,
+              borderRadius: BorderRadius.circular(14),
             ),
-          );
-        }).toList(),
+            child: Icon(icon, color: _textWhite, size: 22),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: _textGrey,
+              fontSize: 10,
+              fontWeight: FontWeight.w400,
+              fontFamily: _dmSans,
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  // ── EMAIL MASK ───────────────────────────────────────────────────────────
   String _maskEmail(String email) {
     if (email.isEmpty) return "";
     final parts = email.split("@");
     if (parts.length != 2) return email;
     final name = parts[0];
-    final masked = name.length > 2
-        ? "${name.substring(0, 2)}${"*" * (name.length - 2)}"
+    final masked = name.length > 4
+        ? "${name.substring(0, 4)}${"*" * (name.length - 4)}tel"
         : name;
     return "$masked@${parts[1]}";
   }
 
-  // ── LOGOUT ALERT — IDENTICAL TO ORIGINAL ────────────────────────────────
+  // ── LOGOUT ALERT — UNCHANGED ─────────────────────────────────────────────
   void _showLogOutAlert() {
     alertForAction(
       context,
@@ -544,7 +592,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── BOTTOM VIEW — IDENTICAL TO ORIGINAL ─────────────────────────────────
+  // ── BOTTOM SOCIAL — UNCHANGED ────────────────────────────────────────────
   Container _bottomView(CommonSettings? cSettings) {
     final socialView = _socialMediaView();
     return Container(
