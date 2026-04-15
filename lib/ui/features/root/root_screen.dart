@@ -37,6 +37,7 @@ import '../side_navigation/staking/staking_screen.dart';
 import '../auth/sign_in/sign_in_screen.dart';
 import 'root_controller.dart';
 import 'root_widgets.dart';
+import 'dart:ui';
 
 // ── EXACT FIGMA COLORS ───────────────────────────────────────────────────────
 const _green       = Color(0xFFCCFF00);   // EXACT Figma secondary #CCFF00
@@ -46,7 +47,8 @@ const _sectionClr  = Color(0xFFCCFF00);   // section header color
 const _textWhite   = Color(0xFFFFFFFF);
 const _textGrey    = Color(0xFF8A8A8A);
 const _divider     = Color(0xFF2A2A2A);
-const _dmSans      = 'DMSans';           // DM Sans font family
+const _dmSans      = 'DMSans';  
+const _bgcolor =   Color.fromARGB(255, 17, 17, 17);         // DM Sans font family
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -96,42 +98,55 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   }
 
   // ── BOTTOM NAV — UNCHANGED ───────────────────────────────────────────────
-  Widget _getBottomNavigationBar() {
-    navList = AppBottomNavHelper.getBottomNavList();
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).secondaryHeaderColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-          child: BottomNavigationBar(
-            elevation: 0,
-            iconSize: 24,
-            backgroundColor: Colors.transparent,
-            selectedItemColor: _green,
-            unselectedItemColor: Theme.of(context).primaryColorLight,
-            selectedLabelStyle: Theme.of(context).textTheme.displaySmall,
-            unselectedLabelStyle: Theme.of(context).textTheme.displaySmall,
-            type: BottomNavigationBarType.fixed,
-            currentIndex: _controller.bottomNavIndex,
-            onTap: (index) => changeBottomNavTab(navList[index].id),
-            items: List.generate(navList.length, (index) {
-              return BottomNavigationBarItem(
-                icon: SizedBox(width: 18, height: 18,
-                    child: Image.asset(navList[index].imagePath, fit: BoxFit.contain)),
-                activeIcon: SizedBox(width: 24, height: 24,
-                    child: Image.asset(navList[index].imagePath, fit: BoxFit.contain, gaplessPlayback: true)),
-                label: navList[index].name,
-              );
-            }),
+ Widget _getBottomNavigationBar() {
+  navList = AppBottomNavHelper.getBottomNavList();
+
+  return Container(
+    height: 76,
+    padding: const EdgeInsets.symmetric(horizontal: 15),
+    decoration: const BoxDecoration(
+      color: Color(0xFF111111),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: List.generate(navList.length, (index) {
+        final isSelected = _controller.bottomNavIndex == index;
+
+        return GestureDetector(
+          onTap: () => changeBottomNavTab(navList[index].id),
+          child: Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.symmetric(horizontal: 0), // <--- Yahan gap control karo
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // ── ICON — same for selected & unselected ──
+                SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: Image.asset(
+                    navList[index].imagePath,
+                    // koi color filter nahi — icon same rahega
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // ── LABEL — green if selected, white54 if not ──
+                Text(
+                  navList[index].name ?? "",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    color: isSelected ? const Color(0xFFCCFF00) : Colors.white54,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      }),
+    ),
+  );
+}
 
   // ── BODY — UNCHANGED ────────────────────────────────────────────────────
   Widget _getBody() {

@@ -11,7 +11,7 @@ import 'market_spot/market_spot_screen.dart';
 
 // RGBA(17, 17, 17, 1) ko Flutter Color mein convert karna hai
 // Format: Color.fromARGB(Alpha, Red, Green, Blue)
-const  _bgcolor = Colors.black26;  ///background: #111111;background: var(--Primary, rgba(17, 17, 17, 1));
+const  _bgcolor =  Colors.white; ///Color.fromARGB(255, 17, 17, 17);  ///background: #111111;background: var(--Primary, rgba(17, 17, 17, 1));
 
 
 

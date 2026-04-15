@@ -31,7 +31,7 @@ class AppBottomNavHelper {
     
     list.add(AppBottomNav(
       id: AppBottomNavKey.market, 
-      imagePath: 'assets/icons/markets.png', // <--- Market ka Logo
+      imagePath: 'assets/icons/market.png', // <--- Market ka Logo
       name: "Markets".tr
     ));
     
@@ -44,7 +44,7 @@ class AppBottomNavHelper {
     if (getSettingsLocal()?.enableFutureTrade == 1) {
       list.add(AppBottomNav(
         id: AppBottomNavKey.future, 
-        imagePath: 'assets/icons/future.png', // <--- Futures ka Logo
+        imagePath: 'assets/icons/futures.png', // <--- Futures ka Logo
         name: "Futures".tr
       ));
     }

@@ -21,7 +21,8 @@ class MarketSpotScreen extends StatefulWidget {
   MarketSpotState createState() => MarketSpotState();
 }
 
-class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMixin {
+class MarketSpotState extends State<MarketSpotScreen>
+    with TickerProviderStateMixin {
   final _controller = Get.put(MarketSpotController());
 
   late final TabController _oldTabController;
@@ -31,8 +32,14 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
 
   @override
   void initState() {
-    _oldTabController = TabController(length: _controller.getTypeMap().values.length, vsync: this);
-    _filterTabController = TabController(length: _controller.getFilterList().length, vsync: this);
+    _oldTabController = TabController(
+      length: _controller.getTypeMap().values.length,
+      vsync: this,
+    );
+    _filterTabController = TabController(
+      length: _controller.getFilterList().length,
+      vsync: this,
+    );
 
     _filterTabController.addListener(() {
       if (!_filterTabController.indexIsChanging) {
@@ -95,19 +102,24 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
                   : Expanded(
                       child: ListView.separated(
                         padding: const EdgeInsets.all(5),
-                        separatorBuilder: (context, index) => const SizedBox.shrink(),
+                        separatorBuilder: (context, index) =>
+                            const SizedBox.shrink(),
                         itemCount: _controller.marketList.length,
                         itemBuilder: (context, index) {
-                          if (_controller.hasMoreData && index == _controller.marketList.length - 1) {
+                          if (_controller.hasMoreData &&
+                              index == _controller.marketList.length - 1) {
                             WidgetsBinding.instance.addPostFrameCallback(
-                              (t) => _controller.getMarketOverviewTopCoinList(true),
+                              (t) => _controller.getMarketOverviewTopCoinList(
+                                true,
+                              ),
                             );
                           }
                           return Builder(
                             builder: (BuildContext newContext) {
                               return spot.MarketCoinItemViewBottom(
                                 coin: _controller.marketList[index],
-                                onFavChange: (message) => showToast(message, isError: false),
+                                onFavChange: (message) =>
+                                    showToast(message, isError: false),
                               );
                             },
                           );
@@ -121,49 +133,62 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
     );
   }
 
-Widget _buildFilterTabBar() {
-  final filterList = _controller.getFilterList();
+  Widget _buildFilterTabBar() {
+    final filterList = _controller.getFilterList();
 
-  return Obx(() => Container(
-    height: 35,
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    color: Colors.transparent,
-    child: Row(
-      children: filterList.asMap().entries.map((entry) {
-        final index = entry.key;
-        final title = entry.value;
-        final isSelected = _controller.selectedFilterIndex.value == index;
+    return Obx(
+      () => Container(
+        height: 35,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        color: Colors.transparent,
+        child: Row(
+          children: filterList.asMap().entries.map((entry) {
+            final index = entry.key;
+            final title = entry.value;
+            final isSelected = _controller.selectedFilterIndex.value == index;
 
-        return GestureDetector(
-          onTap: () {
-            _filterTabController.animateTo(index);
-            _controller.onFilterChanged(index);
-          },
-          child: Container(
-            height: 35,
-            color: Colors.transparent,
-            margin: const EdgeInsets.only(right: 20), // <--- Yahan gap do apne hisaab se
-            alignment: Alignment.center,
-           
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontFamily: "DMSans",
-                fontWeight: isSelected ? FontWeight.w400 : FontWeight.w300,
-                color: isSelected ? Colors.white : Colors.white54,
+            return GestureDetector(
+              onTap: () {
+                _filterTabController.animateTo(index);
+                _controller.onFilterChanged(index);
+              },
+              child: Container(
+                height: 35,
+                color: Colors.transparent,
+                margin: const EdgeInsets.only(
+                  right: 20,
+                ), // <--- Yahan gap do apne hisaab se
+                alignment: Alignment.center,
+
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: "DMSans",
+                    fontWeight: isSelected ? FontWeight.w400 : FontWeight.w300,
+                    color: isSelected ? Colors.white : Colors.white54,
+                  ),
+                ),
               ),
-            ),
-          ),
-        );
-      }).toList(),
-    ),
-  ));
-}
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
 
   // ── STATIC CATEGORY LIST ──
   Widget _buildStaticCategoryList() {
-    final categories = ["All", "🔥 AI", "Meme", "RWA", "DeFi", "NFT", "Layer 1", "Layer 2"];
+    final categories = [
+      "All",
+      "🔥 AI",
+      "Meme",
+      "RWA",
+      "DeFi",
+      "NFT",
+      "Layer 1",
+      "Layer 2",
+    ];
 
     return Container(
       height: 20,
@@ -185,14 +210,17 @@ Widget _buildFilterTabBar() {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFB5F000) : Color.fromARGB(255, 43, 43, 43), // "All" ke liye thoda different color
+                color: isSelected
+                    ? const Color(0xFFB5F000)
+                    : Color(0xFF1A1A1A), // "All" ke liye thoda different color
                 borderRadius: BorderRadius.circular(6),
-                
               ),
               child: Text(
                 categories[index],
                 style: TextStyle(
-                  color: isSelected ? const Color(0xFF000000) : const Color(0xFFFFFFFF),
+                  color: isSelected
+                      ? const Color(0xFF000000)
+                      : const Color(0xFFFFFFFF),
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   fontFamily: "DMSans",
@@ -220,12 +248,13 @@ class MarketHeaderRow extends StatelessWidget {
         children: [
           Expanded(
             flex: 3,
-            child: Text(
+            child: const Text(
               "Pair/Vol",
               style: TextStyle(
-                color: Colors.white54,
-                fontSize: 15,
+                color: Colors.white30, // ✅ 50% white
+                fontSize: 14,
                 fontWeight: FontWeight.w400,
+                height: 1.6,
               ),
             ),
           ),
@@ -234,10 +263,11 @@ class MarketHeaderRow extends StatelessWidget {
             child: Text(
               "Price",
               textAlign: TextAlign.right,
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 15,
+             style: TextStyle(
+                color: Colors.white30, // ✅ 50% white
+                fontSize: 14,
                 fontWeight: FontWeight.w400,
+                height: 1.6,
               ),
             ),
           ),
@@ -248,9 +278,10 @@ class MarketHeaderRow extends StatelessWidget {
               "24h Change",
               textAlign: TextAlign.right,
               style: TextStyle(
-                color: Colors.white54,
-                fontSize: 15,
+                color: Colors.white30, // ✅ 50% white
+                fontSize: 14,
                 fontWeight: FontWeight.w400,
+                height: 1.6,
               ),
             ),
           ),

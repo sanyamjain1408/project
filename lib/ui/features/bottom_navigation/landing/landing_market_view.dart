@@ -20,7 +20,7 @@ import 'landing_controller.dart';
 
 
 
-const _bg        = Color(0xFF0A0B0D);
+const _bg =  Color.fromARGB(255, 17, 17, 17);
 const _card      = Color(0xFF111318);
 const _green     = Color(0xFFB5F000);
 const _border    = Color(0xFF1E2128);
@@ -48,7 +48,7 @@ class _LandingMarketViewState extends State<LandingMarketView> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: _bg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

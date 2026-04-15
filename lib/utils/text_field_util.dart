@@ -5,6 +5,7 @@ import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/utils/extensions.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'dimens.dart';
+import 'dart:ui';
 
 Container textFieldWithSuffixIcon({
   Widget? countryPick,
@@ -150,64 +151,54 @@ Container textFieldSearch({
 }) {
   height = 30;
 
-  // Basic Gray Colors
-  final Color bgColor = const Color.fromARGB(255, 14, 14, 14); // Dark Gray Background
-  final Color borderColor =
-      Colors.transparent; // Border nahi chahiye (Basic look)
-  final Color defaultIconColor = Colors.white54; // Icon ka default color
-  final Color activeIconColor = const Color.fromARGB(
-    255,
-    180,
-    154,
-    8,
-  ); // Type karne par Yellow color
-
   return Container(
     margin: EdgeInsets.only(left: 10, right: 10),
-    height: height,
-    width: width,
-    decoration: BoxDecoration(
-      color: bgColor, // Gray Background
+    child: ClipRRect(
       borderRadius: BorderRadius.circular(10),
-      // Agar border chahiye toh yahan uncomment kar sakte hain:
-      // border: Border.all(color: Colors.grey, width: 1),
-    ),
-    child: TextField(
-      controller: controller,
-      keyboardType: TextInputType.text,
-      textInputAction: TextInputAction.search,
-      cursorColor: Colors.white,
-      style: const TextStyle(color: Colors.white, fontSize: 15),
-      decoration: InputDecoration(
-        filled: false,
-        isDense: true,
-        hintText: "Search".tr,
-        hintStyle: const TextStyle(color: Colors.white54, fontSize: 15),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
-        border: InputBorder.none, // Border hata diya basic look ke liye
-        // Right Side Icon
-        suffixIcon: IconButton(
-          padding: const EdgeInsets.only(right: 2), // Right side padding
-          icon: Image.asset(
-            'assets/icons/search.png', // Yahan apni image ka full path likhein
-            height: 15, // Icon size
-            width: 15,
-             // Icon ka color set karein
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+        child: Container(
+          height: height,
+          width: width,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A).withOpacity(0.7),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.text,
+            textInputAction: TextInputAction.search,
+            cursorColor: Colors.white,
+            style: const TextStyle(color: Colors.white, fontSize: 15),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: "Search".tr,
+              hintStyle: const TextStyle(color: Colors.white54, fontSize: 15),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+              border: InputBorder.none,
+              suffixIcon: IconButton(
+                padding: const EdgeInsets.only(right: 2),
+                icon: Image.asset(
+                  'assets/icons/search.png',
+                  height: 15,
+                  width: 15,
+                  color: Colors.white54,
+                ),
+                onPressed: () {
+                  if (onSearch != null) onSearch();
+                },
+              ),
             ),
-          onPressed: () {
-            if (onSearch != null) onSearch();
-          },
+            onSubmitted: (value) {
+              if (onSearch != null) onSearch();
+            },
+            onChanged: (value) {
+              if (onTextChange != null) onTextChange(value);
+            },
+          ),
         ),
       ),
-      onSubmitted: (value) {
-        if (onSearch != null) onSearch();
-      },
-      onChanged: (value) {
-        if (onTextChange != null) onTextChange(value);
-        // (Optional) Agar aap chahte hain ki type karte hi icon color change ho,
-        // toh aapko controller ya state update karna hoga.
-        // Basic TextField mein automatically focus color change hota hai.
-      },
     ),
   );
 }

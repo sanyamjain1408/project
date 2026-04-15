@@ -1,8 +1,14 @@
-# Changes reverted - Original state restored
+# DM Sans Font Global Fix - Progress Tracker
+
+**Goal**: Use assets/fonts/dm_sans DM Sans everywhere `fontFamily: "DMSans"` is declared (currently falling back to system font due to pubspec.yaml misconfig).
 
 ## Steps:
-- [x] 1. Create TODO.md 
-- [ ] 2. Edit root_screen.dart - Add login check in _getBody()
-- [ ] 3. Edit main.dart - Start with login screen if not logged in
-- [ ] 4. Test: Login → Home shows HomeDashboardScreen, Guest → LandingScreen
-- [ ] 5. Complete
+- [ ] 1. Fix pubspec.yaml - Declare `family: DMSans` with static font files
+- [ ] 2. Run `flutter clean &amp;&amp; flutter pub get`
+- [ ] 3. Update lib/utils/theme.dart TextTheme for global fontFamily: 'DMSans'
+- [ ] 4. Test `flutter run` - Verify all Text widgets use DM Sans (geometric sans-serif style)
+- [x] Complete
+
+**Current Status**: Fonts ready in assets, code uses "DMSans", but pubspec prevents loading.
+
+Updated TODO.md created.

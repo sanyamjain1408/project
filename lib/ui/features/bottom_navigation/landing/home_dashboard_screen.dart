@@ -9,9 +9,10 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/announcement_view.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/home_grid_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/more_card_screen.dart';
+import 'dart:ui';
 
 const _green = Color(0xFFB5F000);
-const _bgcolor =  Color(0xFF111111);
+const _bgcolor =   Color.fromARGB(255, 17, 17, 17);
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -34,9 +35,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // REMOVE THIS LINE: It is redundant now because we did it above.
-    // Get.put(HomeGridController()); 
+    // Get.put(HomeGridController());
 
     _rotationController = AnimationController(
       vsync: this,
@@ -101,7 +102,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
             Container(
               width: double.infinity,
               margin: const EdgeInsets.all(0),
-              decoration: const BoxDecoration(color: Colors.black),
+              decoration: const BoxDecoration(color: Colors.transparent),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.transparent,
@@ -486,7 +487,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                   width: double.infinity,
                   height: 20,
                   padding: const EdgeInsets.symmetric(horizontal: 5),
-                  color: Colors.black,
+                  color: Colors.transparent,
                   child: Row(
                     children: [
                       const Icon(Icons.volume_up, color: _green, size: 20),
@@ -510,10 +511,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
             Container(
               width: 362,
               height: 48,
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 14, 14, 14),
+                image: const DecorationImage(
+                  image: AssetImage("assets/images/frame.png"),
+                  fit: BoxFit
+                      .cover, // Image ko container ke hisab bha set karega
+                ),
+                color: const Color(0XFF1A1A1A),
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Row(
@@ -564,7 +570,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
+                        backgroundColor: _bgcolor,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: -10,
@@ -600,7 +606,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
               margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: _bgcolor,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Row(
@@ -610,7 +616,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                       height: 210,
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 14, 14, 14),
+                        color: const Color(0XFF1A1A1A),
                         borderRadius: BorderRadius.circular(5),
                       ),
                       child: Column(
@@ -763,7 +769,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       height: 100,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 14, 14, 14),
+        color: const Color(0XFF1A1A1A),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Column(
@@ -804,61 +810,72 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     required String icon,
     required List<Color> colors,
   }) {
-    return Container(
-      width: 230,
-      margin: const EdgeInsets.only(right: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 25, 24, 24),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Earn up to",
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                const SizedBox(height: 5),
-                Row(
+    return ClipRRect(
+      // 1. Yeh Border Radius (15px) ko maintain karega
+      borderRadius: BorderRadius.circular(15),
+      child: BackdropFilter(
+        // 2. Yeh Blur Effect lagaega
+        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4), // Figma wala blur(4px)
+        child: Container(
+          width: 230,
+          margin: const EdgeInsets.only(right: 10),
+          padding: const EdgeInsets.all(12),
+          // 3. Background Color thoda transparent rakhein taaki blur dikhe
+          decoration: BoxDecoration(
+            color: Color(0XFF1A1A1A), // Opacity kam zyada kar sakte hain
+            borderRadius: BorderRadius.circular(15), // Yeh zaroori hai
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ShaderMask(
-                      shaderCallback: (bounds) =>
-                          LinearGradient(colors: colors).createShader(bounds),
-                      child: Text(
-                        percent,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 5),
                     const Text(
-                      "/ year",
+                      "Earn up to",
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: colors,
+                          ).createShader(bounds),
+                          child: Text(
+                            percent,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const Text(
+                          "/ year",
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(name, style: const TextStyle(color: Colors.white)),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(name, style: const TextStyle(color: Colors.white)),
-              ],
-            ),
+              ),
+              Center(child: Image.asset(icon, height: 40)),
+            ],
           ),
-          Center(child: Image.asset(icon, height: 40)),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildEarnCards() {
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10),
+      color: Colors.transparent,
       child: SizedBox(
         height: 110,
         child: ListView(
