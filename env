@@ -1,9 +1,0 @@
-apiSecret = h0vWu6MkInNlWHJVfIXmHbIbC66cQvlbSUQI09Whbp
-
-# Stripe
-stripKey = pk_live_51MxTPlESDHY5x8hMMF827y9oRnTiRRtK0R77i6akAfqdPnHeWklHldD3JDscECueAtLw7Wfc0MdGsni7B961W2uq00mSud6XMB
-
-# Paypal (modePaypal = sandbox/production)
-clientIdPaypal = AV-kpCdSGhgP7Cm-krKtmDsO3S1h4Os7cqd0_z78eEu-thao-XJ5SMY2KuuubLfAzHCEQKkOK6W1ufg4
-secretPaypal = EH5HavBNDK58og9i8OiJH0HkWRLTPxDG-IL5yMHMLWUEbIguZIq45NJ-SlWmngUWN3r6sGmaNrwHZdCh
-modePaypal = sandbox
