@@ -24,7 +24,8 @@ class SpotTradeDetailsScreen extends StatefulWidget {
   const SpotTradeDetailsScreen({super.key});
 
   @override
-  State<SpotTradeDetailsScreen> createState() => _SpotTradeDetailsScreenState();
+  State<SpotTradeDetailsScreen> createState() =>
+      _SpotTradeDetailsScreenState();
 }
 
 class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
@@ -41,35 +42,69 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
           children: [
             Row(
               children: [
-                buttonOnlyIcon(onPress: () => Navigator.pop(context), iconData: Icons.arrow_back_outlined, size: Dimens.iconSizeMin),
-                TextRobotoAutoBold(_controller.selectedCoinPair.value.getCoinPairName(), fontSize: Dimens.fontSizeMid),
+                buttonOnlyIcon(
+                  onPress: () => Navigator.pop(context),
+                  iconData: Icons.arrow_back_outlined,
+                  size: Dimens.iconSizeMin,
+                ),
+                TextRobotoAutoBold(
+                  _controller.selectedCoinPair.value.getCoinPairName(),
+                  fontSize: Dimens.fontSizeMid,
+                ),
                 const Spacer(),
+                // ── Plain inline % text — no red badge ──────────────────────
                 Obx(() {
-                  final change = _controller.dashboardData.value.orderData?.total?.tradeWallet?.priceChange;
+                  final change = _controller
+                      .dashboardData
+                      .value
+                      .orderData
+                      ?.total
+                      ?.tradeWallet
+                      ?.priceChange;
                   final (sing, color) = getNumberData(change);
-                  return buttonText("$sing${coinFormat(change, fixed: 4)}%",
-                      textColor: color, bgColor: color.withValues(alpha:0.2), visualDensity: minimumVisualDensity);
+                  return Text(
+                    "$sing${coinFormat(change, fixed: 2)}%",
+                    style: TextStyle(
+                      color: color,
+                      fontSize: Dimens.fontSizeSmall,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  );
                 }),
-                Obx(() => FavoriteHelper.getFavoriteIcon(_controller.selectedCoinPair.value, () {
-                      FavoriteHelper.updateFavorite(_controller.selectedCoinPair.value, '', (pair) {
-                        _controller.selectedCoinPair.value = pair;
-                        _controller.selectedCoinPair.refresh();
-                      });
-                    })),
-                hSpacer5()
+                Obx(() => FavoriteHelper.getFavoriteIcon(
+                      _controller.selectedCoinPair.value,
+                      () {
+                        FavoriteHelper.updateFavorite(
+                          _controller.selectedCoinPair.value,
+                          '',
+                          (pair) {
+                            _controller.selectedCoinPair.value = pair;
+                            _controller.selectedCoinPair.refresh();
+                          },
+                        );
+                      },
+                    )),
+                hSpacer5(),
               ],
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: Dimens.paddingMid),
                 children: [
                   Obx(() => CurrencyPairDetailsView(
-                      order: _controller.dashboardData.value.orderData, prices: _controller.dashboardData.value.lastPriceData)),
+                      order: _controller.dashboardData.value.orderData,
+                      prices:
+                          _controller.dashboardData.value.lastPriceData)),
                   dividerHorizontal(),
                   const ChartsScreen(fromModal: false),
                   vSpacer10(),
                   Obx(() => tabBarText(
-                      ["Order Book".tr, "Trades".tr, "Asset Overview".tr],
+                      [
+                        "Order Book".tr,
+                        "Trades".tr,
+                        "Asset Overview".tr,
+                      ],
                       tabIndex.value,
                       selectedColor: context.theme.focusColor,
                       (index) => tabIndex.value = index)),
@@ -78,11 +113,19 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                     switch (tabIndex.value) {
                       case 0:
                         return DetailsOrderBookView(
-                            buyExchangeOrder: _controller.buyExchangeOrder,
-                            sellExchangeOrder: _controller.sellExchangeOrder,
-                            total: _controller.dashboardData.value.orderData?.total);
+                          buyExchangeOrder:
+                              _controller.buyExchangeOrder,
+                          sellExchangeOrder:
+                              _controller.sellExchangeOrder,
+                          total: _controller
+                              .dashboardData.value.orderData?.total,
+                        );
                       case 1:
-                        return TradeListView(exchangeTrades: _controller.exchangeTrades, total: _controller.dashboardData.value.orderData?.total);
+                        return TradeListView(
+                          exchangeTrades: _controller.exchangeTrades,
+                          total: _controller
+                              .dashboardData.value.orderData?.total,
+                        );
                       case 2:
                         return AssetOverviewView();
                       default:
@@ -93,9 +136,13 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
               ),
             ),
             TradeBottomButtonsView(
-                buyStr: "Buy".tr,
-                sellStr: "Sell".tr,
-                onTap: (bool isBuy) => _controller.onBuySaleChange != null ? _controller.onBuySaleChange!(isBuy ? 0 : 1) : null)
+              buyStr: "Buy".tr,
+              sellStr: "Sell".tr,
+              onTap: (bool isBuy) =>
+                  _controller.onBuySaleChange != null
+                      ? _controller.onBuySaleChange!(isBuy ? 0 : 1)
+                      : null,
+            ),
           ],
         ),
       ),
@@ -124,31 +171,59 @@ class AssetOverviewView extends StatelessWidget {
           children: [
             TextRobotoAutoBold("Trading Account".tr),
             vSpacer5(),
-            twoTextSpaceFixed(baseCType, coinFormat(_controller.selfBalance.value.baseWallet, fixed: tradeDecimal), color: color),
-            twoTextSpaceFixed(tradeCType, coinFormat(_controller.selfBalance.value.tradeWallet, fixed: tradeDecimal), color: color),
+            twoTextSpaceFixed(baseCType,
+                coinFormat(_controller.selfBalance.value.baseWallet,
+                    fixed: tradeDecimal),
+                color: color),
+            twoTextSpaceFixed(tradeCType,
+                coinFormat(_controller.selfBalance.value.tradeWallet,
+                    fixed: tradeDecimal),
+                color: color),
             vSpacer10(),
             TextRobotoAutoBold("Funding Account".tr),
             vSpacer5(),
-            twoTextSpaceFixed(baseCType, coinFormat(total?.baseWallet?.balance, fixed: tradeDecimal), color: color),
-            twoTextSpaceFixed(tradeCType, coinFormat(total?.tradeWallet?.balance, fixed: tradeDecimal), color: color),
+            twoTextSpaceFixed(
+                baseCType,
+                coinFormat(total?.baseWallet?.balance,
+                    fixed: tradeDecimal),
+                color: color),
+            twoTextSpaceFixed(
+                tradeCType,
+                coinFormat(total?.tradeWallet?.balance,
+                    fixed: tradeDecimal),
+                color: color),
             vSpacer15(),
             Row(
               children: [
                 Expanded(
-                    child: buttonText("Deposit".tr, visualDensity: VisualDensity.compact, onPress: () {
-                  if (total?.tradeWallet != null) {
-                    Get.to(() => WalletCryptoDepositScreen(wallet: total!.tradeWallet!.createWallet()));
-                  }
-                })),
+                  child: buttonText(
+                    "Deposit".tr,
+                    visualDensity: VisualDensity.compact,
+                    onPress: () {
+                      if (total?.tradeWallet != null) {
+                        Get.to(() => WalletCryptoDepositScreen(
+                            wallet:
+                                total!.tradeWallet!.createWallet()));
+                      }
+                    },
+                  ),
+                ),
                 hSpacer15(),
                 Expanded(
-                    child: buttonText("Transfer".tr, visualDensity: VisualDensity.compact, onPress: () {
-                  if (total?.tradeWallet != null) {
-                    Get.to(() => WalletCryptoWithdrawScreen(wallet: total!.tradeWallet!.createWallet()));
-                  }
-                }))
+                  child: buttonText(
+                    "Transfer".tr,
+                    visualDensity: VisualDensity.compact,
+                    onPress: () {
+                      if (total?.tradeWallet != null) {
+                        Get.to(() => WalletCryptoWithdrawScreen(
+                            wallet:
+                                total!.tradeWallet!.createWallet()));
+                      }
+                    },
+                  ),
+                ),
               ],
-            )
+            ),
           ],
         );
       }),

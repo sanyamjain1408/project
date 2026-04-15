@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/addons/p2p_trade/ui/p2p_trade_screen.dart';
-import 'package:tradexpro_flutter/utils/appbar_util.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
+import 'package:tradexpro_flutter/utils/text_util.dart';
+import 'package:tradexpro_flutter/utils/spacers.dart';
 
 import 'spot_trade/spot_trade_screen.dart';
-import 'trade_controller.dart';
 
 class TradesScreen extends StatefulWidget {
   const TradesScreen({super.key});
@@ -15,19 +15,45 @@ class TradesScreen extends StatefulWidget {
   State<TradesScreen> createState() => _TradesScreenState();
 }
 
-class _TradesScreenState extends State<TradesScreen> with SingleTickerProviderStateMixin {
-  final _controller = TradeController();
+class _TradesScreenState extends State<TradesScreen>
+    with SingleTickerProviderStateMixin {
+  // TradeController removed — it had length=2 which conflicted with our 5 tabs
   late final TabController _tabController;
+
+  static const List<String> _tabs = ['Swap', 'Spot', 'Future', 'Earn', 'P2P'];
+  int _selectedTab = 1; // default: Spot
 
   @override
   void initState() {
-    _tabController = TabController(length: _controller.getTradeTabs().length, vsync: this);
-    if (TemporaryData.changingPageId != null) {
-      _controller.selectedTab.value = TemporaryData.changingPageId!;
-      TemporaryData.changingPageId = null;
-      _tabController.animateTo(_controller.selectedTab.value);
-    }
     super.initState();
+    _tabController = TabController(
+      length: _tabs.length,
+      vsync: this,
+      initialIndex: 1,
+    );
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() => _selectedTab = _tabController.index);
+      }
+    });
+
+    // Handle deep-link navigation (old 2-tab IDs: 0=Spot, 1=P2P)
+    if (TemporaryData.changingPageId != null) {
+      final id = TemporaryData.changingPageId!;
+      TemporaryData.changingPageId = null;
+      // Map to new 5-tab positions: Spot=1, P2P=4
+      final newIndex = id == 1 ? 4 : 1;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _tabController.animateTo(newIndex);
+        setState(() => _selectedTab = newIndex);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -35,25 +61,70 @@ class _TradesScreenState extends State<TradesScreen> with SingleTickerProviderSt
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: Dimens.btnHeightMid,
-          child: TabBarPlain(
-              titles: _controller.getTradeTabs(),
-              controller: _tabController,
-              fontSize: Dimens.fontSizeLarge,
-              onTap: (index) => _controller.selectedTab.value = index),
+        // ── Top tab bar: Swap / Spot / Future / Earn / P2P ──────────────────
+        Container(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            indicator: const BoxDecoration(), // no underline
+            indicatorSize: TabBarIndicatorSize.label,
+            dividerColor: Colors.transparent,
+            labelColor: Theme.of(context).primaryColor,
+            unselectedLabelColor: Theme.of(context).primaryColorLight,
+            labelStyle: const TextStyle(
+              fontSize: Dimens.fontSizeMid,
+              fontWeight: FontWeight.bold,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: Dimens.fontSizeMid,
+              fontWeight: FontWeight.normal,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+            tabs: _tabs.map((t) => Tab(text: t.tr)).toList(),
+          ),
         ),
-        Obx(() {
-          switch (_controller.selectedTab.value) {
-            case 0:
-              return const SpotTradeScreen();
-              case 1:
-            return const P2PTradeScreen();
-            default:
-              return Container();
-          }
-        })
+
+        // ── Tab body ─────────────────────────────────────────────────────────
+        _buildTabBody(),
       ],
+    );
+  }
+
+  Widget _buildTabBody() {
+    switch (_selectedTab) {
+      case 0:
+        return _placeholderView('Swap');
+      case 1:
+        return const SpotTradeScreen();
+      case 2:
+        return _placeholderView('Future');
+      case 3:
+        return _placeholderView('Earn');
+      case 4:
+        return const P2PTradeScreen();
+      default:
+        return const SpotTradeScreen();
+    }
+  }
+
+  Widget _placeholderView(String label) {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.construction_rounded, size: 48,
+                color: Theme.of(context).primaryColorLight),
+            vSpacer10(),
+            TextRobotoAutoBold(
+              '$label ${'coming_soon'.tr}',
+              fontSize: Dimens.fontSizeLarge,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
