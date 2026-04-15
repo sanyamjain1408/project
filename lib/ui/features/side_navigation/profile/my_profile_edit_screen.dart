@@ -1,21 +1,27 @@
 import 'dart:io';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
-import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/extensions.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
-import 'package:tradexpro_flutter/utils/text_field_util.dart';
-import 'package:tradexpro_flutter/utils/text_util.dart';
 import '../../../../data/models/user.dart';
 import '../../../../utils/common_utils.dart';
-import '../../../../utils/common_widgets.dart';
-import '../../../../utils/decorations.dart';
+import '../../../../helper/app_helper.dart';
 import 'my_profile_controller.dart';
+
+// ── FIGMA COLORS ─────────────────────────────────────────────────────────────
+const _bg       = Color(0xFF121212);
+const _cardBg   = Color(0xFF1E1E1E);
+const _fieldBg  = Color(0xFF1A1A1A);
+const _green    = Color(0xFFCCFF00);
+const _white    = Color(0xFFFFFFFF);
+const _grey     = Color(0xFF6B6B6B);
+const _dmSans   = 'DMSans';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -28,138 +34,293 @@ class ProfileEditScreenState extends State<ProfileEditScreen> {
   final _controller = Get.put(MyProfileController());
   User user = gUserRx.value;
   Rx<File> profileImage = File("").obs;
-  Rx<Country> selectedPhone = Country.parse("US").obs;
+  Rx<Country> selectedPhone   = Country.parse("US").obs;
   Rx<Country> selectedCountry = Country.parse("US").obs;
-  RxInt selectedGender = 0.obs;
-  TextEditingController firstNameEditController = TextEditingController();
-  TextEditingController lastNameEditController = TextEditingController();
-  TextEditingController nickNameEditController = TextEditingController();
-  TextEditingController phoneEditController = TextEditingController();
-  TextEditingController countryEditController = TextEditingController();
-
-  List<String> getGenderList() => ["Male".tr, "Female".tr, "Others".tr];
+  TextEditingController userNameController  = TextEditingController();
+  TextEditingController emailController     = TextEditingController();
+  TextEditingController phoneController     = TextEditingController();
+  TextEditingController countryController   = TextEditingController();
+  TextEditingController uidController       = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    selectedGender.value = user.gender != null ? (user.gender! - 1) : -1;
+    userNameController.text  = getName(user.firstName, user.lastName);
+    emailController.text     = user.email ?? "";
+    uidController.text       = user.id.toString();
     if (user.country.isValid) {
-      selectedCountry.value = Country.parse(user.country!);
-      countryEditController.text = selectedCountry.value.name;
+      try {
+        selectedCountry.value   = Country.parse(user.country!);
+        countryController.text  = selectedCountry.value.name;
+      } catch (_) {}
     }
-    getPhoneNumber();
+    _loadPhone();
   }
 
-  void getPhoneNumber() async {
+  void _loadPhone() async {
     if (user.phone.isValid) {
-      var phone = user.phone!.contains("+") ? user.phone! : "+${user.phone!}";
-      final phoneNumber = await PhoneNumber.getRegionInfoFromPhoneNumber(phone);
-      selectedPhone.value = Country.parse(phoneNumber.isoCode ?? "");
-      phoneEditController.text = user.phone!;
-    } else {
-      phoneEditController.text = selectedPhone.value.phoneCode;
+      try {
+        var phone = user.phone!.contains("+") ? user.phone! : "+${user.phone!}";
+        final info = await PhoneNumber.getRegionInfoFromPhoneNumber(phone);
+        selectedPhone.value  = Country.parse(info.isoCode ?? "US");
+        phoneController.text = user.phone!;
+      } catch (_) {
+        phoneController.text = user.phone ?? "";
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: ListView(
-        shrinkWrap: true,
-        padding: const EdgeInsets.all(Dimens.paddingMid),
+      child: Column(
         children: [
-          Align(alignment: Alignment.centerLeft, child: TextRobotoAutoNormal("Profile Update".tr, fontSize: Dimens.fontSizeMidExtra)),
-          vSpacer20(),
-          _photoEditView(),
-          vSpacer20(),
-          textFieldWithSuffixIcon(controller: firstNameEditController, hint: "First Name".tr, labelText: "First Name".tr, text: user.firstName ?? ""),
-          vSpacer10(),
-          textFieldWithSuffixIcon(controller: lastNameEditController, hint: "Last Name".tr, labelText: "Last Name".tr, text: user.lastName ?? ""),
-          vSpacer10(),
-          textFieldWithSuffixIcon(controller: nickNameEditController, hint: "Nick Name".tr, labelText: "Nick Name".tr, text: user.nickName ?? ""),
-          vSpacer10(),
-          Obx(() => textFieldWithWidget(
-              controller: phoneEditController,
-              type: TextInputType.phone,
-              prefixWidget: countryPickerView(context, selectedPhone.value, (value) {
-                selectedPhone.value = value;
-                phoneEditController.text = value.phoneCode;
-              }, showPhoneCode: true))),
-          TextRobotoAutoNormal("add phone number message".tr, maxLines: 2, fontSize: Dimens.fontSizeMin),
-          vSpacer10(),
-          Obx(() => textFieldWithWidget(
-              controller: countryEditController,
-              hint: "Select Country".tr,
-              readOnly: true,
-              prefixWidget: countryPickerView(context, selectedCountry.value, (value) {
-                selectedCountry.value = value;
-                countryEditController.text = value.name;
-              }))),
-          vSpacer10(),
-          Obx(() =>
-              dropDownListIndex(getGenderList(), selectedGender.value, "Select Gender".tr, hMargin: 0, (value) => selectedGender.value = value)),
-          vSpacer20(),
-          buttonRoundedMain(text: "Update Profile".tr, onPress: () => checkProfileData()),
-          vSpacer10(),
+          // ── SCROLLABLE CONTENT ────────────────────────────────────
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+              children: [
+
+                // ── USER NAME (read only) ─────────────────────────
+                _fieldLabel("User Name"),
+                const SizedBox(height: 6),
+                _readOnlyField(userNameController),
+
+                const SizedBox(height: 16),
+
+                // ── EMAIL ─────────────────────────────────────────
+                _fieldLabel("Email"),
+                const SizedBox(height: 6),
+                _editField(emailController, hint: "Email", keyboardType: TextInputType.emailAddress),
+
+                const SizedBox(height: 16),
+
+                // ── PHONE NUMBER ──────────────────────────────────
+                _fieldLabel("Phone Number"),
+                const SizedBox(height: 6),
+                Obx(() => _phoneField()),
+
+                const SizedBox(height: 16),
+
+                // ── COUNTRY ───────────────────────────────────────
+                _fieldLabel("Country"),
+                const SizedBox(height: 6),
+                Obx(() => _countryField()),
+
+                const SizedBox(height: 16),
+
+                // ── UID (read only) ───────────────────────────────
+                _fieldLabel("UID Number"),
+                const SizedBox(height: 6),
+                _readOnlyField(uidController),
+
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
+
+          // ── UPDATE BUTTON ─────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                onPressed: _checkAndUpdate,
+                child: const Text(
+                  "Update",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: _dmSans,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _photoEditView() {
-    final boxSize = context.width / 2.5;
-    return Align(
-      child: Container(
-        width: boxSize,
-        height: boxSize,
-        padding: const EdgeInsets.all(Dimens.paddingMid),
-        decoration: getRoundCornerWithShadow(color: context.theme.scaffoldBackgroundColor),
-        child: InkWell(
-          onTap: () {
-            showImageChooser(context, (chooseFile, isGallery) {
-              isGallery ? profileImage.value = chooseFile : saveFileOnTempPath(chooseFile, onNewFile: (newFile) => profileImage.value = newFile);
-            });
-          },
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Obx(() => profileImage.value.path == ""
-                  ? showCircleAvatar(user.photo, size: boxSize - Dimens.paddingLargeDouble)
-                  : showCircleAvatarLocal(profileImage.value, size: boxSize - Dimens.paddingLargeDouble)),
-              Positioned(bottom: 0, right: 0, child: buttonOnlyIcon(iconPath: AssetConstants.icEditRoundBg, size: Dimens.iconSizeMid))
-            ],
-          ),
+  // ── FIELD LABEL ───────────────────────────────────────────────────────────
+  Widget _fieldLabel(String label) {
+    return Text(
+      label,
+      style: const TextStyle(
+        color: _grey,
+        fontSize: 13,
+        fontFamily: _dmSans,
+        fontWeight: FontWeight.w400,
+      ),
+    );
+  }
+
+  // ── READ ONLY FIELD ───────────────────────────────────────────────────────
+  Widget _readOnlyField(TextEditingController ctrl) {
+    return Container(
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: _fieldBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        ctrl.text,
+        style: const TextStyle(
+          color: _grey,
+          fontSize: 15,
+          fontFamily: _dmSans,
         ),
       ),
     );
   }
 
-  void checkProfileData() async {
+  // ── EDITABLE FIELD ────────────────────────────────────────────────────────
+  Widget _editField(
+    TextEditingController ctrl, {
+    String hint = "",
+    TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false,
+  }) {
+    return Container(
+      height: 58,
+      decoration: BoxDecoration(
+        color: _fieldBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: ctrl,
+        readOnly: readOnly,
+        keyboardType: keyboardType,
+        style: const TextStyle(
+          color: _white,
+          fontSize: 15,
+          fontFamily: _dmSans,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: _grey, fontSize: 15, fontFamily: _dmSans),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        ),
+      ),
+    );
+  }
+
+  // ── PHONE FIELD ───────────────────────────────────────────────────────────
+  Widget _phoneField() {
+    return Container(
+      height: 58,
+      decoration: BoxDecoration(
+        color: _fieldBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => showCountryPicker(
+              context: context,
+              showPhoneCode: true,
+              onSelect: (c) {
+                selectedPhone.value  = c;
+                phoneController.text = c.phoneCode;
+              },
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                children: [
+                  Text(selectedPhone.value.flagEmoji, style: const TextStyle(fontSize: 22)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.keyboard_arrow_down, color: _grey, size: 20),
+                ],
+              ),
+            ),
+          ),
+          Container(width: 1, height: 28, color: Colors.white12),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              style: const TextStyle(color: _white, fontSize: 15, fontFamily: _dmSans),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: "Phone number",
+                hintStyle: TextStyle(color: _grey, fontSize: 15, fontFamily: _dmSans),
+                contentPadding: EdgeInsets.symmetric(vertical: 18),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
+    );
+  }
+
+  // ── COUNTRY FIELD ─────────────────────────────────────────────────────────
+  Widget _countryField() {
+    return GestureDetector(
+      onTap: () => showCountryPicker(
+        context: context,
+        showPhoneCode: false,
+        onSelect: (c) {
+          selectedCountry.value  = c;
+          countryController.text = c.name;
+        },
+      ),
+      child: Container(
+        height: 58,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: _fieldBg,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Text(selectedCountry.value.flagEmoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: 8),
+            const Icon(Icons.keyboard_arrow_down, color: _grey, size: 20),
+            Container(width: 1, height: 28, color: Colors.white12, margin: const EdgeInsets.symmetric(horizontal: 12)),
+            Expanded(
+              child: Text(
+                countryController.text.isNotEmpty ? countryController.text : "Country",
+                style: TextStyle(
+                  color: countryController.text.isNotEmpty ? _white : _grey,
+                  fontSize: 15,
+                  fontFamily: _dmSans,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── UPDATE LOGIC ──────────────────────────────────────────────────────────
+  void _checkAndUpdate() {
     User updateUser = user.createNewInstance();
-    if (firstNameEditController.text.trim().isEmpty) {
-      showToast("First name can not be empty".tr, isError: true);
-      return;
-    }
-    updateUser.firstName = firstNameEditController.text.trim();
+    final nameParts = userNameController.text.trim().split(" ");
+    updateUser.firstName = nameParts.isNotEmpty ? nameParts.first : "";
+    updateUser.lastName  = nameParts.length > 1 ? nameParts.sublist(1).join(" ") : "";
 
-    if (lastNameEditController.text.trim().isEmpty) {
-      showToast("Last name can not be empty".tr, isError: true);
-      return;
+    if (phoneController.text.trim().isNotEmpty) {
+      updateUser.phone = removeSpecialChar(phoneController.text.trim());
     }
-    updateUser.lastName = lastNameEditController.text.trim();
-
-    if (nickNameEditController.text.trim().isEmpty) {
-      showToast("Nick name can not be empty".tr, isError: true);
-      return;
+    if (countryController.text.trim().isNotEmpty) {
+      updateUser.country = selectedCountry.value.countryCode;
     }
-    updateUser.nickName = nickNameEditController.text.trim();
-
-    if (phoneEditController.text.trim().isNotEmpty) {
-      var number = removeSpecialChar(phoneEditController.text.trim());
-      if (number.length > selectedPhone.value.phoneCode.length) updateUser.phone = number;
-    }
-    if (countryEditController.text.trim().isNotEmpty) updateUser.country = selectedCountry.value.countryCode;
-    if (selectedGender.value != -1) updateUser.gender = selectedGender.value + 1;
     hideKeyboard(context: context);
     _controller.updateProfile(updateUser, profileImage.value);
   }
