@@ -87,6 +87,8 @@ class MarketSpotState extends State<MarketSpotScreen> with TickerProviderStateMi
 
             const MarketHeaderRow(),
 
+            SizedBox(height: 7),
+
             Obx(() {
               return _controller.marketList.isEmpty
                   ? handleEmptyViewWithLoading(_controller.isLoading.value)
@@ -161,7 +163,7 @@ Widget _buildFilterTabBar() {
 
   // ── STATIC CATEGORY LIST ──
   Widget _buildStaticCategoryList() {
-    final categories = ["All", "🔥AI", "Meme", "RWA", "DeFi", "NFT", "Layer 1", "Layer 2"];
+    final categories = ["All", "🔥 AI", "Meme", "RWA", "DeFi", "NFT", "Layer 1", "Layer 2"];
 
     return Container(
       height: 20,

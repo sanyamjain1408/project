@@ -9,7 +9,7 @@ import 'market_future/market_future_screen.dart';
 import 'market_spot/market_spot_screen.dart';
 
 
-const _bgcolor =  Colors.black54;
+const _bgcolor =  Colors.black12;
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
@@ -30,19 +30,21 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: _bgcolor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TabBarPlain(
-              titles: getMarketTabs(),
-              controller: _tabController,
-              isScrollable: true,
-              fontSize: 16,
-              onTap: (index) => selectedTab.value = index),
-          Obx(() => _getBody(selectedTab.value))
-        ],
+    return SafeArea(
+      child: Container(
+        color: _bgcolor,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TabBarPlain(
+                titles: getMarketTabs(),
+                controller: _tabController,
+                isScrollable: true,
+                fontSize: 16,
+                onTap: (index) => selectedTab.value = index),
+            Obx(() => _getBody(selectedTab.value))
+          ],
+        ),
       ),
     );
   }

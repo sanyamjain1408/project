@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:k_chart_plus/k_chart_plus.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/market_date.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
@@ -172,6 +173,7 @@ class SpotMarketHeaderView extends StatelessWidget {
     );
   }
 }
+
 class MarketCoinItemViewBottom extends StatelessWidget {
   const MarketCoinItemViewBottom({
     super.key,
@@ -214,11 +216,11 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                   // Icon (same size as LandingMarketView)
                   showImageNetwork(
                     imagePath: coin.coinIcon,
-                    width: Dimens.iconSizeMin,
-                    height: Dimens.iconSizeMin,
+                    width: 30,
+                    height: 30,
                     bgColor: Colors.transparent,
                   ),
-                  hSpacer5(),
+                  hSpacer10(),
 
                   Expanded(
                     child: Column(
@@ -233,18 +235,22 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                               color: Colors.white,
                               fontSize: 15,
                               fontWeight: FontWeight.w400,
-                              fontFamily: formattedPrice.length > 9 ? "DMSans" : "DMSans", // Font size ke hisaab se font family switch kar sakte hain agar needed ho toh (LandingMarketView me aisa hai)
+                              fontFamily: formattedPrice.length > 9
+                                  ? "DMSans"
+                                  : "DMSans", // Font size ke hisaab se font family switch kar sakte hain agar needed ho toh (LandingMarketView me aisa hai)
                             ),
                             children: <TextSpan>[
                               if ((coin.baseCoinType ?? '').isNotEmpty)
                                 TextSpan(
                                   text: "/${coin.baseCoinType}",
-                                   style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: formattedPrice.length > 9 ? "DMSans" : "DMSans", // Font size ke hisaab se font family switch kar sakte hain agar needed ho toh (LandingMarketView me aisa hai)
-                            ),
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: formattedPrice.length > 9
+                                        ? "DMSans"
+                                        : "DMSans", // Font size ke hisaab se font family switch kar sakte hain agar needed ho toh (LandingMarketView me aisa hai)
+                                  ),
                                 ),
                             ],
                           ),
@@ -255,8 +261,11 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                         Text(
                           "\$${numberFormatCompact(coin.volume, decimals: 2)}",
                           style: const TextStyle(
-                            color: Color(0xFF6B7280), // _textDim — same as LandingMarketView
+                            color: Colors
+                                .white54, // _textDim — same as LandingMarketView
                             fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: "DMSans",
                           ),
                           maxLines: 1,
                         ),
@@ -286,8 +295,11 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                   Text(
                     "\$${coinFormat(coin.price, fixed: 6)}",
                     style: const TextStyle(
-                      color: Color(0xFF6B7280), // _textDim — same as LandingMarketView
+                      color: Colors
+                          .white54, // _textDim — same as LandingMarketView
                       fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: "DMSans",
                     ),
                     maxLines: 1,
                   ),
@@ -296,7 +308,6 @@ class MarketCoinItemViewBottom extends StatelessWidget {
             ),
 
             hSpacer20(), // LandingMarketView me hSpacer20 hai
-
             // ── 4. CHANGE BUTTON (LandingMarketView jaisa — Expanded flex:2) ──
             Expanded(
               flex: 2,
@@ -305,7 +316,7 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: cColor,
-                    borderRadius: BorderRadius.circular(Dimens.radiusCorner),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: Center(
@@ -316,7 +327,7 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                         maxLines: 1,
                       ),
