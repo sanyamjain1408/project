@@ -471,7 +471,7 @@ class _TpSlToggleRow extends StatelessWidget {
           child: Switch(
             value: enabled,
             onChanged: onToggle,
-            activeColor: gBuyColor,
+            activeThumbColor: gBuyColor,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ),

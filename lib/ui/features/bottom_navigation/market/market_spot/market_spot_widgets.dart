@@ -119,8 +119,9 @@ class SpotMarketHeaderView extends StatelessWidget {
     if (type == SortKey.pair) sort.pair = _updateCurrentValue(sort.pair);
     if (type == SortKey.volume) sort.volume = _updateCurrentValue(sort.volume);
     if (type == SortKey.price) sort.price = _updateCurrentValue(sort.price);
-    if (type == SortKey.capital)
+    if (type == SortKey.capital) {
       sort.capital = _updateCurrentValue(sort.capital);
+    }
     if (type == SortKey.change) sort.change = _updateCurrentValue(sort.change);
     _clearOtherSort(type);
     onTap(sort);

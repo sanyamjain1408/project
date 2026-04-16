@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/appbar_util.dart';
-import 'package:tradexpro_flutter/utils/dimens.dart';
 
 import 'favorites_pair/favorites_pair_screen.dart';
 import 'market_future/market_future_screen.dart';

@@ -191,7 +191,7 @@ class MarketTrendItemView extends StatelessWidget {
                      TextRobotoAutoBold(formattedPrice, maxLines: 1, textAlign: TextAlign.end),
                       // Niche: Price (e.g., $23k)
                       Text(
-                            "\$${formattedPrice} ", // Yahan Price add hoga
+                            "\$$formattedPrice ", // Yahan Price add hoga
                             style: TextStyle(
                               color: Colors.grey,
                               fontSize: 11, // Chhota font size

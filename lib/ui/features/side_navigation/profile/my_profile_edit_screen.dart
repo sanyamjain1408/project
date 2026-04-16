@@ -1,14 +1,10 @@
 import 'dart:io';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
-import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/extensions.dart';
-import 'package:tradexpro_flutter/utils/image_util.dart';
-import 'package:tradexpro_flutter/utils/spacers.dart';
 import '../../../../data/models/user.dart';
 import '../../../../utils/common_utils.dart';
 import '../../../../helper/app_helper.dart';

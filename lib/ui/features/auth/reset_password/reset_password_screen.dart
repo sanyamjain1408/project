@@ -167,7 +167,7 @@ class _ResetPasswordContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _controller = Get.find<ResetPasswordController>();
+    final controller = Get.find<ResetPasswordController>();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -267,22 +267,22 @@ class _ResetPasswordContent extends StatelessWidget {
         // New Password Field
         Obx(() {
           return TextField(
-            controller: _controller.passEditController,
-            obscureText: !_controller.isShowPassword.value,
+            controller: controller.passEditController,
+            obscureText: !controller.isShowPassword.value,
             style: const TextStyle(color: Colors.white),
             onTap: () => onPasswordFocus(),
             decoration: _inputDecoration(
               "New Password",
               suffix: IconButton(
                 icon: Icon(
-                  _controller.isShowPassword.value
+                  controller.isShowPassword.value
                       ? Icons.visibility
                       : Icons.visibility_off,
                   color: Colors.white70,
                 ),
                 onPressed: () {
-                  _controller.isShowPassword.value =
-                      !_controller.isShowPassword.value;
+                  controller.isShowPassword.value =
+                      !controller.isShowPassword.value;
                 },
               ),
             ),
@@ -294,22 +294,22 @@ class _ResetPasswordContent extends StatelessWidget {
         // Confirm Password Field
         Obx(() {
           return TextField(
-            controller: _controller.confirmPassEditController,
-            obscureText: !_controller.isShowPassword.value,
+            controller: controller.confirmPassEditController,
+            obscureText: !controller.isShowPassword.value,
             style: const TextStyle(color: Colors.white),
             onTap: () => onPasswordFocus(),
             decoration: _inputDecoration(
               "Confirm New Password",
               suffix: IconButton(
                 icon: Icon(
-                  _controller.isShowPassword.value
+                  controller.isShowPassword.value
                       ? Icons.visibility
                       : Icons.visibility_off,
                   color: Colors.white70,
                 ),
                 onPressed: () {
-                  _controller.isShowPassword.value =
-                      !_controller.isShowPassword.value;
+                  controller.isShowPassword.value =
+                      !controller.isShowPassword.value;
                 },
               ),
             ),
@@ -346,10 +346,10 @@ class _ResetPasswordContent extends StatelessWidget {
                 }
                 
                 // Set the combined code to the main controller
-                _controller.codeEditController.text = fullOtpCode;
+                controller.codeEditController.text = fullOtpCode;
                 
                 // Call validation
-                _controller.isInPutDataValid(context, registrationId);
+                controller.isInPutDataValid(context, registrationId);
               },
               borderRadius: BorderRadius.circular(12),
               child: const Center(

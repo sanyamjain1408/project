@@ -100,7 +100,7 @@ class _SignInContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _controller = Get.find<SignInController>();
+    final controller = Get.find<SignInController>();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -144,7 +144,7 @@ class _SignInContent extends StatelessWidget {
         ),
         const SizedBox(height: 49),
         TextField(
-          controller: _controller.emailEditController,
+          controller: controller.emailEditController,
           style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.emailAddress,
           decoration: _inputDecoration("Email"),
@@ -152,21 +152,21 @@ class _SignInContent extends StatelessWidget {
         const SizedBox(height: 20),
         Obx(() {
           return TextField(
-            controller: _controller.passEditController,
-            obscureText: !_controller.isShowPassword.value,
+            controller: controller.passEditController,
+            obscureText: !controller.isShowPassword.value,
             style: const TextStyle(color: Colors.white),
             decoration: _inputDecoration(
               "Password",
               suffix: IconButton(
                 icon: Icon(
-                  _controller.isShowPassword.value
+                  controller.isShowPassword.value
                       ? Icons.visibility
                       : Icons.visibility_off,
                   color: Colors.white70,
                 ),
                 onPressed: () {
-                  _controller.isShowPassword.value =
-                      !_controller.isShowPassword.value;
+                  controller.isShowPassword.value =
+                      !controller.isShowPassword.value;
                 },
               ),
             ),
@@ -208,7 +208,7 @@ class _SignInContent extends StatelessWidget {
           child: Material(
             color: Colors.transparent, // FIXED: Removed space between Colors and transparent
             child: InkWell(
-              onTap: () => _controller.isInPutDataValid(context),
+              onTap: () => controller.isInPutDataValid(context),
               borderRadius: BorderRadius.circular(12),
               child: const Center(
                 child: Text(

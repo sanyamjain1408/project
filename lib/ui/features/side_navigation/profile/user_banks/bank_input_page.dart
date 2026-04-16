@@ -201,7 +201,7 @@ class _BankInputPageState extends State<BankInputPage> {
                           ),
                       ],
                     ),
-                  )).toList(),
+                  )),
                 ],
               ),
             ),
