@@ -257,7 +257,7 @@ class MarketHeaderRow extends StatelessWidget {
         children: [
           Expanded(
             flex: 3,
-            child: Text(
+            child: const Text(
               "Pair/Vol",
               style: TextStyle(
                 color: Colors.white30, // ✅ 50% white

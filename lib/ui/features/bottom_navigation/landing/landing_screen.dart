@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:k_chart_plus/k_chart_plus.dart';
 
 import '../../../../addons/ico/ico_ui/ico_screen.dart';
 import '../../../../data/local/constants.dart';
@@ -14,11 +15,13 @@ import '../../../../utils/image_util.dart';
 import '../../../../utils/shimmer_loading/shimmer_view.dart';
 import '../../../../utils/spacers.dart';
 import '../../../../utils/text_util.dart';
+import '../../../../utils/web_view.dart';
 import '../../side_navigation/activity/activity_screen.dart';
 import '../../side_navigation/blog/blog_screen.dart';
 import '../../side_navigation/faq/faq_page.dart';
 import '../../side_navigation/gift_cards/gift_cards_screen.dart';
 import '../../side_navigation/profile/profile_screen.dart';
+import '../../side_navigation/referrals/referrals_screen.dart';
 import '../../side_navigation/staking/staking_screen.dart';
 import '../../side_navigation/fiat/fiat_screen.dart';
 import '../wallet/swap/swap_screen.dart';

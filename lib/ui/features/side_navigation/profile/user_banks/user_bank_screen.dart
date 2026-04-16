@@ -7,6 +7,7 @@ import '../../../../../utils/common_utils.dart';
 import '../../../../../utils/date_util.dart';
 import '../../../../../utils/dimens.dart';
 import '../../../../../utils/spacers.dart';
+import '../../../../../utils/text_util.dart';
 import '../../../../../utils/common_widgets.dart';
 import '../../../../../data/local/constants.dart';
 import '../../../../../data/models/bank_data.dart';

@@ -84,7 +84,7 @@ class _ForgotPasswordContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<ForgotPasswordController>();
+    final _controller = Get.find<ForgotPasswordController>();
 
     return Column(
       mainAxisSize: MainAxisSize.min, // Content wrap karega, stretch nahi hoga
@@ -134,7 +134,7 @@ class _ForgotPasswordContent extends StatelessWidget {
 
         // Input Field
         TextField(
-          controller: controller.emailEditController,
+          controller: _controller.emailEditController,
           style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
@@ -217,7 +217,7 @@ class _ForgotPasswordContent extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => controller.isInPutDataValid(context),
+              onTap: () => _controller.isInPutDataValid(context),
               borderRadius: BorderRadius.circular(12),
               child: const Center(
                 child: Text(
