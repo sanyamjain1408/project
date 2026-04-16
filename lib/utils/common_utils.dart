@@ -30,7 +30,13 @@ void showToast(String? text, {bool isError = true, bool isLong = false, ToastGra
 
 void showLoadingDialog({bool isDismissible = false}) {
   if (Get.isDialogOpen == null || !Get.isDialogOpen!) {
-    Get.dialog(Center(child: CircularProgressIndicator(color: Get.theme.focusColor)), barrierDismissible: isDismissible);
+    Get.dialog(
+      Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFFCCFF00)
+          ),
+          ),
+           barrierDismissible: isDismissible);
   }
 }
 

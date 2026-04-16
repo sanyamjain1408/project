@@ -17,13 +17,17 @@ import 'user_banks/user_bank_screen.dart';
 import 'user_banks/user_bank_controller.dart';
 import 'user_banks/bank_input_page.dart';
 
-const _bg      = Color(0xFF121212);
-const _cardBg  = Color(0xFF1E1E1E);
-const _green   = Color(0xFFCCFF00);
-const _white   = Color(0xFFFFFFFF);
-const _grey    = Color(0xFF8A8A8A);
+const _bg = Color(0xFF121212);
+const _cardBg = Color(0xFF1E1E1E);
+const _green = Color(0xFFCCFF00);
+const _white = Color(0xFFFFFFFF);
+const _grey = Color(0xFF8A8A8A);
 const _divider = Color(0xFF2A2A2A);
-const _dmSans  = 'DMSans';
+const _dmSans = 'DMSans';
+
+const Color _primary = Color(0xFF111111);
+const Color _secondary = Color(0xFF1A1A1A);
+const Color _textSecondary = Color(0xFFCCFF00);
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -38,13 +42,11 @@ class _ProfileScreenState extends State<ProfileScreen>
   late final TabController _tabController;
   List<UserActivity> userActivities = <UserActivity>[];
 
-  // ── FIGMA TAB NAMES — exactly matching Figma design ──
   static const _figmaTabs = ['Profile', 'Security', 'General', 'KYC', 'Banks'];
 
   @override
   void initState() {
     super.initState();
-    // Use controller menu count to avoid mismatch crash
     _tabController = TabController(
       length: _controller.getProfileMenus().length,
       vsync: this,
@@ -64,156 +66,185 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bg,
-      appBar: AppBar(
-        backgroundColor: _bg,
-        elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-        ),
-        leading: GestureDetector(
-          onTap: () => Get.back(),
-          child: const Icon(Icons.arrow_back_ios_new, color: _white, size: 18),
-        ),
-        title: const Text(
-          "Settings",
-          style: TextStyle(
-            color: _white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            fontFamily: _dmSans,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Obx(() {
-        final user = gUserRx.value;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-
-            // ── AVATAR ──────────────────────────────────────────────
-            const SizedBox(height: 20),
-            Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: _green, width: 2.5),
-                  ),
-                  child: ClipOval(child: showCircleAvatar(user.photo, size: 72)),
-                ),
-                Positioned(
-                  bottom: -8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _green,
-                      borderRadius: BorderRadius.circular(4),
+    return SafeArea(
+      top: true,
+      child: Scaffold(
+        backgroundColor: _primary,
+      
+        body: Obx(() {
+          final user = gUserRx.value;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height: 10),
+      
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                color: Colors.transparent,
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Get.back(),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: _white,
+                        size: 25,
+                      ),
                     ),
-                    child: const Text(
-                      "Verified",
+                    const SizedBox(width: 20),
+                    const Text(
+                      "Settings",
                       style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 9,
+                        color: _white,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         fontFamily: _dmSans,
                       ),
                     ),
+                  ],
+                ),
+              ),
+              // ── TOP SECTION ──
+              Container(
+                color: Colors.transparent,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: ClipOval(child: showCircleAvatar(user.photo)),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF015629).withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        "Verified",
+                        style: TextStyle(
+                          color: Color(0xFF00FF4D),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: _dmSans,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      getName(user.firstName, user.lastName),
+                      style: const TextStyle(
+                        color: _white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: _dmSans,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _maskEmail(user.email ?? ""),
+                      style: const TextStyle(
+                        color: _white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: _dmSans,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Tabs
+                    Container(
+                      color: _primary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(
+                          _controller.getProfileMenus().length,
+                          (i) {
+                            final isSelected =
+                                _controller.selectedType.value == i;
+                            final title = i < _figmaTabs.length
+                                ? _figmaTabs[i]
+                                : _controller.getProfileMenus()[i];
+                            return GestureDetector(
+                              onTap: () {
+                                _controller.selectedType.value = i;
+                                _tabController.animateTo(i);
+                                setState(() {});
+                              },
+                              child: Container(
+                                color: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 6,
+                                ),
+                                child: Text(
+                                  title,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? _white
+                                        : const Color(0x80FFFFFF),
+                                    fontSize: 16,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w400,
+                                    fontFamily: _dmSans,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      
+              // ── BOTTOM SECTION ──
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: _secondary,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // ── NAME ────────────────────────────────────────────────
-            Text(
-              getName(user.firstName, user.lastName),
-              style: const TextStyle(
-                color: _white,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                fontFamily: _dmSans,
-              ),
-            ),
-            const SizedBox(height: 4),
-
-            // ── EMAIL — masked like Figma ────────────────────────────
-            Text(
-              _maskEmail(user.email ?? ""),
-              style: const TextStyle(
-                color: _grey,
-                fontSize: 13,
-                fontFamily: _dmSans,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // ── TABS — Figma names ───────────────────────────────────
-            Container(
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: _divider, width: 1)),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                labelColor: _white,
-                unselectedLabelColor: _grey,
-                indicator: const UnderlineTabIndicator(
-                  borderSide: BorderSide(color: _green, width: 3.0),
-                  insets: EdgeInsets.symmetric(horizontal: 0),
-                ),
-                indicatorSize: TabBarIndicatorSize.label,
-                labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: _dmSans,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: _dmSans,
-                ),
-                onTap: (index) => _controller.selectedType.value = index,
-                // Show Figma names but keep same count as controller
-                tabs: List.generate(
-                  _controller.getProfileMenus().length,
-                  (i) => Tab(
-                    text: i < _figmaTabs.length
-                        ? _figmaTabs[i]
-                        : _controller.getProfileMenus()[i],
-                  ),
+                  child: _buildBody(),
                 ),
               ),
-            ),
-
-            // ── BODY ─────────────────────────────────────────────────
-            Expanded(
-              child: _buildBody(),
-            ),
-          ],
-        );
-      }),
+            ],
+          );
+        }),
+      ),
     );
   }
 
   Widget _buildBody() {
     switch (_controller.selectedType.value) {
-      case 0:  return _profileTab();
-      case 1:  return _wrapScreen(const ProfileEditScreen());
-      case 2:  return _wrapScreen(const SecurityScreen());
-      case 3:  return _wrapScreen(const KYCScreen());
-      case 4:  return const UserBankScreen();
-      default: return Container();
+      case 0:
+        return _profileTab();
+      case 1:
+        return _wrapScreen(const ProfileEditScreen());
+      case 2:
+        return _wrapScreen(const SecurityScreen());
+      case 3:
+        return _wrapScreen(const KYCScreen());
+      case 4:
+        return const UserBankScreen();
+      default:
+        return Container();
     }
   }
 
-  // Wrap screens that use Expanded internally
   Widget _wrapScreen(Widget screen) {
     return LayoutBuilder(
       builder: (context, constraints) => SizedBox(
@@ -228,25 +259,29 @@ class _ProfileScreenState extends State<ProfileScreen>
     final user = gUserRx.value;
     if (userActivities.isEmpty) {
       _controller.getUserActivities(
-          (list) => setState(() => userActivities = list));
+        (list) => setState(() => userActivities = list),
+      );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 30),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       children: [
-
-        // ── PROFILE UPDATE CARD ──────────────────────────────────────
+        // ── PROFILE UPDATE CARD ──
         _infoCard(
           title: "Profile Update",
           onEdit: () => Get.to(() => const _ProfileEditPage()),
           children: [
             _infoRow(
-              "User Name", getName(user.firstName, user.lastName),
-              "Email",     user.email ?? "",
+              "User Name",
+              getName(user.firstName, user.lastName),
+              "Email",
+              user.email ?? "",
             ),
             const SizedBox(height: 16),
             _infoRow(
               "Country",
-              user.countryName.isValid ? (user.countryName ?? "") : "No Country",
+              user.countryName.isValid
+                  ? (user.countryName ?? "")
+                  : "No Country",
               "Phone Number",
               user.phone ?? "No Phone",
             ),
@@ -257,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
         const SizedBox(height: 16),
 
-        // ── BANK DETAILS CARD ────────────────────────────────────────
+        // ── BANK DETAILS CARD ──
         _infoCard(
           title: "Bank Details",
           onEdit: () async {
@@ -267,46 +302,31 @@ class _ProfileScreenState extends State<ProfileScreen>
             await Future.delayed(const Duration(seconds: 2));
             hideLoadingDialog();
             if (bankController.userBanks.isNotEmpty) {
-              Get.to(() => BankInputPage(preBank: bankController.userBanks.first));
+              Get.to(
+                () => BankInputPage(preBank: bankController.userBanks.first),
+              );
             } else {
               Get.to(() => BankInputPage());
             }
           },
           children: [
-            // FIXED: "Bank Name" on both sides like Figma
             _infoRow("Bank Name", "Axis Bank", "Bank Name", "Patel Vyom"),
             const SizedBox(height: 16),
-            _infoRow("Bank account number", "10000100012121", "IFSC Code", "BARBOHUHDAS"),
+            _infoRow(
+              "Bank account number",
+              "10000100012121",
+              "IFSC Code",
+              "BARBOHUHDAS",
+            ),
           ],
         ),
 
         const SizedBox(height: 24),
-
-        // ── PROFILE ACTIVITY ─────────────────────────────────────────
-        if (userActivities.isNotEmpty) ...[
-          const Text(
-            "Profile Activity",
-            style: TextStyle(
-              color: _white,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              fontFamily: _dmSans,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(children: const [
-            Expanded(child: Text("Action",     style: TextStyle(color: _grey, fontSize: 12, fontFamily: _dmSans))),
-            Expanded(child: Text("IP Address", style: TextStyle(color: _grey, fontSize: 12, fontFamily: _dmSans), textAlign: TextAlign.center)),
-            Expanded(child: Text("Time",       style: TextStyle(color: _grey, fontSize: 12, fontFamily: _dmSans), textAlign: TextAlign.end)),
-          ]),
-          const SizedBox(height: 8),
-          ...userActivities.map((a) => _activityRow(a)),
-        ],
       ],
     );
   }
 
-  // ── WIDGETS ───────────────────────────────────────────────────────────────
+  // ── SINGLE _infoCard — NO DUPLICATE ──────────────────────────────────────
 
   Widget _infoCard({
     required String title,
@@ -316,24 +336,36 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(14),
+        color: _primary, // card bg — image se match
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Text(title, style: const TextStyle(
-              color: _green, fontSize: 15,
-              fontWeight: FontWeight.w700, fontFamily: _dmSans,
-            )),
-            const Spacer(),
-            GestureDetector(
-              onTap: onEdit,
-              child: const Icon(Icons.edit_outlined, color: _green, size: 18),
-            ),
-          ]),
-          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Color(0xFFCCFF00), // green title
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: _dmSans,
+                  height: 1.25,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: onEdit,
+                child: const Icon(
+                  Icons.edit_outlined,
+                  color: Color(0xFFCCFF00),
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
           ...children,
         ],
       ),
@@ -341,36 +373,80 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _infoRow(String l1, String v1, String l2, String v2) {
-    return Row(children: [
-      Expanded(child: _infoField(l1, v1)),
-      const SizedBox(width: 16),
-      Expanded(child: _infoField(l2, v2)),
-    ]);
+    return Row(
+      children: [
+        Expanded(child: _infoField(l1, v1)),
+        const SizedBox(width: 16),
+        Expanded(child: _infoField(l2, v2)),
+      ],
+    );
   }
 
   Widget _infoSingle(String label, String value) {
-    return Row(children: [
-      _infoField(label, value),
-      const SizedBox(width: 8),
-      GestureDetector(
-        onTap: () => Clipboard.setData(ClipboardData(text: value)),
-        child: const Icon(Icons.copy_outlined, color: _grey, size: 14),
-      ),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF8A8A8A), // grey label
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+            fontFamily: _dmSans,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                color: Color(0xFFFFFFFF), // white value
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: _dmSans,
+              ),
+            ),
+            const SizedBox(width: 6),
+            GestureDetector(
+              onTap: () => Clipboard.setData(ClipboardData(text: value)),
+              child: const Icon(
+                Icons.copy_outlined,
+                color: Color(0xFF8A8A8A),
+                size: 14,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _infoField(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(
-          color: _grey, fontSize: 11, fontFamily: _dmSans,
-        )),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0x80FFFFFF), // grey label
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            fontFamily: _dmSans,
+            height: 1.4,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(
-          color: _white, fontSize: 14,
-          fontWeight: FontWeight.w500, fontFamily: _dmSans,
-        )),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Color(0xFFFFFFFF), // white value
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            fontFamily: _dmSans,
+            height: 1.3,
+          ),
+        ),
       ],
     );
   }
@@ -380,22 +456,51 @@ class _ProfileScreenState extends State<ProfileScreen>
         "${AppChecker.getActivityActionText(activity.action)}\n${activity.source ?? ""}";
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(children: [
-        Expanded(child: Text(action,
-            style: const TextStyle(color: _white, fontSize: 12, fontFamily: _dmSans),
-            maxLines: 2)),
-        Expanded(child: Text(activity.ipAddress ?? "",
-            style: const TextStyle(color: _white, fontSize: 12, fontFamily: _dmSans),
-            textAlign: TextAlign.center, maxLines: 2)),
-        Expanded(child: Text(
-            formatDate(activity.updatedAt, format: dateTimeFormatYyyyMMDdHhMm),
-            style: const TextStyle(color: _white, fontSize: 12, fontFamily: _dmSans),
-            textAlign: TextAlign.end, maxLines: 2)),
-      ]),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              action,
+              style: const TextStyle(
+                color: _white,
+                fontSize: 12,
+                fontFamily: _dmSans,
+              ),
+              maxLines: 2,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              activity.ipAddress ?? "",
+              style: const TextStyle(
+                color: _white,
+                fontSize: 12,
+                fontFamily: _dmSans,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              formatDate(
+                activity.updatedAt,
+                format: dateTimeFormatYyyyMMDdHhMm,
+              ),
+              style: const TextStyle(
+                color: _white,
+                fontSize: 12,
+                fontFamily: _dmSans,
+              ),
+              textAlign: TextAlign.end,
+              maxLines: 2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  // ── vyym****tel@gmail.com format ─────────────────────────────────────────
   String _maskEmail(String email) {
     if (email.isEmpty) return "";
     final parts = email.split("@");
@@ -408,7 +513,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 }
 
-// ── WRAPPER: opens ProfileEditScreen as a proper full Scaffold page ───────────
+// ── WRAPPER ───────────────────────────────────────────────────────────────────
 class _ProfileEditPage extends StatelessWidget {
   const _ProfileEditPage();
 
@@ -421,7 +526,11 @@ class _ProfileEditPage extends StatelessWidget {
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Get.back(),
-          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+          child: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.white,
+            size: 18,
+          ),
         ),
         title: const Text(
           "Profile Update",
@@ -434,11 +543,7 @@ class _ProfileEditPage extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: const [
-          ProfileEditScreen(),
-        ],
-      ),
+      body: Column(children: const [ProfileEditScreen()]),
     );
   }
 }
