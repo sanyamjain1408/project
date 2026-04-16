@@ -40,7 +40,8 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> with SingleT
     return Column(
       children: [
         tabBarUnderline(
-            ["Open Orders".tr, "Order History".tr, "Trade History".tr, "Stop Limit Orders".tr], orderTabController,
+            ["Open Orders".tr, "Order History".tr, "Trade History".tr, "Stop Limit Orders".tr],
+            orderTabController,
             indicator: tabCustomIndicator(context),
             isScrollable: true,
             fontSize: Dimens.fontSizeMid,
@@ -64,8 +65,8 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> with SingleT
         Obx(() => gUserRx.value.id == 0
             ? Padding(
                 padding: const EdgeInsets.all(Dimens.paddingMid),
-                child:
-                    textSpanWithAction("Want to trade".tr, "Login".tr, onTap: () => Get.to(() => const SignInPage())),
+                child: textSpanWithAction(
+                    "Want to trade".tr, "Login".tr, onTap: () => Get.to(() => const SignInPage())),
               )
             : _listView())
       ],
@@ -74,7 +75,8 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> with SingleT
 
   Widget _listView() {
     return Obx(() {
-      final list = getData(selectedTabIndex.value, _controller.allMyHistories.value, subTab: selectedSubTabIndex.value);
+      final list = getData(selectedTabIndex.value, _controller.allMyHistories.value,
+          subTab: selectedSubTabIndex.value);
       return list.isEmpty
           ? handleEmptyViewWithLoading(_controller.isHistoryLoading.value)
           : Column(
@@ -82,13 +84,15 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> with SingleT
                 if (selectedTabIndex.value == 3 && list[index] is StopLimitOrder) {
                   return SpotTradeHistoryStopLimitItemView(
                       trade: list[index],
-                      onCancel: (trade) => _controller.cancelOpenOrderApp('stop', trade.id ?? 0),
+                      onCancel: (trade) =>
+                          _controller.cancelOpenOrderApp('stop', trade.id ?? 0),
                       orderData: _controller.dashboardData.value.orderData);
                 } else {
                   return SpotTradeHistoryItemView(
                       trade: list[index],
                       fromKey: getFromKey(),
-                      onCancel: (trade) => _controller.cancelOpenOrderApp(trade.type ?? '', trade.id ?? 0),
+                      onCancel: (trade) =>
+                          _controller.cancelOpenOrderApp(trade.type ?? '', trade.id ?? 0),
                       orderData: _controller.dashboardData.value.orderData);
                 }
               }),
@@ -97,28 +101,18 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> with SingleT
   }
 
   List<dynamic> getData(int tab, SpotAllMyHistories histories, {int? subTab}) {
-    if (tab == 0) {
-      return histories.orders ?? [];
-    } else if (tab == 1) {
-      return (subTab == 0 ? histories.buyOrders : histories.sellOrders) ?? [];
-    } else if (tab == 2) {
-      return histories.transactions ?? [];
-    } else if (tab == 3) {
-      return histories.stopLimitOrders ?? [];
-    }
+    if (tab == 0) return histories.orders ?? [];
+    if (tab == 1) return (subTab == 0 ? histories.buyOrders : histories.sellOrders) ?? [];
+    if (tab == 2) return histories.transactions ?? [];
+    if (tab == 3) return histories.stopLimitOrders ?? [];
     return [];
   }
 
   String getFromKey() {
-    if (selectedTabIndex.value == 0) {
-      return FromKey.buySell;
-    } else if (selectedTabIndex.value == 1 && selectedSubTabIndex.value == 0) {
-      return FromKey.buy;
-    } else if (selectedTabIndex.value == 1 && selectedSubTabIndex.value == 1) {
-      return FromKey.sell;
-    } else if (selectedTabIndex.value == 2) {
-      return FromKey.trade;
-    }
+    if (selectedTabIndex.value == 0) return FromKey.buySell;
+    if (selectedTabIndex.value == 1 && selectedSubTabIndex.value == 0) return FromKey.buy;
+    if (selectedTabIndex.value == 1 && selectedSubTabIndex.value == 1) return FromKey.sell;
+    if (selectedTabIndex.value == 2) return FromKey.trade;
     return '';
   }
 }
@@ -138,36 +132,84 @@ class SpotTradeHistoryItemView extends StatelessWidget {
     final tradeCoin = orderData?.tradeCoin ?? "";
     final baseCoin = orderData?.baseCoin ?? "";
     final pcl = context.theme.primaryColorLight;
-    return Column(
-      children: [
-        if (fromKey != FromKey.trade)
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF1F2937), width: 0.6),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // HEADER
           Row(
             children: [
-              buttonTextBordered((trade.type ?? "").toUpperCase(), true,
-                  color: color, visualDensity: minimumVisualDensity),
+              Text(
+                "$tradeCoin/$baseCoin",
+                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                "${(trade.type ?? "").toUpperCase()} LIMIT",
+                style: TextStyle(color: color, fontSize: 11),
+              ),
               const Spacer(),
-              if (fromKey == FromKey.buySell)
-                buttonText("Cancel".tr, visualDensity: minimumVisualDensity, onPress: () => onCancel(trade)),
-              if (fromKey == FromKey.buy || fromKey == FromKey.sell) TextRobotoAutoBold("$tradeCoin/$baseCoin"),
+              Text(
+                formatDate(trade.createdAt, format: dateTimeFormatYyyyMMDdHhMm) ?? "",
+                style: const TextStyle(color: Colors.grey, fontSize: 10),
+              ),
             ],
           ),
-        twoTextSpaceFixed("${"Amount".tr}: ", "${coinFormat(trade.amount)} $tradeCoin",
-            color: pcl, fontSize: Dimens.fontSizeSmall),
-        twoTextSpaceFixed("${"Fees".tr}: ", "${coinFormat(trade.fees)} $baseCoin",
-            color: pcl, fontSize: Dimens.fontSizeSmall),
-        twoTextSpaceFixed("${"Price".tr}: ", "${coinFormat(trade.price)} $baseCoin",
-            color: pcl, fontSize: Dimens.fontSizeSmall),
-        if (fromKey != FromKey.buy)
-          twoTextSpaceFixed("${"Processed".tr}: ", "${coinFormat(trade.processed)} $tradeCoin",
+
+          const SizedBox(height: 8),
+
+          // ORIGINAL UI
+          if (fromKey != FromKey.trade)
+            Row(
+              children: [
+                buttonTextBordered((trade.type ?? "").toUpperCase(), true,
+                    color: color, visualDensity: minimumVisualDensity),
+                const Spacer(),
+                if (fromKey == FromKey.buySell)
+                  buttonText("Cancel".tr,
+                      visualDensity: minimumVisualDensity,
+                      onPress: () => onCancel(trade)),
+                if (fromKey == FromKey.buy || fromKey == FromKey.sell)
+                  TextRobotoAutoBold("$tradeCoin/$baseCoin"),
+              ],
+            ),
+
+          twoTextSpaceFixed("${"Amount".tr}: ", "${coinFormat(trade.amount)} $tradeCoin",
               color: pcl, fontSize: Dimens.fontSizeSmall),
-        if (fromKey != FromKey.trade)
-          twoTextSpaceFixed("${"Total".tr}: ", "${coinFormat(trade.total)} $baseCoin",
+
+          twoTextSpaceFixed("${"Fees".tr}: ", "${coinFormat(trade.fees)} $baseCoin",
               color: pcl, fontSize: Dimens.fontSizeSmall),
-        twoTextSpaceFixed("${"Created At".tr}: ", formatDate(trade.createdAt, format: dateTimeFormatDdMMMMYyyyHhMm),
-            color: pcl, fontSize: Dimens.fontSizeSmall),
-        if (fromKey == FromKey.trade) textWithCopyView(trade.transactionId ?? "", mainAxisAlign: MainAxisAlignment.end),
-        dividerHorizontal()
-      ],
+
+          twoTextSpaceFixed("${"Price".tr}: ", "${coinFormat(trade.price)} $baseCoin",
+              color: pcl, fontSize: Dimens.fontSizeSmall),
+
+          if (fromKey != FromKey.buy)
+            twoTextSpaceFixed("${"Processed".tr}: ", "${coinFormat(trade.processed)} $tradeCoin",
+                color: pcl, fontSize: Dimens.fontSizeSmall),
+
+          if (fromKey != FromKey.trade)
+            twoTextSpaceFixed("${"Total".tr}: ", "${coinFormat(trade.total)} $baseCoin",
+                color: pcl, fontSize: Dimens.fontSizeSmall),
+
+          twoTextSpaceFixed("${"Created At".tr}: ",
+              formatDate(trade.createdAt, format: dateTimeFormatDdMMMMYyyyHhMm),
+              color: pcl, fontSize: Dimens.fontSizeSmall),
+
+          if (fromKey == FromKey.trade)
+            textWithCopyView(trade.transactionId ?? "", mainAxisAlign: MainAxisAlignment.end),
+
+          dividerHorizontal()
+        ],
+      ),
     );
   }
 }
@@ -186,29 +228,69 @@ class SpotTradeHistoryStopLimitItemView extends StatelessWidget {
     final tradeCoin = orderData?.tradeCoin ?? "";
     final baseCoin = orderData?.baseCoin ?? "";
     final pcl = context.theme.primaryColorLight;
-    return Column(
-      children: [
-        Row(
-          children: [
-            buttonTextBordered((trade.type ?? "").toUpperCase(), true,
-                color: color, visualDensity: minimumVisualDensity),
-            const Spacer(),
-            buttonText("Cancel".tr, visualDensity: minimumVisualDensity, onPress: () => onCancel(trade)),
-          ],
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF1F2937), width: 0.6),
         ),
-        twoTextSpaceFixed("${"Amount".tr}: ", "${coinFormat(trade.amount)} $tradeCoin",
-            color: pcl, fontSize: Dimens.fontSizeSmall),
-        twoTextSpaceFixed("${"Fees".tr}: ", "${coinFormat(trade.fees)} $baseCoin",
-            color: pcl, fontSize: Dimens.fontSizeSmall),
-        twoTextSpaceFixed("${"Price".tr}: ", "${coinFormat(trade.price)} $baseCoin",
-            color: pcl, fontSize: Dimens.fontSizeSmall),
-        twoTextSpaceFixed("${"Stop".tr}: ", "${coinFormat(trade.stop)} $baseCoin",
-            color: pcl, fontSize: Dimens.fontSizeSmall),
-        twoTextSpaceFixed("${"Total".tr}: ", "${coinFormat(trade.total)} $baseCoin",
-            color: pcl, fontSize: Dimens.fontSizeSmall),
-        // twoTextSpaceFixed("${"Created At".tr}: ", formatDate(trade.createdAt, format: dateTimeFormatDdMMMMYyyyHhMm)),
-        dividerHorizontal()
-      ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          Row(
+            children: [
+              Text(
+                "$tradeCoin/$baseCoin",
+                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                "${(trade.type ?? "").toUpperCase()} STOP LIMIT",
+                style: TextStyle(color: color, fontSize: 11),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => onCancel(trade),
+                child: const Icon(Icons.delete_outline, color: Colors.red, size: 16),
+              )
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          Row(
+            children: [
+              buttonTextBordered((trade.type ?? "").toUpperCase(), true,
+                  color: color, visualDensity: minimumVisualDensity),
+              const Spacer(),
+              buttonText("Cancel".tr,
+                  visualDensity: minimumVisualDensity,
+                  onPress: () => onCancel(trade)),
+            ],
+          ),
+
+          twoTextSpaceFixed("${"Amount".tr}: ", "${coinFormat(trade.amount)} $tradeCoin",
+              color: pcl, fontSize: Dimens.fontSizeSmall),
+
+          twoTextSpaceFixed("${"Fees".tr}: ", "${coinFormat(trade.fees)} $baseCoin",
+              color: pcl, fontSize: Dimens.fontSizeSmall),
+
+          twoTextSpaceFixed("${"Price".tr}: ", "${coinFormat(trade.price)} $baseCoin",
+              color: pcl, fontSize: Dimens.fontSizeSmall),
+
+          twoTextSpaceFixed("${"Stop".tr}: ", "${coinFormat(trade.stop)} $baseCoin",
+              color: pcl, fontSize: Dimens.fontSizeSmall),
+
+          twoTextSpaceFixed("${"Total".tr}: ", "${coinFormat(trade.total)} $baseCoin",
+              color: pcl, fontSize: Dimens.fontSizeSmall),
+
+          dividerHorizontal()
+        ],
+      ),
     );
   }
 }
