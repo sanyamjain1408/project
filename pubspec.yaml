@@ -73,6 +73,7 @@ dependencies:
   chat_bubbles: ^1.7.0
   file_picker: ^10.3.2
   google_fonts: ^6.2.1
+  dotted_border: ^3.1.0
 
 
 dev_dependencies:
