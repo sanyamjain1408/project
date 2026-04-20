@@ -44,7 +44,7 @@ Widget showCachedNetworkImage(String url, {double size = 90}) {
 
 Widget showImageAsset(
     {IconData? icon,
-    String? imagePath = "",
+    String? imagePath = "assets/icons/blogo.png",
     double? width,
     double? height,
     VoidCallback? onPressCallback,

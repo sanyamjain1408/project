@@ -131,7 +131,7 @@ flutter:
 
 flutter_launcher_icons:
   # To Create: dart run flutter_launcher_icons
-  image_path: "assets/icons/icLogo.png"
+  image_path: "assets/icons/blogo.png"
   android: true
   ios: true
   min_sdk_android: 21 # default 21
@@ -143,7 +143,7 @@ flutter_native_splash:
   color: "#ffffff"
   # background_image: "assets/dark-background.png"
   # splash image, must be png file and density 4x pixel.
-  image: assets/icons/ic_app_icon.png
+  image: assets/icons/blogo.png
   # The branding image must be a png file. It is supported for Android, iOS and the Web.
   # branding: assets/images/ic_branding.png
 
@@ -157,7 +157,7 @@ flutter_native_splash:
     # 640 pixels in diameter.
     # App icon without an icon background: This should be 1152×1152 pixels, and fit within a circle
     # 768 pixels in diameter.
-    image: assets/icons/ic_app_icon.png
+    image: assets/icons/blogo.png
     # Splash screen background color.
     color: "#ffffff"
     # App icon background color.
@@ -166,6 +166,6 @@ flutter_native_splash:
     # branding: assets/images/ic_branding.png
 
   # The image_dark, color_dark, icon_background_color_dark, and branding_dark set values that
-  image_dark: assets/icons/ic_app_icon.png
+  image_dark: assets/icons/blogo.png
   color_dark: "#0F0F0F"
   #icon_background_color_dark: "#17202A"

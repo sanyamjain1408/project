@@ -34,7 +34,7 @@ enum PhotoType { front, back, selfie }
 class AssetConstants {
   //ICONS
   static const basePathIcons = "assets/icons/";
-  static const icLogo = "${basePathIcons}icLogo.png";
+  static const blogo = "${basePathIcons}blogo.png";
   static const icEmail = "${basePathIcons}ic_email.svg";
   static const icFingerprintScan = "${basePathIcons}ic_fingerprint_scan.svg";
   static const icKey = "${basePathIcons}ic_key.svg";

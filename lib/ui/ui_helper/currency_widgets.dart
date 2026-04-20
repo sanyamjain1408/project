@@ -73,7 +73,7 @@ class CurrencyIconView extends StatelessWidget {
           child: TextRobotoAutoNormal(symbol, fontSize: Dimens.fontSizeMin),
         );
       }else {
-        return Image.asset(AssetConstants.icLogo, fit: BoxFit.cover);
+        return Image.asset(AssetConstants.blogo, fit: BoxFit.cover);
       }
     }
   }

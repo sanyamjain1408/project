@@ -10,20 +10,91 @@ import 'common_utils.dart';
 import 'decorations.dart';
 import 'dimens.dart';
 
-void alertForAction(BuildContext context,
-    {String? title, String? subTitle, int? maxLinesSub, String? buttonTitle, VoidCallback? onOkAction, Color? buttonColor}) {
-  final view = Column(
-    children: [
-      vSpacer10(),
-      if (title.isValid) TextRobotoAutoBold(title!, maxLines: 2, fontSize: Dimens.fontSizeLarge),
-      vSpacer10(),
-      if (subTitle.isValid) TextRobotoAutoBold(subTitle!, maxLines: maxLinesSub ?? 5),
-      vSpacer15(),
-      if (buttonTitle.isValid) buttonRoundedMain(text: buttonTitle, onPress: onOkAction, bgColor: buttonColor, buttonHeight: Dimens.btnHeightMid),
-      vSpacer10(),
-    ],
+const _bg = Color(0xFF121212);
+const _cardBg = Color(0xFF1E1E1E);
+const _green = Color(0xFFCCFF00);
+const _white = Color(0xFFFFFFFF);
+const _grey = Color(0xFF8A8A8A);
+const _divider = Color(0xFF2A2A2A);
+const _dmSans = 'DMSans';
+
+const Color _primary = Color(0xFF111111);
+const Color _secondary = Color(0xFF1A1A1A);
+
+
+void alertForAction(
+  BuildContext context, {
+  String? title,
+  String? subTitle,
+  int? maxLinesSub,
+  String? buttonTitle,
+  VoidCallback? onOkAction,
+  Color? buttonColor,
+}) {
+  final view = Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: _primary, //  CARD BG COLOR
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        vSpacer10(),
+
+        // 🔥 TITLE
+        if (title != null)
+          Text(
+            title,
+            maxLines: 2,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _white,
+              fontSize: 18, //  custom size
+              fontWeight: FontWeight.w700, //  custom weight
+              fontFamily: _dmSans, //  custom font
+            ),
+          ),
+
+        vSpacer10(),
+
+        // 🔥 SUBTITLE
+        if (subTitle != null)
+          Text(
+            subTitle,
+            maxLines: maxLinesSub ?? 5,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              fontFamily: _dmSans,
+            ),
+          ),
+
+        vSpacer15(),
+
+        // 🔥 BUTTON
+        if (buttonTitle != null)
+          buttonRoundedMain(
+            text: buttonTitle,
+            onPress: onOkAction,
+            bgColor: Colors.red, // BUTTON BG COLOR
+            textColor: Colors.white,
+            buttonHeight: Dimens.btnHeightMid,
+          ),
+
+        vSpacer10(),
+      ],
+    ),
   );
-  showModalSheetFullScreen(context, view);
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent, // important
+    builder: (_) => view,
+  );
 }
 
 void showModalSheetFullScreen(BuildContext context, Widget customView, {Function? onClose}) {
