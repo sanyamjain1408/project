@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   late final TabController _tabController;
   List<UserActivity> userActivities = <UserActivity>[];
 
-  static const _figmaTabs = ['Profile', 'Security', 'General', 'KYC', 'Banks'];
+  static const _figmaTabs = ['Profile', 'Security', 'General', 'KYC', ];
 
   @override
   void initState() {
@@ -161,13 +161,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                     // Tabs
                     Container(
-                      color: _primary,
+                      color: Colors.transparent,
+                      alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 10,
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: List.generate(
                           _controller.getProfileMenus().length,
                           (i) {
@@ -183,11 +184,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 setState(() {});
                               },
                               child: Container(
+                                alignment: Alignment.centerLeft,
                                 color: Colors.transparent,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 5,
                                   vertical: 6,
                                 ),
+                                margin: EdgeInsets.only(right: 5),
                                 child: Text(
                                   title,
                                   style: TextStyle(
@@ -241,8 +244,6 @@ class _ProfileScreenState extends State<ProfileScreen>
         return _generalTab();
       case 3:
         return KycTabView(controller: _controller); // ✅ Direct call
-      case 4:
-        return const UserBankScreen();
       default:
         return Container();
     }
@@ -260,6 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   ///---------------------------- profile --------------------------------------------
   Widget _profileTab() {
+
     final user = gUserRx.value;
     if (userActivities.isEmpty) {
       _controller.getUserActivities(
@@ -961,29 +963,8 @@ class _ProfileEditPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
-        elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Get.back(),
-          child: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.white,
-            size: 18,
-          ),
-        ),
-        title: const Text(
-          "Profile Update",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'DMSans',
-          ),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: _primary,
+      
       body: Column(children: const [ProfileEditScreen()]),
     );
   }

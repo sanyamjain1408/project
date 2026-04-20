@@ -14,7 +14,7 @@ import 'phone_verify_screen.dart';
 class MyProfileController extends GetxController {
   RxInt selectedType = 0.obs;
 
-  List<String> getProfileMenus() => ['Profile'.tr, 'Edit Profile'.tr, 'Security'.tr, 'KYC'.tr, "Banks".tr];
+  List<String> getProfileMenus() => ['Profile'.tr, 'Edit Profile'.tr, 'Security'.tr, 'KYC'.tr, ];
 
   void updateProfile(User updatedUser, File profileImage) {
     showLoadingDialog();
