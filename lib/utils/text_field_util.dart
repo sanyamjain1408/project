@@ -38,11 +38,11 @@ Container textFieldWithSuffixIcon({
       controller: controller,
       keyboardType: type,
       maxLines: maxLines,
-      cursorColor: Get.theme.primaryColor,
+      cursorColor: Colors.white,
       obscureText: isObscure,
       enabled: isEnable,
-      style: Get.theme.textTheme.displaySmall?.copyWith(
-        color: Get.theme.primaryColor,
+      style: TextStyle(
+        color: Colors.white,
       ),
       onChanged: (value) {
         if (onTextChange != null) onTextChange(value);
@@ -50,8 +50,8 @@ Container textFieldWithSuffixIcon({
       decoration: InputDecoration(
         prefixIcon: countryPick,
         labelText: labelText,
-        labelStyle: Get.theme.textTheme.displaySmall?.copyWith(
-          color: Get.theme.primaryColor,
+        labelStyle: TextStyle(
+          color: Colors.white,
         ),
         filled: false,
         isDense: true,
@@ -111,8 +111,8 @@ Container textFieldWithWidget({
       enabled: isEnable,
       readOnly: readOnly,
       textAlign: textAlign,
-      style: Get.theme.textTheme.displaySmall?.copyWith(
-        color: Get.theme.primaryColor,
+      style: TextStyle(
+        color: Colors.white,
       ),
       onChanged: (value) {
         if (onTextChange != null) onTextChange(value);
@@ -161,7 +161,7 @@ Container textFieldSearch({
           height: height,
           width: width,
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A).withOpacity(0.7),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(10),
           ),
           child: TextField(
@@ -222,10 +222,10 @@ SizedBox textFieldWithPrefixSuffixText({
     child: TextField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      cursorColor: Get.theme.primaryColor,
+      cursorColor: Colors.white,
       enabled: isEnable,
       style: Get.theme.textTheme.displaySmall?.copyWith(
-        color: Get.theme.primaryColor,
+        color: Colors.white,
       ),
       textAlign: textAlign,
       textAlignVertical: TextAlignVertical.center,
@@ -360,3 +360,75 @@ FittedBox textFieldTextWidget(String text, {Color? color, double? hMargin}) =>
         ],
       ),
     );
+
+// --- NEW: Fully Custom Basic Text Field (Updated) ---
+Container basicCustomTextField({
+  // Functionality Parameters
+  TextEditingController? controller,
+  String? hint,
+  String? labelText,
+  bool isObscure = false,
+  TextInputType? keyboardType,
+  Widget? suffixIcon,
+  Function(String)? onChange,
+
+  // --- Styling Parameters ---
+  double? height,
+  double? width, 
+  Color? bgColor,
+  
+  Color? textColor,
+  double? fontSize,
+  FontWeight? fontWeight,
+  
+  Color? hintColor,
+  
+  Color? borderColor,
+  double? borderWidth,
+  double? borderRadius,
+  
+  EdgeInsetsGeometry? padding,
+}) {
+  return Container(
+    height: height ?? 50,
+    width: width ?? double.infinity,
+    padding: padding ?? const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
+    decoration: BoxDecoration(
+      color: bgColor ?? Colors.transparent,
+      borderRadius: BorderRadius.circular(borderRadius ?? 8),
+      border: Border.all(
+        color: borderColor ?? Colors.transparent, // Default transparent
+        width: borderWidth ?? 1,
+      ),
+    ),
+    child: TextField(
+      controller: controller,
+      obscureText: isObscure,
+      keyboardType: keyboardType,
+      style: TextStyle(
+        color: textColor ?? Colors.white,
+        fontSize: fontSize ?? 16,
+        fontWeight: fontWeight ?? FontWeight.w400,
+        fontFamily: 'DMSans'
+      ),
+      onChanged: (val) {
+        if (onChange != null) onChange(val);
+      },
+      decoration: InputDecoration(
+        border: InputBorder.none, 
+        labelText: null, // Label removed to avoid floating hint
+        hintText: hint,
+        // Hint text same size as normal text so it doesn't float up
+        hintStyle: TextStyle(
+          color: hintColor ?? Colors.white.withOpacity(0.5),
+          fontSize: fontSize ?? 16,
+          fontWeight: fontWeight ?? FontWeight.w400,
+          fontFamily: 'DMSans'
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 15), // Center vertically
+        suffixIcon: suffixIcon,
+        isDense: true, 
+      ),
+    ),
+  );
+}

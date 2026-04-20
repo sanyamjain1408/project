@@ -27,7 +27,7 @@ Widget buttonRoundedMain(
               foregroundColor: WidgetStateProperty.all<Color>(bgColor),
               backgroundColor: WidgetStateProperty.all<Color>(bgColor),
               shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(borderRadius!)), side: BorderSide(color: bgColor)))),
+                  RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10)), side: BorderSide(color: bgColor)))),
           onPressed: onPress,
           child: AutoSizeText(text ?? "", style: Get.theme.textTheme.labelMedium!.copyWith(color: textColor), maxLines: 1)));
 }
@@ -44,7 +44,7 @@ Widget buttonRoundedWithIcon(
     double? borderRadius = Dimens.radiusCorner,
     EdgeInsets? padding,
     TextDirection textDirection = TextDirection.rtl}) {
-  bgColor = bgColor ?? Colors.grey;
+  bgColor = bgColor ?? Colors.white.withOpacity(0.5);
   final iconColor = textColor ?? Get.theme.primaryColor;
   return Directionality(
     textDirection: textDirection,

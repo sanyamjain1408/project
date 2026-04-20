@@ -18,16 +18,20 @@ import 'user_banks/user_bank_screen.dart';
 import 'user_banks/user_bank_controller.dart';
 import 'user_banks/bank_input_page.dart';
 import 'package:tradexpro_flutter/ui/features/auth/change_password/change_password_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart'; // GetX import assume kiya hai
+import 'package:qr_flutter/qr_flutter.dart'; // QR Package import kiya
 
-const _bg      = Color(0xFF121212);
-const _cardBg  = Color(0xFF1E1E1E);
-const _green   = Color(0xFFCCFF00);
-const _white   = Color(0xFFFFFFFF);
-const _grey    = Color(0xFF8A8A8A);
+const _bg = Color(0xFF121212);
+const _cardBg = Color(0xFF1E1E1E);
+const _green = Color(0xFFCCFF00);
+const _white = Color(0xFFFFFFFF);
+const _grey = Color(0xFF8A8A8A);
 const _divider = Color(0xFF2A2A2A);
-const _dmSans  = 'DMSans';
+const _dmSans = 'DMSans';
 
-const Color _primary   = Color(0xFF111111);
+const Color _primary = Color(0xFF111111);
 const Color _secondary = Color(0xFF1A1A1A);
 
 class ProfileScreen extends StatefulWidget {
@@ -77,20 +81,29 @@ class _ProfileScreenState extends State<ProfileScreen>
             children: [
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 color: Colors.transparent,
                 child: Row(
                   children: [
                     GestureDetector(
                       onTap: () => Get.back(),
-                      child: const Icon(Icons.arrow_back, color: _white, size: 25),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: _white,
+                        size: 25,
+                      ),
                     ),
                     const SizedBox(width: 20),
                     const Text(
                       "Settings",
                       style: TextStyle(
-                        color: _white, fontSize: 16,
-                        fontWeight: FontWeight.w700, fontFamily: _dmSans,
+                        color: _white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: _dmSans,
                       ),
                     ),
                   ],
@@ -102,12 +115,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                   children: [
                     const SizedBox(height: 20),
                     SizedBox(
-                      width: 50, height: 50,
+                      width: 50,
+                      height: 50,
                       child: ClipOval(child: showCircleAvatar(user.photo)),
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF015629).withOpacity(0.4),
                         borderRadius: BorderRadius.circular(10),
@@ -115,8 +132,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                       child: const Text(
                         "Verified",
                         style: TextStyle(
-                          color: Color(0xFF00FF4D), fontSize: 10,
-                          fontWeight: FontWeight.w400, fontFamily: _dmSans,
+                          color: Color(0xFF00FF4D),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: _dmSans,
                         ),
                       ),
                     ),
@@ -124,29 +143,37 @@ class _ProfileScreenState extends State<ProfileScreen>
                     Text(
                       getName(user.firstName, user.lastName),
                       style: const TextStyle(
-                        color: _white, fontSize: 20,
-                        fontWeight: FontWeight.w600, fontFamily: _dmSans,
+                        color: _white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: _dmSans,
                       ),
                     ),
                     const SizedBox(height: 5),
                     Text(
                       _maskEmail(user.email ?? ""),
                       style: const TextStyle(
-                        color: _white, fontSize: 12,
-                        fontWeight: FontWeight.w400, fontFamily: _dmSans,
+                        color: _white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: _dmSans,
                       ),
                     ),
                     // ── TABS ──
                     Container(
                       color: Colors.transparent,
                       alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: List.generate(
                           _controller.getProfileMenus().length,
                           (i) {
-                            final isSelected = _controller.selectedType.value == i;
+                            final isSelected =
+                                _controller.selectedType.value == i;
                             final title = i < _figmaTabs.length
                                 ? _figmaTabs[i]
                                 : _controller.getProfileMenus()[i];
@@ -159,14 +186,21 @@ class _ProfileScreenState extends State<ProfileScreen>
                               child: Container(
                                 alignment: Alignment.centerLeft,
                                 color: Colors.transparent,
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 6,
+                                ),
                                 margin: const EdgeInsets.only(right: 5),
                                 child: Text(
                                   title,
                                   style: TextStyle(
-                                    color: isSelected ? _white : const Color(0x80FFFFFF),
+                                    color: isSelected
+                                        ? _white
+                                        : const Color(0x80FFFFFF),
                                     fontSize: 16,
-                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w400,
                                     fontFamily: _dmSans,
                                   ),
                                 ),
@@ -200,11 +234,16 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildBody() {
     switch (_controller.selectedType.value) {
-      case 0: return _profileTab();
-      case 1: return _securityTab();
-      case 2: return _generalTab();
-      case 3: return KycTabView(controller: _controller);
-      default: return Container();
+      case 0:
+        return _profileTab();
+      case 1:
+        return _securityTab();
+      case 2:
+        return _generalTab();
+      case 3:
+        return KycTabView(controller: _controller);
+      default:
+        return Container();
     }
   }
 
@@ -212,7 +251,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _profileTab() {
     final user = gUserRx.value;
     if (userActivities.isEmpty) {
-      _controller.getUserActivities((list) => setState(() => userActivities = list));
+      _controller.getUserActivities(
+        (list) => setState(() => userActivities = list),
+      );
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
@@ -221,12 +262,20 @@ class _ProfileScreenState extends State<ProfileScreen>
           title: "Profile Update",
           onEdit: () => Get.to(() => const _ProfileEditPage()),
           children: [
-            _infoRow("User Name", getName(user.firstName, user.lastName), "Email", user.email ?? ""),
+            _infoRow(
+              "User Name",
+              getName(user.firstName, user.lastName),
+              "Email",
+              user.email ?? "",
+            ),
             const SizedBox(height: 16),
             _infoRow(
               "Country",
-              user.countryName.isValid ? (user.countryName ?? "") : "No Country",
-              "Phone Number", user.phone ?? "No Phone",
+              user.countryName.isValid
+                  ? (user.countryName ?? "")
+                  : "No Country",
+              "Phone Number",
+              user.phone ?? "No Phone",
             ),
             const SizedBox(height: 16),
             _infoSingle("UID Number", user.id.toString()),
@@ -242,7 +291,9 @@ class _ProfileScreenState extends State<ProfileScreen>
             await Future.delayed(const Duration(seconds: 2));
             hideLoadingDialog();
             if (bankController.userBanks.isNotEmpty) {
-              Get.to(() => BankInputPage(preBank: bankController.userBanks.first));
+              Get.to(
+                () => BankInputPage(preBank: bankController.userBanks.first),
+              );
             } else {
               Get.to(() => BankInputPage());
             }
@@ -250,7 +301,12 @@ class _ProfileScreenState extends State<ProfileScreen>
           children: [
             _infoRow("Bank Name", "Axis Bank", "Account Holder", "Patel Vyom"),
             const SizedBox(height: 16),
-            _infoRow("Bank account number", "10000100012121", "IFSC Code", "BARBOHUHDAS"),
+            _infoRow(
+              "Bank account number",
+              "10000100012121",
+              "IFSC Code",
+              "BARBOHUHDAS",
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -327,8 +383,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                 child: Text(
                   "Suspicious activity?\nPlease disable your account to secure your funds.",
                   style: TextStyle(
-                    color: Colors.white, fontSize: 12,
-                    fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33,
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontFamily: _dmSans,
+                    fontWeight: FontWeight.w400,
+                    height: 1.33,
                   ),
                 ),
               ),
@@ -372,11 +431,11 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       isScrollControlled: true,
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
-          color: _secondary,
+          color: _primary,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
@@ -385,7 +444,8 @@ class _ProfileScreenState extends State<ProfileScreen>
           children: [
             // Handle bar
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: Colors.white24,
                 borderRadius: BorderRadius.circular(2),
@@ -397,8 +457,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                 const Text(
                   "Account Management",
                   style: TextStyle(
-                    color: _white, fontSize: 16,
-                    fontWeight: FontWeight.w700, fontFamily: _dmSans,
+                    color: _white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: _dmSans,
                   ),
                 ),
                 const Spacer(),
@@ -410,20 +472,25 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
             const SizedBox(height: 20),
             // Delete Account option
-            Obx(() => _accountOptionTile(
-              title: "Delete Account",
-              subtitle: "This action will delete your account. if not sure, consider disabling your account",
-              isSelected: selected.value == 0,
-              onTap: () => selected.value = 0,
-            )),
+            Obx(
+              () => _accountOptionTile(
+                title: "Delete Account",
+                subtitle:
+                    "This action will delete your account. if not sure, consider disabling your account",
+                isSelected: selected.value == 0,
+                onTap: () => selected.value = 0,
+              ),
+            ),
             const SizedBox(height: 12),
             // Disable Account option
-            Obx(() => _accountOptionTile(
-              title: "Disable Account",
-              subtitle: "This is temporary disabling your account",
-              isSelected: selected.value == 1,
-              onTap: () => selected.value = 1,
-            )),
+            Obx(
+              () => _accountOptionTile(
+                title: "Disable Account",
+                subtitle: "This is temporary disabling your account",
+                isSelected: selected.value == 1,
+                onTap: () => selected.value = 1,
+              ),
+            ),
             const SizedBox(height: 24),
             // Continue button
             GestureDetector(
@@ -436,15 +503,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
                   color: _secondary,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white24, width: 0.5),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Center(
                   child: Text(
                     "Continue",
                     style: TextStyle(
-                      color: _white, fontSize: 16,
-                      fontWeight: FontWeight.w600, fontFamily: _dmSans,
+                      color: _white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: _dmSans,
                     ),
                   ),
                 ),
@@ -468,7 +536,8 @@ class _ProfileScreenState extends State<ProfileScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 22, height: 22,
+            width: 22,
+            height: 22,
             margin: const EdgeInsets.only(top: 2),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -486,16 +555,21 @@ class _ProfileScreenState extends State<ProfileScreen>
                 Text(
                   title,
                   style: TextStyle(
-                    color: isSelected ? _white : const Color(0xCCFFFFFF),
-                    fontSize: 15, fontWeight: FontWeight.w600, fontFamily: _dmSans,
+                    color: isSelected ? _white : Colors.white.withOpacity(0.5),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: _dmSans,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: Color(0x80FFFFFF), fontSize: 12,
-                    fontFamily: _dmSans, height: 1.4,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: _dmSans,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -532,14 +606,20 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: Text(
                 title,
                 style: const TextStyle(
-                  color: _white, fontSize: 16,
-                  fontFamily: _dmSans, fontWeight: FontWeight.w700, height: 1.25,
+                  color: _white,
+                  fontSize: 16,
+                  fontFamily: _dmSans,
+                  fontWeight: FontWeight.w700,
+                  height: 1.25,
                 ),
               ),
             ),
             if (showStatus && status != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusBgColor,
                   borderRadius: BorderRadius.circular(10),
@@ -547,8 +627,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                 child: Text(
                   status,
                   style: TextStyle(
-                    color: statusTextColor, fontSize: 10,
-                    fontFamily: _dmSans, fontWeight: FontWeight.w400,
+                    color: statusTextColor,
+                    fontSize: 10,
+                    fontFamily: _dmSans,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
@@ -582,8 +664,11 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: Text(
                 title,
                 style: const TextStyle(
-                  color: _white, fontSize: 16,
-                  fontFamily: _dmSans, fontWeight: FontWeight.w700, height: 1.25,
+                  color: _white,
+                  fontSize: 16,
+                  fontFamily: _dmSans,
+                  fontWeight: FontWeight.w700,
+                  height: 1.25,
                 ),
               ),
             ),
@@ -600,14 +685,38 @@ class _ProfileScreenState extends State<ProfileScreen>
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       children: [
-        _generalItem(title: "Portfolio base currency", iconPath: "assets/icons/portfolio.png", trailingText: "USDT", onTap: () {}),
-        _generalItem(title: "Language", iconPath: "assets/icons/language.png", trailingText: "English", onTap: () {}),
-        _generalItem(title: "History", iconPath: "assets/icons/history.png", showArrow: true, onTap: () {}),
-        _generalItem(title: "Price alerts", iconPath: "assets/icons/price.png", showArrow: true, onTap: () {}),
+        _generalItem(
+          title: "Portfolio base currency",
+          iconPath: "assets/icons/portfolio.png",
+          trailingText: "USDT",
+          onTap: () {},
+        ),
+        _generalItem(
+          title: "Language",
+          iconPath: "assets/icons/language.png",
+          trailingText: "English",
+          onTap: () {},
+        ),
+        _generalItem(
+          title: "History",
+          iconPath: "assets/icons/history.png",
+          showArrow: true,
+          onTap: () {},
+        ),
+        _generalItem(
+          title: "Price alerts",
+          iconPath: "assets/icons/price.png",
+          showArrow: true,
+          onTap: () {},
+        ),
         const SizedBox(height: 20),
         const Text(
           "Theme",
-          style: TextStyle(color: _green, fontSize: 14, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: _green,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 10),
         _darkModeItem(),
@@ -639,7 +748,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       isScrollControlled: true,
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
-          color: _secondary,
+          color: _primary,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
@@ -647,15 +756,24 @@ class _ProfileScreenState extends State<ProfileScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             const SizedBox(height: 20),
             Row(
               children: [
                 const Text(
                   "Style Setting",
-                  style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans),
+                  style: TextStyle(
+                    color: _white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: _dmSans,
+                  ),
                 ),
                 const Spacer(),
                 GestureDetector(
@@ -665,23 +783,41 @@ class _ProfileScreenState extends State<ProfileScreen>
               ],
             ),
             const SizedBox(height: 24),
-            Obx(() => Row(
-              children: [
-                _styleOption(
-                  label: "Default",
-                  isSelected: selected.value == 0,
-                  onTap: () => selected.value = 0,
-                  child: _candleChart(colors: [Colors.green, Colors.red, Colors.green, Colors.red, Colors.green]),
-                ),
-                const SizedBox(width: 16),
-                _styleOption(
-                  label: "Color Vision\nDeficiency",
-                  isSelected: selected.value == 1,
-                  onTap: () => selected.value = 1,
-                  child: _candleChart(colors: [const Color(0xFF00CFFF), const Color(0xFFFFD600), const Color(0xFF00CFFF), const Color(0xFFFFD600), const Color(0xFF00CFFF)]),
-                ),
-              ],
-            )),
+            Obx(
+              () => Row(
+                children: [
+                  _styleOption(
+                    label: "Default",
+                    isSelected: selected.value == 0,
+                    onTap: () => selected.value = 0,
+                    child: _candleChart(
+                      colors: [
+                        Colors.green,
+                        Colors.red,
+                        Colors.green,
+                        Colors.red,
+                        Colors.green,
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  _styleOption(
+                    label: "Color Vision\nDeficiency",
+                    isSelected: selected.value == 1,
+                    onTap: () => selected.value = 1,
+                    child: _candleChart(
+                      colors: [
+                        const Color(0xFF00CFFF),
+                        const Color(0xFFFFD600),
+                        const Color(0xFF00CFFF),
+                        const Color(0xFFFFD600),
+                        const Color(0xFF00CFFF),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -699,10 +835,10 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: _primary,
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isSelected ? _green : Colors.transparent,
               width: 1.5,
@@ -710,13 +846,16 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           child: Column(
             children: [
-              SizedBox(height: 80, child: child),
+              SizedBox(height: 70, child: child),
               const SizedBox(height: 10),
               Text(
                 label,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: _white, fontSize: 13, fontFamily: _dmSans,
+                  color: _white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: _dmSans,
                 ),
               ),
             ],
@@ -733,19 +872,28 @@ class _ProfileScreenState extends State<ProfileScreen>
       crossAxisAlignment: CrossAxisAlignment.center,
       children: List.generate(colors.length, (i) {
         final heights = [50.0, 65.0, 45.0, 70.0, 55.0];
-        final wicks   = [15.0, 20.0, 12.0, 22.0, 18.0];
+        final wicks = [15.0, 20.0, 12.0, 22.0, 18.0];
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(width: 2, height: wicks[i] / 2, color: colors[i].withOpacity(0.6)),
             Container(
-              width: 10, height: heights[i] * 0.55,
+              width: 2,
+              height: wicks[i] / 2,
+              color: colors[i].withOpacity(0.6),
+            ),
+            Container(
+              width: 10,
+              height: heights[i] * 0.55,
               decoration: BoxDecoration(
                 color: colors[i],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Container(width: 2, height: wicks[i] / 2, color: colors[i].withOpacity(0.6)),
+            Container(
+              width: 2,
+              height: wicks[i] / 2,
+              color: colors[i].withOpacity(0.6),
+            ),
           ],
         );
       }),
@@ -754,7 +902,8 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   // ── Color Preference Drawer (Image 8) ─────────────────────────────────────
   void _showColorPreferenceDrawer(BuildContext context) {
-    final RxInt selected = 0.obs; // 0 = green up/red down, 1 = green down/red up
+    final RxInt selected =
+        0.obs; // 0 = green up/red down, 1 = green down/red up
 
     showModalBottomSheet(
       context: context,
@@ -762,23 +911,24 @@ class _ProfileScreenState extends State<ProfileScreen>
       isScrollControlled: true,
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
-          color: _secondary,
+          color: _primary,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
-            ),
             const SizedBox(height: 20),
             Row(
               children: [
                 const Text(
                   "Color Preference",
-                  style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans),
+                  style: TextStyle(
+                    color: _white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: _dmSans,
+                  ),
                 ),
                 const Spacer(),
                 GestureDetector(
@@ -788,37 +938,39 @@ class _ProfileScreenState extends State<ProfileScreen>
               ],
             ),
             const SizedBox(height: 20),
-            Obx(() => Column(
-              children: [
-                // Option 1: Green Up, Red Down
-                _colorPrefOption(
-                  isSelected: selected.value == 0,
-                  onTap: () => selected.value = 0,
-                  leftLabel: "Green Up",
-                  leftColor: Colors.green,
-                  leftIcon: Icons.arrow_upward,
-                  rightLabel: "Red Down",
-                  rightColor: Colors.red,
-                  rightIcon: Icons.arrow_downward,
-                  trailingUp: Colors.green,
-                  trailingDown: Colors.red,
-                ),
-                const SizedBox(height: 12),
-                // Option 2: Green Down, Red Up
-                _colorPrefOption(
-                  isSelected: selected.value == 1,
-                  onTap: () => selected.value = 1,
-                  leftLabel: "Green Down",
-                  leftColor: Colors.green,
-                  leftIcon: Icons.arrow_downward,
-                  rightLabel: "Red Up",
-                  rightColor: Colors.red,
-                  rightIcon: Icons.arrow_upward,
-                  trailingUp: Colors.red,
-                  trailingDown: Colors.green,
-                ),
-              ],
-            )),
+            Obx(
+              () => Column(
+                children: [
+                  // Option 1: Green Up, Red Down
+                  _colorPrefOption(
+                    isSelected: selected.value == 0,
+                    onTap: () => selected.value = 0,
+                    leftLabel: "Green Up",
+                    leftColor: _green,
+                    leftIcon: Icons.arrow_upward,
+                    rightLabel: "Red Down",
+                    rightColor: Colors.red,
+                    rightIcon: Icons.arrow_downward,
+                    trailingUp: _green,
+                    trailingDown: Colors.red,
+                  ),
+                  const SizedBox(height: 12),
+                  // Option 2: Green Down, Red Up
+                  _colorPrefOption(
+                    isSelected: selected.value == 1,
+                    onTap: () => selected.value = 1,
+                    leftLabel: "Green Down",
+                    leftColor: _green,
+                    leftIcon: Icons.arrow_downward,
+                    rightLabel: "Red Up",
+                    rightColor: Colors.red,
+                    rightIcon: Icons.arrow_upward,
+                    trailingUp: Colors.red,
+                    trailingDown: _green,
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
           ],
         ),
@@ -852,15 +1004,41 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
         child: Row(
           children: [
+            // LEFT ICON (colored)
             Icon(leftIcon, color: leftColor, size: 16),
             const SizedBox(width: 4),
-            Text(leftLabel, style: TextStyle(color: leftColor, fontSize: 13, fontFamily: _dmSans, fontWeight: FontWeight.w500)),
+
+            // LEFT TEXT (always white)
+            Text(
+              leftLabel,
+              style: const TextStyle(
+                color: _white, //  FIXED
+                fontSize: 15,
+                fontFamily: _dmSans,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+
             const SizedBox(width: 16),
+
+            // RIGHT ICON (colored)
             Icon(rightIcon, color: rightColor, size: 16),
             const SizedBox(width: 4),
-            Text(rightLabel, style: TextStyle(color: rightColor, fontSize: 13, fontFamily: _dmSans, fontWeight: FontWeight.w500)),
+
+            // RIGHT TEXT (always white)
+            Text(
+              rightLabel,
+              style: const TextStyle(
+                color: _white, //  FIXED
+                fontSize: 15,
+                fontFamily: _dmSans,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+
             const Spacer(),
-            // Trailing arrows
+
+            // TRAILING ICONS (colored)
             Icon(Icons.arrow_upward, color: trailingUp, size: 16),
             Icon(Icons.arrow_downward, color: trailingDown, size: 16),
           ],
@@ -882,7 +1060,10 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: Container(
         margin: const EdgeInsets.only(bottom: 15),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        decoration: BoxDecoration(color: _primary, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: _primary,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Row(
           children: [
             Image.asset(iconPath, height: 22, width: 22),
@@ -890,19 +1071,38 @@ class _ProfileScreenState extends State<ProfileScreen>
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w600, fontFamily: _dmSans, height: 1.25),
+                style: const TextStyle(
+                  color: _white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: _dmSans,
+                  height: 1.25,
+                ),
               ),
             ),
             if (trailingText != null)
               Row(
                 children: [
-                  Text(trailingText, style: const TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
+                  Text(
+                    trailingText,
+                    style: const TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down, color: _green, size: 18),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: _green,
+                    size: 18,
+                  ),
                 ],
               ),
             if (customWidget != null) customWidget,
-            if (showArrow) const Icon(Icons.arrow_forward_ios, color: _green, size: 16),
+            if (showArrow)
+              const Icon(Icons.arrow_forward_ios, color: _green, size: 16),
           ],
         ),
       ),
@@ -917,7 +1117,15 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: Row(
         children: [
           const Expanded(
-            child: Text("Dark Mode", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+            child: Text(
+              "Dark Mode",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: _dmSans,
+              ),
+            ),
           ),
           Container(
             padding: const EdgeInsets.all(4),
@@ -945,23 +1153,46 @@ class _ProfileScreenState extends State<ProfileScreen>
         color: isSelected ? Colors.black : Colors.transparent,
         shape: BoxShape.circle,
       ),
-      child: Image.asset(asset, height: 20, color: isSelected ? Colors.white : Colors.white.withOpacity(0.5)),
+      child: Image.asset(
+        asset,
+        height: 20,
+        color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+      ),
     );
   }
 
   // ─────────────────────────── SHARED WIDGETS ───────────────────────────────
-  Widget _infoCard({required String title, required VoidCallback onEdit, required List<Widget> children}) {
+  Widget _infoCard({
+    required String title,
+    required VoidCallback onEdit,
+    required List<Widget> children,
+  }) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: _primary, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: _primary,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(title, style: const TextStyle(color: _green, fontSize: 16, fontWeight: FontWeight.w400, fontFamily: _dmSans, height: 1.25)),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: _green,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: _dmSans,
+                  height: 1.25,
+                ),
+              ),
               const Spacer(),
-              GestureDetector(onTap: onEdit, child: const Icon(Icons.edit_outlined, color: _green, size: 20)),
+              GestureDetector(
+                onTap: onEdit,
+                child: const Icon(Icons.edit_outlined, color: _green, size: 20),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -985,15 +1216,35 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Color(0xFF8A8A8A), fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF8A8A8A),
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+            fontFamily: _dmSans,
+          ),
+        ),
         const SizedBox(height: 4),
         Row(
           children: [
-            Text(value, style: const TextStyle(color: _white, fontSize: 14, fontWeight: FontWeight.w500, fontFamily: _dmSans)),
+            Text(
+              value,
+              style: const TextStyle(
+                color: _white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: _dmSans,
+              ),
+            ),
             const SizedBox(width: 6),
             GestureDetector(
               onTap: () => Clipboard.setData(ClipboardData(text: value)),
-              child: const Icon(Icons.copy_outlined, color: Color(0xFF8A8A8A), size: 14),
+              child: const Icon(
+                Icons.copy_outlined,
+                color: Color(0xFF8A8A8A),
+                size: 14,
+              ),
             ),
           ],
         ),
@@ -1005,9 +1256,27 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Color(0x80FFFFFF), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dmSans, height: 1.4)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0x80FFFFFF),
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            fontFamily: _dmSans,
+            height: 1.4,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w400, fontFamily: _dmSans, height: 1.3)),
+        Text(
+          value,
+          style: const TextStyle(
+            color: _white,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            fontFamily: _dmSans,
+            height: 1.3,
+          ),
+        ),
       ],
     );
   }
@@ -1017,7 +1286,9 @@ class _ProfileScreenState extends State<ProfileScreen>
     final parts = email.split("@");
     if (parts.length != 2) return email;
     final name = parts[0];
-    final masked = name.length > 4 ? "${name.substring(0, 4)}${"*" * (name.length - 4)}tel" : name;
+    final masked = name.length > 4
+        ? "${name.substring(0, 4)}${"*" * (name.length - 4)}tel"
+        : name;
     return "$masked@${parts[1]}";
   }
 }
@@ -1039,14 +1310,37 @@ class _ProfileEditPage extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // GOOGLE AUTHENTICATOR SCREEN  (Image 1)
 // ─────────────────────────────────────────────────────────────────────────────
-class GoogleAuthScreen extends StatelessWidget {
+
+// Class ko StatefulWidget banaya
+class GoogleAuthScreen extends StatefulWidget {
   const GoogleAuthScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    const secretKey = "wetyruykngbvsfbl25434wergfbdn";
-    final codeCtrl  = TextEditingController();
+  State<GoogleAuthScreen> createState() => _GoogleAuthScreenState();
+}
 
+// State class banayi
+class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
+  // Colors aur Fonts (Apne project ke hisab se adjust kar sakte hain)
+
+  static const _bg = Color(0xFF121212);
+  static const _cardBg = Color(0xFF1E1E1E);
+  static const _green = Color(0xFFCCFF00);
+  static const _white = Color(0xFFFFFFFF);
+  static const _grey = Color(0xFF8A8A8A);
+  static const _divider = Color(0xFF2A2A2A);
+  static const _dmSans = 'DMSans';
+
+  static const Color _primary = Color(0xFF111111);
+  static const Color _secondary = Color(0xFF1A1A1A);
+
+  // Ab 'const' hata diya, bas 'final' rakha hai. Error solve ho jayega.
+  final String secretKey = "wetyruykngbvsfbl25434wergfbdn";
+
+  final codeCtrl = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _primary,
       body: SafeArea(
@@ -1060,11 +1354,22 @@ class GoogleAuthScreen extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: () => Get.back(),
-                    child: const Icon(Icons.arrow_back, color: _white, size: 22),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: _white,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 16),
-                  const Text("Google Authenticator",
-                      style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                  const Text(
+                    "Google Authenticator",
+                    style: TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1074,32 +1379,67 @@ class GoogleAuthScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 16),
                   const Text(
-                    "Open  Google Authenticator, Scan the QR code\nor enter the key, then come\nback here to continue",
-                    style: TextStyle(color: _white, fontSize: 14, fontFamily: _dmSans, height: 1.6,fontWeight: FontWeight.w400),
+                    "Open Google Authenticator, Scan the QR code\nor enter the key, then come\nback here to continue",
+                    style: TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontFamily: _dmSans,
+                      height: 1.6,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                   const SizedBox(height: 32),
-                  // QR placeholder
+
+                  // --- QR CODE CONTAINER START ---
                   Center(
                     child: Container(
-                      width: 180, height: 180,
+                      width: 180,
+                      height: 180,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD9D9D9),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: QrImageView(
+                          data: secretKey,
+                          version: QrVersions.auto,
+                          size: 160.0,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                        ),
                       ),
                     ),
                   ),
+
+                  // --- QR CODE CONTAINER END ---
                   const SizedBox(height: 20),
                   Center(
-                    child: Text(secretKey,
-                        style: const TextStyle(color: _white, fontSize: 16, fontFamily: _dmSans,fontWeight: FontWeight.w400)),
+                    child: Text(
+                      secretKey,
+                      style: const TextStyle(
+                        color: _white,
+                        fontSize: 16,
+                        fontFamily: _dmSans,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Copy button
                   Center(
                     child: GestureDetector(
                       onTap: () {
-                        Clipboard.setData(const ClipboardData(text: secretKey));
-                        showToast("Copied to clipboard");
+                        Clipboard.setData(
+                          ClipboardData(text: secretKey),
+                        ); // 'const' hata diya
+                        // Agar aapke paas custom showToast function hai to use use karein, nahi to SnackBar
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Copied to clipboard"),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
                       },
                       child: Container(
                         width: 180,
@@ -1109,8 +1449,15 @@ class GoogleAuthScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Center(
-                          child: Text("Copy",
-                              style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                          child: Text(
+                            "Copy",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: _dmSans,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1118,7 +1465,13 @@ class GoogleAuthScreen extends StatelessWidget {
                   const SizedBox(height: 28),
                   const Text(
                     "Enter the 6 digit verification code from your authenticator app.",
-                    style: TextStyle(color: _white, fontSize: 12, fontFamily: _dmSans, height: 1.5, fontWeight: FontWeight.w400),
+                    style: TextStyle(
+                      color: _white,
+                      fontSize: 12,
+                      fontFamily: _dmSans,
+                      height: 1.5,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   // Code input
@@ -1134,12 +1487,25 @@ class GoogleAuthScreen extends StatelessWidget {
                           child: TextField(
                             controller: codeCtrl,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(color: _white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w400),
-                            decoration:  InputDecoration(
+                            style: const TextStyle(
+                              color: _white,
+                              fontSize: 16,
+                              fontFamily: _dmSans,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: "Google 2FA Code",
-                              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w400),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              hintStyle: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: 16,
+                                fontFamily: _dmSans,
+                                fontWeight: FontWeight.w400,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                             ),
                           ),
                         ),
@@ -1147,11 +1513,20 @@ class GoogleAuthScreen extends StatelessWidget {
                           padding: const EdgeInsets.only(right: 16),
                           child: GestureDetector(
                             onTap: () async {
-                              final data = await Clipboard.getData('text/plain');
+                              final data = await Clipboard.getData(
+                                'text/plain',
+                              );
                               codeCtrl.text = data?.text ?? '';
                             },
-                            child: const Text("Paste",
-                                style: TextStyle(color: Color(0xFF00B052), fontSize: 13, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
+                            child: const Text(
+                              "Paste",
+                              style: TextStyle(
+                                color: Color(0xFF00B052),
+                                fontSize: 13,
+                                fontFamily: _dmSans,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -1177,8 +1552,15 @@ class GoogleAuthScreen extends StatelessWidget {
                           border: Border.all(color: Colors.white),
                         ),
                         child: const Center(
-                          child: Text("Close",
-                              style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                          child: Text(
+                            "Close",
+                            style: TextStyle(
+                              color: _white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: _dmSans,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1197,8 +1579,15 @@ class GoogleAuthScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Center(
-                          child: Text("Verify",
-                              style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                          child: Text(
+                            "Verify",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: _dmSans,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1233,49 +1622,93 @@ class VerifyEmailScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  GestureDetector(onTap: () => Get.back(), child: const Icon(Icons.arrow_back, color: _white, size: 22)),
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: _white,
+                      size: 22,
+                    ),
+                  ),
                   const SizedBox(width: 16),
-                  const Text("Verify E-mail",
-                      style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                  const Text(
+                    "Verify E-mail",
+                    style: TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
                 ],
               ),
             ),
             Expanded(
               child: Padding(
-                padding:  EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                     Text("Email Verification",
-                        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
+                    Text(
+                      "Email Verification",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                        fontFamily: _dmSans,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Container(
                       height: 52,
-                      decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
+                      decoration: BoxDecoration(
+                        color: _secondary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: emailCtrl,
-                              style: const TextStyle(color: _white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w400),
+                              style: const TextStyle(
+                                color: _white,
+                                fontSize: 16,
+                                fontFamily: _dmSans,
+                                fontWeight: FontWeight.w400,
+                              ),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
+                                ),
                               ),
                             ),
                           ),
                           const Padding(
                             padding: EdgeInsets.only(right: 16),
-                            child: Text("Sent OTP",
-                                style: TextStyle(color:Color(0xFF00B052),  fontSize: 13, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
+                            child: Text(
+                              "Sent OTP",
+                              style: TextStyle(
+                                color: Color(0xFF00B052),
+                                fontSize: 13,
+                                fontFamily: _dmSans,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text("Sent to Ab123@df",
-                        style: TextStyle(color: _green, fontSize: 12, fontFamily: _dmSans)),
+                    const Text(
+                      "Sent to Ab123@df",
+                      style: TextStyle(
+                        color: _green,
+                        fontSize: 12,
+                        fontFamily: _dmSans,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1288,14 +1721,23 @@ class VerifyEmailScreen extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _green,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     elevation: 0,
                   ),
                   onPressed: () {
                     // TODO: confirm email OTP
                   },
-                  child: const Text("Confirm",
-                      style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                  child: const Text(
+                    "Confirm",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1326,10 +1768,24 @@ class VerifyMobileScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  GestureDetector(onTap: () => Get.back(), child: const Icon(Icons.arrow_back, color: _white, size: 22)),
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: _white,
+                      size: 22,
+                    ),
+                  ),
                   const SizedBox(width: 16),
-                  const Text("Verify Mobile",
-                      style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                  const Text(
+                    "Verify Mobile",
+                    style: TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1340,36 +1796,66 @@ class VerifyMobileScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    const Text("Mobile Verification",
-                        style: TextStyle(color: Colors.white54, fontSize: 12, fontFamily: _dmSans)),
+                    Text(
+                      "Mobile Verification",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                        fontFamily: _dmSans,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Container(
                       height: 52,
-                      decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
+                      decoration: BoxDecoration(
+                        color: _secondary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: mobileCtrl,
                               keyboardType: TextInputType.phone,
-                              style: const TextStyle(color: _white, fontSize: 15, fontFamily: _dmSans),
+                              style: const TextStyle(
+                                color: _white,
+                                fontSize: 15,
+                                fontFamily: _dmSans,
+                              ),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
+                                ),
                               ),
                             ),
                           ),
                           const Padding(
                             padding: EdgeInsets.only(right: 16),
-                            child: Text("Sent OTP",
-                                style: TextStyle(color: _green, fontSize: 13, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
+                            child: Text(
+                              "Sent OTP",
+                              style: TextStyle(
+                                color: Color(0xFF00B052),
+                                fontSize: 12,
+                                fontFamily: _dmSans,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text("Sent to 99******12",
-                        style: TextStyle(color: _green, fontSize: 12, fontFamily: _dmSans)),
+                    const Text(
+                      "Sent to 99******12",
+                      style: TextStyle(
+                        color: _green,
+                        fontSize: 12,
+                        fontFamily: _dmSans,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1378,18 +1864,27 @@ class VerifyMobileScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
               child: SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _green,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     elevation: 0,
                   ),
                   onPressed: () {
                     // TODO: confirm mobile OTP
                   },
-                  child: const Text("Confirm",
-                      style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                  child: const Text(
+                    "Confirm",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1410,11 +1905,11 @@ class AccountActivityScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Dummy data — replace with real API
     final items = List.generate(
-      6,
+      3,
       (_) => {
         "device": "Mobile Safari – Apple iphone\niOS 26.2",
-        "time":   "11 Days Ago | Surat – GJ – In",
-        "ip":     "IP : 152.59.40.245",
+        "time": "11 Days Ago | Surat – GJ – In",
+        "ip": "IP : 152.59.40.245",
       },
     );
 
@@ -1428,10 +1923,24 @@ class AccountActivityScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  GestureDetector(onTap: () => Get.back(), child: const Icon(Icons.arrow_back, color: _white, size: 22)),
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: _white,
+                      size: 22,
+                    ),
+                  ),
                   const SizedBox(width: 16),
-                  const Text("Account Activity",
-                      style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                  const Text(
+                    "Account Activity",
+                    style: TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1443,35 +1952,62 @@ class AccountActivityScreen extends StatelessWidget {
                   final item = items[i];
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    height: 127,
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: _secondary,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.center, // 👈 ye add karo
                       children: [
-                        // Phone icon box
-                        Container(
-                          width: 44, height: 44,
-                          decoration: BoxDecoration(
-                            color: _primary,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: _green.withOpacity(0.6), width: 1),
-                          ),
-                          child: const Icon(Icons.smartphone_outlined, color: _green, size: 22),
+                        Image.asset(
+                          'assets/icons/phone.png',
+                          height: 54,
+                          width: 54,
+                          fit: BoxFit.contain,
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment
+                                .center, // 👈 optional but better
                             children: [
-                              Text(item["device"]!,
-                                  style: const TextStyle(color: _white, fontSize: 13, fontFamily: _dmSans, fontWeight: FontWeight.w600, height: 1.4)),
-                              const SizedBox(height: 4),
-                              Text(item["time"]!,
-                                  style: const TextStyle(color: Colors.white54, fontSize: 11, fontFamily: _dmSans)),
-                              Text(item["ip"]!,
-                                  style: const TextStyle(color: Colors.white54, fontSize: 11, fontFamily: _dmSans)),
+                              Text(
+                                item["device"]!,
+                                style: const TextStyle(
+                                  color: _white,
+                                  fontSize: 16,
+                                  fontFamily: _dmSans,
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                item["time"]!,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 12,
+                                  fontFamily: _dmSans,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              Text(
+                                item["ip"]!,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 12,
+                                  fontFamily: _dmSans,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1499,7 +2035,7 @@ class KycTabView extends StatefulWidget {
 }
 
 class _KycTabViewState extends State<KycTabView> {
-  Rx<KycDetails>  kycDetailsRx  = KycDetails().obs;
+  Rx<KycDetails> kycDetailsRx = KycDetails().obs;
   Rx<KycSettings> kycSettingsRx = KycSettings(enabledKycType: 0).obs;
   RxBool isLoading = true.obs;
 
@@ -1522,45 +2058,89 @@ class _KycTabViewState extends State<KycTabView> {
   Widget build(BuildContext context) {
     return Obx(() {
       if (isLoading.value) {
-        return const Center(child: CircularProgressIndicator(color: Colors.transparent));
+        return const Center(
+          child: CircularProgressIndicator(color: Colors.transparent),
+        );
       }
       final settings = kycSettingsRx.value;
       if (settings.enabledKycType == 0) {
         return const Center(
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.person_add_disabled, color: Colors.white54, size: 60),
-            SizedBox(height: 12),
-            Text("KYC Disabled", style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans')),
-          ]),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.person_add_disabled, color: Colors.white54, size: 60),
+              SizedBox(height: 12),
+              Text(
+                "KYC Disabled",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontFamily: 'DMSans',
+                ),
+              ),
+            ],
+          ),
         );
       }
       if (settings.enabledKycType == 2) {
         if (settings.enabledKycUserDetails?.persona?.isVerified == 1) {
           return const Center(
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(Icons.how_to_reg, color: Color(0xFFCCFF00), size: 60),
-              SizedBox(height: 12),
-              Text("KYC Verified Successfully", style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans')),
-            ]),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.how_to_reg, color: Color(0xFFCCFF00), size: 60),
+                SizedBox(height: 12),
+                Text(
+                  "KYC Verified Successfully",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: 'DMSans',
+                  ),
+                ),
+              ],
+            ),
           );
         }
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.photo_camera_outlined, color: Color(0xFFCCFF00), size: 60),
+              const Icon(
+                Icons.photo_camera_outlined,
+                color: Color(0xFFCCFF00),
+                size: 60,
+              ),
               const SizedBox(height: 12),
-              const Text("Verify your identity", style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans')),
+              const Text(
+                "Verify your identity",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontFamily: 'DMSans',
+                ),
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFCCFF00),
                   foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 14,
+                  ),
                 ),
                 onPressed: () {},
-                child: const Text("Start", style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w700)),
+                child: const Text(
+                  "Start",
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1571,11 +2151,27 @@ class _KycTabViewState extends State<KycTabView> {
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
         children: [
           if (details.nid != null)
-            _kycListItem(iconPath: "assets/icons/id_card.png", title: "Upload your ID Card",
-                onTap: () => _goUpload(context, "ID Card", details.nid, IdVerificationType.nid)),
+            _kycListItem(
+              iconPath: "assets/icons/id_card.png",
+              title: "Upload your ID Card",
+              onTap: () => _goUpload(
+                context,
+                "ID Card",
+                details.nid,
+                IdVerificationType.nid,
+              ),
+            ),
           if (details.passport != null)
-            _kycListItem(iconPath: "assets/icons/passport.png", title: "Upload your Passport",
-                onTap: () => _goUpload(context, "Passport", details.passport, IdVerificationType.passport)),
+            _kycListItem(
+              iconPath: "assets/icons/passport.png",
+              title: "Upload your Passport",
+              onTap: () => _goUpload(
+                context,
+                "Passport",
+                details.passport,
+                IdVerificationType.passport,
+              ),
+            ),
           _selfieItem(),
           const SizedBox(height: 30),
           _submitBtn(),
@@ -1584,26 +2180,59 @@ class _KycTabViewState extends State<KycTabView> {
     });
   }
 
-  void _goUpload(BuildContext context, String title, KycObject? kyc, IdVerificationType type) {
-    Navigator.push(context, MaterialPageRoute(
-      builder: (_) => KycUploadPage(title: title, kyc: kyc, type: type, controller: widget.controller,
-          onUploaded: (d) => kycDetailsRx.value = d),
-    ));
+  void _goUpload(
+    BuildContext context,
+    String title,
+    KycObject? kyc,
+    IdVerificationType type,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KycUploadPage(
+          title: title,
+          kyc: kyc,
+          type: type,
+          controller: widget.controller,
+          onUploaded: (d) => kycDetailsRx.value = d,
+        ),
+      ),
+    );
   }
 
-  Widget _kycListItem({required String iconPath, required String title, required VoidCallback onTap}) {
+  Widget _kycListItem({
+    required String iconPath,
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(color: _primary, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: _primary,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Row(
           children: [
             Image.asset(iconPath, height: 22, width: 22),
             const SizedBox(width: 14),
-            Expanded(child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'DMSans'))),
-            const Icon(Icons.arrow_forward_ios, color: Color(0xFFCCFF00), size: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'DMSans',
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Color(0xFFCCFF00),
+              size: 16,
+            ),
           ],
         ),
       ),
@@ -1614,25 +2243,50 @@ class _KycTabViewState extends State<KycTabView> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(color: _primary, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: _primary,
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Image.asset("assets/icons/selfie.png", height: 22, width: 22, color: Colors.white),
-            const SizedBox(width: 14),
-            const Text("Upload your Selfie", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'DMSans')),
-          ]),
+          Row(
+            children: [
+              Image.asset(
+                "assets/icons/selfie.png",
+                height: 22,
+                width: 22,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 14),
+              const Text(
+                "Upload your Selfie",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'DMSans',
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
           GestureDetector(
             onTap: () {},
             child: Container(
-              height: 130, width: double.infinity,
-              decoration: BoxDecoration(color: Colors.transparent, borderRadius: BorderRadius.circular(10)),
+              height: 130,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(50), color: _secondary),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(50),
+                    color: _secondary,
+                  ),
                   child: const Icon(Icons.add, color: Colors.white, size: 32),
                 ),
               ),
@@ -1649,10 +2303,20 @@ class _KycTabViewState extends State<KycTabView> {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: _green,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: const Center(
-          child: Text("Submit",
-              style: TextStyle(color: Color(0xF1111111), fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+          child: Text(
+            "Submit",
+            style: TextStyle(
+              color: Color(0xF1111111),
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'DMSans',
+            ),
+          ),
         ),
       ),
     );
