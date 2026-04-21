@@ -31,27 +31,22 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
 
     super.initState();
   }
+@override
+Widget build(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // ── TOP TABBAR HATAO — Overview nahi dikhana ──
+      // TabBarPlain hata diya
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TabBarPlain(
-            titles: _controller.getTypeMap().values.toList(),
-            controller: _controller.tabController!,
-            isScrollable: true,
-            onTap: (value) => _controller.selectedTypeIndex.value = value),
-        Expanded(
-          child: Container(
-            decoration: boxDecorationTopRoundBorder(radius: Dimens.radiusCornerMid),
-            alignment: Alignment.topCenter,
-            child: Obx(() => gUserRx.value.id == 0 ? signInNeedView() : _getBodyPage(_controller.selectedTypeIndex.value)),
-          ),
-        ),
-      ],
-    );
-  }
+      Expanded(
+        child: Obx(() => gUserRx.value.id == 0 
+          ? signInNeedView() 
+          : const WalletOverviewPage()),
+      ),
+    ],
+  );
+}
 
   Widget _getBodyPage(int index) {
     int key = _controller.getTypeMap().keys.toList()[index];

@@ -28,8 +28,19 @@ import 'wallet_crypto_withdraw/wallet_crypto_withdraw_screen.dart';
 import 'wallet_fiat_deposit/wallet_fiat_deposit_screen.dart';
 import 'wallet_fiat_withdrawal/wallet_fiat_withdrawal_screen.dart';
 
+const Color _primary = Color(0xFF111111);
+   const Color _secondary = Color(0xFF1A1A1A);
+const Color _green = Color(0xFFCCFF00);
+  const _white = Color(0xFFFFFFFF);
+  const _dmSans = 'DMSans';
+
 class WalletNameView extends StatelessWidget {
-  const WalletNameView({super.key, required this.wallet, this.isExpanded = false, this.hideImage});
+  const WalletNameView({
+    super.key,
+    required this.wallet,
+    this.isExpanded = false,
+    this.hideImage,
+  });
 
   final Wallet wallet;
   final bool isExpanded;
@@ -39,7 +50,13 @@ class WalletNameView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (hideImage != true) showImageNetwork(imagePath: wallet.coinIcon, width: Dimens.iconSizeMid, height: Dimens.iconSizeMid, bgColor: Colors.transparent),
+        if (hideImage != true)
+          showImageNetwork(
+            imagePath: wallet.coinIcon,
+            width: Dimens.iconSizeMid,
+            height: Dimens.iconSizeMid,
+            bgColor: Colors.transparent,
+          ),
         if (hideImage != true) hSpacer10(),
         isExpanded ? Expanded(child: _nameView(context)) : _nameView(context),
       ],
@@ -51,14 +68,22 @@ class WalletNameView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextRobotoAutoBold(wallet.coinType ?? ""),
-        TextRobotoAutoNormal(wallet.name ?? "", color: context.theme.primaryColor),
+        TextRobotoAutoNormal(
+          wallet.name ?? "",
+          color: context.theme.primaryColor,
+        ),
       ],
     );
   }
 }
 
 class CommonWalletItemView extends StatelessWidget {
-  const CommonWalletItemView({super.key, required this.wallet, required this.fromType, required this.isHide});
+  const CommonWalletItemView({
+    super.key,
+    required this.wallet,
+    required this.fromType,
+    required this.isHide,
+  });
 
   final Wallet wallet;
   final int fromType;
@@ -79,28 +104,34 @@ class CommonWalletItemView extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 isHide
-                    ? const TextRobotoAutoBold("******", fontSize: Dimens.fontSizeMid, textAlign: TextAlign.end)
+                    ? const TextRobotoAutoBold(
+                        "******",
+                        fontSize: Dimens.fontSizeMid,
+                        textAlign: TextAlign.end,
+                      )
                     : TextRobotoAutoBold(coinFormat(wallet.balance)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     buttonOnlyIcon(
-                        iconData: Icons.send_outlined,
-                        size: Dimens.iconSizeMin,
-                        visualDensity: minimumVisualDensity,
-                        iconColor: context.theme.primaryColor,
-                        onPress: () => _showTransferView(context, true)),
+                      iconData: Icons.send_outlined,
+                      size: Dimens.iconSizeMin,
+                      visualDensity: minimumVisualDensity,
+                      iconColor: context.theme.primaryColor,
+                      onPress: () => _showTransferView(context, true),
+                    ),
                     buttonOnlyIcon(
-                        iconData: Icons.wallet_outlined,
-                        size: Dimens.iconSizeMin,
-                        visualDensity: minimumVisualDensity,
-                        iconColor: context.theme.primaryColor,
-                        onPress: () => _showTransferView(context, false))
+                      iconData: Icons.wallet_outlined,
+                      size: Dimens.iconSizeMin,
+                      visualDensity: minimumVisualDensity,
+                      iconColor: context.theme.primaryColor,
+                      onPress: () => _showTransferView(context, false),
+                    ),
                   ],
-                )
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -111,19 +142,30 @@ class CommonWalletItemView extends StatelessWidget {
     showModalSheetFullScreen(
       context,
       WalletTransferView(
-          isSend: isSend,
-          fromType: fromType,
-          coinType: wallet.coinType ?? '',
-          onSubmit: (amount) {
-
-            Get.find<WalletController>().transferWalletAmount(wallet, fromType, amount, isSend);
-          }),
+        isSend: isSend,
+        fromType: fromType,
+        coinType: wallet.coinType ?? '',
+        onSubmit: (amount) {
+          Get.find<WalletController>().transferWalletAmount(
+            wallet,
+            fromType,
+            amount,
+            isSend,
+          );
+        },
+      ),
     );
   }
 }
 
 class WalletTransferView extends StatelessWidget {
-  const WalletTransferView({super.key, required this.isSend, required this.fromType, required this.coinType, required this.onSubmit});
+  const WalletTransferView({
+    super.key,
+    required this.isSend,
+    required this.fromType,
+    required this.coinType,
+    required this.onSubmit,
+  });
 
   final bool isSend;
   final int fromType;
@@ -136,7 +178,10 @@ class WalletTransferView extends StatelessWidget {
     final name = fromType == WalletViewType.p2p ? "P2P" : "Future";
     final subtitle = isSend
         ? "sent_coin_to_spot_wallet".trParams({"coin": coinType, "name": name})
-        : "receive_coin_from_spot_wallet".trParams({"coin": coinType, "name": name});
+        : "receive_coin_from_spot_wallet".trParams({
+            "coin": coinType,
+            "name": name,
+          });
     final amountEditController = TextEditingController();
     RxString error = "".obs;
 
@@ -149,24 +194,34 @@ class WalletTransferView extends StatelessWidget {
         TextRobotoAutoNormal(subtitle, maxLines: 2),
         vSpacer20(),
         textFieldWithSuffixIcon(
-            controller: amountEditController,
-            labelText: "Amount".tr,
-            hint: "Your amount".tr,
-            type: const TextInputType.numberWithOptions(decimal: true),
-            onTextChange: (text) => error.value = ""),
-        Obx(() => error.value.isValid ? TextRobotoAutoNormal(error.value, color: Colors.red, textAlign: TextAlign.center) : vSpacer0()),
+          controller: amountEditController,
+          labelText: "Amount".tr,
+          hint: "Your amount".tr,
+          type: const TextInputType.numberWithOptions(decimal: true),
+          onTextChange: (text) => error.value = "",
+        ),
+        Obx(
+          () => error.value.isValid
+              ? TextRobotoAutoNormal(
+                  error.value,
+                  color: Colors.red,
+                  textAlign: TextAlign.center,
+                )
+              : vSpacer0(),
+        ),
         vSpacer20(),
         buttonRoundedMain(
-            text: "Exchange".tr,
-            onPress: () {
-              final amount = makeDouble(amountEditController.text.trim());
-              if (amount <= 0) {
-                error.value = "amount_must_greater_than_0".tr;
-                return;
-              }
-              hideKeyboard();
-              onSubmit(amount);
-            }),
+          text: "Exchange".tr,
+          onPress: () {
+            final amount = makeDouble(amountEditController.text.trim());
+            if (amount <= 0) {
+              error.value = "amount_must_greater_than_0".tr;
+              return;
+            }
+            hideKeyboard();
+            onSubmit(amount);
+          },
+        ),
         vSpacer15(),
       ],
     );
@@ -174,7 +229,12 @@ class WalletTransferView extends StatelessWidget {
 }
 
 class SpotWalletItemView extends StatelessWidget {
-  const SpotWalletItemView({super.key, required this.wallet, this.onTap, required this.isHide});
+  const SpotWalletItemView({
+    super.key,
+    required this.wallet,
+    this.onTap,
+    required this.isHide,
+  });
 
   final Wallet wallet;
   final VoidCallback? onTap;
@@ -186,26 +246,40 @@ class SpotWalletItemView extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(Dimens.paddingMid),
       child: InkWell(
-        onTap: onTap ??
+        onTap:
+            onTap ??
             () {
               hideKeyboard();
-              showBottomSheetDynamic(context, SpotWalletDetailsView(wallet: wallet), title: "Wallet Details".tr);
+              showBottomSheetDynamic(
+                context,
+                SpotWalletDetailsView(wallet: wallet),
+                title: "Wallet Details".tr,
+              );
             },
         child: Row(
           children: [
             Expanded(child: WalletNameView(wallet: wallet, isExpanded: true)),
             Expanded(
               child: isHide
-                  ? const TextRobotoAutoBold("******", fontSize: Dimens.fontSizeMid, textAlign: TextAlign.end)
+                  ? const TextRobotoAutoBold(
+                      "******",
+                      fontSize: Dimens.fontSizeMid,
+                      textAlign: TextAlign.end,
+                    )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         TextRobotoAutoBold(coinFormat(wallet.availableBalance)),
-                        TextRobotoAutoNormal(currencyFormat(wallet.availableBalanceUsd, name: currencyName)),
+                        TextRobotoAutoNormal(
+                          currencyFormat(
+                            wallet.availableBalanceUsd,
+                            name: currencyName,
+                          ),
+                        ),
                       ],
                     ),
-            )
+            ),
           ],
         ),
       ),
@@ -233,47 +307,75 @@ class SpotWalletDetailsView extends StatelessWidget {
           vSpacer10(),
           WalletNameView(wallet: wallet),
           vSpacer20(),
-          WalletBalanceView(title: 'Total Balance'.tr, coin: wallet.total, currency: wallet.totalBalanceUsd),
+          WalletBalanceView(
+            title: 'Total Balance'.tr,
+            coin: wallet.total,
+            currency: wallet.totalBalanceUsd,
+          ),
           dividerHorizontal(),
-          WalletBalanceView(title: 'On Order'.tr, coin: wallet.onOrder, currency: wallet.onOrderUsd),
+          WalletBalanceView(
+            title: 'On Order'.tr,
+            coin: wallet.onOrder,
+            currency: wallet.onOrderUsd,
+          ),
           dividerHorizontal(),
-          WalletBalanceView(title: 'Available Balance'.tr, coin: wallet.availableBalance, currency: wallet.availableBalanceUsd),
+          WalletBalanceView(
+            title: 'Available Balance'.tr,
+            coin: wallet.availableBalance,
+            currency: wallet.availableBalanceUsd,
+          ),
           dividerHorizontal(),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
               if (wallet.isDeposit == 1)
-                _btnWalletDetails("Deposit".tr, true, onTap: () {
-                  if (wallet.currencyType == CurrencyType.crypto) {
-                    Get.to(() => WalletCryptoDepositScreen(wallet: wallet));
-                  } else if (wallet.currencyType == CurrencyType.fiat) {
-                    Get.to(() => WalletFiatDepositScreen(wallet: wallet));
-                  }
-                }),
+                _btnWalletDetails(
+                  "Deposit".tr,
+                  true,
+                  onTap: () {
+                    if (wallet.currencyType == CurrencyType.crypto) {
+                      Get.to(() => WalletCryptoDepositScreen(wallet: wallet));
+                    } else if (wallet.currencyType == CurrencyType.fiat) {
+                      Get.to(() => WalletFiatDepositScreen(wallet: wallet));
+                    }
+                  },
+                ),
               if (wallet.isWithdrawal == 1)
-                _btnWalletDetails("Withdraw".tr, false, onTap: () {
-                  if (wallet.currencyType == CurrencyType.crypto) {
-                    Get.to(() => WalletCryptoWithdrawScreen(wallet: wallet));
-                  } else if (wallet.currencyType == CurrencyType.fiat) {
-                    Get.to(() => WalletFiatWithdrawalScreen(wallet: wallet));
-                  }
-                }),
+                _btnWalletDetails(
+                  "Withdraw".tr,
+                  false,
+                  onTap: () {
+                    if (wallet.currencyType == CurrencyType.crypto) {
+                      Get.to(() => WalletCryptoWithdrawScreen(wallet: wallet));
+                    } else if (wallet.currencyType == CurrencyType.fiat) {
+                      Get.to(() => WalletFiatWithdrawalScreen(wallet: wallet));
+                    }
+                  },
+                ),
               if (wallet.tradeStatus == 1 && pairList.isNotEmpty)
-                PopupMenuView(pairList,
-                    child: _btnWalletDetails(
-                      "Trade".tr,
-                      false,
-                    ), onSelected: (selected) {
-                  Get.back();
-                  final pair = _controller.coinPairs.firstWhere((element) => element.coinPairName == selected);
-                  getDashboardController().selectedCoinPair.value = pair;
-                  getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
-                }),
+                PopupMenuView(
+                  pairList,
+                  child: _btnWalletDetails("Trade".tr, false),
+                  onSelected: (selected) {
+                    Get.back();
+                    final pair = _controller.coinPairs.firstWhere(
+                      (element) => element.coinPairName == selected,
+                    );
+                    getDashboardController().selectedCoinPair.value = pair;
+                    getRootController().changeBottomNavIndex(
+                      AppBottomNavKey.trade,
+                    );
+                  },
+                ),
               if (isSwapActive)
-                _btnWalletDetails("Swap".tr, false, onTap: () {
-                  Get.to(() => SwapScreen(preWallet: wallet));
-                }),
+                _btnWalletDetails(
+                  "Swap".tr,
+                  false,
+                  onTap: () {
+                    Get.to(() => SwapScreen(preWallet: wallet));
+                  },
+                ),
             ],
           ),
           vSpacer10(),
@@ -282,23 +384,34 @@ class SpotWalletDetailsView extends StatelessWidget {
     );
   }
 
-  Widget _btnWalletDetails(String title, bool isDeposit, {VoidCallback? onTap}) {
+  Widget _btnWalletDetails(
+    String title,
+    bool isDeposit, {
+    VoidCallback? onTap,
+  }) {
     final color = isDeposit ? null : Get.theme.dialogTheme.backgroundColor;
-    return buttonText(title,
-        bgColor: color,
-        fontSize: Dimens.fontSizeMidExtra,
-        visualDensity: VisualDensity.compact,
-        onPress: onTap == null
-            ? null
-            : () {
-                Get.back();
-                onTap();
-              });
+    return buttonText(
+      title,
+      bgColor: color,
+      fontSize: Dimens.fontSizeMidExtra,
+      visualDensity: VisualDensity.compact,
+      onPress: onTap == null
+          ? null
+          : () {
+              Get.back();
+              onTap();
+            },
+    );
   }
 }
 
 class WalletBalanceView extends StatelessWidget {
-  const WalletBalanceView({super.key, required this.title, this.coin, this.currency});
+  const WalletBalanceView({
+    super.key,
+    required this.title,
+    this.coin,
+    this.currency,
+  });
 
   final String title;
   final double? coin;
@@ -310,17 +423,30 @@ class WalletBalanceView extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(flex: 2, child: TextRobotoAutoBold(title, maxLines: 1, color: context.theme.primaryColorLight)),
+        Expanded(
+          flex: 2,
+          child: TextRobotoAutoBold(
+            title,
+            maxLines: 1,
+            color: context.theme.primaryColorLight,
+          ),
+        ),
         Expanded(
           flex: 3,
           child: gIsBalanceHide.value
-              ? const TextRobotoAutoBold("******", fontSize: Dimens.fontSizeMid, textAlign: TextAlign.end)
+              ? const TextRobotoAutoBold(
+                  "******",
+                  fontSize: Dimens.fontSizeMid,
+                  textAlign: TextAlign.end,
+                )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextRobotoAutoBold(coinFormat(coin)),
-                    TextRobotoAutoNormal(currencyFormat(currency, name: currencyName)),
+                    TextRobotoAutoNormal(
+                      currencyFormat(currency, name: currencyName),
+                    ),
                   ],
                 ),
         ),
@@ -330,8 +456,18 @@ class WalletBalanceView extends StatelessWidget {
 }
 
 class TotalBalanceView extends StatelessWidget {
-  const TotalBalanceView(this.isHide, this.totalBalance,
-      {super.key, this.onHide, this.title, this.totalUsd, this.onHistoryTap, this.coins, this.selectedCoin, this.onSelectCoin});
+  const TotalBalanceView(
+    this.isHide,
+    this.totalBalance, {
+    super.key,
+    this.onHide,
+    this.title,
+    this.totalUsd,
+    this.onHistoryTap,
+    this.coins,
+    this.selectedCoin,
+    this.onSelectCoin,
+  });
 
   final bool isHide;
   final double? totalBalance;
@@ -346,53 +482,151 @@ class TotalBalanceView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String currencyName = gUserRx.value.currency ?? DefaultValue.currency;
-    final iconData = isHide ? Icons.visibility_off_outlined : Icons.visibility_outlined;
+
+    final iconData = isHide
+        ? Icons.visibility_off_outlined
+        : Icons.visibility_outlined;
+
     final titleL = title ?? 'Total Balance'.tr;
-    return Row(
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
+        // 🔹 TOP CONTENT (same as before)
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                TextRobotoAutoNormal(titleL),
-                buttonOnlyIcon(
-                    iconData: iconData,
-                    visualDensity: minimumVisualDensity,
-                    onPress: () {
-                      GetStorage().write(PreferenceKey.isBalanceHide, !isHide);
-                      gIsBalanceHide.value = !isHide;
-                      if (onHide != null) onHide!(!isHide);
-                    })
-              ],
-            ),
-            isHide
-                ? TextRobotoAutoNormal("Balance_hidden".tr)
-                : Row(
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      TextRobotoAutoBold(coinFormat(totalBalance), fontSize: Dimens.fontSizeLarge),
-                      hSpacer5(),
-                      if (coins.isValid || selectedCoin.isValid)
-                        PopupMenuView(coins ?? [],
-                            child: _coinNameView(selectedCoin, coins.isValid),
-                            onSelected: (selected) => onSelectCoin == null ? null : onSelectCoin!(selected)),
+                      TextRobotoAutoNormal(titleL),
+                      buttonOnlyIcon(
+                        iconData: iconData,
+                        visualDensity: minimumVisualDensity,
+                        onPress: () {
+                          GetStorage().write(
+                            PreferenceKey.isBalanceHide,
+                            !isHide,
+                          );
+                          gIsBalanceHide.value = !isHide;
+                          if (onHide != null) onHide!(!isHide);
+                        },
+                      ),
                     ],
                   ),
-            if (!isHide) vSpacer2(),
-            if (!isHide) TextRobotoAutoNormal("= ${currencyFormat(totalUsd)} $currencyName")
+
+                  isHide
+                      ? TextRobotoAutoNormal("Balance_hidden".tr)
+                      : Row(
+                          children: [
+                            Text(
+                              double.parse(
+                                coinFormat(totalBalance),
+                              ).toStringAsFixed(2),
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'DMSans',
+                                color: Colors.white,
+                              ),
+                            ),
+                            hSpacer5(),
+                            if (coins.isValid || selectedCoin.isValid)
+                              PopupMenuView(
+                                coins ?? [],
+                                child: _coinNameView(
+                                  selectedCoin,
+                                  coins.isValid,
+                                ),
+                                onSelected: (selected) => onSelectCoin == null
+                                    ? null
+                                    : onSelectCoin!(selected),
+                              ),
+                          ],
+                        ),
+
+                  if (!isHide) vSpacer2(),
+
+                  if (!isHide)
+                    Text(
+                      "= ${currencyFormat(totalUsd)} $currencyName",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'DMSans',
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                    ),
+
+                  const SizedBox(height: 5),
+
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "Today ",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 12,
+                            fontFamily: 'DMSans',
+                          ),
+                        ),
+                        const TextSpan(
+                          text: "+\$8.84(0.71%)",
+                          style: TextStyle(
+                            color: Color(0xFFCCFF00),
+                            fontSize: 12,
+                            fontFamily: 'DMSans',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
-        const Spacer(),
-        if (onHistoryTap != null) buttonOnlyIcon(iconData: Icons.history, visualDensity: minimumVisualDensity, onPress: onHistoryTap)
+
+        // 🔥 spacing before bottom button
+
+        // 🔻 BOTTOM RIGHT BUTTON
+        if (onHistoryTap != null)
+          Align(
+            alignment: Alignment.bottomRight,
+            child: buttonOnlyIcon(
+              iconData: Icons.history,
+              visualDensity: minimumVisualDensity,
+              onPress: onHistoryTap,
+            ),
+          ),
       ],
     );
   }
 
   Row _coinNameView(String? coinType, bool showIcon) {
-    return Row(children: [
-      TextRobotoAutoBold(coinType ?? "", fontSize: Dimens.fontSizeMidExtra),
-      if (showIcon) Icon(Icons.expand_more, size: Dimens.iconSizeMin, color: Get.theme.primaryColor)
-    ]);
+    return Row(
+      children: [
+        Text(
+          coinType ?? "",
+          style: TextStyle(
+            fontSize: 30, // Dimens.fontSizeMidExtra ki jagah apna size
+            fontWeight: FontWeight.w700,
+            fontFamily: 'DMSans',
+            color: Colors.white.withOpacity(0.5),
+          ),
+        ),
+        if (showIcon)
+          Icon(
+            Icons.expand_more,
+            size: 16, // Dimens.iconSizeMin ki jagah fixed ya custom
+            color: Colors.white, // ya Get.theme.primaryColor bhi rakh sakte ho
+          ),
+      ],
+    );
   }
 }
 
@@ -401,34 +635,120 @@ class WalletTopButtonsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = (context.width - 50) / 3;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        SizedBox(
-          width: width,
-          child: buttonText(
-              "Deposit".tr, textColor: Colors.white, onPress: () => Get.to(() => WalletCryptoDepositScreen())),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final btnWidth = (constraints.maxWidth - 20) / 3;
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _WalletActionButton(
+              label: "Add Funds".tr,
+              iconPath: null, //  NO ICON
+              isMain: true,
+              width: btnWidth,
+              onTap: () => Get.to(() => WalletCryptoDepositScreen()),
+            ),
+            _WalletActionButton(
+              label: "Withdraw".tr,
+              iconPath: "assets/images/withdraw.png", // asset icon
+              isMain: false,
+              width: btnWidth,
+              onTap: () => Get.to(() => WalletCryptoWithdrawScreen()),
+            ),
+            if (getSettingsLocal()?.swapStatus == 1)
+              _WalletActionButton(
+                label: "Transfer".tr,
+                iconPath: "assets/images/transfer.png", // asset icon
+                isMain: false,
+                width: btnWidth,
+                onTap: () => Get.to(() => const SwapScreen()),
+              )
+            else
+              SizedBox(width: btnWidth),
+          ],
+        );
+      },
+    );
+  }
+}
+
+
+class _WalletActionButton extends StatelessWidget {
+  const _WalletActionButton({
+    required this.label,
+    required this.width,
+    required this.onTap,
+    this.iconPath,
+    required this.isMain,
+  });
+
+  final String label;
+  final String? iconPath; // ✅ asset icon
+  final bool isMain;
+  final double width;
+  final VoidCallback onTap;
+
+  static const _green = Color(0xFFB5F000);
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = isMain ? _green : _secondary;
+    final textColor = isMain ? Colors.black : Colors.white;
+
+    return SizedBox(
+      width: width,
+      height: 44,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bgColor,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10), // 🔹 radius control
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
         ),
-        SizedBox(
-          width: width,
-          child: buttonText("Withdraw".tr, bgColor: context.theme.dialogTheme.backgroundColor,
-              onPress: () => Get.to(() => WalletCryptoWithdrawScreen())),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // ✅ ICON (only if exists)
+            if (iconPath != null) ...[
+              Image.asset(
+                iconPath!,
+                height: 18,
+                width: 18,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(width: 2),
+            ],
+
+            // ✅ TEXT (fully customizable)
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15, // change kar sakta hai
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'DMSans',
+                  color: textColor,
+                ),
+              ),
+            ),
+          ],
         ),
-        getSettingsLocal()?.swapStatus == 1
-            ? SizedBox(
-          width: width,
-          child: buttonText("Swap".tr, bgColor: context.theme.dialogTheme.backgroundColor,
-              onPress: () => Get.to(() => const SwapScreen())),
-        )
-            : hSpacer50(),
-      ],
+      ),
     );
   }
 }
 
 class WalletRecentTransactionItemView extends StatelessWidget {
-  const WalletRecentTransactionItemView({super.key, required this.history, required this.type});
+  const WalletRecentTransactionItemView({
+    super.key,
+    required this.history,
+    required this.type,
+  });
 
   final History history;
   final String type;
@@ -437,15 +757,30 @@ class WalletRecentTransactionItemView extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusData = AppChecker.getStatusData(history.status ?? 0);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Dimens.paddingMid, horizontal: Dimens.paddingMid),
+      padding: const EdgeInsets.symmetric(
+        vertical: Dimens.paddingMid,
+        horizontal: Dimens.paddingMid,
+      ),
       child: Column(
         children: [
-          TwoTextSpaceFixed(history.coinType ?? "", statusData.first, subColor: statusData.last, color: context.theme.primaryColor),
+          TwoTextSpaceFixed(
+            history.coinType ?? "",
+            statusData.first,
+            subColor: statusData.last,
+            color: context.theme.primaryColor,
+          ),
           TwoTextSpaceFixed('Amount'.tr, coinFormat(history.amount)),
           TwoTextSpaceFixed('Fees'.tr, coinFormat(history.fees)),
-          TwoTextSpaceFixed('Address'.tr, history.address ?? "", color: context.theme.primaryColorLight),
-          TwoTextSpaceFixed('Created At'.tr, formatDate(history.createdAt, format: dateTimeFormatDdMMMYyyyHhMm)),
-          dividerHorizontal()
+          TwoTextSpaceFixed(
+            'Address'.tr,
+            history.address ?? "",
+            color: context.theme.primaryColorLight,
+          ),
+          TwoTextSpaceFixed(
+            'Created At'.tr,
+            formatDate(history.createdAt, format: dateTimeFormatDdMMMYyyyHhMm),
+          ),
+          dividerHorizontal(),
         ],
       ),
     );
@@ -461,12 +796,20 @@ class WalletBalanceViewWithBg extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(Dimens.paddingMid),
-      decoration: boxDecorationRoundCorner(color: context.theme.dialogTheme.backgroundColor),
+      decoration: boxDecorationRoundCorner(
+        color: context.theme.dialogTheme.backgroundColor,
+      ),
       child: Row(
         children: [
           TextRobotoAutoBold("Balance".tr),
           hSpacer10(),
-          Expanded(child: TextRobotoAutoBold(coinFormat(balance), textAlign: TextAlign.end, fontSize: Dimens.fontSizeLarge)),
+          Expanded(
+            child: TextRobotoAutoBold(
+              coinFormat(balance),
+              textAlign: TextAlign.end,
+              fontSize: Dimens.fontSizeLarge,
+            ),
+          ),
         ],
       ),
     );
