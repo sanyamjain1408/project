@@ -22,17 +22,16 @@ import 'ui/features/on_boarding/on_boarding_screen.dart';
 import 'ui/features/root/root_screen.dart';
 import 'ui/ui_helper/maintains_mood_widgets.dart';
 
-
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // <-- Pehle ye hona chahiye
   await dotenv.load(fileName: EnvKeyValue.kEnvFile);
   await GetStorage.init();
   await _setDefaultValues();
-  WidgetsFlutterBinding.ensureInitialized();
   gIsDarkMode = ThemeService().loadThemeFromBox();
   Get.put(APIProvider());
   Get.put(SocketProvider());
   initBuySellColor();
-  getCommonSettings();
+  await getCommonSettings(); // <-- await karo
 }
 
 Future<void> _setDefaultValues() async {
@@ -45,20 +44,37 @@ Future<void> _setDefaultValues() async {
 }
 
 Future<void> getCommonSettings() async {
-  gUserAgent = await getUserAgent();
-  final isOnline = await NetworkCheck.isOnline();
-  if (isOnline) {
-    final resp = await HttpAPIProvider().getRequest(
-        APIURLConstants.baseUrl, APIURLConstants.getCommonSettingsWithLanding, isDynamic: true);
-    if (resp.success && resp.data != null && resp.data is Map<String, dynamic>) {
-      Maintenance? maintenance = DataProcessHelper.checkMaintenanceMood(resp.data);
-      if (maintenance == null) DataProcessHelper.commonSettingsProcess(resp.data);
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((value) =>
-          runApp(MyApp(maintenance: maintenance)));
-    }
-  }
-}
+  Maintenance? maintenance;
 
+  try {
+    gUserAgent = await getUserAgent();
+    final isOnline = await NetworkCheck.isOnline();
+
+    if (isOnline) {
+      // ── TIMEOUT add kiya — 10 second ke baad fallback ──
+      final resp = await HttpAPIProvider()
+          .getRequest(
+            APIURLConstants.baseUrl,
+            APIURLConstants.getCommonSettingsWithLanding,
+            isDynamic: true,
+          )
+          .timeout(const Duration(seconds: 5));
+
+      if (resp.success && resp.data != null && resp.data is Map<String, dynamic>) {
+        maintenance = DataProcessHelper.checkMaintenanceMood(resp.data);
+        if (maintenance == null) DataProcessHelper.commonSettingsProcess(resp.data);
+      }
+    }
+  } catch (e) {
+    // ── Koi bhi error aaye — app band mat ho, chalti rahe ──
+    printFunction("getCommonSettings error", e);
+  }
+
+  // ── Har case mein runApp call hoga ──
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then(
+    (_) => runApp(MyApp(maintenance: maintenance)),
+  );
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key, this.maintenance});
@@ -67,9 +83,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: ThemeService().getBrightness()));
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: ThemeService().getBrightness(),
+      ),
+    );
     final isOnBoarding = GetStorage().read(PreferenceKey.isOnBoardingDone);
-    final screen = maintenance != null ? MaintainsMoodOnScreen(maintenance: maintenance!)
+    final screen = maintenance != null
+        ? MaintainsMoodOnScreen(maintenance: maintenance!)
         : (isOnBoarding ? const RootScreen() : const OnBoardingScreen());
 
     return Directionality(
@@ -91,8 +112,14 @@ class MyApp extends StatelessWidget {
         ],
         initialRoute: "/",
         builder: (context, child) {
-          final scale = MediaQuery.of(context).textScaler.clamp(minScaleFactor: 0.8, maxScaleFactor: 1.3);
-          return MediaQuery(data: MediaQuery.of(context).copyWith(textScaler: scale), child: child!);
+          final scale = MediaQuery.of(context).textScaler.clamp(
+            minScaleFactor: 0.8,
+            maxScaleFactor: 1.3,
+          );
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: scale),
+            child: child!,
+          );
         },
         home: screen,
       ),

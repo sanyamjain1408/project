@@ -15,8 +15,12 @@ class HttpAPIProvider{
     printFunction("postRequest body", body);
     headers[APIKeyConstants.contentType] = APIKeyConstants.vApplicationJson;
     printFunction("postRequest headers", headers);
-    final response = await http.post(Uri.parse(url), body: jsonEncode(body), headers: headers);
-    GetUtils.printFunction("postRequest url", response.request?.url, "");
+    final response = await http.post(Uri.parse(url), body: jsonEncode(body), headers: headers).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => http.Response('Timeout', 408),
+    );
+    GetUtils.printFunction("postRequest url", response.request?.url.toString(), "");
+    printFunction("postRequest status", response.statusCode);
     return handleResponse(response, isDynamic: isDynamic);
   }
 
@@ -26,20 +30,27 @@ class HttpAPIProvider{
     headers[APIKeyConstants.contentType] = APIKeyConstants.vApplicationJson;
     printFunction("getRequest headers", headers);
     final uri = Uri.https(baseUrl.split("/").last, path, query);
-    final response = await http.get(uri, headers:  headers);
-    GetUtils.printFunction("getRequest url", response.request?.url, "");
+    final response = await http.get(uri, headers: headers).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => http.Response('Timeout', 408),
+    );
+    GetUtils.printFunction("getRequest url", response.request?.url.toString(), "");
+    printFunction("getRequest status", response.statusCode);
     return handleResponse(response, isDynamic: isDynamic);
   }
 
   Future<ServerResponse> handleResponse(http.Response response, {bool? isDynamic}) async {
     printFunction("handleResponse statusCode", response.statusCode);
+    if (response.statusCode == 408) {
+      return ServerResponse(success: false, message: "Request timeout. Please check your network.");
+    }
     if (response.statusCode == 401) {
       logOutActions();
       return Future.error(response.reasonPhrase ?? response.statusCode);
     }
 
     if (response.statusCode != 200) {
-      return Future.error(response.reasonPhrase  ?? response.statusCode);
+      return ServerResponse(success: false, message: response.reasonPhrase ?? "Server error: ${response.statusCode}");
     } else {
       printFunction("handleResponse body", response.body);
       final body = json.decode(response.body);

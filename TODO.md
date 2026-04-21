@@ -1,14 +1,14 @@
-# DM Sans Font Global Fix - Progress Tracker
+# Splash Screen Hang Fix - TODO Steps
 
-**Goal**: Use assets/fonts/dm_sans DM Sans everywhere `fontFamily: "DMSans"` is declared (currently falling back to system font due to pubspec.yaml misconfig).
+## Plan Summary
+App hangs on native splash because `getCommonSettings()` API call in main.dart blocks `runApp()`. Make init non-blocking, add logging/timeout/error handling.
 
-## Steps:
-- [ ] 1. Fix pubspec.yaml - Declare `family: DMSans` with static font files
-- [ ] 2. Run `flutter clean &amp;&amp; flutter pub get`
-- [ ] 3. Update lib/utils/theme.dart TextTheme for global fontFamily: 'DMSans'
-- [ ] 4. Test `flutter run` - Verify all Text widgets use DM Sans (geometric sans-serif style)
-- [x] Complete
+## Steps (Approved Plan Breakdown)
+- [x] **Step 1**: Edit `lib/data/remote/http_api_provider.dart` - Add timeout (10s) to all `http.get/post` calls. ✅
+- [ ] **Step 2**: Edit `lib/main.dart` - Add prints around network/API, make `getCommonSettings()` non-blocking (move inside app with FutureBuilder), fallback to cached/local settings.
+- [ ] **Step 3**: Run `flutter clean && flutter pub get && flutter run --verbose`.
+- [ ] **Step 4**: Test on device, check logs for API response/error. Ping `https://api.trapix.com` manually.
+- [ ] **Step 5**: If fixed, update this TODO.md with completion. Optional: Add custom splash screen.
 
-**Current Status**: Fonts ready in assets, code uses "DMSans", but pubspec prevents loading.
+**Progress: 0/5 steps complete. Starting Step 1...**
 
-Updated TODO.md created.
