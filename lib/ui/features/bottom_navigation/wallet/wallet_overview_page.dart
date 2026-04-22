@@ -82,7 +82,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     );
   }
 
-   Widget _buildTopHero(WalletOverview data) {
+  Widget _buildTopHero(WalletOverview data) {
     return Container(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.42,
@@ -90,13 +90,13 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.5),
 
-        // 🔥 Bottom round
+        //  Bottom round
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(20),
         ),
 
-        // 🔥 Bottom white border
+        //  Bottom white border
         border: Border(
           bottom: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
         ),
@@ -111,7 +111,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
         child: Stack(
           clipBehavior: Clip.hardEdge,
           children: [
-            // 🌊 Green wave image
+            //  Green wave image
             Positioned(
               right: 0,
               top: 0,
@@ -120,11 +120,10 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
               child: Image.asset(
                 'assets/images/wallet_green_wave.png',
                 fit: BoxFit.cover,
-  
               ),
             ),
 
-            // 🔝 TOP CONTENT
+            //  TOP CONTENT
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -152,23 +151,6 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                       ),
 
                       const SizedBox(width: 10),
-
-                      // ⏱ History icon
-                      GestureDetector(
-                        onTap: () => Get.to(() => const ActivityScreen()),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(
-                            Icons.history,
-                            color: Colors.white60,
-                            size: 18,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -190,7 +172,6 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
       ),
     );
   }
-
 
   Widget _buildStackedCards(WalletOverview data, settings) {
     final coin = data.selectedCoin ?? '';
@@ -226,10 +207,12 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
         amount: 0,
         amtUsd: 0,
         coin: coin,
-        onTap: () {},
+        onTap: () => Get.to(
+          () => const WalletDetailScreen(initialType: WalletViewType.earn),
+        ),
       ),
       _RowData(
-        name: "Fund",
+        name: "P2P",
         svgIcon: 'assets/images/funds.svg',
         pngIcon: 'assets/images/funds.png',
         amount: data.p2PWallet ?? 0,
@@ -372,7 +355,7 @@ class _SvgCard extends StatelessWidget {
                       painter: _CardShapePainter(
                         cardW: screenW,
                         cardH: _svgH,
-                        fillColor: const Color(0x4D1A1A1A),
+                        fillColor: Color(0xB21A1A1A),
                       ),
                     ),
                   ),
@@ -826,19 +809,20 @@ class _GreenWavePainter extends CustomPainter {
       Offset(size.width * 0.7, size.height * 0.3),
       size.height * 0.7,
       Paint()
-        ..shader = RadialGradient(
-          colors: [
-            const Color(0xFF7FFF00).withOpacity(0.6),
-            const Color(0xFF39FF14).withOpacity(0.2),
-            Colors.transparent,
-          ],
-          stops: const [0.0, 0.45, 1.0],
-        ).createShader(
-          Rect.fromCircle(
-            center: Offset(size.width * 0.7, size.height * 0.3),
-            radius: size.height * 0.7,
-          ),
-        ),
+        ..shader =
+            RadialGradient(
+              colors: [
+                const Color(0xFF7FFF00).withOpacity(0.6),
+                const Color(0xFF39FF14).withOpacity(0.2),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.45, 1.0],
+            ).createShader(
+              Rect.fromCircle(
+                center: Offset(size.width * 0.7, size.height * 0.3),
+                radius: size.height * 0.7,
+              ),
+            ),
     );
   }
 

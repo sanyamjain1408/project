@@ -5,6 +5,7 @@ import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/history.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/activity/activity_screen.dart';
 import 'package:tradexpro_flutter/ui/ui_helper/app_widgets.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
@@ -484,7 +485,7 @@ class TotalBalanceView extends StatelessWidget {
     String currencyName = gUserRx.value.currency ?? DefaultValue.currency;
 
     final iconData = isHide
-        ? Icons.visibility_off_outlined
+        ? Icons.visibility_off_rounded
         : Icons.visibility_outlined;
 
     final titleL = title ?? 'Total Balance'.tr;
@@ -501,10 +502,14 @@ class TotalBalanceView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      TextRobotoAutoNormal(titleL),
+                     Row(
+                      children: [
+                         TextRobotoAutoNormal(titleL),
                       buttonOnlyIcon(
                         iconData: iconData,
+                        size: 15,
                         visualDensity: minimumVisualDensity,
                         onPress: () {
                           GetStorage().write(
@@ -514,6 +519,25 @@ class TotalBalanceView extends StatelessWidget {
                           gIsBalanceHide.value = !isHide;
                           if (onHide != null) onHide!(!isHide);
                         },
+                      ),
+                      ],
+                     ),
+                     
+                      GestureDetector(
+                        onTap: () => Get.to(() => const ActivityScreen()),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Image.asset(
+                            'assets/icons/time.png',
+                            width: 18,
+                            height: 18,
+                             // optional tint
+                          ),
+                        ),
                       ),
                     ],
                   ),

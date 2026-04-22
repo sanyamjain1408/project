@@ -315,6 +315,7 @@ class WalletViewType {
   static const future = 2;
   static const p2p = 3;
   static const checkDeposit = 4;
+  static const  earn = 5;
 }
 
 /// # trc20Token, evmBaseCoin => network list; # coinPayment && USDT => network list(coin payment)

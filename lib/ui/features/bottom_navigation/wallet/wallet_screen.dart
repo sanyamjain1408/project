@@ -48,19 +48,5 @@ Widget build(BuildContext context) {
   );
 }
 
-  Widget _getBodyPage(int index) {
-    int key = _controller.getTypeMap().keys.toList()[index];
-    switch (key) {
-      case WalletViewType.overview:
-        return const WalletOverviewPage();
-      case WalletViewType.spot:
-      case WalletViewType.future:
-      case WalletViewType.p2p:
-        return WalletListView(fromType: key);
-      case WalletViewType.checkDeposit:
-        return  CheckDepositPage(fromKey: FromKey.wallet);
-      default:
-        return Container();
-    }
-  }
+  
 }
