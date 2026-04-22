@@ -27,8 +27,8 @@ const Color _white = Color(0xFFFFFFFF);
 const String _dmSans = 'DMSans';
 
 const double _svgW = 362.0;
-const double _svgH = 204.0;
-const double _peekAmount = 85.0;
+const double _svgH = 160.0;
+const double _peekAmount = 60.0;
 
 class WalletOverviewPage extends StatefulWidget {
   const WalletOverviewPage({super.key});
@@ -85,10 +85,10 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
   Widget _buildTopHero(WalletOverview data) {
     return Container(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.42,
+      height: MediaQuery.of(context).size.height * 0.38,
 
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
+        color: Color(0xB21A1A1A),
 
         //  Bottom round
         borderRadius: const BorderRadius.only(
@@ -98,7 +98,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
 
         //  Bottom white border
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
+          bottom: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
         ),
       ),
 
@@ -129,7 +129,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
               children: [
                 const SizedBox(height: 30),
 
-                Padding(
+                Container(
+                  color: Colors.transparent,
                   padding: const EdgeInsets.fromLTRB(20, 0, 16, 0),
                   child: Row(
                     children: [
@@ -157,7 +158,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
               ],
             ),
 
-            // 🔥 BOTTOM FIXED BUTTONS (IMPORTANT)
+            //  BOTTOM FIXED BUTTONS (IMPORTANT)
             Positioned(
               left: 0,
               right: 0,
@@ -348,7 +349,20 @@ class _SvgCard extends StatelessWidget {
               child: ClipPath(
                 clipper: _CardShapeClipper(cardW: screenW, cardH: _svgH),
                 child: Container(
-                  color: Colors.transparent,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+
+                    //  Bottom round
+                    borderRadius:  BorderRadius.circular(20),
+                    //  Bottom white border
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: CustomPaint(
@@ -375,6 +389,7 @@ class _SvgCard extends StatelessWidget {
                   child: Image.asset(
                     'assets/images/wallet_wave_bottom.png',
                     fit: BoxFit.fill,
+                    
                     alignment: Alignment.bottomCenter,
                     errorBuilder: (_, __, ___) =>
                         CustomPaint(painter: _BottomWavePainter()),
@@ -533,17 +548,24 @@ class _CardShapePainter extends CustomPainter {
       ..cubicTo(218.893 * sx, 2.10713 * sy, 223.98 * sx, 0, 229.284 * sx, 0)
       ..lineTo(342 * sx, 0)
       ..cubicTo(353.046 * sx, 0, 362 * sx, 8.95431 * sy, 362 * sx, 20 * sy)
-      ..lineTo(362 * sx, 184 * sy)
+      ..lineTo(362 * sx, (_svgH - 20) * sy) // ← 184 hatao
       ..cubicTo(
         362 * sx,
-        195.046 * sy,
+        (_svgH - 9) * sy,
         353.046 * sx,
-        204 * sy,
+        _svgH * sy,
         342 * sx,
-        204 * sy,
-      )
-      ..lineTo(20 * sx, 204 * sy)
-      ..cubicTo(8.9543 * sx, 204 * sy, 0, 195.046 * sy, 0, 184 * sy)
+        _svgH * sy,
+      ) // ← 195, 204 hatao
+      ..lineTo(20 * sx, _svgH * sy) // ← 204 hatao
+      ..cubicTo(
+        8.9543 * sx,
+        _svgH * sy,
+        0,
+        (_svgH - 9) * sy,
+        0,
+        (_svgH - 20) * sy,
+      ) // ← hatao
       ..lineTo(0, 20 * sy)
       ..close();
   }
@@ -676,7 +698,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
   final List<Map<String, dynamic>> _tabs = [
     {"label": "Spot", "type": WalletViewType.spot},
     {"label": "Future", "type": WalletViewType.future},
-    {"label": "Earn", "type": null},
+    {"label": "Earn", "type": WalletViewType.earn},
     {"label": "P2P", "type": WalletViewType.p2p},
     {"label": "Buy Crypto", "type": null},
     {"label": "Check Deposit", "type": WalletViewType.checkDeposit},
@@ -758,6 +780,11 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
     if (type == WalletViewType.checkDeposit) {
       return const CheckDepositPage(fromKey: FromKey.wallet);
     }
+    // ── YE NAYA BLOCK ADD KARO ──
+    if (type == WalletViewType.earn) {
+      return const EarnWalletView();
+    }
+    // ────────────────────────────
     return WalletListView(fromType: type as int);
   }
 }
@@ -862,4 +889,231 @@ class _BottomWavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+class EarnWalletView extends StatelessWidget {
+  const EarnWalletView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header Card ──
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Total Earning",
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 13,
+                    fontFamily: _dmSans,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  "0.00 USDT",
+                  style: TextStyle(
+                    color: _white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: _dmSans,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "≈ \$0.00",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.4),
+                    fontSize: 13,
+                    fontFamily: _dmSans,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // ── Section Title ──
+          const Text(
+            "Staking Products",
+            style: TextStyle(
+              color: _white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              fontFamily: _dmSans,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── Earn Product Cards ──
+          _EarnProductCard(
+            coin: "USDT",
+            apy: "12.5%",
+            duration: "30 Days",
+            minAmount: "100",
+            color: const Color(0xFF26A17B),
+          ),
+          const SizedBox(height: 10),
+          _EarnProductCard(
+            coin: "BTC",
+            apy: "8.2%",
+            duration: "60 Days",
+            minAmount: "0.001",
+            color: const Color(0xFFF7931A),
+          ),
+          const SizedBox(height: 10),
+          _EarnProductCard(
+            coin: "ETH",
+            apy: "9.8%",
+            duration: "90 Days",
+            minAmount: "0.01",
+            color: const Color(0xFF627EEA),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EarnProductCard extends StatelessWidget {
+  const _EarnProductCard({
+    required this.coin,
+    required this.apy,
+    required this.duration,
+    required this.minAmount,
+    required this.color,
+  });
+
+  final String coin, apy, duration, minAmount;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          // Coin circle
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                coin[0],
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontFamily: _dmSans,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  coin,
+                  style: const TextStyle(
+                    color: _white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    fontFamily: _dmSans,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  "Min: $minAmount · $duration",
+                  style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 12,
+                    fontFamily: _dmSans,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // APY + Button
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                apy,
+                style: const TextStyle(
+                  color: _green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontFamily: _dmSans,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "APY",
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.4),
+                  fontSize: 11,
+                  fontFamily: _dmSans,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(width: 12),
+
+          // Stake button
+          SizedBox(
+            height: 32,
+            child: ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _green,
+                foregroundColor: Colors.black,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                "Stake",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: _dmSans,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

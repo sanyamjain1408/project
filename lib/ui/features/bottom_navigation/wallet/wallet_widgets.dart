@@ -30,10 +30,10 @@ import 'wallet_fiat_deposit/wallet_fiat_deposit_screen.dart';
 import 'wallet_fiat_withdrawal/wallet_fiat_withdrawal_screen.dart';
 
 const Color _primary = Color(0xFF111111);
-   const Color _secondary = Color(0xFF1A1A1A);
+const Color _secondary = Color(0xFF1A1A1A);
 const Color _green = Color(0xFFCCFF00);
-  const _white = Color(0xFFFFFFFF);
-  const _dmSans = 'DMSans';
+const _white = Color(0xFFFFFFFF);
+const _dmSans = 'DMSans';
 
 class WalletNameView extends StatelessWidget {
   const WalletNameView({
@@ -504,25 +504,26 @@ class TotalBalanceView extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                     Row(
-                      children: [
-                         TextRobotoAutoNormal(titleL),
-                      buttonOnlyIcon(
-                        iconData: iconData,
-                        size: 15,
-                        visualDensity: minimumVisualDensity,
-                        onPress: () {
-                          GetStorage().write(
-                            PreferenceKey.isBalanceHide,
-                            !isHide,
-                          );
-                          gIsBalanceHide.value = !isHide;
-                          if (onHide != null) onHide!(!isHide);
-                        },
+                      Row(
+                        children: [
+                          TextRobotoAutoNormal(titleL),
+                          buttonOnlyIcon(
+                            iconData: iconData,
+                            size: 15,
+                            iconColor: Colors.white.withOpacity(0.5),
+                            visualDensity: minimumVisualDensity,
+                            onPress: () {
+                              GetStorage().write(
+                                PreferenceKey.isBalanceHide,
+                                !isHide,
+                              );
+                              gIsBalanceHide.value = !isHide;
+                              if (onHide != null) onHide!(!isHide);
+                            },
+                          ),
+                        ],
                       ),
-                      ],
-                     ),
-                     
+
                       GestureDetector(
                         onTap: () => Get.to(() => const ActivityScreen()),
                         child: Container(
@@ -535,7 +536,7 @@ class TotalBalanceView extends StatelessWidget {
                             'assets/icons/time.png',
                             width: 18,
                             height: 18,
-                             // optional tint
+                            // optional tint
                           ),
                         ),
                       ),
@@ -547,9 +548,7 @@ class TotalBalanceView extends StatelessWidget {
                       : Row(
                           children: [
                             Text(
-                              double.parse(
-                                coinFormat(totalBalance),
-                              ).toStringAsFixed(2),
+                              '\$${double.parse(coinFormat(totalBalance)).toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontSize: 30,
                                 fontWeight: FontWeight.w700,
@@ -576,7 +575,7 @@ class TotalBalanceView extends StatelessWidget {
 
                   if (!isHide)
                     Text(
-                      "= ${currencyFormat(totalUsd)} $currencyName",
+                      "≈ \$${currencyFormat(totalUsd)} ",
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
@@ -696,7 +695,6 @@ class WalletTopButtonsView extends StatelessWidget {
     );
   }
 }
-
 
 class _WalletActionButton extends StatelessWidget {
   const _WalletActionButton({
