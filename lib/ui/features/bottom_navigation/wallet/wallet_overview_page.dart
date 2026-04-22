@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/history.dart';
@@ -7,13 +10,10 @@ import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/check_deposit/check_deposit_page.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_list_page.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
-import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/extensions.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
-import 'package:tradexpro_flutter/utils/spacers.dart';
-import 'package:tradexpro_flutter/utils/text_util.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
 import '../../side_navigation/activity/activity_screen.dart';
@@ -23,8 +23,12 @@ import 'wallet_widgets.dart';
 const Color _primary = Color(0xFF111111);
 const Color _secondary = Color(0xFF1A1A1A);
 const Color _green = Color(0xFFCCFF00);
-const _white = Color(0xFFFFFFFF);
-const _dmSans = 'DMSans';
+const Color _white = Color(0xFFFFFFFF);
+const String _dmSans = 'DMSans';
+
+const double _svgW = 362.0;
+const double _svgH = 204.0;
+const double _peekAmount = 85.0;
 
 class WalletOverviewPage extends StatefulWidget {
   const WalletOverviewPage({super.key});
@@ -35,8 +39,8 @@ class WalletOverviewPage extends StatefulWidget {
 
 class _WalletOverviewPageState extends State<WalletOverviewPage> {
   final _controller = Get.find<WalletController>();
-  Rx<WalletOverview> wOverview = WalletOverview().obs;
-  RxString selectedCoin = "".obs;
+  final Rx<WalletOverview> wOverview = WalletOverview().obs;
+  final RxString selectedCoin = "".obs;
 
   Future<void> _getOverviewData() async {
     _controller.refreshController.callRefresh();
@@ -65,12 +69,12 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
             padding: EdgeInsets.zero,
             shrinkWrap: true,
             children: [
-              _buildTopHeroSection(data),
-              const SizedBox(height: 12),
-              _buildAssetListSection(data, settings),
+              _buildTopHero(data),
               const SizedBox(height: 16),
-              if (data.spotWallet != null) _buildReportSection(data),
-              const SizedBox(height: 30),
+              _buildStackedCards(data, settings),
+              const SizedBox(height: 20),
+              if (data.spotWallet != null) _buildReport(data),
+              const SizedBox(height: 40),
             ],
           ),
         );
@@ -78,10 +82,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // TOP HERO SECTION
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildTopHeroSection(WalletOverview data) {
+   Widget _buildTopHero(WalletOverview data) {
     return Container(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.42,
@@ -119,7 +120,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
               child: Image.asset(
                 'assets/images/wallet_green_wave.png',
                 fit: BoxFit.cover,
-                errorBuilder: (c, e, s) => _buildGreenWaveFallback(),
+  
               ),
             ),
 
@@ -190,107 +191,100 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // ASSET LIST SECTION
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildAssetListSection(WalletOverview data, settings) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: _secondary,
-        borderRadius: BorderRadius.circular(16),
+
+  Widget _buildStackedCards(WalletOverview data, settings) {
+    final coin = data.selectedCoin ?? '';
+
+    // ORDER: index 0 = Spot, 1 = Future, 2 = Earn, 3 = Fund
+    final rows = <_RowData>[
+      _RowData(
+        name: "Spot",
+        svgIcon: 'assets/images/spot.svg',
+        pngIcon: 'assets/images/spot.png',
+        amount: data.spotWallet ?? 0,
+        amtUsd: data.spotWalletUsd ?? 0,
+        coin: coin,
+        onTap: () => Get.to(
+          () => const WalletDetailScreen(initialType: WalletViewType.spot),
+        ),
       ),
-      // clipBehavior clips children to the rounded corners — no inner ClipRRect needed
-      clipBehavior: Clip.hardEdge,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Asset rows
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Column(
-              children: [
-                if (data.spotWallet != null) ...[
-                  _AssetRow(
-                    imagePath: 'assets/icons/spot_wallet.png',
-                    name: "Spot",
-                    amount: data.spotWallet,
-                    amountUsd: data.spotWalletUsd,
-                    coinType: data.selectedCoin,
-                    isHide: gIsBalanceHide.value,
-                    onTap: () => Get.to(
-                      () =>
-                          WalletDetailScreen(initialType: WalletViewType.spot),
-                    ),
-                  ),
-                  _buildWaveDivider(),
-                ],
+      _RowData(
+        name: "Future",
+        svgIcon: 'assets/images/future.svg',
+        pngIcon: 'assets/images/future.png',
+        amount: data.futureWallet ?? 0,
+        amtUsd: data.futureWalletUsd ?? 0,
+        coin: coin,
+        onTap: () => Get.to(
+          () => const WalletDetailScreen(initialType: WalletViewType.future),
+        ),
+      ),
+      _RowData(
+        name: "Earn",
+        svgIcon: 'assets/icons/earn.svg',
+        pngIcon: 'assets/icons/earn.png',
+        amount: 0,
+        amtUsd: 0,
+        coin: coin,
+        onTap: () {},
+      ),
+      _RowData(
+        name: "Fund",
+        svgIcon: 'assets/images/funds.svg',
+        pngIcon: 'assets/images/funds.png',
+        amount: data.p2PWallet ?? 0,
+        amtUsd: data.p2PWalletUsd ?? 0,
+        coin: coin,
+        onTap: () => Get.to(
+          () => const WalletDetailScreen(initialType: WalletViewType.p2p),
+        ),
+      ),
+    ];
 
-                if (settings?.enableFutureTrade == 1 &&
-                    data.futureWallet != null) ...[
-                  _AssetRow(
-                    imagePath: 'assets/icons/future_wallet.png',
-                    name: "Future",
-                    amount: data.futureWallet,
-                    amountUsd: data.futureWalletUsd,
-                    coinType: data.selectedCoin,
-                    isHide: gIsBalanceHide.value,
-                    onTap: () => Get.to(
-                      () => WalletDetailScreen(
-                        initialType: WalletViewType.future,
-                      ),
-                    ),
-                  ),
-                  _buildWaveDivider(),
-                ],
+    final double totalH = _svgH + (rows.length - 1) * _peekAmount;
 
-                _AssetRow(
-                  imagePath: 'assets/icons/earn_wallet.png',
-                  name: "Earn",
-                  amount: 0.0,
-                  amountUsd: 0.0,
-                  coinType: data.selectedCoin,
-                  isHide: gIsBalanceHide.value,
-                  onTap: () {},
-                ),
-
-                _buildWaveDivider(),
-
-                _AssetRow(
-                  imagePath: 'assets/icons/fund_wallet.png',
-                  name: "Fund",
-                  amount: data.p2PWallet ?? 0.0,
-                  amountUsd: data.p2PWalletUsd ?? 0.0,
-                  coinType: data.selectedCoin,
-                  isHide: gIsBalanceHide.value,
-                  onTap: () => Get.to(
-                    () => WalletDetailScreen(initialType: WalletViewType.p2p),
-                  ),
-                ),
-              ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: SizedBox(
+        height: totalH,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // ── Spot peeks at top (rendered first = behind everything) ──
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _SvgCard(data: rows[0], isLast: false, cardIndex: 0),
             ),
-          ),
-
-          // Bottom wave — plain Column child, no Stack / Positioned needed
-          SizedBox(
-            width: double.infinity,
-            height: 100,
-            child: Image.asset(
-              'assets/images/wallet_wave_bottom.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.bottomCenter,
-              errorBuilder: (c, e, s) => _buildBottomWaveFallback(),
+            // ── Future peeks second ──
+            Positioned(
+              top: 1 * _peekAmount,
+              left: 0,
+              right: 0,
+              child: _SvgCard(data: rows[1], isLast: false, cardIndex: 1),
             ),
-          ),
-        ],
+            // ── Earn peeks third ──
+            Positioned(
+              top: 2 * _peekAmount,
+              left: 0,
+              right: 0,
+              child: _SvgCard(data: rows[2], isLast: false, cardIndex: 2),
+            ),
+            // ── Fund fully visible at bottom (rendered last = on top) ──
+            Positioned(
+              top: 3 * _peekAmount,
+              left: 0,
+              right: 0,
+              child: _SvgCard(data: rows[3], isLast: true, cardIndex: 3),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // REPORT SECTION
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildReportSection(WalletOverview data) {
+  Widget _buildReport(WalletOverview data) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -305,6 +299,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                   color: _white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  fontFamily: _dmSans,
                 ),
               ),
               buttonTextBordered(
@@ -322,14 +317,14 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
           const SizedBox(height: 12),
           if (data.withdraw.isValid)
             for (final w in data.withdraw!)
-              HistoryItemView(
+              _HistoryRow(
                 history: w,
                 isWithdraw: true,
                 coinType: data.selectedCoin,
               ),
           if (data.deposit.isValid)
             for (final d in data.deposit!)
-              HistoryItemView(
+              _HistoryRow(
                 history: d,
                 isWithdraw: false,
                 coinType: data.selectedCoin,
@@ -340,127 +335,276 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
       ),
     );
   }
-
-  Widget _buildWaveDivider() {
-    return CustomPaint(
-      size: const Size(double.infinity, 24),
-      painter: _WaveDividerPainter(),
-    );
-  }
-
-  Widget _buildGreenWaveFallback() => CustomPaint(painter: _GreenWavePainter());
-  Widget _buildBottomWaveFallback() =>
-      CustomPaint(painter: _BottomWavePainter());
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ASSET ROW
-// ─────────────────────────────────────────────────────────────────────────────
-class _AssetRow extends StatelessWidget {
-  const _AssetRow({
-    required this.imagePath,
-    required this.name,
-    required this.amount,
-    required this.amountUsd,
-    required this.coinType,
-    required this.isHide,
-    required this.onTap,
+// ── SVG SHAPED CARD ──────────────────────────────────────────────────────────
+class _SvgCard extends StatelessWidget {
+  const _SvgCard({
+    required this.data,
+    required this.isLast,
+    required this.cardIndex,
   });
 
-  final String imagePath;
-  final String name;
-  final double? amount;
-  final double? amountUsd;
-  final String? coinType;
-  final bool isHide;
-  final VoidCallback onTap;
+  final _RowData data;
+  final bool isLast;
+  final int cardIndex;
 
   @override
   Widget build(BuildContext context) {
-    final currency = getSettingsLocal()?.currency ?? DefaultValue.currency;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
+    final screenW = MediaQuery.of(context).size.width - 24;
+
+    return GestureDetector(
+      onTap: data.onTap,
+      child: SizedBox(
+        width: screenW,
+        height: _svgH,
+        child: Stack(
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: Image.asset(
-                imagePath,
-                fit: BoxFit.contain,
-                errorBuilder: (c, e, s) => const Icon(
-                  Icons.account_balance_wallet_outlined,
-                  color: _green,
-                  size: 20,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                name,
-                style: const TextStyle(
-                  color: _white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            isHide
-                ? const Text(
-                    "******",
-                    style: TextStyle(
-                      color: _white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        "${coinFormat(amount)} ${coinType ?? ''}",
-                        style: const TextStyle(
-                          color: _white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+            // ── Card background shape ──
+            Positioned.fill(
+              child: ClipPath(
+                clipper: _CardShapeClipper(cardW: screenW, cardH: _svgH),
+                child: Container(
+                  color: Colors.transparent,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: CustomPaint(
+                      painter: _CardShapePainter(
+                        cardW: screenW,
+                        cardH: _svgH,
+                        fillColor: const Color(0x4D1A1A1A),
                       ),
-                      Text(
-                        currencyFormat(amountUsd, name: currency),
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Wave image — only on Fund (isLast) card ──
+            if (isLast)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 80,
+                child: ClipPath(
+                  clipper: _CardShapeClipper(cardW: screenW, cardH: _svgH),
+                  child: Image.asset(
+                    'assets/images/wallet_wave_bottom.png',
+                    fit: BoxFit.fill,
+                    alignment: Alignment.bottomCenter,
+                    errorBuilder: (_, __, ___) =>
+                        CustomPaint(painter: _BottomWavePainter()),
+                  ),
+                ),
+              ),
+
+            // ── Card content row ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      _iconWidget(data.svgIcon, data.pngIcon),
+                      const SizedBox(width: 1),
+                      SizedBox(
+                        width: 65,
+                        child: Text(
+                          data.name,
+                          style: const TextStyle(
+                            color: _white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: _dmSans,
+                          ),
                         ),
                       ),
                     ],
                   ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        "${_fmtNum(data.amount)} ${data.coin.toUpperCase()}",
+                        style: const TextStyle(
+                          color: _white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: _dmSans,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "\$${_fmtNum(data.amtUsd)}",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.45),
+                          fontSize: 12,
+                          fontFamily: _dmSans,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+
+  Widget _iconWidget(String svgPath, String pngPath) {
+    return SizedBox(
+      width: 36,
+      height: 36,
+      child: SvgPicture.asset(
+        svgPath,
+        fit: BoxFit.contain,
+        placeholderBuilder: (_) => Image.asset(
+          pngPath,
+          width: 36,
+          height: 36,
+          errorBuilder: (_, __, ___) => const Icon(
+            Icons.account_balance_wallet_outlined,
+            color: _green,
+            size: 28,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _fmtNum(double v) {
+    if (v == 0) return "0.00";
+    final s = v.toStringAsFixed(2);
+    final p = s.split('.');
+    final i = p[0].replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+    return '$i.${p[1]}';
+  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HISTORY ITEM
-// ─────────────────────────────────────────────────────────────────────────────
-class HistoryItemView extends StatelessWidget {
-  const HistoryItemView({
-    super.key,
+// ── CARD SHAPE PAINTER ───────────────────────────────────────────────────────
+class _CardShapePainter extends CustomPainter {
+  const _CardShapePainter({
+    required this.cardW,
+    required this.cardH,
+    required this.fillColor,
+  });
+  final double cardW, cardH;
+  final Color fillColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sx = cardW / _svgW;
+    final sy = cardH / _svgH;
+    final path = _buildPath(sx, sy);
+    canvas.drawPath(path, Paint()..color = fillColor);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = Colors.white.withOpacity(0.12)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+  }
+
+  static Path _buildPath(double sx, double sy) {
+    return Path()
+      ..moveTo(0, 20 * sy)
+      ..cubicTo(0, 8.9543 * sy, 8.95431 * sx, 0, 20 * sx, 0)
+      ..lineTo(132.716 * sx, 0)
+      ..cubicTo(
+        138.02 * sx,
+        0,
+        143.107 * sx,
+        2.10714 * sy,
+        146.858 * sx,
+        5.85786 * sy,
+      )
+      ..lineTo(155.142 * sx, 14.1421 * sy)
+      ..cubicTo(
+        158.893 * sx,
+        17.8929 * sy,
+        163.98 * sx,
+        20 * sy,
+        169.284 * sx,
+        20 * sy,
+      )
+      ..lineTo(192.716 * sx, 20 * sy)
+      ..cubicTo(
+        198.02 * sx,
+        20 * sy,
+        203.107 * sx,
+        17.8929 * sy,
+        206.858 * sx,
+        14.1421 * sy,
+      )
+      ..lineTo(215.142 * sx, 5.85786 * sy)
+      ..cubicTo(218.893 * sx, 2.10713 * sy, 223.98 * sx, 0, 229.284 * sx, 0)
+      ..lineTo(342 * sx, 0)
+      ..cubicTo(353.046 * sx, 0, 362 * sx, 8.95431 * sy, 362 * sx, 20 * sy)
+      ..lineTo(362 * sx, 184 * sy)
+      ..cubicTo(
+        362 * sx,
+        195.046 * sy,
+        353.046 * sx,
+        204 * sy,
+        342 * sx,
+        204 * sy,
+      )
+      ..lineTo(20 * sx, 204 * sy)
+      ..cubicTo(8.9543 * sx, 204 * sy, 0, 195.046 * sy, 0, 184 * sy)
+      ..lineTo(0, 20 * sy)
+      ..close();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+// ── CARD SHAPE CLIPPER ────────────────────────────────────────────────────────
+class _CardShapeClipper extends CustomClipper<Path> {
+  const _CardShapeClipper({required this.cardW, required this.cardH});
+  final double cardW, cardH;
+
+  @override
+  Path getClip(Size size) =>
+      _CardShapePainter._buildPath(cardW / _svgW, cardH / _svgH);
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> old) => false;
+}
+
+// ── DATA MODEL ───────────────────────────────────────────────────────────────
+class _RowData {
+  const _RowData({
+    required this.name,
+    required this.svgIcon,
+    required this.pngIcon,
+    required this.amount,
+    required this.amtUsd,
+    required this.coin,
+    required this.onTap,
+  });
+  final String name, svgIcon, pngIcon, coin;
+  final double amount, amtUsd;
+  final VoidCallback onTap;
+}
+
+// ── HISTORY ROW ──────────────────────────────────────────────────────────────
+class _HistoryRow extends StatelessWidget {
+  const _HistoryRow({
     required this.history,
     required this.isWithdraw,
     this.coinType,
   });
-
   final History history;
   final bool isWithdraw;
   final String? coinType;
@@ -472,7 +616,7 @@ class HistoryItemView extends StatelessWidget {
         : Icons.file_download_outlined;
     final title = isWithdraw ? "Withdraw".tr : "Deposit".tr;
     final sign = isWithdraw ? "-" : "+";
-    final amtColor = isWithdraw ? Colors.redAccent : _green;
+    final color = isWithdraw ? Colors.redAccent : _green;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -514,7 +658,7 @@ class HistoryItemView extends StatelessWidget {
               Text(
                 "$sign${coinFormat(history.amount)} $coinType",
                 style: TextStyle(
-                  color: amtColor,
+                  color: color,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -532,9 +676,7 @@ class HistoryItemView extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// WALLET DETAIL SCREEN
-// ─────────────────────────────────────────────────────────────────────────────
+// ── WALLET DETAIL SCREEN ─────────────────────────────────────────────────────
 class WalletDetailScreen extends StatefulWidget {
   const WalletDetailScreen({super.key, required this.initialType});
   final int initialType;
@@ -602,10 +744,12 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
           labelStyle: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
+            fontFamily: _dmSans,
           ),
           unselectedLabelStyle: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w400,
+            fontFamily: _dmSans,
           ),
           indicator: const UnderlineTabIndicator(
             borderSide: BorderSide(color: _green, width: 2),
@@ -622,7 +766,10 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
     final type = _tabs[_selectedIndex]["type"];
     if (type == null) {
       return const Center(
-        child: Text("Coming Soon", style: TextStyle(color: Colors.white54)),
+        child: Text(
+          "Coming Soon",
+          style: TextStyle(color: Colors.white54, fontFamily: _dmSans),
+        ),
       );
     }
     if (type == WalletViewType.checkDeposit) {
@@ -632,40 +779,40 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PAINTERS
-// ─────────────────────────────────────────────────────────────────────────────
-class _WaveDividerPainter extends CustomPainter {
+// ── PAINTERS ─────────────────────────────────────────────────────────────────
+class _WaveLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white12
-      ..strokeWidth = 1
+      ..color = Colors.white.withOpacity(0.15)
+      ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
-    final path = Path()
-      ..moveTo(0, size.height / 2)
-      ..cubicTo(
-        size.width * 0.25,
-        0,
-        size.width * 0.50,
-        size.height,
-        size.width * 0.75,
-        size.height / 2,
-      )
-      ..cubicTo(
-        size.width * 0.85,
-        size.height * 0.25,
-        size.width * 0.95,
-        size.height * 0.60,
-        size.width,
-        size.height / 2,
-      );
-    canvas.drawPath(path, paint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, size.height / 2)
+        ..cubicTo(
+          size.width * 0.20,
+          0,
+          size.width * 0.35,
+          size.height,
+          size.width * 0.50,
+          size.height / 2,
+        )
+        ..cubicTo(
+          size.width * 0.65,
+          0,
+          size.width * 0.80,
+          size.height,
+          size.width,
+          size.height / 2,
+        ),
+      paint,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
 class _GreenWavePainter extends CustomPainter {
@@ -675,81 +822,60 @@ class _GreenWavePainter extends CustomPainter {
       Rect.fromLTWH(0, 0, size.width, size.height),
       Paint()..color = const Color(0xFF111111),
     );
-
-    final glowPaint = Paint()
-      ..shader =
-          RadialGradient(
-            colors: [
-              const Color(0xFF7FFF00).withOpacity(0.6),
-              const Color(0xFF39FF14).withOpacity(0.2),
-              Colors.transparent,
-            ],
-            stops: const [0.0, 0.45, 1.0],
-          ).createShader(
-            Rect.fromCircle(
-              center: Offset(size.width * 0.7, size.height * 0.3),
-              radius: size.height * 0.7,
-            ),
-          );
     canvas.drawCircle(
       Offset(size.width * 0.7, size.height * 0.3),
       size.height * 0.7,
-      glowPaint,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFF7FFF00).withOpacity(0.6),
+            const Color(0xFF39FF14).withOpacity(0.2),
+            Colors.transparent,
+          ],
+          stops: const [0.0, 0.45, 1.0],
+        ).createShader(
+          Rect.fromCircle(
+            center: Offset(size.width * 0.7, size.height * 0.3),
+            radius: size.height * 0.7,
+          ),
+        ),
     );
-
-    final wavePaint = Paint()
-      ..color = const Color(0xFF1A1A1A)
-      ..style = PaintingStyle.fill;
-    final path = Path()
-      ..moveTo(0, size.height * 0.5)
-      ..cubicTo(
-        size.width * 0.3,
-        size.height * 0.2,
-        size.width * 0.6,
-        size.height * 0.8,
-        size.width,
-        size.height * 0.5,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(path, wavePaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
 class _BottomWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..shader = LinearGradient(
-        colors: [
-          const Color(0xFF39FF14).withOpacity(0.3),
-          const Color(0xFF7FFF00).withOpacity(0.1),
-          Colors.transparent,
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    final path = Path()
-      ..moveTo(0, size.height * 0.5)
-      ..cubicTo(
-        size.width * 0.3,
-        size.height * 0.1,
-        size.width * 0.6,
-        size.height * 0.9,
-        size.width,
-        size.height * 0.4,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(path, paint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, size.height * 0.5)
+        ..cubicTo(
+          size.width * 0.3,
+          size.height * 0.1,
+          size.width * 0.6,
+          size.height * 0.9,
+          size.width,
+          size.height * 0.4,
+        )
+        ..lineTo(size.width, size.height)
+        ..lineTo(0, size.height)
+        ..close(),
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            const Color(0xFF39FF14).withOpacity(0.5),
+            const Color(0xFF7FFF00).withOpacity(0.2),
+            Colors.transparent,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
