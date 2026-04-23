@@ -546,6 +546,8 @@ class TotalBalanceView extends StatelessWidget {
                   isHide
                       ? TextRobotoAutoNormal("Balance_hidden".tr)
                       : Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic, //  important
                           children: [
                             Text(
                               '\$${double.parse(coinFormat(totalBalance)).toStringAsFixed(2)}',
@@ -636,9 +638,10 @@ class TotalBalanceView extends StatelessWidget {
         Text(
           coinType ?? "",
           style: TextStyle(
-            fontSize: 30, // Dimens.fontSizeMidExtra ki jagah apna size
-            fontWeight: FontWeight.w700,
+            fontSize: 15, // Dimens.fontSizeMidExtra ki jagah apna size
+            fontWeight: FontWeight.w300,
             fontFamily: 'DMSans',
+            height: 1,
             color: Colors.white.withOpacity(0.5),
           ),
         ),

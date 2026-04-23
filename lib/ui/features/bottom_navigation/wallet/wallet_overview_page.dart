@@ -64,7 +64,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
         final data = wOverview.value;
         final settings = getSettingsLocal();
         return Container(
-          color: _primary,
+          color: Colors.black45,
           child: ListView(
             padding: EdgeInsets.zero,
             shrinkWrap: true,
@@ -86,32 +86,24 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     return Container(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.38,
-
       decoration: BoxDecoration(
-        color: Color(0xB21A1A1A),
-
-        //  Bottom round
+        color: Colors.transparent,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(20),
         ),
-
-        //  Bottom white border
         border: Border(
           bottom: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
         ),
       ),
-
       child: ClipRRect(
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(20),
         ),
-
         child: Stack(
           clipBehavior: Clip.hardEdge,
           children: [
-            //  Green wave image
             Positioned(
               right: 0,
               top: 0,
@@ -122,13 +114,10 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                 fit: BoxFit.cover,
               ),
             ),
-
-            //  TOP CONTENT
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 30),
-
                 Container(
                   color: Colors.transparent,
                   padding: const EdgeInsets.fromLTRB(20, 0, 16, 0),
@@ -150,15 +139,12 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 10),
                     ],
                   ),
                 ),
               ],
             ),
-
-            //  BOTTOM FIXED BUTTONS (IMPORTANT)
             Positioned(
               left: 0,
               right: 0,
@@ -177,7 +163,6 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
   Widget _buildStackedCards(WalletOverview data, settings) {
     final coin = data.selectedCoin ?? '';
 
-    // ORDER: index 0 = Spot, 1 = Future, 2 = Earn, 3 = Fund
     final rows = <_RowData>[
       _RowData(
         name: "Spot",
@@ -234,28 +219,24 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // ── Spot peeks at top (rendered first = behind everything) ──
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: _SvgCard(data: rows[0], isLast: false, cardIndex: 0),
             ),
-            // ── Future peeks second ──
             Positioned(
               top: 1 * _peekAmount,
               left: 0,
               right: 0,
               child: _SvgCard(data: rows[1], isLast: false, cardIndex: 1),
             ),
-            // ── Earn peeks third ──
             Positioned(
               top: 2 * _peekAmount,
               left: 0,
               right: 0,
               child: _SvgCard(data: rows[2], isLast: false, cardIndex: 2),
             ),
-            // ── Fund fully visible at bottom (rendered last = on top) ──
             Positioned(
               top: 3 * _peekAmount,
               left: 0,
@@ -351,25 +332,15 @@ class _SvgCard extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.transparent,
-
-                    //  Bottom round
-                    borderRadius:  BorderRadius.circular(20),
-                    //  Bottom white border
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.white,
-                        width: 2,
-                      ),
-                    ),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: CustomPaint(
                       painter: _CardShapePainter(
                         cardW: screenW,
                         cardH: _svgH,
-                        fillColor: Color(0xB21A1A1A),
+                        fillColor: Color(0x991A1A1A),
                       ),
                     ),
                   ),
@@ -377,22 +348,25 @@ class _SvgCard extends StatelessWidget {
               ),
             ),
 
-            // ── Wave image — only on Fund (isLast) card ──
+            // ── Wave image — only on last card ──
             if (isLast)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 80,
+              Positioned.fill(
                 child: ClipPath(
                   clipper: _CardShapeClipper(cardW: screenW, cardH: _svgH),
-                  child: Image.asset(
-                    'assets/images/wallet_wave_bottom.png',
-                    fit: BoxFit.fill,
-                    
+                  child: Align(
                     alignment: Alignment.bottomCenter,
-                    errorBuilder: (_, __, ___) =>
-                        CustomPaint(painter: _BottomWavePainter()),
+                    child: Transform.translate(
+                      offset: const Offset(0, 80),
+                      child: Opacity(
+                        opacity: 1,
+                        child: Image.asset(
+                          'assets/images/wallet_wave_bottom.png',
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: _svgH,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -406,8 +380,9 @@ class _SvgCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
+                      const SizedBox(width: 10),
                       _iconWidget(data.svgIcon, data.pngIcon),
-                      const SizedBox(width: 1),
+                      const SizedBox(width: 5),
                       SizedBox(
                         width: 65,
                         child: Text(
@@ -422,26 +397,58 @@ class _SvgCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment:
+                            CrossAxisAlignment.baseline, //  important
+                            textBaseline: TextBaseline.alphabetic, 
+                    
                     children: [
-                      Text(
-                        "${_fmtNum(data.amount)} ${data.coin.toUpperCase()}",
-                        style: const TextStyle(
-                          color: _white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: _dmSans,
-                        ),
+                      // 🔹 LEFT COLUMN (amount + usd)
+                      Column(
+                        crossAxisAlignment:CrossAxisAlignment.end,
+                             
+                            
+                        children: [
+                          Text(
+                            _fmtNum(data.amount),
+                            style: const TextStyle(
+                              color: _white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: _dmSans,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "\$${_fmtNum(data.amtUsd)}",
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              height: 1,
+                              fontFamily: _dmSans,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        "\$${_fmtNum(data.amtUsd)}",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.45),
-                          fontSize: 12,
-                          fontFamily: _dmSans,
+
+                      const SizedBox(width: 5),
+
+                      // 🔹 RIGHT COLUMN (coin)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 2,
+                        ), //  thoda adjust for baseline feel
+                        child: Text(
+                          data.coin.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: _dmSans,
+                            height: 1,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
                         ),
                       ),
                     ],
@@ -503,14 +510,54 @@ class _CardShapePainter extends CustomPainter {
     final sx = cardW / _svgW;
     final sy = cardH / _svgH;
     final path = _buildPath(sx, sy);
+
+    // ── Fill ──
     canvas.drawPath(path, Paint()..color = fillColor);
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = Colors.white.withOpacity(0.12)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2,
-    );
+
+    // ── Symmetric gradient border — left+right se center tak white ──
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, cardW, 22 * sy));
+
+    final pathMetrics = path.computeMetrics().toList();
+    if (pathMetrics.isNotEmpty) {
+      for (final metric in pathMetrics) {
+        const int steps = 1000;
+        for (int i = 0; i < steps; i++) {
+          final double t = i / steps;
+
+          final double dist = metric.length * t;
+          final Tangent? tangent = metric.getTangentForOffset(dist);
+          if (tangent == null) continue;
+
+          final double x = tangent.position.dx;
+
+          // X position ke basis pe — left(0) aur right(cardW) pe dim, center(cardW/2) pe bright
+          final double distFromCenter = ((x - cardW / 2) / (cardW / 2))
+              .abs(); // 0=center, 1=edge
+          final double opacity = 0.02 + (1.0 - distFromCenter) * 0.18;
+          final double strokeW = 0.3 + (1.0 - distFromCenter) * 0.9;
+
+          final double start = t * metric.length;
+          final double end = ((t + 1 / steps) * metric.length).clamp(
+            0.0,
+            metric.length,
+          );
+
+          final segPath = metric.extractPath(start, end);
+
+          canvas.drawPath(
+            segPath,
+            Paint()
+              ..color = Colors.white24.withOpacity(opacity.clamp(0.0, 0.5))
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = strokeW
+              ..strokeCap = StrokeCap.square,
+          );
+        }
+      }
+    }
+
+    canvas.restore();
   }
 
   static Path _buildPath(double sx, double sy) {
@@ -548,7 +595,7 @@ class _CardShapePainter extends CustomPainter {
       ..cubicTo(218.893 * sx, 2.10713 * sy, 223.98 * sx, 0, 229.284 * sx, 0)
       ..lineTo(342 * sx, 0)
       ..cubicTo(353.046 * sx, 0, 362 * sx, 8.95431 * sy, 362 * sx, 20 * sy)
-      ..lineTo(362 * sx, (_svgH - 20) * sy) // ← 184 hatao
+      ..lineTo(362 * sx, (_svgH - 20) * sy)
       ..cubicTo(
         362 * sx,
         (_svgH - 9) * sy,
@@ -556,8 +603,8 @@ class _CardShapePainter extends CustomPainter {
         _svgH * sy,
         342 * sx,
         _svgH * sy,
-      ) // ← 195, 204 hatao
-      ..lineTo(20 * sx, _svgH * sy) // ← 204 hatao
+      )
+      ..lineTo(20 * sx, _svgH * sy)
       ..cubicTo(
         8.9543 * sx,
         _svgH * sy,
@@ -565,7 +612,7 @@ class _CardShapePainter extends CustomPainter {
         (_svgH - 9) * sy,
         0,
         (_svgH - 20) * sy,
-      ) // ← hatao
+      )
       ..lineTo(0, 20 * sy)
       ..close();
   }
@@ -780,11 +827,9 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
     if (type == WalletViewType.checkDeposit) {
       return const CheckDepositPage(fromKey: FromKey.wallet);
     }
-    // ── YE NAYA BLOCK ADD KARO ──
     if (type == WalletViewType.earn) {
       return const EarnWalletView();
     }
-    // ────────────────────────────
     return WalletListView(fromType: type as int);
   }
 }
@@ -901,7 +946,6 @@ class EarnWalletView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header Card ──
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -943,10 +987,7 @@ class EarnWalletView extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // ── Section Title ──
           const Text(
             "Staking Products",
             style: TextStyle(
@@ -956,10 +997,7 @@ class EarnWalletView extends StatelessWidget {
               fontFamily: _dmSans,
             ),
           ),
-
           const SizedBox(height: 12),
-
-          // ── Earn Product Cards ──
           _EarnProductCard(
             coin: "USDT",
             apy: "12.5%",
@@ -1012,7 +1050,6 @@ class _EarnProductCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Coin circle
           Container(
             width: 42,
             height: 42,
@@ -1033,8 +1070,6 @@ class _EarnProductCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-
-          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1060,8 +1095,6 @@ class _EarnProductCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // APY + Button
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -1085,10 +1118,7 @@ class _EarnProductCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(width: 12),
-
-          // Stake button
           SizedBox(
             height: 32,
             child: ElevatedButton(
