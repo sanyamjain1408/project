@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/history.dart';
+import 'package:tradexpro_flutter/data/models/response.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/check_deposit/check_deposit_page.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_list_page.dart';
@@ -19,6 +20,8 @@ import 'package:tradexpro_flutter/utils/common_widgets.dart';
 import '../../side_navigation/activity/activity_screen.dart';
 import 'wallet_controller.dart';
 import 'wallet_widgets.dart';
+import 'package:tradexpro_flutter/data/remote/api_repository.dart';
+import 'package:tradexpro_flutter/data/models/list_response.dart';
 
 const Color _primary = Color(0xFF111111);
 const Color _secondary = Color(0xFF1A1A1A);
@@ -41,6 +44,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
   final _controller = Get.find<WalletController>();
   final Rx<WalletOverview> wOverview = WalletOverview().obs;
   final RxString selectedCoin = "".obs;
+  final RxList<History> depositList = <History>[].obs;
+  final RxList<History> withdrawList = <History>[].obs;
 
   Future<void> _getOverviewData() async {
     _controller.refreshController.callRefresh();
@@ -48,6 +53,44 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
       wOverview.value = overview;
       selectedCoin.value = wOverview.value.selectedCoin ?? "";
     });
+
+    // ── DEPOSIT HISTORY FETCH ──
+    APIRepository().getActivityList(1, HistoryType.deposit, isFiat: false).then(
+      (resp) {
+        if (resp.success) {
+          try {
+            final historyResponse = HistoryResponse.fromJson(resp.data);
+            final listResponse = historyResponse.histories;
+            if (listResponse?.data != null) {
+              depositList.value = List<History>.from(
+                listResponse!.data!.map((x) => History.fromJson(x)),
+              );
+            }
+          } catch (e) {
+            print("Deposit fetch error: $e");
+          }
+        }
+      },
+    );
+
+    // ── WITHDRAW HISTORY FETCH ──
+    APIRepository()
+        .getActivityList(1, HistoryType.withdraw, isFiat: false)
+        .then((resp) {
+          if (resp.success) {
+            try {
+              final historyResponse = HistoryResponse.fromJson(resp.data);
+              final listResponse = historyResponse.histories;
+              if (listResponse?.data != null) {
+                withdrawList.value = List<History>.from(
+                  listResponse!.data!.map((x) => History.fromJson(x)),
+                );
+              }
+            } catch (e) {
+              print("Withdraw fetch error: $e");
+            }
+          }
+        });
   }
 
   @override
@@ -64,7 +107,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
         final data = wOverview.value;
         final settings = getSettingsLocal();
         return Container(
-          color: Colors.black45,
+          color: const Color(0xFF111111),
           child: ListView(
             padding: EdgeInsets.zero,
             shrinkWrap: true,
@@ -72,8 +115,14 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
               _buildTopHero(data),
               const SizedBox(height: 16),
               _buildStackedCards(data, settings),
-              const SizedBox(height: 20),
-              if (data.spotWallet != null) _buildReport(data),
+              const SizedBox(height: 15),
+              Obx(
+                () => _buildReportWithLists(
+                  depositList: depositList,
+                  withdrawList: withdrawList,
+                  selectedCoin: wOverview.value.selectedCoin ?? "",
+                ),
+              ), // ← condition hata di
               const SizedBox(height: 40),
             ],
           ),
@@ -82,12 +131,348 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     );
   }
 
+  Widget _buildReportWithLists({
+    required RxList<History> depositList,
+    required RxList<History> withdrawList,
+    required String selectedCoin,
+  }) {
+    final hasData = depositList.isNotEmpty || withdrawList.isNotEmpty;
+
+    if (!hasData) {
+      return _buildReport(wOverview.value);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Report",
+            style: TextStyle(
+              color: _white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              fontFamily: _dmSans,
+            ),
+          ),
+          const SizedBox(height: 15),
+
+          // ── TAX + GENERATE REPORT CARDS ──
+          Container(
+            decoration: BoxDecoration(
+              color: Color(0x4D1A1A1A),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                _reportCardRow(
+                  iconBg: Colors.transparent,
+                  icon: Image.asset(
+                    'assets/icons/tax.png',
+                    width: 20,
+                    height: 20,
+                  ),
+                  title: "Tax Report with",
+                  subtitle: "Calculate tax in 2 minutes",
+                  badge: null,
+                  onTap: () {},
+                ),
+                Divider(color: Colors.white.withOpacity(0.07), height: 1),
+                _reportCardRow(
+                  iconBg: Colors.transparent,
+                  icon: Image.asset(
+                    'assets/icons/generate.png',
+                    width: 20,
+                    height: 20,
+                  ),
+                  title: "Generate report",
+                  subtitle: "Trade report, TDS certificates & summary",
+                  badge: "CLAIM TDS",
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // ── RECENT TRANSACTIONS HEADER ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Recent Transactions",
+                style: TextStyle(
+                  color: _white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: _dmSans,
+                  height: 1.5,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  TemporaryData.activityType = HistoryType.deposit;
+                  Get.to(() => const ActivityScreen());
+                },
+                child: Text(
+                  "View All",
+                  style: TextStyle(
+                    color: _white.withOpacity(0.5),
+                    fontSize: 15,
+                    fontFamily: _dmSans,
+                    height: 1.33,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── DEPOSIT LIST ──
+          // ── DEPOSIT LIST ──
+          for (final d in depositList)
+            _transactionRow(
+              isDeposit: true,
+              amount: d.amount ?? 0,
+              date: formatDate(
+                d.createdAt,
+                format: dateTimeFormatDdMMMYyyyHhMm,
+              ),
+              status: d.status ?? 0,
+              coinType: selectedCoin,
+            ),
+
+          // ── WITHDRAW LIST ──
+          for (final w in withdrawList)
+            _transactionRow(
+              isDeposit: false,
+              amount: w.amount ?? 0,
+              date: formatDate(
+                w.createdAt,
+                format: dateTimeFormatDdMMMMYyyyHhMm,
+              ),
+              status: w.status ?? 0,
+              coinType: selectedCoin,
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── REPORT CARD ROW ───────────────────────────────────────────────────────
+  Widget _reportCardRow({
+    required Color iconBg,
+    required Widget icon,
+    required String title,
+    required String subtitle,
+    String? badge,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(child: icon), //  yaha change
+            ),
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: _white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: _dmSans,
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF00B7FF).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            badge,
+                            style: const TextStyle(
+                              color: Color(0xFF00B7FF),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: _dmSans,
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white.withOpacity(0.1),
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── TRANSACTION ROW ───────────────────────────────────────────────────────
+  // ── TRANSACTION ROW ───────────────────────────────────────────────────────
+  Widget _transactionRow({
+    required bool isDeposit,
+    required double amount,
+    required String date,
+    required int status,
+    required String coinType,
+  }) {
+    String statusText;
+    Color statusColor;
+    switch (status) {
+      case 1:
+        statusText = "Success";
+        statusColor = Color(0xFF4ED78E);
+        break;
+      default:
+        statusText = "Failed";
+        statusColor = Color(0xFFD73C3C);
+        break;
+    }
+
+    final iconBg = isDeposit
+        ? const Color(0xFF015629).withOpacity(0.4)
+        : const Color(0xFF920000).withOpacity(0.5);
+    final iconColor = isDeposit ? Color(0xFF4ED78E) : Color(0xFFD73C3C);
+    final icon = isDeposit ? Icons.arrow_downward : Icons.arrow_upward;
+    final sign = isDeposit ? "+" : "-";
+    final label = isDeposit ? "Deposit" : "Withdraw";
+
+    // Format: e.g. "$300.00" like image
+    final formattedAmount = "\$${amount.toStringAsFixed(2)}";
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              // ── LEFT ICON ──
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 20),
+
+              // ── LABEL + DATE ──
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: _white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: _dmSans,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      date,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                        fontFamily: _dmSans,
+                        height: 1.33,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── AMOUNT + STATUS ──
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    formattedAmount, // "$300.00" format — image jaisa
+                    style: const TextStyle(
+                      color: _white, // amount always white like image
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                      color: statusColor, // green=Success, red=Failed
+                      fontSize: 12,
+                      fontFamily: _dmSans,
+                      height: 1.33,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── TOP HERO ──────────────────────────────────────────────────────────────
   Widget _buildTopHero(WalletOverview data) {
     return Container(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.38,
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: Color(0x4D1A1A1A),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(20),
@@ -160,6 +545,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     );
   }
 
+  // ── STACKED CARDS ─────────────────────────────────────────────────────────
   Widget _buildStackedCards(WalletOverview data, settings) {
     final coin = data.selectedCoin ?? '';
 
@@ -249,6 +635,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     );
   }
 
+  // ── OLD REPORT (fallback jab data nahi hota) ──────────────────────────────
   Widget _buildReport(WalletOverview data) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -280,22 +667,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
             ],
           ),
           const SizedBox(height: 12),
-          if (data.withdraw.isValid)
-            for (final w in data.withdraw!)
-              _HistoryRow(
-                history: w,
-                isWithdraw: true,
-                coinType: data.selectedCoin,
-              ),
-          if (data.deposit.isValid)
-            for (final d in data.deposit!)
-              _HistoryRow(
-                history: d,
-                isWithdraw: false,
-                coinType: data.selectedCoin,
-              ),
-          if (!data.deposit.isValid && !data.withdraw.isValid)
-            const EmptyView(),
+          const EmptyView(),
         ],
       ),
     );
@@ -340,7 +712,7 @@ class _SvgCard extends StatelessWidget {
                       painter: _CardShapePainter(
                         cardW: screenW,
                         cardH: _svgH,
-                        fillColor: Color(0x991A1A1A),
+                        fillColor: const Color(0x4D1A1A1A),
                       ),
                     ),
                   ),
@@ -357,14 +729,11 @@ class _SvgCard extends StatelessWidget {
                     alignment: Alignment.bottomCenter,
                     child: Transform.translate(
                       offset: const Offset(0, 80),
-                      child: Opacity(
-                        opacity: 1,
-                        child: Image.asset(
-                          'assets/images/wallet_wave_bottom.png',
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: _svgH,
-                        ),
+                      child: Image.asset(
+                        'assets/images/wallet_wave_bottom.png',
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: _svgH,
                       ),
                     ),
                   ),
@@ -399,16 +768,11 @@ class _SvgCard extends StatelessWidget {
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment:
-                            CrossAxisAlignment.baseline, //  important
-                            textBaseline: TextBaseline.alphabetic, 
-                    
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
-                      // 🔹 LEFT COLUMN (amount + usd)
                       Column(
-                        crossAxisAlignment:CrossAxisAlignment.end,
-                             
-                            
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
                             _fmtNum(data.amount),
@@ -432,14 +796,9 @@ class _SvgCard extends StatelessWidget {
                           ),
                         ],
                       ),
-
                       const SizedBox(width: 5),
-
-                      // 🔹 RIGHT COLUMN (coin)
                       Padding(
-                        padding: const EdgeInsets.only(
-                          top: 2,
-                        ), //  thoda adjust for baseline feel
+                        padding: const EdgeInsets.only(top: 2),
                         child: Text(
                           data.coin.toUpperCase(),
                           style: TextStyle(
@@ -495,7 +854,7 @@ class _SvgCard extends StatelessWidget {
   }
 }
 
-// ── CARD SHAPE PAINTER ───────────────────────────────────────────────────────
+// ── CARD SHAPE PAINTER ────────────────────────────────────────────────────────
 class _CardShapePainter extends CustomPainter {
   const _CardShapePainter({
     required this.cardW,
@@ -511,10 +870,8 @@ class _CardShapePainter extends CustomPainter {
     final sy = cardH / _svgH;
     final path = _buildPath(sx, sy);
 
-    // ── Fill ──
     canvas.drawPath(path, Paint()..color = fillColor);
 
-    // ── Symmetric gradient border — left+right se center tak white ──
     canvas.save();
     canvas.clipRect(Rect.fromLTWH(0, 0, cardW, 22 * sy));
 
@@ -524,16 +881,12 @@ class _CardShapePainter extends CustomPainter {
         const int steps = 1000;
         for (int i = 0; i < steps; i++) {
           final double t = i / steps;
-
           final double dist = metric.length * t;
           final Tangent? tangent = metric.getTangentForOffset(dist);
           if (tangent == null) continue;
 
           final double x = tangent.position.dx;
-
-          // X position ke basis pe — left(0) aur right(cardW) pe dim, center(cardW/2) pe bright
-          final double distFromCenter = ((x - cardW / 2) / (cardW / 2))
-              .abs(); // 0=center, 1=edge
+          final double distFromCenter = ((x - cardW / 2) / (cardW / 2)).abs();
           final double opacity = 0.02 + (1.0 - distFromCenter) * 0.18;
           final double strokeW = 0.3 + (1.0 - distFromCenter) * 0.9;
 
@@ -548,7 +901,7 @@ class _CardShapePainter extends CustomPainter {
           canvas.drawPath(
             segPath,
             Paint()
-              ..color = Colors.white24.withOpacity(opacity.clamp(0.0, 0.5))
+              ..color = Colors.white.withOpacity(opacity.clamp(0.0, 1.0))
               ..style = PaintingStyle.stroke
               ..strokeWidth = strokeW
               ..strokeCap = StrokeCap.square,
@@ -634,7 +987,7 @@ class _CardShapeClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant CustomClipper<Path> old) => false;
 }
 
-// ── DATA MODEL ───────────────────────────────────────────────────────────────
+// ── DATA MODEL ────────────────────────────────────────────────────────────────
 class _RowData {
   const _RowData({
     required this.name,
@@ -650,7 +1003,7 @@ class _RowData {
   final VoidCallback onTap;
 }
 
-// ── HISTORY ROW ──────────────────────────────────────────────────────────────
+// ── HISTORY ROW (fallback) ────────────────────────────────────────────────────
 class _HistoryRow extends StatelessWidget {
   const _HistoryRow({
     required this.history,
@@ -728,7 +1081,7 @@ class _HistoryRow extends StatelessWidget {
   }
 }
 
-// ── WALLET DETAIL SCREEN ─────────────────────────────────────────────────────
+// ── WALLET DETAIL SCREEN ──────────────────────────────────────────────────────
 class WalletDetailScreen extends StatefulWidget {
   const WalletDetailScreen({super.key, required this.initialType});
   final int initialType;
@@ -834,7 +1187,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
   }
 }
 
-// ── PAINTERS ─────────────────────────────────────────────────────────────────
+// ── PAINTERS ──────────────────────────────────────────────────────────────────
 class _WaveLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -842,7 +1195,6 @@ class _WaveLinePainter extends CustomPainter {
       ..color = Colors.white.withOpacity(0.15)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-
     canvas.drawPath(
       Path()
         ..moveTo(0, size.height / 2)
@@ -936,6 +1288,7 @@ class _BottomWavePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
+// ── EARN WALLET VIEW ──────────────────────────────────────────────────────────
 class EarnWalletView extends StatelessWidget {
   const EarnWalletView({super.key});
 
@@ -998,28 +1351,28 @@ class EarnWalletView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _EarnProductCard(
+          const _EarnProductCard(
             coin: "USDT",
             apy: "12.5%",
             duration: "30 Days",
             minAmount: "100",
-            color: const Color(0xFF26A17B),
+            color: Color(0xFF26A17B),
           ),
           const SizedBox(height: 10),
-          _EarnProductCard(
+          const _EarnProductCard(
             coin: "BTC",
             apy: "8.2%",
             duration: "60 Days",
             minAmount: "0.001",
-            color: const Color(0xFFF7931A),
+            color: Color(0xFFF7931A),
           ),
           const SizedBox(height: 10),
-          _EarnProductCard(
+          const _EarnProductCard(
             coin: "ETH",
             apy: "9.8%",
             duration: "90 Days",
             minAmount: "0.01",
-            color: const Color(0xFF627EEA),
+            color: Color(0xFF627EEA),
           ),
         ],
       ),
@@ -1027,6 +1380,7 @@ class EarnWalletView extends StatelessWidget {
   }
 }
 
+// ── EARN PRODUCT CARD ─────────────────────────────────────────────────────────
 class _EarnProductCard extends StatelessWidget {
   const _EarnProductCard({
     required this.coin,

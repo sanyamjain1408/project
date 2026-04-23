@@ -584,6 +584,7 @@ class TotalBalanceView extends StatelessWidget {
 
                   const SizedBox(height: 5),
 
+                  if(!isHide)
                   RichText(
                     text: TextSpan(
                       children: [
@@ -744,13 +745,15 @@ class _WalletActionButton extends StatelessWidget {
               const SizedBox(width: 2),
             ],
 
+            SizedBox(width: 5,),
+
             // ✅ TEXT (fully customizable)
             Flexible(
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 15, // change kar sakta hai
+                  fontSize: 13, // change kar sakta hai
                   fontWeight: FontWeight.w400,
                   fontFamily: 'DMSans',
                   color: textColor,
