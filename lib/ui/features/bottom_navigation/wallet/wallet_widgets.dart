@@ -532,12 +532,8 @@ class TotalBalanceView extends StatelessWidget {
                             color: Colors.black.withOpacity(0.5),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Image.asset(
-                            'assets/icons/time.png',
-                            width: 18,
-                            height: 18,
-                            // optional tint
-                          ),
+                          child:
+                              RotatingIcon(), //  bas yaha replace karo
                         ),
                       ),
                     ],
@@ -837,6 +833,66 @@ class WalletBalanceViewWithBg extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── ROTATING ICON ─────────────────────────────────────────────────────────────
+class RotatingIcon extends StatefulWidget {
+  const RotatingIcon({super.key});
+
+  @override
+  State<RotatingIcon> createState() => _RotatingIconState();
+}
+
+class _RotatingIconState extends State<RotatingIcon>
+    with SingleTickerProviderStateMixin {
+  AnimationController? _controller;
+  Animation<double>? _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+    _animation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 0.0, end: -3.1416 / 2),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: -3.1416 / 2, end: 0.0),
+        weight: 50,
+      ),
+    ]).animate(CurvedAnimation(
+      parent: _controller!,
+      curve: Curves.easeInOut,
+    ));
+    _controller!.repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_animation == null) {
+      return Image.asset('assets/icons/time.png', width: 18, height: 18);
+    }
+    return AnimatedBuilder(
+      animation: _animation!,
+      builder: (context, child) {
+        return Transform.rotate(
+          angle: _animation!.value,
+          child: child,
+        );
+      },
+      child: Image.asset('assets/icons/time.png', width: 18, height: 18),
     );
   }
 }
