@@ -52,8 +52,9 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
   void initState() {
     _controller.onBuySaleChange = onBuySellChange;
     isLoggedIn = gUserRx.value.id > 0;
-    _controller.selectedBuySellTab.value =
-        (widget.fromPage == FromKey.buy ? 0 : 1);
+    _controller.selectedBuySellTab.value = (widget.fromPage == FromKey.buy
+        ? 0
+        : 1);
     buySellTabController = TabController(
       vsync: this,
       length: 2,
@@ -87,11 +88,13 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       children: [
-        Obx(() => BuySellToggleButton(
-              options: ['Buy'.tr, 'Sell'.tr],
-              selected: _controller.selectedBuySellTab.value,
-              onSelect: (index) => onBuySellChange(index),
-            )),
+        Obx(
+          () => BuySellToggleButton(
+            options: ['Buy'.tr, 'Sell'.tr],
+            selected: _controller.selectedBuySellTab.value,
+            onSelect: (index) => onBuySellChange(index),
+          ),
+        ),
         Obx(() => _buySellTabView(_controller.selectedBuySellTab.value)),
       ],
     );
@@ -104,7 +107,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
 
   Widget _buySellTabView(int tabIndex) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMin),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
       child: Obx(() {
         int subIndex = tabIndex == 0
             ? selectedBuySubTabIndex.value
@@ -126,7 +129,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
             dropDownListIndex(
               ["Limit".tr, "Market".tr, "Stop-limit".tr],
               subIndex,
-              "",
+              "Limit".tr, //  hint text do
               (index) {
                 tabIndex == 0
                     ? selectedBuySubTabIndex.value = index
@@ -135,8 +138,8 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
               },
               height: Dimens.btnHeightMid,
               hMargin: 0,
-              bgColor: Colors.transparent,
-              radius: Dimens.radiusCornerSmall,
+              bgColor: const Color(0xFF1A1A1A),
+              radius: 10,
             ),
             vSpacer5(),
 
@@ -201,10 +204,12 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
             vSpacer10(),
 
             // ── TP/SL Toggle ────────────────────────────────────────────────
-            Obx(() => _TpSlToggleRow(
-                  enabled: _tpSlEnabled.value,
-                  onToggle: (v) => _tpSlEnabled.value = v,
-                )),
+            Obx(
+              () => _TpSlToggleRow(
+                enabled: _tpSlEnabled.value,
+                onToggle: (v) => _tpSlEnabled.value = v,
+              ),
+            ),
             vSpacer5(),
 
             // ── Take-Profit & Take-Loss fields ─────────────────────────────
@@ -261,8 +266,8 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       price = makeDouble(limitEditController.text.trim());
     }
     final amount = Decimal.parse(amountEditController.text.trim());
-    totalEditController.text =
-        (amount * Decimal.parse(price.toString())).toString();
+    totalEditController.text = (amount * Decimal.parse(price.toString()))
+        .toString();
   }
 
   void _tapOnPercentItem(String percentStr) {
@@ -280,15 +285,18 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         price = makeDouble(limitEditController.text.trim());
       }
       if (price <= 0) {
-        showToast(selectedBuySubTabIndex.value == 2
-            ? "Please input your limit".tr
-            : "Please input your price".tr);
+        showToast(
+          selectedBuySubTabIndex.value == 2
+              ? "Please input your limit".tr
+              : "Please input your price".tr,
+        );
         return;
       }
       final amount =
           (_controller.selfBalance.value.total?.baseWallet?.balance ?? 0) /
-              price;
-      final feesPercentage = ((dData.feesSettings?.makerFees ?? 0) >
+          price;
+      final feesPercentage =
+          ((dData.feesSettings?.makerFees ?? 0) >
                   (dData.feesSettings?.takerFees ?? 0)
               ? dData.feesSettings?.makerFees
               : dData.feesSettings?.takerFees) ??
@@ -308,14 +316,16 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         price = makeDouble(limitEditController.text.trim());
       }
       if (price <= 0) {
-        showToast(selectedSellSubTabIndex.value == 2
-            ? "Please input your limit".tr
-            : "Please input your price".tr);
+        showToast(
+          selectedSellSubTabIndex.value == 2
+              ? "Please input your limit".tr
+              : "Please input your price".tr,
+        );
         return;
       }
       final amountPercentage =
           (_controller.selfBalance.value.total?.tradeWallet?.balance ?? 0) *
-              percent;
+          percent;
       amountEditController.text = coinFormat(amountPercentage);
       if (selectedSellSubTabIndex.value != 1) {
         totalEditController.text = coinFormat(amountPercentage * price);
@@ -351,14 +361,12 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       if (_controller.tolerance != null) {
         final lowT = _controller.tolerance?.lowTolerance ?? 0;
         if (lowT > 0 && price < lowT) {
-          showToast(
-              "${"Price is too low, it must be at least".tr} $lowT");
+          showToast("${"Price is too low, it must be at least".tr} $lowT");
           return;
         }
         final highT = _controller.tolerance?.highTolerance ?? 0;
         if (highT > 0 && price > highT) {
-          showToast(
-              "${"Price is too high, it must be at most".tr} $highT");
+          showToast("${"Price is too high, it must be at most".tr} $highT");
           return;
         }
       }
@@ -373,8 +381,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       );
     } else if ((isBuy && selectedBuySubTabIndex.value == 1) ||
         (!isBuy && selectedSellSubTabIndex.value == 1)) {
-      final price =
-          isBuy ? dData?.sellPrice ?? 0 : dData?.buyPrice ?? 0;
+      final price = isBuy ? dData?.sellPrice ?? 0 : dData?.buyPrice ?? 0;
       hideKeyboard();
       _controller.placeOrderMarket(
         isBuy,
@@ -501,9 +508,9 @@ class _SliderPercentRowState extends State<_SliderPercentRow> {
             trackHeight: 2,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-            activeTrackColor: Theme.of(context).focusColor,
-            inactiveTrackColor: Theme.of(context).dividerColor,
-            thumbColor: Theme.of(context).focusColor,
+            activeTrackColor: Color(0xFF00B052),
+            inactiveTrackColor: Color(0xFF00B052).withOpacity(0.2),
+            thumbColor: Colors.white,
           ),
           child: Slider(
             value: _sliderValue,
@@ -541,8 +548,11 @@ class _SliderPercentRowState extends State<_SliderPercentRow> {
 //  TradeBalanceAddView  (unchanged — kept here so imports stay clean)
 // ═════════════════════════════════════════════════════════════════════════════
 class TradeBalanceAddView extends StatelessWidget {
-  const TradeBalanceAddView(
-      {super.key, required this.coinPair, required this.isBuy});
+  const TradeBalanceAddView({
+    super.key,
+    required this.coinPair,
+    required this.isBuy,
+  });
 
   final CoinPair coinPair;
   final bool isBuy;
@@ -561,8 +571,9 @@ class TradeBalanceAddView extends StatelessWidget {
             textColor: context.theme.primaryColor,
             onPress: () async {
               Navigator.pop(context);
-              final currencyCode =
-                  isBuy ? coinPair.parentCoinName : coinPair.childCoinName;
+              final currencyCode = isBuy
+                  ? coinPair.parentCoinName
+                  : coinPair.childCoinName;
               final wallet = await getWalletList(currencyCode ?? '');
               if (wallet != null) {
                 if (wallet.currencyType == CurrencyType.crypto) {
@@ -593,15 +604,19 @@ class TradeBalanceAddView extends StatelessWidget {
     if (gUserRx.value.id == 0) return null;
     showLoadingDialog();
     try {
-      final resp = await APIRepository()
-          .getWalletList(1, type: WalletViewType.spot, search: code);
+      final resp = await APIRepository().getWalletList(
+        1,
+        type: WalletViewType.spot,
+        search: code,
+      );
       hideLoadingDialog();
       if (resp.success) {
         final wallets = resp.data[APIKeyConstants.wallets];
         if (wallets != null) {
           final listResponse = ListResponse.fromJson(wallets);
-          final walletMap = listResponse.data!
-              .firstWhere((x) => x[APIKeyConstants.coinType] == code);
+          final walletMap = listResponse.data!.firstWhere(
+            (x) => x[APIKeyConstants.coinType] == code,
+          );
           return Wallet.fromJson(walletMap);
         }
       }

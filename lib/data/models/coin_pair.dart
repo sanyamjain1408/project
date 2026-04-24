@@ -43,24 +43,32 @@ class CoinPair {
   double? volume;
 
   factory CoinPair.fromJson(Map<String, dynamic> json) => CoinPair(
-    coinPairName: json["coin_pair_name"],
-    coinPair: json["coin_pair"],
-    coinPairId: json["coin_pair_id"],
-    parentCoinId: json["parent_coin_id"],
-    childCoinId: json["child_coin_id"],
-    lastPrice: makeDouble(json["last_price"]),
-    priceChange: makeDouble(json["price_change"]),
-    childCoinName: json["child_coin_name"],
-    icon: json["icon"] ?? json["coin_icon"],
-    parentCoinName: json["parent_coin_name"],
-    userId: makeInt(json["user_id"]),
-    balance: makeDouble(json["balance"]),
-    estBalance: json["est_balance"],
-    isFavorite: json["is_favorite"],
-    high: json["high"],
-    low: json["low"],
-    volume: makeDouble(json["volume"]),
-  );
+  coinPairName: json["coin_pair_name"],
+  coinPair: json["coin_pair"],
+
+  //  FIX HERE
+  coinPairId: makeInt(json["coin_pair_id"]),
+  parentCoinId: makeInt(json["parent_coin_id"]),
+  childCoinId: makeInt(json["child_coin_id"]),
+
+  lastPrice: makeDouble(json["last_price"]),
+  priceChange: makeDouble(json["price_change"]),
+
+  childCoinName: json["child_coin_name"],
+  icon: json["icon"] ?? json["coin_icon"],
+  parentCoinName: json["parent_coin_name"],
+
+  userId: makeInt(json["user_id"]),
+  balance: makeDouble(json["balance"]),
+  estBalance: json["est_balance"],
+
+  //  FIX HERE ALSO
+  isFavorite: makeInt(json["is_favorite"]),
+
+  high: json["high"],
+  low: json["low"],
+  volume: makeDouble(json["volume"]),
+);
 
   String getCoinPairName() => "${childCoinName ?? ""}/${parentCoinName ?? ""}";
 

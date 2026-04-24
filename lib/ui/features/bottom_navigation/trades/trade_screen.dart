@@ -60,10 +60,11 @@ class _TradesScreenState extends State<TradesScreen>
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      
       children: [
         // ── Top tab bar: Swap / Spot / Future / Earn / P2P ──────────────────
         Container(
-          color: Theme.of(context).scaffoldBackgroundColor,
+          color: Color(0xFF111111),
           child: TabBar(
             controller: _tabController,
             isScrollable: true,
@@ -71,17 +72,22 @@ class _TradesScreenState extends State<TradesScreen>
             indicator: const BoxDecoration(), // no underline
             indicatorSize: TabBarIndicatorSize.label,
             dividerColor: Colors.transparent,
-            labelColor: Theme.of(context).primaryColor,
-            unselectedLabelColor: Theme.of(context).primaryColorLight,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withOpacity(0.5),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 10),
             labelStyle: const TextStyle(
-              fontSize: Dimens.fontSizeMid,
-              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              fontFamily: "DMSans",
+              height: 1.5
             ),
             unselectedLabelStyle: const TextStyle(
-              fontSize: Dimens.fontSizeMid,
-              fontWeight: FontWeight.normal,
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              fontFamily: "DMSans",
+              height: 1.5
             ),
-            padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             tabs: _tabs.map((t) => Tab(text: t.tr)).toList(),
           ),
         ),

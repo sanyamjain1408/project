@@ -73,7 +73,7 @@ Widget handleEmptyViewWithLoading(
     height: height,
     child: Center(
       child: isLoading
-          ? CircularProgressIndicator(color: Get.theme.focusColor)
+          ? CircularProgressIndicator(color: Color(0xFF00B052))
           : TextRobotoAutoNormal(
               message,
               maxLines: 3,
@@ -138,43 +138,101 @@ Widget dropDownListIndex(
       bottom: vMargin,
     ),
     padding: EdgeInsets.only(left: padding, top: 0, right: padding, bottom: 0),
-    height: height,
+    height: 26,
     width: width,
     decoration: isBordered
         ? boxDecorationRoundBorder(
-            color: bgColor,
-            borderColor: borderColor,
-            radius: radius ?? Dimens.radiusCorner,
+            color: Color(0xFF1A1A1A),
+            borderColor: Colors.transparent,
+            radius: radius ?? 10,
             width: 1,
           )
         : null,
-    alignment: Alignment.center,
-    child: DropdownButton<String>(
-      focusNode: focusNode,
-      isExpanded: isExpanded,
-      value: items.hasIndex(selectedValue) ? items[selectedValue] : null,
-      hint: Text(
-        hint,
-        style: Get.textTheme.displaySmall?.copyWith(
-          color: Get.theme.primaryColor,
-        ),
-      ),
-      icon: Icon(
-        Icons.keyboard_arrow_down_outlined,
-        color: isEditable ? Get.theme.primaryColor : Colors.transparent,
-      ),
-      elevation: 10,
-      dropdownColor: Get.theme.dialogTheme.backgroundColor,
-      borderRadius: BorderRadius.circular(Dimens.radiusCornerMid),
-      underline: Container(height: 0, color: Colors.transparent),
-      menuMaxHeight: Get.width,
-      onChanged: isEditable ? (value) => onChange(items.indexOf(value!)) : null,
-      items: items.map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: TextRobotoAutoBold(value, maxLines: 2, fontSize: fontSize),
+
+    child: // DropdownButton ki jagah ye use karo
+    PopupMenuButton<String>(
+      color: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      onSelected: (value) => onChange(items.indexOf(value)),
+      itemBuilder: (context) => items.map((item) {
+        return PopupMenuItem<String>(
+          value: item,
+          height: 50,
+          
+          child: Text(
+            item,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'DMSans',
+            ),
+          ),
         );
       }).toList(),
+      child: DropdownButtonHideUnderline(
+  child: DropdownButton<String>(
+    focusNode: focusNode,
+    isExpanded: true, // ← important
+    dropdownColor: const Color(0xFF1A1A1A),
+    borderRadius: BorderRadius.circular(10),
+    menuMaxHeight: 200,
+    iconSize: 0, // ← default icon hide karo
+    icon: const SizedBox.shrink(), // ← default icon hatao
+    value: items.hasIndex(selectedValue) ? items[selectedValue] : null,
+    underline: const SizedBox.shrink(),
+    onChanged: isEditable ? (value) => onChange(items.indexOf(value!)) : null,
+
+    // ── SELECTED ITEM — center text + right icon ──
+    selectedItemBuilder: (context) {
+      return items.map<Widget>((String value) {
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // Center text
+            Center(
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'DMSans',
+                ),
+              ),
+            ),
+            // Right icon
+            const Positioned(
+              right: 0,
+              child: Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.white,
+                size: 14,
+              ),
+            ),
+          ],
+        );
+      }).toList();
+    },
+
+    items: items.map<DropdownMenuItem<String>>((String value) {
+      return DropdownMenuItem<String>(
+        value: value,
+        alignment: Alignment.center,
+        child: Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            height: 1.33,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'DMSans',
+          ),
+        ),
+      );
+    }).toList(),
+  ),
+),
     ),
   );
 }

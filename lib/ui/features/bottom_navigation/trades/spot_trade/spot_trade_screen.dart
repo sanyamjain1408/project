@@ -74,9 +74,9 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
           // ── Main scrollable body ─────────────────────────────────────────
           Expanded(
             child: Container(
-              decoration: boxDecorationTopRoundBorder(radius: Dimens.radiusCornerMid),
+              
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 children: [
                   Obx(() => _controller.isLoading.value ? showLoadingSmall() : vSpacer0()),
                   // Chart shown inline when bar-chart icon is tapped

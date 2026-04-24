@@ -103,64 +103,67 @@ class _WalletListViewState extends State<WalletListView> {
     backgroundColor: const Color(0xFF1A1A1A),
     strokeWidth: 2.5,
         child: Obx(() {
-          return CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    // ── HERO CARD ──
-                    _SpotHeroCard(
-                      isHide: gIsBalanceHide.value,
-                      total: _controller.totalBalance.value,
-                      onHistoryTap: () => Get.to(() => const ActivityScreen()),
-                      onHide: (_) => _controller.walletList.refresh(),
+          return Container(
+            color: Color(0xFF111111),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        // ── HERO CARD ──
+                        _SpotHeroCard(
+                          isHide: gIsBalanceHide.value,
+                          total: _controller.totalBalance.value,
+                          onHistoryTap: () => Get.to(() => const ActivityScreen()),
+                          onHide: (_) => _controller.walletList.refresh(),
+                        ),
+                          
+                        // ── INVITE CARD ──
+                        const _InviteCard(),
+                          
+                        // ── BALANCE + SEARCH BAR ──
+                        _BalanceSearchBar(
+                          controller: _controller.searchController,
+                          onTextChanged: _onTextChanged,
+                          onRefresh: () => initViewData(keepSearch: true),
+                        ),
+                          
+                        vSpacer10(),
+                      ],
                     ),
-      
-                    // ── INVITE CARD ──
-                    const _InviteCard(),
-      
-                    // ── BALANCE + SEARCH BAR ──
-                    _BalanceSearchBar(
-                      controller: _controller.searchController,
-                      onTextChanged: _onTextChanged,
-                      onRefresh: () => initViewData(keepSearch: true),
-                    ),
-      
-                    vSpacer10(),
-                  ],
                 ),
-              ),
-      
-              // ── WALLET LIST ──
-              _controller.walletList.isEmpty
-                  ? SliverFillRemaining(
-                      child: handleEmptyViewWithLoading(
-                        isLoading.value,
-                        message: "Your wallets will listed here".tr,
-                      ),
-                    )
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          if (_controller.hasMoreData &&
-                              index == (_controller.walletList.length - 1)) {
-                            _controller.getWalletList(
-                              widget.fromType,
-                              () {},
-                              isFromLoadMore: true,
+                  
+                // ── WALLET LIST ──
+                _controller.walletList.isEmpty
+                    ? SliverFillRemaining(
+                        child: handleEmptyViewWithLoading(
+                          isLoading.value,
+                          message: "Your wallets will listed here".tr,
+                        ),
+                      )
+                    : SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            if (_controller.hasMoreData &&
+                                index == (_controller.walletList.length - 1)) {
+                              _controller.getWalletList(
+                                widget.fromType,
+                                () {},
+                                isFromLoadMore: true,
+                              );
+                            }
+                            final item = _controller.walletList[index];
+                            return SpotWalletItemView(
+                              wallet: item,
+                              isHide: gIsBalanceHide.value,
                             );
-                          }
-                          final item = _controller.walletList[index];
-                          return SpotWalletItemView(
-                            wallet: item,
-                            isHide: gIsBalanceHide.value,
-                          );
-                        },
-                        childCount: _controller.walletList.length,
+                          },
+                          childCount: _controller.walletList.length,
+                        ),
                       ),
-                    ),
-            ],
+              ],
+            ),
           );
         }),
       ),
@@ -679,194 +682,197 @@ class _SpotHeroCard extends StatelessWidget {
     final String currencyName =
         gUserRx.value.currency ?? total?.currency ?? DefaultValue.currency;
 
-    return SizedBox(
-      width: screenW,
-      height: _cardH,
-      child: Stack(
-        clipBehavior: Clip.hardEdge,
-        children: [
-          Positioned.fill(
-            child: ClipPath(
-              clipper: _HeroCardClipper(cardW: screenW, cardH: _cardH),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: CustomPaint(
-                  painter: _HeroCardPainter(
-                    cardW: screenW,
-                    cardH: _cardH,
-                    fillColor: const Color(0x4D1A1A1A),
+    return Container(
+      color: Colors.transparent,
+      child: SizedBox(
+        width: screenW,
+        height: _cardH,
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            Positioned.fill(
+              child: ClipPath(
+                clipper: _HeroCardClipper(cardW: screenW, cardH: _cardH),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: CustomPaint(
+                    painter: _HeroCardPainter(
+                      cardW: screenW,
+                      cardH: _cardH,
+                      fillColor: Color(0xFF111111).withOpacity(0.5),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            right: 25,
-            top: 30,
-            width: screenW * 0.40,
-            height: _cardH * 1.3,
-            child: Transform.rotate(
-              angle: 1.250,
-              alignment: Alignment.center,
-              child: Image.asset(
-                'assets/images/wallet_green_wave.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.bottomRight,
+            Positioned(
+              right: 25,
+              top: 30,
+              width: screenW * 0.40,
+              height: _cardH * 1.3,
+              child: Transform.rotate(
+                angle: 1.250,
+                alignment: Alignment.center,
+                child: Image.asset(
+                  'assets/images/wallet_green_wave.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.bottomRight,
+                ),
               ),
             ),
-          ),
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _HeroBorderPainter(cardW: screenW, cardH: _cardH),
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _HeroBorderPainter(cardW: screenW, cardH: _cardH),
+              ),
             ),
-          ),
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              "Est. Total Value",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                height: 1.33,
+                                fontFamily: 'DMSans',
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () {
+                                GetStorage().write(
+                                  PreferenceKey.isBalanceHide,
+                                  !isHide,
+                                );
+                                gIsBalanceHide.value = !isHide;
+                                if (onHide != null) onHide!(!isHide);
+                              },
+                              child: Icon(
+                                isHide
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: Colors.white.withOpacity(0.5),
+                                size: 14,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (onHistoryTap != null)
+                              GestureDetector(
+                                onTap: onHistoryTap,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.35),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.12),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: const RotatingIcon(),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        isHide
+                            ? const Text(
+                                "******",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'DMSans',
+                                ),
+                              )
+                            : Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      "\$${currencyFormat(total?.total)}",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 25,
+                                        fontWeight: FontWeight.w700,
+                                        fontFamily: 'DMSans',
+                                        height: 1.2,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "USDT",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.5),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w400,
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: Colors.white.withOpacity(0.5),
+                                    size: 16,
+                                  ),
+                                ],
+                              ),
+                        if (!isHide) ...[
+                          const SizedBox(height: 2),
                           Text(
-                            "Est. Total Value",
+                            "≈ \$${currencyFormat(total?.total)}",
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.5),
                               fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              height: 1.33,
                               fontFamily: 'DMSans',
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () {
-                              GetStorage().write(
-                                PreferenceKey.isBalanceHide,
-                                !isHide,
-                              );
-                              gIsBalanceHide.value = !isHide;
-                              if (onHide != null) onHide!(!isHide);
-                            },
-                            child: Icon(
-                              isHide
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: Colors.white.withOpacity(0.5),
-                              size: 14,
-                            ),
-                          ),
-                          const Spacer(),
-                          if (onHistoryTap != null)
-                            GestureDetector(
-                              onTap: onHistoryTap,
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.35),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.12),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: const RotatingIcon(),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      isHide
-                          ? const Text(
-                              "******",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'DMSans',
-                              ),
-                            )
-                          : Row(
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
+                          const SizedBox(height: 2),
+                          RichText(
+                            text: TextSpan(
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    "\$${currencyFormat(total?.total)}",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'DMSans',
-                                      height: 1.2,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  "USDT",
+                                TextSpan(
+                                  text: "Today's PnL  ",
                                   style: TextStyle(
                                     color: Colors.white.withOpacity(0.5),
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w400,
+                                    fontSize: 12,
                                     fontFamily: 'DMSans',
                                   ),
                                 ),
-                                const SizedBox(width: 2),
-                                Icon(
-                                  Icons.keyboard_arrow_down,
-                                  color: Colors.white.withOpacity(0.5),
-                                  size: 16,
+                                const TextSpan(
+                                  text: "+\$8.84 (0.71%)",
+                                  style: TextStyle(
+                                    color: Color(0xFF4ED78E),
+                                    fontSize: 12,
+                                    fontFamily: 'DMSans',
+                                  ),
                                 ),
                               ],
                             ),
-                      if (!isHide) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          "≈ \$${currencyFormat(total?.total)}",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 12,
-                            fontFamily: 'DMSans',
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: "Today's PnL  ",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 12,
-                                  fontFamily: 'DMSans',
-                                ),
-                              ),
-                              const TextSpan(
-                                text: "+\$8.84 (0.71%)",
-                                style: TextStyle(
-                                  color: Color(0xFF4ED78E),
-                                  fontSize: 12,
-                                  fontFamily: 'DMSans',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       ],
-                    ],
-                  ),
-                  const WalletTopButtonsView(),
-                ],
+                    ),
+                    const WalletTopButtonsView(),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
