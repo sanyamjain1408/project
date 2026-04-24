@@ -9,7 +9,7 @@ import 'colors.dart';
 class Themes {
   static final light = ThemeData.light().copyWith(
     textTheme: lightTextTheme,
-    colorScheme: ThemeData.light().colorScheme.copyWith(error: error),
+    colorScheme: ThemeData.light().colorScheme.copyWith( primary: const Color(0xFFCCFF00),),
     primaryColor: darkBG,
     primaryColorLight: lightTextSecondary,
     scaffoldBackgroundColor: lightBG,
@@ -27,7 +27,7 @@ class Themes {
 
   static final dark = ThemeData.dark().copyWith(
     textTheme: darkTextTheme,
-    colorScheme: ThemeData.light().colorScheme.copyWith(error: error),
+    colorScheme: ThemeData.light().colorScheme.copyWith(primary: const Color(0xFFCCFF00) ),
     primaryColor: darkTextPrimary,
     primaryColorLight: darkTextSecondary,
     scaffoldBackgroundColor: darkBG,

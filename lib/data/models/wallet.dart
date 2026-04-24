@@ -7,6 +7,7 @@ class Wallet {
       {required this.id,
       this.userId,
       this.name,
+      this.childfullname,
       this.coinId,
       this.key,
       this.type,
@@ -41,6 +42,7 @@ class Wallet {
   int? userId;
   String? encryptId;
   String? name;
+  String? childfullname;
   int? coinId;
   dynamic key;
   int? type;
@@ -70,41 +72,51 @@ class Wallet {
   int? withdrawalFeesType;
   int? decimal;
 
-  factory Wallet.fromJson(Map<String?, dynamic> json) => Wallet(
-        id: json["id"] ?? 0,
-        userId: json["user_id"],
-        encryptId: json["encryptId"],
-        name: json["name"] ?? json["wallet_name"],
-        coinId: json["coin_id"],
-        key: json["key"],
-        type: json["type"],
-        coinType: json["coin_type"],
-        status: json["status"],
-        currencyType: json["currency_type"],
-        isPrimary: json["is_primary"],
-        isDeposit: json["is_deposit"],
-        isWithdrawal: json["is_withdrawal"],
-        tradeStatus: json["trade_status"],
-        createdAt: json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
-        updatedAt: json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
-        coinIcon: json["coin_icon"],
-        balance: makeDouble(json["balance"]),
-        onOrder: makeDouble(json["on_order"]),
-        availableBalance: makeDouble(json["available_balance"]),
-        total: makeDouble(json["total"]),
-        onOrderUsd: makeDouble(json["on_order_usd"]),
-        availableBalanceUsd: makeDouble(json["available_balance_usd"]),
-        totalBalanceUsd: makeDouble(json["total_balance_usd"]),
-        network: json["network"],
-        networkName: json["network_name"],
-        networkId: makeInt(json["network_id"]),
-        // minimumWithdrawal: makeDouble(json["minimum_withdrawal"]),
-        minimumWithdrawal: makeDecimal(json["minimum_withdrawal"]),
-        maximumWithdrawal: makeDouble(json["maximum_withdrawal"]),
-        withdrawalFees: makeDouble(json["withdrawal_fees"]),
-        withdrawalFeesType: makeInt(json["withdrawal_fees_type"]),
+  factory Wallet.fromJson(Map<String?, dynamic> json) {
+  final coinPairs = json["coin_pairs"];
+  final firstPair = (coinPairs != null && coinPairs is List && coinPairs.isNotEmpty)
+      ? coinPairs[0] as Map<String, dynamic>
+      : null;
+
+  return Wallet(
+    id: json["id"] ?? 0,
+    userId: json["user_id"],
+    encryptId: json["encryptId"],
+    name: json["name"] ?? json["wallet_name"],
+    childfullname: json["child_full_name"]
+        ?? json["wallet_child_full_name"]
+        ?? firstPair?["child_full_name"]
+        ?? json["coin_type"],
+    coinId: json["coin_id"],
+    key: json["key"],
+    type: json["type"],
+    coinType: json["coin_type"],
+    status: json["status"],
+    currencyType: json["currency_type"],
+    isPrimary: json["is_primary"],
+    isDeposit: json["is_deposit"],
+    isWithdrawal: json["is_withdrawal"],
+    tradeStatus: json["trade_status"],
+    createdAt: json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
+    updatedAt: json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
+    coinIcon: json["coin_icon"],
+    balance: makeDouble(json["balance"]),
+    onOrder: makeDouble(json["on_order"]),
+    availableBalance: makeDouble(json["available_balance"]),
+    total: makeDouble(json["total"]),
+    onOrderUsd: makeDouble(json["on_order_usd"]),
+    availableBalanceUsd: makeDouble(json["available_balance_usd"]),
+    totalBalanceUsd: makeDouble(json["total_balance_usd"]),
+    network: json["network"],
+    networkName: json["network_name"],
+    networkId: makeInt(json["network_id"]),
+    minimumWithdrawal: makeDecimal(json["minimum_withdrawal"]),
+    maximumWithdrawal: makeDouble(json["maximum_withdrawal"]),
+    withdrawalFees: makeDouble(json["withdrawal_fees"]),
+    withdrawalFeesType: makeInt(json["withdrawal_fees_type"]),
     decimal: json["decimal"],
-      );
+  );
+}
 }
 
 class Network {

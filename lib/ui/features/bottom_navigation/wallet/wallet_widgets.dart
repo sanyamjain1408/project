@@ -54,8 +54,8 @@ class WalletNameView extends StatelessWidget {
         if (hideImage != true)
           showImageNetwork(
             imagePath: wallet.coinIcon,
-            width: Dimens.iconSizeMid,
-            height: Dimens.iconSizeMid,
+            width: 30,
+            height: 30,
             bgColor: Colors.transparent,
           ),
         if (hideImage != true) hSpacer10(),
@@ -68,10 +68,27 @@ class WalletNameView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextRobotoAutoBold(wallet.coinType ?? ""),
-        TextRobotoAutoNormal(
-          wallet.name ?? "",
-          color: context.theme.primaryColor,
+        Text(
+          wallet.coinType ?? "",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+            fontFamily: _dmSans,
+            fontStyle: FontStyle.normal,
+            height: 1.33,
+          ),
+        ),
+        Text(
+          wallet.childfullname ?? "",
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            fontFamily: _dmSans,
+            fontStyle: FontStyle.normal,
+            height: 1.33,
+          ),
         ),
       ],
     );
@@ -229,6 +246,13 @@ class WalletTransferView extends StatelessWidget {
   }
 }
 
+String _formatBalance(double? value) {
+  if (value == null || value == 0) return "0.00";
+  final intDigits = value.truncate().abs().toString().length;
+  final decimals = intDigits <= 2 ? 4 : 2;
+  return value.toStringAsFixed(decimals);
+}
+
 class SpotWalletItemView extends StatelessWidget {
   const SpotWalletItemView({
     super.key,
@@ -245,7 +269,7 @@ class SpotWalletItemView extends StatelessWidget {
   Widget build(BuildContext context) {
     String currencyName = getSettingsLocal()?.currency ?? DefaultValue.currency;
     return Padding(
-      padding: const EdgeInsets.all(Dimens.paddingMid),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: InkWell(
         onTap:
             onTap ??
@@ -271,11 +295,29 @@ class SpotWalletItemView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        TextRobotoAutoBold(coinFormat(wallet.availableBalance)),
-                        TextRobotoAutoNormal(
+                        Text(
+                          _formatBalance(wallet.availableBalance),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: _dmSans,
+                            fontStyle: FontStyle.normal,
+                            height: 1.33,
+                          ),
+                        ),
+                        Text(
                           currencyFormat(
                             wallet.availableBalanceUsd,
                             name: currencyName,
+                          ),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: _dmSans,
+                            fontStyle: FontStyle.normal,
+                            height: 1.33,
                           ),
                         ),
                       ],
@@ -532,8 +574,7 @@ class TotalBalanceView extends StatelessWidget {
                             color: Colors.black.withOpacity(0.5),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child:
-                              RotatingIcon(), //  bas yaha replace karo
+                          child: RotatingIcon(), //  bas yaha replace karo
                         ),
                       ),
                     ],
@@ -584,29 +625,29 @@ class TotalBalanceView extends StatelessWidget {
 
                   const SizedBox(height: 5),
 
-                  if(!isHide)
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: "Today ",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 12,
-                            fontFamily: 'DMSans',
+                  if (!isHide)
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "Today ",
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 12,
+                              fontFamily: 'DMSans',
+                            ),
                           ),
-                        ),
-                        const TextSpan(
-                          text: "+\$8.84(0.71%)",
-                          style: TextStyle(
-                            color: Color(0xFFCCFF00),
-                            fontSize: 12,
-                            fontFamily: 'DMSans',
+                          const TextSpan(
+                            text: "+\$8.84(0.71%)",
+                            style: TextStyle(
+                              color: Color(0xFFCCFF00),
+                              fontSize: 12,
+                              fontFamily: 'DMSans',
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -720,7 +761,7 @@ class _WalletActionButton extends StatelessWidget {
 
     return SizedBox(
       width: width,
-      height: 44,
+      height: 40,
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
@@ -729,7 +770,7 @@ class _WalletActionButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10), // 🔹 radius control
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 7),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -745,7 +786,7 @@ class _WalletActionButton extends StatelessWidget {
               const SizedBox(width: 2),
             ],
 
-            SizedBox(width: 5,),
+            SizedBox(width: 5),
 
             // ✅ TEXT (fully customizable)
             Flexible(
@@ -861,18 +902,9 @@ class _RotatingIconState extends State<RotatingIcon>
       duration: const Duration(milliseconds: 2000),
     );
     _animation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: -3.1416 / 2),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: -3.1416 / 2, end: 0.0),
-        weight: 50,
-      ),
-    ]).animate(CurvedAnimation(
-      parent: _controller!,
-      curve: Curves.easeInOut,
-    ));
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -3.1416 / 2), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: -3.1416 / 2, end: 0.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _controller!, curve: Curves.easeInOut));
     _controller!.repeat();
   }
 
@@ -890,10 +922,7 @@ class _RotatingIconState extends State<RotatingIcon>
     return AnimatedBuilder(
       animation: _animation!,
       builder: (context, child) {
-        return Transform.rotate(
-          angle: _animation!.value,
-          child: child,
-        );
+        return Transform.rotate(angle: _animation!.value, child: child);
       },
       child: Image.asset('assets/icons/time.png', width: 18, height: 18),
     );
