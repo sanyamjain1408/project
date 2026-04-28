@@ -135,6 +135,16 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                     : selectedSellSubTabIndex.value = index;
 
                 _clearInputViews();
+
+                if (index == 2) {
+                  final prices = _controller.dashboardData.value.lastPriceData;
+                  if (prices?.isNotEmpty ?? false) {
+                    final price = prices!.first.price;
+                    if (price != null && price > 0) {
+                      limitEditController.text = price.toStringAsFixed(2);
+                    }
+                  }
+                }
               },
             ),
             vSpacer5(),
@@ -157,19 +167,16 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                 sSubtitle: baseCType,
               ),
             if (subIndex == 2) vSpacer5(),
-            if (subIndex == 2) ...[
-              MidPriceBlock(
-                lastPData: (_controller.dashboardData.value.lastPriceData?.isNotEmpty ?? false)
-                    ? _controller.dashboardData.value.lastPriceData!.first
-                    : null,
-                priceColor: ((_controller.dashboardData.value.lastPriceData?.isNotEmpty ?? false) &&
-                        _controller.dashboardData.value.lastPriceData!.first.priceOrderType ==
-                            FromKey.buy)
+            if (subIndex == 2)
+              Obx(() {
+                final prices = _controller.dashboardData.value.lastPriceData;
+                final lastPData = (prices?.isNotEmpty ?? false) ? prices!.first : null;
+                final priceColor = lastPData?.priceOrderType == FromKey.buy
                     ? const Color(0xFF4ED78E)
-                    : const Color(0xFFD05858),
-              ),
-              vSpacer5(),
-            ],
+                    : const Color(0xFFD05858);
+                return MidPriceBlock(lastPData: lastPData, priceColor: priceColor);
+              }),
+            if (subIndex == 2) vSpacer5(),
 
             // ── Qty ───────────────────────────────────────────────────
             TradeTextFieldCalculate(
@@ -251,7 +258,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                   // ✅ BUY/SELL BUTTON — BILKUL FIXED, KABHI NAHI HILEGA
                   if (isLoggedIn)
                     buttonRoundedMain(
-                      text: "${isBuy ? "Buy".tr : "Sell".tr} $tradeCType",
+                      text: "${isBuy ? "Buy".tr : "Sell".tr} ",
                       bgColor: isBuy ? gBuyColor : gSellColor,
                       textColor: Colors.white,
                       buttonHeight: 40,

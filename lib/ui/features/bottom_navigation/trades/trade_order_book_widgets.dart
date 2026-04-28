@@ -265,7 +265,7 @@ class MidPriceBlock extends StatelessWidget {
           children: [
             Flexible(
               child: Text(
-                _fmt2(lastPData?.price),
+                _fmt2(lastPData?.price, fixed: 2),
                 style: TextStyle(
                   color: priceColor,
                   fontSize: 15,
@@ -280,7 +280,7 @@ class MidPriceBlock extends StatelessWidget {
         ),
         vSpacer5(),
         Text(
-          "= \$${_fmt2(lastPData?.lastPrice)}",
+          "= \$${_fmt2(lastPData?.lastPrice, fixed: 2)}",
           style: TextStyle(
             color: Colors.white.withOpacity(0.5),
             fontSize: 10,

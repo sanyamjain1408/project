@@ -15,9 +15,9 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import 'spot_trade_controller.dart';
 
-const _cardBg    = Color(0xFF161A1E);
-const _labelClr  = Color(0xFF848E9C);
-const _valueClr  = Color(0xFFEAECEF);
+const _cardBg = Color(0xFF161A1E);
+const _labelClr = Color(0xFF848E9C);
+const _valueClr = Color(0xFFEAECEF);
 const _borderClr = Color(0xFF252930);
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -41,17 +41,21 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
         // ── Tab row ───────────────────────────────────────────────────────────
         Row(
           children: [
-            Obx(() => _TabChip(
-                  label: "Open order".tr,
-                  selected: _mainTab.value == 0,
-                  onTap: () => _mainTab.value = 0,
-                )),
+            Obx(
+              () => _TabChip(
+                label: "Open order".tr,
+                selected: _mainTab.value == 0,
+                onTap: () => _mainTab.value = 0,
+              ),
+            ),
             const SizedBox(width: 4),
-            Obx(() => _TabChip(
-                  label: "Assets".tr,
-                  selected: _mainTab.value == 1,
-                  onTap: () => _mainTab.value = 1,
-                )),
+            Obx(
+              () => _TabChip(
+                label: "Assets".tr,
+                selected: _mainTab.value == 1,
+                onTap: () => _mainTab.value = 1,
+              ),
+            ),
             const Spacer(),
             // Clock icon → history bottom sheet
             GestureDetector(
@@ -63,7 +67,11 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: _borderClr),
                 ),
-                child: const Icon(Icons.history_rounded, color: _labelClr, size: 18),
+                child: const Icon(
+                  Icons.history_rounded,
+                  color: _labelClr,
+                  size: 18,
+                ),
               ),
             ),
           ],
@@ -73,32 +81,36 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
         const SizedBox(height: 8),
 
         // ── Body ──────────────────────────────────────────────────────────────
-        Obx(() => gUserRx.value.id == 0
-            ? Padding(
-                padding: const EdgeInsets.all(Dimens.paddingMid),
-                child: RichText(
-                  text: TextSpan(
-                    text: "${"Want to trade".tr} ",
-                    style: const TextStyle(color: _labelClr, fontSize: 13),
-                    children: [
-                      WidgetSpan(
-                        child: GestureDetector(
-                          onTap: () => Get.to(() => const SignInPage()),
-                          child: Text(
-                            "Login".tr,
-                            style: TextStyle(
-                              color: gBuyColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
+        Obx(
+          () => gUserRx.value.id == 0
+              ? Padding(
+                  padding: const EdgeInsets.all(Dimens.paddingMid),
+                  child: RichText(
+                    text: TextSpan(
+                      text: "${"Want to trade".tr} ",
+                      style: const TextStyle(color: _labelClr, fontSize: 13),
+                      children: [
+                        WidgetSpan(
+                          child: GestureDetector(
+                            onTap: () => Get.to(() => const SignInPage()),
+                            child: Text(
+                              "Login".tr,
+                              style: TextStyle(
+                                color: gBuyColor,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                )
+              : Obx(
+                  () => _mainTab.value == 0 ? _openOrdersList() : _assetsView(),
                 ),
-              )
-            : Obx(() => _mainTab.value == 0 ? _openOrdersList() : _assetsView())),
+        ),
       ],
     );
   }
@@ -110,13 +122,17 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
           ? handleEmptyViewWithLoading(_controller.isHistoryLoading.value)
           : Column(
               children: list
-                  .map((t) => SpotTradeHistoryItemView(
-                        trade: t,
-                        fromKey: FromKey.buySell,
-                        onCancel: (trade) => _controller
-                            .cancelOpenOrderApp(trade.type ?? '', trade.id ?? 0),
-                        orderData: _controller.dashboardData.value.orderData,
-                      ))
+                  .map(
+                    (t) => SpotTradeHistoryItemView(
+                      trade: t,
+                      fromKey: FromKey.buySell,
+                      onCancel: (trade) => _controller.cancelOpenOrderApp(
+                        trade.type ?? '',
+                        trade.id ?? 0,
+                      ),
+                      orderData: _controller.dashboardData.value.orderData,
+                    ),
+                  )
                   .toList(),
             );
     });
@@ -124,10 +140,10 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
 
   Widget _assetsView() {
     return Obx(() {
-      final total      = _controller.selfBalance.value.total;
-      final baseW      = total?.baseWallet;
-      final tradeW     = total?.tradeWallet;
-      final coinPair   = _controller.selectedCoinPair.value;
+      final total = _controller.selfBalance.value.total;
+      final baseW = total?.baseWallet;
+      final tradeW = total?.tradeWallet;
+      final coinPair = _controller.selectedCoinPair.value;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,7 +181,7 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  ASSET COIN CARD  (matches Image 2 design)
+//  ASSET COIN CARD
 // ══════════════════════════════════════════════════════════════════════════════
 class _AssetCoinCard extends StatelessWidget {
   const _AssetCoinCard({
@@ -193,10 +209,8 @@ class _AssetCoinCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ── Coin header ─────────────────────────────────────────────────
           Row(
             children: [
-              // Coin circle icon
               Container(
                 width: 32,
                 height: 32,
@@ -229,42 +243,46 @@ class _AssetCoinCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // ── Total ───────────────────────────────────────────────────────
           Row(
             children: [
-              const Text("Total",
-                  style: TextStyle(color: _labelClr, fontSize: 12)),
+              const Text(
+                "Total",
+                style: TextStyle(color: _labelClr, fontSize: 12),
+              ),
               const Spacer(),
-              Text(total,
-                  style: const TextStyle(
-                      color: _valueClr,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500)),
+              Text(
+                total,
+                style: const TextStyle(
+                  color: _valueClr,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
-          // ── Available ───────────────────────────────────────────────────
           Row(
             children: [
-              const Text("Available",
-                  style: TextStyle(color: _labelClr, fontSize: 12)),
+              const Text(
+                "Available",
+                style: TextStyle(color: _labelClr, fontSize: 12),
+              ),
               const Spacer(),
-              Text(available,
-                  style: const TextStyle(
-                      color: _valueClr,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500)),
+              Text(
+                available,
+                style: const TextStyle(
+                  color: _valueClr,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),
-          // ── Action buttons ───────────────────────────────────────────────
           Row(
             children: [
               Expanded(
-                child: _ActionBtn(
-                  label: "Buy/Sell",
-                  onTap: () => Get.back(),
-                ),
+                child: _ActionBtn(label: "Buy/Sell", onTap: () => Get.back()),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -272,12 +290,16 @@ class _AssetCoinCard extends StatelessWidget {
                   label: "Add Funds",
                   onTap: () {
                     final total = controller.selfBalance.value.total;
-                    final wallet = coinType == (total?.baseWallet?.coinType ?? "")
+                    final wallet =
+                        coinType == (total?.baseWallet?.coinType ?? "")
                         ? total?.baseWallet
                         : total?.tradeWallet;
                     if (wallet != null) {
-                      Get.to(() => WalletCryptoDepositScreen(
-                          wallet: wallet.createWallet()));
+                      Get.to(
+                        () => WalletCryptoDepositScreen(
+                          wallet: wallet.createWallet(),
+                        ),
+                      );
                     }
                   },
                 ),
@@ -286,8 +308,7 @@ class _AssetCoinCard extends StatelessWidget {
               Expanded(
                 child: _ActionBtn(
                   label: "⇄ Swap",
-                  onTap: () =>
-                      Get.to(() => SwapScreen(prePair: coinPair)),
+                  onTap: () => Get.to(() => SwapScreen(prePair: coinPair)),
                 ),
               ),
             ],
@@ -329,10 +350,12 @@ class _ActionBtn extends StatelessWidget {
   }
 }
 
-// ── Tab chip ──────────────────────────────────────────────────────────────────
 class _TabChip extends StatelessWidget {
-  const _TabChip(
-      {required this.label, required this.selected, required this.onTap});
+  const _TabChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -347,18 +370,15 @@ class _TabChip extends StatelessWidget {
           color: selected ? _cardBg : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-              color: selected
-                  ? Theme.of(context).focusColor
-                  : Colors.transparent),
+            color: selected ? Theme.of(context).focusColor : Colors.transparent,
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color:
-                selected ? Theme.of(context).primaryColor : _labelClr,
+            color: selected ? Theme.of(context).primaryColor : _labelClr,
             fontSize: 13,
-            fontWeight:
-                selected ? FontWeight.bold : FontWeight.normal,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),
@@ -367,7 +387,7 @@ class _TabChip extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  HISTORY FULL SCREEN  (opens when clock icon is tapped)
+//  HISTORY FULL SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
 class SpotTradeHistoryFullScreen extends StatefulWidget {
   const SpotTradeHistoryFullScreen({super.key, required this.controller});
@@ -378,8 +398,7 @@ class SpotTradeHistoryFullScreen extends StatefulWidget {
       _SpotTradeHistoryFullScreenState();
 }
 
-class _SpotTradeHistoryFullScreenState
-    extends State<SpotTradeHistoryFullScreen>
+class _SpotTradeHistoryFullScreenState extends State<SpotTradeHistoryFullScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab;
   final RxInt _buySell = 0.obs;
@@ -387,7 +406,8 @@ class _SpotTradeHistoryFullScreenState
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 3, vsync: this);
+    // 4 Tabs: Open Order, Order History, Trade History, Stop Limit Orders
+    _tab = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -399,9 +419,9 @@ class _SpotTradeHistoryFullScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0E11),
+      backgroundColor: const Color(0xFF111111),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0E11),
+        backgroundColor: const Color(0xFF111111),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: _valueClr),
@@ -410,7 +430,11 @@ class _SpotTradeHistoryFullScreenState
         title: const Text(
           "My Trades",
           style: TextStyle(
-              color: _valueClr, fontSize: 16, fontWeight: FontWeight.bold),
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            fontFamily: "DMSans",
+          ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -418,18 +442,29 @@ class _SpotTradeHistoryFullScreenState
             controller: _tab,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            indicatorColor: gBuyColor,
-            labelColor: _valueClr,
-            unselectedLabelColor: _labelClr,
-            labelStyle:
-                const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: const TextStyle(fontSize: 13),
-            dividerColor: _borderClr,
+            indicatorColor: Colors.transparent,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withOpacity(0.5),
+            labelStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              fontFamily: "DMSans",
+              height: 1.5,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              fontFamily: "DMSans",
+              height: 1.5,
+            ),
+            dividerColor: Colors.transparent,
+            dividerHeight: 0,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             tabs: [
+              Tab(text: "Open Order".tr),
               Tab(text: "Order History".tr),
               Tab(text: "Trade History".tr),
-              Tab(text: "Stop Limit".tr),
+              Tab(text: "Stop Limit Orders".tr),
             ],
           ),
         ),
@@ -437,111 +472,131 @@ class _SpotTradeHistoryFullScreenState
       body: TabBarView(
         controller: _tab,
         children: [
-          // ── Order History (Buy + Sell merged) ────────────────────────────
+          // ── Tab 0: Open Order ─────────────────────────────────────
           Obx(() {
-            final buys  = widget.controller.allMyHistories.value.buyOrders  ?? [];
-            final sells = widget.controller.allMyHistories.value.sellOrders ?? [];
-            final list  = [...buys, ...sells];
-            // sort by createdAt descending if possible
-            list.sort((a, b) {
-              final aDate = (a as dynamic).createdAt;
-              final bDate = (b as dynamic).createdAt;
-              if (aDate == null || bDate == null) return 0;
-              return bDate.compareTo(aDate);
-            });
-            if (list.isEmpty) {
-              return handleEmptyViewWithLoading(
-                  widget.controller.isHistoryLoading.value);
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: list.length,
-              itemBuilder: (_, i) => SpotTradeHistoryItemView(
-                trade: list[i],
-                fromKey: list[i].type == FromKey.buy ? FromKey.buy : FromKey.sell,
-                onCancel: (_) {},
-                orderData: widget.controller.dashboardData.value.orderData,
-              ),
-            );
+            final list = widget.controller.allMyHistories.value.orders ?? [];
+            return list.isEmpty
+                ? handleEmptyViewWithLoading(
+                    widget.controller.isHistoryLoading.value,
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: list.length,
+                    itemBuilder: (_, i) => SpotTradeHistoryItemView(
+                      trade: list[i],
+                      fromKey: FromKey.buySell,
+                      onCancel: (trade) => widget.controller.cancelOpenOrderApp(
+                        trade.type ?? '',
+                        trade.id ?? 0,
+                      ),
+                      orderData: widget.controller.dashboardData.value.orderData,
+                    ),
+                  );
           }),
 
-          // ── Trade History ────────────────────────────────────────────────
+          // ── Tab 1: Order History (Separate Widget) ────────────────────
+          _OrderHistoryView(controller: widget.controller),
+
+          // ── Tab 2: Trade History ───────────────────────────────────────
           Obx(() {
             final list =
                 widget.controller.allMyHistories.value.transactions ?? [];
-            if (list.isEmpty) {
-              return handleEmptyViewWithLoading(
-                  widget.controller.isHistoryLoading.value);
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: list.length,
-              itemBuilder: (_, i) => SpotTradeHistoryItemView(
-                trade: list[i],
-                fromKey: FromKey.trade,
-                onCancel: (_) {},
-                orderData: widget.controller.dashboardData.value.orderData,
-              ),
-            );
+            return list.isEmpty
+                ? handleEmptyViewWithLoading(
+                    widget.controller.isHistoryLoading.value,
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: list.length,
+                    itemBuilder: (_, i) => SpotTradeHistoryItemView(
+                      trade: list[i],
+                      fromKey: FromKey.trade,
+                      onCancel: (_) {},
+                      orderData: widget.controller.dashboardData.value.orderData,
+                    ),
+                  );
           }),
 
-          // ── Stop Limit ───────────────────────────────────────────────────
-          Obx(() {
-            final list =
-                widget.controller.allMyHistories.value.stopLimitOrders ?? [];
-            if (list.isEmpty) {
-              return handleEmptyViewWithLoading(
-                  widget.controller.isHistoryLoading.value);
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: list.length,
-              itemBuilder: (_, i) => SpotTradeHistoryStopLimitItemView(
-                trade: list[i],
-                onCancel: (t) => widget.controller
-                    .cancelOpenOrderApp('stop', t.id ?? 0),
-                orderData: widget.controller.dashboardData.value.orderData,
-              ),
-            );
-          }),
+          // ── Tab 3: Stop Limit Orders (Separate Widget) ────────────────
+          _StopLimitOrdersView(controller: widget.controller),
         ],
       ),
     );
   }
 }
 
-class _SubBtn extends StatelessWidget {
-  const _SubBtn(
-      {required this.label,
-      required this.selected,
-      required this.color,
-      required this.onTap});
-  final String label;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
+// ══════════════════════════════════════════════════════════════════════════════
+//  WIDGET 1: ORDER HISTORY VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+class _OrderHistoryView extends StatelessWidget {
+  const _OrderHistoryView({required this.controller});
+  final SpotTradeController controller;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-          decoration: BoxDecoration(
-            color: selected ? color.withValues(alpha: 0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: selected ? color : _borderClr),
-          ),
-          child: Text(label,
-              style: TextStyle(
-                  color: selected ? color : _labelClr,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600)),
+  Widget build(BuildContext context) {
+    return Obx(() {
+      // Logic: Buy + Sell merged
+      final buys = controller.allMyHistories.value.buyOrders ?? [];
+      final sells = controller.allMyHistories.value.sellOrders ?? [];
+      final list = [...buys, ...sells];
+
+      // Sort logic
+      list.sort((a, b) {
+        final aDate = (a as dynamic).createdAt;
+        final bDate = (b as dynamic).createdAt;
+        if (aDate == null || bDate == null) return 0;
+        return bDate.compareTo(aDate);
+      });
+
+      if (list.isEmpty) {
+        return handleEmptyViewWithLoading(controller.isHistoryLoading.value);
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: list.length,
+        itemBuilder: (_, i) => SpotTradeHistoryItemView(
+          trade: list[i],
+          fromKey: list[i].type == FromKey.buy ? FromKey.buy : FromKey.sell,
+          onCancel: (_) {}, // History mein cancel nahi hota usually
+          orderData: controller.dashboardData.value.orderData,
         ),
       );
+    });
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  ORDER CARD
+//  WIDGET 2: STOP LIMIT ORDERS VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+class _StopLimitOrdersView extends StatelessWidget {
+  const _StopLimitOrdersView({required this.controller});
+  final SpotTradeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final list = controller.allMyHistories.value.stopLimitOrders ?? [];
+
+      if (list.isEmpty) {
+        return handleEmptyViewWithLoading(controller.isHistoryLoading.value);
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: list.length,
+        itemBuilder: (_, i) => SpotTradeHistoryStopLimitItemView(
+          trade: list[i],
+          onCancel: (t) => controller.cancelOpenOrderApp('stop', t.id ?? 0),
+          orderData: controller.dashboardData.value.orderData,
+        ),
+      );
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  COMMON ORDER CARD (USED EVERYWHERE)
 // ══════════════════════════════════════════════════════════════════════════════
 class SpotTradeHistoryItemView extends StatelessWidget {
   const SpotTradeHistoryItemView({
@@ -558,10 +613,10 @@ class SpotTradeHistoryItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isBuy     = trade.type == FromKey.buy;
-    final color     = isBuy ? gBuyColor : gSellColor;
+    final isBuy = trade.type == FromKey.buy;
+    final color = isBuy ? gBuyColor : gSellColor;
     final tradeCoin = orderData?.tradeCoin ?? "";
-    final baseCoin  = orderData?.baseCoin  ?? "";
+    final baseCoin = orderData?.baseCoin ?? "";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -576,14 +631,20 @@ class SpotTradeHistoryItemView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
             child: Row(
               children: [
-                Text("$tradeCoin/$baseCoin",
-                    style: const TextStyle(
-                        color: _valueClr,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold)),
+                Text(
+                  "$tradeCoin/$baseCoin",
+                  style: const TextStyle(
+                    color: _valueClr,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(4),
@@ -592,20 +653,30 @@ class SpotTradeHistoryItemView extends StatelessWidget {
                   child: Text(
                     "${(trade.type ?? '').toUpperCase()} Limit",
                     style: TextStyle(
-                        color: color, fontSize: 10, fontWeight: FontWeight.w600),
+                      color: color,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const Spacer(),
                 Text(
-                  formatDate(trade.createdAt, format: dateTimeFormatYyyyMMDdHhMm) ?? "",
+                  formatDate(
+                        trade.createdAt,
+                        format: dateTimeFormatYyyyMMDdHhMm,
+                      ) ??
+                      "",
                   style: const TextStyle(color: _labelClr, fontSize: 10),
                 ),
                 if (fromKey == FromKey.buySell) ...[
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => onCancel(trade),
-                    child: const Icon(Icons.delete_outline,
-                        color: Colors.redAccent, size: 16),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.redAccent,
+                      size: 16,
+                    ),
                   ),
                 ],
               ],
@@ -617,8 +688,8 @@ class SpotTradeHistoryItemView extends StatelessWidget {
             child: Column(
               children: [
                 _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
-                _row("Fee ($baseCoin)",     coinFormat(trade.fees)),
-                _row("Price ($baseCoin)",   coinFormat(trade.price)),
+                _row("Fee ($baseCoin)", coinFormat(trade.fees)),
+                _row("Price ($baseCoin)", coinFormat(trade.price)),
                 if (fromKey != FromKey.buy)
                   _row("Processed ($tradeCoin)", coinFormat(trade.processed)),
                 if (fromKey != FromKey.trade)
@@ -634,15 +705,15 @@ class SpotTradeHistoryItemView extends StatelessWidget {
   }
 
   Widget _row(String l, String v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(
-          children: [
-            Text(l, style: const TextStyle(color: _labelClr, fontSize: 12)),
-            const Spacer(),
-            Text(v, style: const TextStyle(color: _valueClr, fontSize: 12)),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      children: [
+        Text(l, style: const TextStyle(color: _labelClr, fontSize: 12)),
+        const Spacer(),
+        Text(v, style: const TextStyle(color: _valueClr, fontSize: 12)),
+      ],
+    ),
+  );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -661,10 +732,10 @@ class SpotTradeHistoryStopLimitItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isBuy     = trade.type == FromKey.buy;
-    final color     = isBuy ? gBuyColor : gSellColor;
+    final isBuy = trade.type == FromKey.buy;
+    final color = isBuy ? gBuyColor : gSellColor;
     final tradeCoin = orderData?.tradeCoin ?? "";
-    final baseCoin  = orderData?.baseCoin  ?? "";
+    final baseCoin = orderData?.baseCoin ?? "";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -679,14 +750,20 @@ class SpotTradeHistoryStopLimitItemView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
             child: Row(
               children: [
-                Text("$tradeCoin/$baseCoin",
-                    style: const TextStyle(
-                        color: _valueClr,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold)),
+                Text(
+                  "$tradeCoin/$baseCoin",
+                  style: const TextStyle(
+                    color: _valueClr,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(4),
@@ -695,14 +772,20 @@ class SpotTradeHistoryStopLimitItemView extends StatelessWidget {
                   child: Text(
                     "${(trade.type ?? '').toUpperCase()} Stop Limit",
                     style: TextStyle(
-                        color: color, fontSize: 10, fontWeight: FontWeight.w600),
+                      color: color,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => onCancel(trade),
-                  child: const Icon(Icons.delete_outline,
-                      color: Colors.redAccent, size: 16),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.redAccent,
+                    size: 16,
+                  ),
                 ),
               ],
             ),
@@ -713,10 +796,10 @@ class SpotTradeHistoryStopLimitItemView extends StatelessWidget {
             child: Column(
               children: [
                 _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
-                _row("Fee ($baseCoin)",     coinFormat(trade.fees)),
-                _row("Price ($baseCoin)",   coinFormat(trade.price)),
-                _row("Stop ($baseCoin)",    coinFormat(trade.stop)),
-                _row("Total ($baseCoin)",   coinFormat(trade.total)),
+                _row("Fee ($baseCoin)", coinFormat(trade.fees)),
+                _row("Price ($baseCoin)", coinFormat(trade.price)),
+                _row("Stop ($baseCoin)", coinFormat(trade.stop)),
+                _row("Total ($baseCoin)", coinFormat(trade.total)),
               ],
             ),
           ),
@@ -726,13 +809,13 @@ class SpotTradeHistoryStopLimitItemView extends StatelessWidget {
   }
 
   Widget _row(String l, String v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(
-          children: [
-            Text(l, style: const TextStyle(color: _labelClr, fontSize: 12)),
-            const Spacer(),
-            Text(v, style: const TextStyle(color: _valueClr, fontSize: 12)),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      children: [
+        Text(l, style: const TextStyle(color: _labelClr, fontSize: 12)),
+        const Spacer(),
+        Text(v, style: const TextStyle(color: _valueClr, fontSize: 12)),
+      ],
+    ),
+  );
 }
