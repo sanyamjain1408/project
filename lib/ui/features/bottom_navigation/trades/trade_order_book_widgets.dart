@@ -20,9 +20,9 @@ import 'trade_widgets.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
-const int _kMaxOrderBookRows = 8;
-// ✅ 5 decimal digits
+const int _kMaxOrderBookRows = 12; // ✅ Buy/Sell only mode mein 12 rows
 const int _kOrderDecimal = 5;
+const double _kMinFillPercent = 0.05;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ORDER BOOK FIXED VIEW
@@ -54,26 +54,26 @@ class OderBookFixedView extends StatelessWidget {
     final total = order?.total;
     PriceData? lastPData = prices.isValid ? prices?.first : PriceData();
 
-    // ── Sell list: max 8, bottom-aligned (neeche se dikhao) ──────────────────
+    // ✅ All mode mein 8 rows, single mode mein 12 rows
+    final int maxRows = selectedOrderSort == FromKey.all ? 8 : 15;
+
     List<ExchangeOrder> sList = [];
     if (selectedOrderSort != FromKey.buy) {
-      final raw = sellList.length > _kMaxOrderBookRows
-          ? sellList.sublist(sellList.length - _kMaxOrderBookRows)
+      final raw = sellList.length > maxRows
+          ? sellList.sublist(sellList.length - maxRows)
           : List<ExchangeOrder>.from(sellList);
       sList = raw;
     }
 
-    // ── Buy list: max 8, top-aligned (upar se dikhao) ────────────────────────
     List<ExchangeOrder> bList = [];
     if (selectedOrderSort != FromKey.sell) {
-      bList = buyList.length > _kMaxOrderBookRows
-          ? buyList.sublist(0, _kMaxOrderBookRows)
+      bList = buyList.length > maxRows
+          ? buyList.sublist(0, maxRows)
           : List<ExchangeOrder>.from(buyList);
     }
 
-    // ── Fixed row height so both sections always occupy the same space ────────
     const double rowH = 18.0;
-    const double sectionH = _kMaxOrderBookRows * rowH;
+    final double sectionH = maxRows * rowH;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -128,15 +128,15 @@ class OderBookFixedView extends StatelessWidget {
         ),
         vSpacer5(),
 
-        // ── SELL LIST — fixed height box, items stick to BOTTOM ───────────────
-        // Jab kam items aaye to upar blank space rehta hai
+        // ── SELL LIST ─────────────────────────────────────────────────────────
         if (selectedOrderSort != FromKey.buy)
           SizedBox(
             height: sectionH,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.end, // ✅ neeche se dikhao
+              mainAxisAlignment: MainAxisAlignment.end,
               children: List.generate(sList.length, (index) {
                 return OderBookItemMinView(
+                  key: ValueKey('sell_${sList[index].price}'),
                   sList[index],
                   FromKey.sell,
                   selectedHeaderIndex == 1,
@@ -149,52 +149,53 @@ class OderBookFixedView extends StatelessWidget {
 
         vSpacer5(),
 
-        // ── Mid price ─────────────────────────────────────────────────────────
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    coinFormat(lastPData?.price, fixed: _kOrderDecimal),
-                    style: const TextStyle(
-                      color: Color(0xFFD05858),
-                      fontSize: 15,
-                      fontFamily: "DMSans",
-                      fontWeight: FontWeight.w600,
-                      height: 1.33,
+        // ── Mid price — sirf "all" mode mein dikhega ──────────────────────────
+        if (selectedOrderSort == FromKey.all)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      coinFormat(lastPData?.price, fixed: _kOrderDecimal),
+                      style: const TextStyle(
+                        color: Color(0xFFD05858),
+                        fontSize: 15,
+                        fontFamily: "DMSans",
+                        fontWeight: FontWeight.w600,
+                        height: 1.33,
+                      ),
+                      maxLines: 1,
                     ),
-                    maxLines: 1,
                   ),
-                ),
-              ],
-            ),
-            vSpacer5(),
-            Text(
-              "= \$${currencyFormat(lastPData?.lastPrice, fixed: _kOrderDecimal)}",
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 10,
-                fontFamily: "DMSans",
-                fontWeight: FontWeight.w400,
-                height: 1.2,
+                ],
               ),
-            ),
-          ],
-        ),
+              vSpacer5(),
+              Text(
+                "= \$${currencyFormat(lastPData?.lastPrice, fixed: _kOrderDecimal)}",
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 10,
+                  fontFamily: "DMSans",
+                  fontWeight: FontWeight.w400,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
 
-        vSpacer5(),
+        if (selectedOrderSort == FromKey.all) vSpacer5(),
 
-        // ── BUY LIST — fixed height box, items stick to TOP ───────────────────
-        // Jab kam items aaye to neeche blank space rehta hai
+        // ── BUY LIST ──────────────────────────────────────────────────────────
         if (selectedOrderSort != FromKey.sell)
           SizedBox(
             height: sectionH,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, // ✅ upar se dikhao
+              mainAxisAlignment: MainAxisAlignment.start,
               children: List.generate(bList.length, (index) {
                 return OderBookItemMinView(
+                  key: ValueKey('buy_${bList[index].price}'),
                   bList[index],
                   FromKey.buy,
                   selectedHeaderIndex == 1,
@@ -213,24 +214,10 @@ class OderBookFixedView extends StatelessWidget {
           children: [
             const CustomDropdown(),
             const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                height: 28,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Center(
-                  child: Image.asset(
-                    "assets/icons/dot.png",
-                    width: 20,
-                    height: 20,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
+            // ✅ 3-state dot toggle button
+            _DotToggleButton(
+              selectedOrderSort: selectedOrderSort,
+              onToggle: onShortChange,
             ),
           ],
         ),
@@ -263,6 +250,62 @@ class OderBookFixedView extends StatelessWidget {
       }),
     );
     showBottomSheetDynamic(context, view, title: "Choose".tr);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ✅ 3-STATE DOT TOGGLE BUTTON
+// all → dot.png (default)
+// buy → greendot.png (sirf buy dikhega)
+// sell → reddot.png (sirf sell dikhega)
+// ─────────────────────────────────────────────────────────────────────────────
+class _DotToggleButton extends StatelessWidget {
+  const _DotToggleButton({
+    required this.selectedOrderSort,
+    required this.onToggle,
+  });
+
+  final String selectedOrderSort;
+  final Function(String) onToggle;
+
+  String get _dotAsset {
+    if (selectedOrderSort == FromKey.buy) return "assets/icons/greendot.png";
+    if (selectedOrderSort == FromKey.sell) return "assets/icons/reddot.png";
+    return "assets/icons/dot.png";
+  }
+
+  // ✅ Cycle: all → buy → sell → all
+  void _onTap() {
+    if (selectedOrderSort == FromKey.all) {
+      onToggle(FromKey.buy);
+    } else if (selectedOrderSort == FromKey.buy) {
+      onToggle(FromKey.sell);
+    } else {
+      onToggle(FromKey.all);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _onTap,
+      child: Container(
+        height: 28,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Center(
+          child: Image.asset(
+            _dotAsset,
+            width: 20,
+            height: 20,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -330,7 +373,7 @@ class OrderBookIcon extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // ORDER BOOK ITEM MIN VIEW
 // ─────────────────────────────────────────────────────────────────────────────
-class OderBookItemMinView extends StatelessWidget {
+class OderBookItemMinView extends StatefulWidget {
   const OderBookItemMinView(
     this.order,
     this.type,
@@ -347,35 +390,108 @@ class OderBookItemMinView extends StatelessWidget {
   final int rowIndex;
 
   @override
+  State<OderBookItemMinView> createState() => _OderBookItemMinViewState();
+}
+
+class _OderBookItemMinViewState extends State<OderBookItemMinView>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  double _currentPercent = _kMinFillPercent;
+
+  double _safePercent(double raw) => raw.clamp(_kMinFillPercent, 1.0);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _currentPercent =
+        _safePercent(getPercentageValue(1, widget.order.percentage));
+
+    _animation = Tween<double>(
+      begin: _currentPercent,
+      end: _currentPercent,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+
+    _controller.value = 1.0;
+
+    _controller.addListener(() {
+      _currentPercent = _animation.value;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant OderBookItemMinView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final newPercent =
+        _safePercent(getPercentageValue(1, widget.order.percentage));
+
+    if ((newPercent - _currentPercent).abs() > 0.001) {
+      final fromPercent = _currentPercent;
+      _currentPercent = newPercent;
+
+      _animation = Tween<double>(
+        begin: fromPercent,
+        end: newPercent,
+      ).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+      );
+
+      _controller
+        ..value = 0.0
+        ..forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bgColor = type == FromKey.buy
+    final bgColor = widget.type == FromKey.buy
         ? const Color(0xFF22C55E)
         : const Color(0xFFEF4444);
-    final percent = getPercentageValue(1, order.percentage);
-    // ✅ 5 decimal digits
-    final value = isTotal
-        ? numberFormatCompact(order.total, decimals: _kOrderDecimal)
-        : coinFormat(order.amount, fixed: _kOrderDecimal);
+
+    final value = widget.isTotal
+        ? numberFormatCompact(widget.order.total, decimals: _kOrderDecimal)
+        : coinFormat(widget.order.amount, fixed: _kOrderDecimal);
 
     return Stack(
       children: [
-        _OrderFillAnimation(
-          color: bgColor,
-          percent: percent,
-          rowIndex: rowIndex,
+        AnimatedBuilder(
+          animation: _animation,
+          builder: (context, _) {
+            return CustomPaint(
+              painter: _OrderFillPainter(
+                color: bgColor,
+                fillPercent: _animation.value,
+              ),
+              child: const SizedBox(height: 18, width: double.infinity),
+            );
+          },
         ),
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => setSelectedPrice.value = order.price,
+            onTap: () => setSelectedPrice.value = widget.order.price,
             child: Row(
               children: [
                 Expanded(
                   child: Text(
-                    // ✅ 5 decimal digits
-                    coinFormat(order.price, fixed: _kOrderDecimal),
+                    coinFormat(widget.order.price, fixed: _kOrderDecimal),
                     style: TextStyle(
-                      color: priceColor,
+                      color: widget.priceColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       height: 1.33,
@@ -404,71 +520,7 @@ class OderBookItemMinView extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _OrderFillAnimation
-// ─────────────────────────────────────────────────────────────────────────────
-class _OrderFillAnimation extends StatefulWidget {
-  const _OrderFillAnimation({
-    required this.color,
-    required this.percent,
-    required this.rowIndex,
-  });
-
-  final Color color;
-  final double percent;
-  final int rowIndex;
-
-  @override
-  State<_OrderFillAnimation> createState() => _OrderFillAnimationState();
-}
-
-class _OrderFillAnimationState extends State<_OrderFillAnimation>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _fillAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    final ms = 1600 + (widget.rowIndex * 139) % 1400;
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: ms),
-    );
-    final base = widget.percent.clamp(0.05, 1.0);
-    final minP = (base - 0.15).clamp(0.02, 1.0);
-    final maxP = (base + 0.15).clamp(0.02, 1.0);
-    _fillAnim = Tween<double>(begin: minP, end: maxP).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
-    _ctrl.repeat(reverse: true);
-    _ctrl.value = (widget.rowIndex * 0.19) % 1.0;
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _fillAnim,
-      builder: (context, _) {
-        return CustomPaint(
-          painter: _OrderFillPainter(
-            color: widget.color,
-            fillPercent: _fillAnim.value,
-          ),
-          child: const SizedBox(height: 18, width: double.infinity),
-        );
-      },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _OrderFillPainter
+// _OrderFillPainter — sirf drawing, koi animation nahi
 // ─────────────────────────────────────────────────────────────────────────────
 class _OrderFillPainter extends CustomPainter {
   _OrderFillPainter({required this.color, required this.fillPercent});
@@ -535,49 +587,153 @@ class DetailsOrderBookView extends StatelessWidget {
         : Column(
             children: List.generate(listLength, (index) {
               final order = list[index];
-              // ✅ 5 decimal digits
               final fText = isBuy
                   ? coinFormat(order.amount, fixed: _kOrderDecimal)
                   : currencyFormat(order.price, fixed: _kOrderDecimal);
               final sText = isBuy
                   ? currencyFormat(order.price, fixed: _kOrderDecimal)
                   : coinFormat(order.amount, fixed: _kOrderDecimal);
-              final percent = getPercentageValue(1, order.percentage);
-              return InkWell(
-                onTap: () => setSelectedPrice.value = order.price,
-                child: Stack(
-                  children: [
-                    RotatedBox(
-                      quarterTurns: -2,
-                      child: LinearProgressIndicator(
-                        value: percent,
-                        minHeight: 20,
-                        color: color.withValues(alpha: 0.15),
-                        backgroundColor: Colors.transparent,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextRobotoAutoNormal(
-                            fText,
-                            color: isBuy ? null : color,
-                          ),
-                        ),
-                        Expanded(
-                          child: TextRobotoAutoNormal(
-                            sText,
-                            textAlign: TextAlign.end,
-                            color: isBuy ? color : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+
+              return _OrderBookDetailRow(
+                key: ValueKey('${isBuy ? "buy" : "sell"}_${order.price}'),
+                order: order,
+                color: color,
+                fText: fText,
+                sText: sText,
+                isBuy: isBuy,
               );
             }),
           );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _OrderBookDetailRow — StatefulWidget with AnimationController
+// ─────────────────────────────────────────────────────────────────────────────
+class _OrderBookDetailRow extends StatefulWidget {
+  const _OrderBookDetailRow({
+    super.key,
+    required this.order,
+    required this.color,
+    required this.fText,
+    required this.sText,
+    required this.isBuy,
+  });
+
+  final ExchangeOrder order;
+  final Color color;
+  final String fText;
+  final String sText;
+  final bool isBuy;
+
+  @override
+  State<_OrderBookDetailRow> createState() => _OrderBookDetailRowState();
+}
+
+class _OrderBookDetailRowState extends State<_OrderBookDetailRow>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  double _currentPercent = _kMinFillPercent;
+
+  double _safePercent(double raw) => raw.clamp(_kMinFillPercent, 1.0);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _currentPercent =
+        _safePercent(getPercentageValue(1, widget.order.percentage));
+
+    _animation = Tween<double>(
+      begin: _currentPercent,
+      end: _currentPercent,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+
+    _controller.value = 1.0;
+
+    _controller.addListener(() {
+      _currentPercent = _animation.value;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _OrderBookDetailRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final newPercent =
+        _safePercent(getPercentageValue(1, widget.order.percentage));
+
+    if ((newPercent - _currentPercent).abs() > 0.001) {
+      final fromPercent = _currentPercent;
+      _currentPercent = newPercent;
+
+      _animation = Tween<double>(
+        begin: fromPercent,
+        end: newPercent,
+      ).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+      );
+
+      _controller
+        ..value = 0.0
+        ..forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => setSelectedPrice.value = widget.order.price,
+      child: Stack(
+        children: [
+          AnimatedBuilder(
+            animation: _animation,
+            builder: (context, _) {
+              return RotatedBox(
+                quarterTurns: -2,
+                child: LinearProgressIndicator(
+                  value: _animation.value,
+                  minHeight: 20,
+                  color: widget.color.withValues(alpha: 0.15),
+                  backgroundColor: Colors.transparent,
+                ),
+              );
+            },
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: TextRobotoAutoNormal(
+                  widget.fText,
+                  color: widget.isBuy ? null : widget.color,
+                ),
+              ),
+              Expanded(
+                child: TextRobotoAutoNormal(
+                  widget.sText,
+                  textAlign: TextAlign.end,
+                  color: widget.isBuy ? widget.color : null,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 

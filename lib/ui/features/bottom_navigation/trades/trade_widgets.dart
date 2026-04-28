@@ -201,7 +201,7 @@ class BuySellToggleButton extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 0),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => onSelect(1),
@@ -300,7 +300,7 @@ class TradeTextFieldCalculate extends StatelessWidget {
                   border: InputBorder.none,
                   labelText: sTitle != null
                       ? (sSubtitle != null && sSubtitle!.isNotEmpty
-                            ? "$sTitle ($sSubtitle)"
+                            ? "$sTitle"
                             : sTitle)
                       : null,
                   // ── bada size jab empty + unfocused ──

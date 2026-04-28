@@ -147,7 +147,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
               controller: priceEditController,
               isEnable: subIndex != 1,
               text: subIndex == 1 ? "Market".tr : null,
-              sTitle: subIndex == 2 ? "Stop".tr : "Limit Price".tr,
+              sTitle: subIndex == 2 ? "Stop".tr : "Limit Price",
               sSubtitle: baseCType,
             ),
             vSpacer5(),
