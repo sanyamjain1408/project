@@ -174,14 +174,14 @@ class BuySellToggleButton extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 5),
           child: SizedBox(
-            height: 35,
+            height: 30,
             child: Row(
               children: [
                 Expanded(
                   child: GestureDetector(
                     onTap: () => onSelect(0),
                     child: Container(
-                      height: 35,
+                      height: 30,
                       decoration: BoxDecoration(
                         color: selected == 0
                             ? const Color(0xFF00B052)
@@ -268,7 +268,7 @@ class TradeTextFieldCalculate extends StatelessWidget {
     final showButtons = hidePlusMinus != true && isEnable != false;
 
     return Container(
-      height: 52,
+      height: 40,
       decoration: BoxDecoration(
         color: _bg,
         borderRadius: BorderRadius.circular(10),
@@ -278,7 +278,7 @@ class TradeTextFieldCalculate extends StatelessWidget {
           // ── LEFT: label + value ──
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
+              padding: const EdgeInsets.fromLTRB(12, 5, 8, 5),
               child: TextField(
                 controller: controller,
                 keyboardType: const TextInputType.numberWithOptions(

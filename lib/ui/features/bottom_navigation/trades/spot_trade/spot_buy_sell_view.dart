@@ -38,7 +38,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
   final totalEditController = TextEditingController();
   final limitEditController = TextEditingController();
 
-  // ── NEW: TP/SL controllers ─────────────────────────────────────────────────
   final takeProfitController = TextEditingController();
   final takeLossController = TextEditingController();
   final RxBool _tpSlEnabled = false.obs;
@@ -84,9 +83,8 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Obx(
           () => BuySellToggleButton(
@@ -122,28 +120,29 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             vSpacer5(),
 
-            // ── Order type dropdown ────────────────────────────────────────
+            // ── Order type dropdown ────────────────────────────────────
             dropDownListIndex(
               ["Limit".tr, "Market".tr, "Stop-limit".tr],
               subIndex,
-              "Limit".tr, //  hint text do
+              "Limit".tr,
               (index) {
                 tabIndex == 0
                     ? selectedBuySubTabIndex.value = index
                     : selectedSellSubTabIndex.value = index;
                 _clearInputViews();
               },
-              height: Dimens.btnHeightMid,
+              height: 25,
               hMargin: 0,
               bgColor: const Color(0xFF1A1A1A),
               radius: 10,
             ),
             vSpacer5(),
 
-            // ── Limit Price ───────────────────────────────────────────────
+            // ── Limit / Stop Price ─────────────────────────────────────
             TradeTextFieldCalculate(
               controller: priceEditController,
               isEnable: subIndex != 1,
@@ -151,40 +150,40 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
               sTitle: subIndex == 2 ? "Stop".tr : "Limit Price".tr,
               sSubtitle: baseCType,
             ),
-            vSpacer10(),
+            vSpacer5(),
 
-            // ── Stop field (Stop-limit only) ───────────────────────────────
+            // ── Limit field (Stop-limit only) ──────────────────────────
             if (subIndex == 2)
               TradeTextFieldCalculate(
                 controller: limitEditController,
                 sTitle: "Limit".tr,
                 sSubtitle: baseCType,
               ),
-            if (subIndex == 2) vSpacer10(),
+            if (subIndex == 2) vSpacer5(),
 
-            // ── Qty ────────────────────────────────────────────────────────
+            // ── Qty ───────────────────────────────────────────────────
             TradeTextFieldCalculate(
               controller: amountEditController,
               onTextChange: _onInputAmount,
               sTitle: "Qty".tr,
               sSubtitle: tradeCType,
             ),
-            vSpacer10(),
+            vSpacer2(),
 
-            // ── Slider ─────────────────────────────────────────────────────
+            // ── Slider ────────────────────────────────────────────────
             _SliderPercentRow(onTap: _tapOnPercentItem),
             vSpacer5(),
 
-            // ── Amount (Total) ─────────────────────────────────────────────
+            // ── Amount (Total) ─────────────────────────────────────────
             TradeTextFieldCalculate(
               controller: totalEditController,
               isEnable: false,
               sTitle: "Amount".tr,
               sSubtitle: baseCType,
             ),
-            vSpacer10(),
+            vSpacer2(),
 
-            // ── Available balance ──────────────────────────────────────────
+            // ── Available balance ──────────────────────────────────────
             isLoggedIn
                 ? TradeBalanceView(
                     balance: balance,
@@ -201,56 +200,65 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                     },
                   )
                 : const TradeLoginButton(),
-            vSpacer10(),
-
-            // ── TP/SL Toggle ────────────────────────────────────────────────
-            Obx(
-              () => _TpSlToggleRow(
-                enabled: _tpSlEnabled.value,
-                onToggle: (v) => _tpSlEnabled.value = v,
-              ),
-            ),
             vSpacer5(),
 
-            // ── Take-Profit & Take-Loss fields ─────────────────────────────
+            // ── TP/SL section + Button — ek saath fixed structure ──────
+            // ✅ KEY: AnimatedAlign + ClipRect = button KABHI nahi hilega
+            // ── TP/SL section + Button ──────────────────────────────────────────
             Obx(() {
-              if (!_tpSlEnabled.value) return const SizedBox.shrink();
+              final enabled = _tpSlEnabled.value;
               return Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  TradeTextFieldCalculate(
-                    controller: takeProfitController,
-                    sTitle: "Take-Profit Price".tr,
-                    sSubtitle: baseCType,
+                  // ── TP/SL Toggle Row ───────────────────────────────────────────
+                  _TpSlToggleRow(
+                    enabled: enabled,
+                    onToggle: (v) => _tpSlEnabled.value = v,
                   ),
-                  vSpacer10(),
-                  TradeTextFieldCalculate(
-                    controller: takeLossController,
-                    sTitle: "Take-Loss Price".tr,
-                    sSubtitle: baseCType,
-                  ),
-                  vSpacer10(),
+
+                  // ── ON: 2 fields dikhao | OFF: fixed SizedBox gap ──────────────
+                  // ✅ Dono cases mein button ki position SAME rehti hai
+                  if (enabled) ...[
+                    const SizedBox(height: 5),
+                    TradeTextFieldCalculate(
+                      controller: takeProfitController,
+                      sTitle: "Take-Profit Price".tr,
+                      sSubtitle: baseCType,
+                    ),
+                    const SizedBox(height: 5),
+                    TradeTextFieldCalculate(
+                      controller: takeLossController,
+                      sTitle: "Take-Loss Price".tr,
+                      sSubtitle: baseCType,
+                    ),
+                    const SizedBox(height: 10),
+                  ] else ...[
+                    // ✅ Same total height jitni 2 fields + spacers ki hoti hai
+                    // 40 + 5 + 40 + 5 + 10 = 100
+                    const SizedBox(height: 100),
+                  ],
+
+                  // ✅ BUY/SELL BUTTON — BILKUL FIXED, KABHI NAHI HILEGA
+                  if (isLoggedIn)
+                    buttonRoundedMain(
+                      text: "${isBuy ? "Buy".tr : "Sell".tr} $tradeCType",
+                      bgColor: isBuy ? gBuyColor : gSellColor,
+                      textColor: Colors.white,
+                      buttonHeight: 40,
+                      borderRadius: 5,
+                      onPress: () => _checkInputData(),
+                    ),
+
                 ],
               );
             }),
-
-            // ── Buy / Sell button ──────────────────────────────────────────
-            if (isLoggedIn)
-              buttonRoundedMain(
-                text: "${isBuy ? "Buy".tr : "Sell".tr} $tradeCType",
-                bgColor: isBuy ? gBuyColor : gSellColor,
-                textColor: Colors.white,
-                buttonHeight: Dimens.btnHeightMid,
-                borderRadius: Dimens.radiusCornerLarge,
-                onPress: () => _checkInputData(),
-              ),
-            vSpacer10(),
           ],
         );
       }),
     );
   }
 
-  // ── Input logic (unchanged from original) ─────────────────────────────────
+  // ── Input logic ────────────────────────────────────────────────────────────
 
   void _onInputAmount(String amountStr) {
     var price = 0.0;
@@ -425,7 +433,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
   }
 }
 
-// ── TP/SL Toggle Row Widget ────────────────────────────────────────────────────
+// ── TP/SL Toggle Row Widget ───────────────────────────────────────────────────
 class _TpSlToggleRow extends StatelessWidget {
   const _TpSlToggleRow({required this.enabled, required this.onToggle});
 
@@ -436,50 +444,52 @@ class _TpSlToggleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Green dot indicator
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: enabled ? gBuyColor : Theme.of(context).primaryColorLight,
-            shape: BoxShape.circle,
-          ),
-        ),
-        hSpacer5(),
-        TextRobotoAutoNormal(
-          'TP/SL',
-          fontSize: Dimens.fontSizeSmall,
-          color: Theme.of(context).primaryColor,
-        ),
-        hSpacer5(),
-        // "Last" label badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            border: Border.all(color: Theme.of(context).dividerColor),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextRobotoAutoNormal(
-                'Last',
-                fontSize: Dimens.fontSizeMin,
-                color: Theme.of(context).primaryColorLight,
+        GestureDetector(
+          onTap: () => onToggle(!enabled),
+          child: Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: enabled ? gBuyColor : Colors.transparent,
+              border: Border.all(
+                color: enabled
+                    ? gBuyColor
+                    : Theme.of(context).primaryColorLight,
               ),
-              const Icon(Icons.arrow_drop_down, size: 14),
-            ],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: enabled
+                ? const Icon(Icons.check, size: 12, color: Colors.white)
+                : null,
+          ),
+        ),
+        hSpacer5(),
+        Text(
+          'TP/SL',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontWeight: FontWeight.w400,
+            fontSize: 12,
+            fontFamily: "DMSans",
           ),
         ),
         const Spacer(),
-        // Toggle switch
-        Transform.scale(
-          scale: 0.8,
-          child: Switch(
-            value: enabled,
-            onChanged: onToggle,
-            activeColor: gBuyColor,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Last',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontWeight: FontWeight.w400,
+                  fontSize: 12,
+                  fontFamily: "DMSans",
+                ),
+              ),
+              const Icon(Icons.arrow_drop_down, size: 14),
+            ],
           ),
         ),
       ],
@@ -487,7 +497,7 @@ class _TpSlToggleRow extends StatelessWidget {
   }
 }
 
-// ── Slider Percent Row (replaces old TradePercentView for slider style) ────────
+// ── Slider Percent Row ────────────────────────────────────────────────────────
 class _SliderPercentRow extends StatefulWidget {
   const _SliderPercentRow({required this.onTap});
   final Function(String) onTap;
@@ -498,55 +508,63 @@ class _SliderPercentRow extends StatefulWidget {
 
 class _SliderPercentRowState extends State<_SliderPercentRow> {
   double _sliderValue = 0;
+  final List<double> points = [0, 25, 50, 75, 100];
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackHeight: 2,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-            activeTrackColor: Color(0xFF00B052),
-            inactiveTrackColor: Color(0xFF00B052).withOpacity(0.2),
-            thumbColor: Colors.white,
+    return SizedBox(
+      height: 20,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 2,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              activeTrackColor: Colors.white.withOpacity(0.5),
+              inactiveTrackColor: Colors.white.withOpacity(0.1),
+              thumbColor: Colors.white.withOpacity(0.5),
+            ),
+            child: Slider(
+              value: _sliderValue,
+              min: 0,
+              max: 100,
+              divisions: 4,
+              onChanged: (v) {
+                setState(() => _sliderValue = v);
+                widget.onTap(v.toStringAsFixed(0));
+              },
+            ),
           ),
-          child: Slider(
-            value: _sliderValue,
-            min: 0,
-            max: 100,
-            divisions: 4,
-            onChanged: (v) {
-              setState(() => _sliderValue = v);
-              widget.onTap(v.toStringAsFixed(0));
-            },
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: points.map((point) {
+                  bool isActive = _sliderValue >= point;
+                  return Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? Colors.white.withOpacity(0.5)
+                          : Colors.grey.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
-        ),
-        // Percent labels row
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: ['0%', '25%', '50%', '75%', '100%'].map((label) {
-              return Text(
-                label,
-                style: TextStyle(
-                  fontSize: Dimens.fontSizeMin,
-                  color: Theme.of(context).primaryColorLight,
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  TradeBalanceAddView  (unchanged — kept here so imports stay clean)
-// ═════════════════════════════════════════════════════════════════════════════
+// ── TradeBalanceAddView ───────────────────────────────────────────────────────
 class TradeBalanceAddView extends StatelessWidget {
   const TradeBalanceAddView({
     super.key,

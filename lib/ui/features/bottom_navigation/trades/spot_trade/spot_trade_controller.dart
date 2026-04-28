@@ -182,7 +182,7 @@ class SpotTradeController extends GetxController implements SocketListener {
         (resp) {
       if (resp.success) {
         var list = List<ExchangeOrder>.from(resp.data[APIKeyConstants.orders].map((x) => ExchangeOrder.fromJson(x)));
-        handleOrderBookList(resp.data[APIKeyConstants.orderType], list);
+        handleOrderBookList(type, list);
       } else {
         showToast(resp.message);
       }

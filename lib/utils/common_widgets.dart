@@ -133,9 +133,9 @@ Widget dropDownListIndex(
   return Container(
     margin: EdgeInsets.only(
       left: hMargin,
-      top: vMargin,
+      top: 0,
       right: hMargin,
-      bottom: vMargin,
+      bottom: 0,
     ),
     padding: EdgeInsets.only(left: padding, top: 0, right: padding, bottom: 0),
     height: 26,
