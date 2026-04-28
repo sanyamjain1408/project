@@ -7,10 +7,7 @@ import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
-import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
-import 'package:tradexpro_flutter/utils/appbar_util.dart';
-import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import 'spot_trade_controller.dart';
@@ -472,27 +469,8 @@ class _SpotTradeHistoryFullScreenState extends State<SpotTradeHistoryFullScreen>
       body: TabBarView(
         controller: _tab,
         children: [
-          // ── Tab 0: Open Order ─────────────────────────────────────
-          Obx(() {
-            final list = widget.controller.allMyHistories.value.orders ?? [];
-            return list.isEmpty
-                ? handleEmptyViewWithLoading(
-                    widget.controller.isHistoryLoading.value,
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: list.length,
-                    itemBuilder: (_, i) => SpotTradeHistoryItemView(
-                      trade: list[i],
-                      fromKey: FromKey.buySell,
-                      onCancel: (trade) => widget.controller.cancelOpenOrderApp(
-                        trade.type ?? '',
-                        trade.id ?? 0,
-                      ),
-                      orderData: widget.controller.dashboardData.value.orderData,
-                    ),
-                  );
-          }),
+          // ── Tab 0: Open Order — Upcoming placeholder ──────────────
+          const _UpcomingOpenOrderWidget(),
 
           // ── Tab 1: Order History (Separate Widget) ────────────────────
           _OrderHistoryView(controller: widget.controller),
@@ -517,8 +495,8 @@ class _SpotTradeHistoryFullScreenState extends State<SpotTradeHistoryFullScreen>
                   );
           }),
 
-          // ── Tab 3: Stop Limit Orders (Separate Widget) ────────────────
-          _StopLimitOrdersView(controller: widget.controller),
+          // ── Tab 3: Stop Limit Orders — Upcoming placeholder ───────────
+          const _UpcomingStopLimitWidget(),
         ],
       ),
     );
@@ -567,31 +545,94 @@ class _OrderHistoryView extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  WIDGET 2: STOP LIMIT ORDERS VIEW
+//  WIDGET 2: UPCOMING OPEN ORDER PLACEHOLDER
 // ══════════════════════════════════════════════════════════════════════════════
-class _StopLimitOrdersView extends StatelessWidget {
-  const _StopLimitOrdersView({required this.controller});
-  final SpotTradeController controller;
+class _UpcomingOpenOrderWidget extends StatelessWidget {
+  const _UpcomingOpenOrderWidget();
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final list = controller.allMyHistories.value.stopLimitOrders ?? [];
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: _cardBg,
+              shape: BoxShape.circle,
+              border: Border.all(color: _borderClr),
+            ),
+            child: const Icon(
+              Icons.pending_actions_rounded,
+              color: _labelClr,
+              size: 40,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Upcoming",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              fontFamily: "DMSans",
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Open Orders feature is coming soon",
+            style: TextStyle(color: _labelClr, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-      if (list.isEmpty) {
-        return handleEmptyViewWithLoading(controller.isHistoryLoading.value);
-      }
+// ══════════════════════════════════════════════════════════════════════════════
+//  WIDGET 3: UPCOMING STOP LIMIT PLACEHOLDER
+// ══════════════════════════════════════════════════════════════════════════════
+class _UpcomingStopLimitWidget extends StatelessWidget {
+  const _UpcomingStopLimitWidget();
 
-      return ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: list.length,
-        itemBuilder: (_, i) => SpotTradeHistoryStopLimitItemView(
-          trade: list[i],
-          onCancel: (t) => controller.cancelOpenOrderApp('stop', t.id ?? 0),
-          orderData: controller.dashboardData.value.orderData,
-        ),
-      );
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: _cardBg,
+              shape: BoxShape.circle,
+              border: Border.all(color: _borderClr),
+            ),
+            child: const Icon(
+              Icons.price_change_rounded,
+              color: _labelClr,
+              size: 40,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Upcoming Stop Limit",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              fontFamily: "DMSans",
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Stop Limit Orders feature is coming soon",
+            style: TextStyle(color: _labelClr, fontSize: 13),
+          ),
+        ],
+      ),
+    );
   }
 }
 
