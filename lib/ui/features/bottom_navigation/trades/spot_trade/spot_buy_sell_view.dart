@@ -18,6 +18,7 @@ import 'package:tradexpro_flutter/utils/text_util.dart';
 import '../../wallet/swap/swap_screen.dart';
 import '../../wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import '../../wallet/wallet_fiat_deposit/wallet_fiat_deposit_screen.dart';
+import '../trade_order_book_widgets.dart';
 import '../trade_widgets.dart';
 import 'spot_trade_controller.dart';
 
@@ -125,20 +126,16 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
             vSpacer5(),
 
             // ── Order type dropdown ────────────────────────────────────
-            dropDownListIndex(
-              ["Limit".tr, "Market".tr, "Stop-limit".tr],
-              subIndex,
-              "Limit".tr,
-              (index) {
+            CustomDropdown(
+              items: ["Limit", "Market", "Stop-limit"],
+              selectedIndex: subIndex,
+              onChange: (index) {
                 tabIndex == 0
                     ? selectedBuySubTabIndex.value = index
                     : selectedSellSubTabIndex.value = index;
+
                 _clearInputViews();
               },
-              height: 25,
-              hMargin: 0,
-              bgColor: const Color(0xFF1A1A1A),
-              radius: 10,
             ),
             vSpacer5(),
 
@@ -160,6 +157,19 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                 sSubtitle: baseCType,
               ),
             if (subIndex == 2) vSpacer5(),
+            if (subIndex == 2) ...[
+              MidPriceBlock(
+                lastPData: (_controller.dashboardData.value.lastPriceData?.isNotEmpty ?? false)
+                    ? _controller.dashboardData.value.lastPriceData!.first
+                    : null,
+                priceColor: ((_controller.dashboardData.value.lastPriceData?.isNotEmpty ?? false) &&
+                        _controller.dashboardData.value.lastPriceData!.first.priceOrderType ==
+                            FromKey.buy)
+                    ? const Color(0xFF4ED78E)
+                    : const Color(0xFFD05858),
+              ),
+              vSpacer5(),
+            ],
 
             // ── Qty ───────────────────────────────────────────────────
             TradeTextFieldCalculate(
@@ -248,7 +258,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                       borderRadius: 5,
                       onPress: () => _checkInputData(),
                     ),
-
                 ],
               );
             }),
@@ -643,5 +652,133 @@ class TradeBalanceAddView extends StatelessWidget {
       hideLoadingDialog();
       return null;
     }
+  }
+}
+
+class CustomDropdown extends StatefulWidget {
+  final List<String> items;
+  final int selectedIndex;
+  final Function(int) onChange;
+
+  const CustomDropdown({
+    super.key,
+    required this.items,
+    required this.selectedIndex,
+    required this.onChange,
+  });
+
+  @override
+  State<CustomDropdown> createState() => _CustomDropdownState();
+}
+
+class _CustomDropdownState extends State<CustomDropdown> {
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+
+  void _toggleDropdown() {
+    if (_overlayEntry == null) {
+      _overlayEntry = _createOverlay();
+      Overlay.of(context).insert(_overlayEntry!);
+    } else {
+      _overlayEntry?.remove();
+      _overlayEntry = null;
+    }
+  }
+
+  OverlayEntry _createOverlay() {
+    RenderBox renderBox = context.findRenderObject() as RenderBox;
+    Size size = renderBox.size;
+
+    return OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          width: size.width,
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            offset: Offset(0, size.height + 5),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(widget.items.length, (index) {
+                    bool isSelected = index == widget.selectedIndex;
+
+                    return GestureDetector(
+                      onTap: () {
+                        widget.onChange(index);
+                        _toggleDropdown();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF00B052) // ✅ GREEN
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          widget.items[index],
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                            fontFamily: "DMSans",
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: _toggleDropdown,
+        child: Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.items[widget.selectedIndex],
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontFamily: "DMSans",
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.white.withOpacity(0.7),
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

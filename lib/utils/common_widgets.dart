@@ -105,134 +105,82 @@ Widget showLoadingSmall() {
   );
 }
 
-Widget dropDownListIndex(
-  List<String> items,
-  int selectedValue,
-  String hint,
-  Function(int index) onChange, {
-  Color? bgColor,
-  Color? borderColor,
-  double? height,
-  double? width,
-  double? padding,
-  double? radius,
-  double? hintFontSize,
-  double? fontSize,
-  FocusNode? focusNode,
-  double hMargin = 10,
-  double vMargin = 5,
-  bool isBordered = true,
-  bool isEditable = true,
-  bool isExpanded = true,
+
+
+
+Widget customDropdown({
+  required List<String> items,
+  required int selectedIndex,
+  required Function(int) onChange,
+  double height = 40,
+  double radius = 10,
 }) {
-  bgColor = bgColor ?? Colors.transparent;
-  borderColor = borderColor ?? Get.theme.dividerColor;
-  padding = padding ?? Dimens.paddingMid;
-  height = height ?? Dimens.btnHeightMain;
-
   return Container(
-    margin: EdgeInsets.only(
-      left: hMargin,
-      top: 0,
-      right: hMargin,
-      bottom: 0,
-    ),
-    padding: EdgeInsets.only(left: padding, top: 0, right: padding, bottom: 0),
-    height: 26,
-    width: width,
-    decoration: isBordered
-        ? boxDecorationRoundBorder(
-            color: Color(0xFF1A1A1A),
-            borderColor: Colors.transparent,
-            radius: radius ?? 10,
-            width: 1,
-          )
-        : null,
-
-    child: // DropdownButton ki jagah ye use karo
-    PopupMenuButton<String>(
+    height: height,
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    decoration: BoxDecoration(
       color: const Color(0xFF1A1A1A),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      onSelected: (value) => onChange(items.indexOf(value)),
-      itemBuilder: (context) => items.map((item) {
-        return PopupMenuItem<String>(
-          value: item,
-          height: 50,
-          
-          child: Text(
-            item,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'DMSans',
-            ),
-          ),
-        );
-      }).toList(),
-      child: DropdownButtonHideUnderline(
-  child: DropdownButton<String>(
-    focusNode: focusNode,
-    isExpanded: true, // ← important
-    dropdownColor: const Color(0xFF1A1A1A),
-    borderRadius: BorderRadius.circular(10),
-    menuMaxHeight: 200,
-    iconSize: 0, // ← default icon hide karo
-    icon: const SizedBox.shrink(), // ← default icon hatao
-    value: items.hasIndex(selectedValue) ? items[selectedValue] : null,
-    underline: const SizedBox.shrink(),
-    onChanged: isEditable ? (value) => onChange(items.indexOf(value!)) : null,
+      borderRadius: BorderRadius.circular(radius),
+    ),
+    child: PopupMenuButton<int>(
+      padding: EdgeInsets.zero,
+      color: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(radius),
+      ),
+      onSelected: onChange,
 
-    // ── SELECTED ITEM — center text + right icon ──
-    selectedItemBuilder: (context) {
-      return items.map<Widget>((String value) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Center text
-            Center(
+      // 🔽 DROPDOWN LIST
+      itemBuilder: (context) {
+        return List.generate(items.length, (index) {
+          final isSelected = index == selectedIndex;
+
+          return PopupMenuItem<int>(
+            value: index,
+            padding: EdgeInsets.zero,
+            child: Container(
+              width: double.infinity,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF00B052) // ✅ GREEN SELECTED
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Text(
-                value,
+                items[index],
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   fontFamily: 'DMSans',
                 ),
               ),
             ),
-            // Right icon
-            const Positioned(
-              right: 0,
-              child: Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.white,
-                size: 14,
-              ),
-            ),
-          ],
-        );
-      }).toList();
-    },
+          );
+        });
+      },
 
-    items: items.map<DropdownMenuItem<String>>((String value) {
-      return DropdownMenuItem<String>(
-        value: value,
-        alignment: Alignment.center,
-        child: Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            height: 1.33,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'DMSans',
+      // 🔽 CLOSED VIEW (selected value)
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            items[selectedIndex],
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontFamily: 'DMSans',
+            ),
           ),
-        ),
-      );
-    }).toList(),
-  ),
-),
+          Icon(
+            Icons.keyboard_arrow_down,
+            color: Colors.white.withOpacity(0.7),
+            size: 18,
+          ),
+        ],
+      ),
     ),
   );
 }

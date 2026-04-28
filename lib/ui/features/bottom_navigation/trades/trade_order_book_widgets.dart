@@ -20,9 +20,19 @@ import 'trade_widgets.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
-const int _kMaxOrderBookRows = 12; // ✅ Buy/Sell only mode mein 12 rows
+const int _kMaxOrderBookRows = 16; // greendot/reddot mode
+const int _kAllModeRows = 8; // dot (all) mode
 const int _kOrderDecimal = 5;
 const double _kMinFillPercent = 0.05;
+
+// Always shows at least 2 decimal places (e.g. "1.5" → "1.50", "100" → "100.00")
+String _fmt2(num? n, {int fixed = _kOrderDecimal}) {
+  final s = coinFormat(n, fixed: fixed);
+  if (!s.contains('.')) return '$s.00';
+  final decLen = s.length - s.indexOf('.') - 1;
+  if (decLen < 2) return s + ('0' * (2 - decLen));
+  return s;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ORDER BOOK FIXED VIEW
@@ -54,8 +64,9 @@ class OderBookFixedView extends StatelessWidget {
     final total = order?.total;
     PriceData? lastPData = prices.isValid ? prices?.first : PriceData();
 
-    // ✅ All mode mein 8 rows, single mode mein 12 rows
-    final int maxRows = selectedOrderSort == FromKey.all ? 8 : 15;
+    final int maxRows = selectedOrderSort == FromKey.all
+        ? _kAllModeRows
+        : _kMaxOrderBookRows;
 
     List<ExchangeOrder> sList = [];
     if (selectedOrderSort != FromKey.buy) {
@@ -149,43 +160,18 @@ class OderBookFixedView extends StatelessWidget {
 
         vSpacer5(),
 
-        // ── Mid price — sirf "all" mode mein dikhega ──────────────────────────
-        if (selectedOrderSort == FromKey.all)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      coinFormat(lastPData?.price, fixed: _kOrderDecimal),
-                      style: const TextStyle(
-                        color: Color(0xFFD05858),
-                        fontSize: 15,
-                        fontFamily: "DMSans",
-                        fontWeight: FontWeight.w600,
-                        height: 1.33,
-                      ),
-                      maxLines: 1,
-                    ),
-                  ),
-                ],
-              ),
-              vSpacer5(),
-              Text(
-                "= \$${currencyFormat(lastPData?.lastPrice, fixed: _kOrderDecimal)}",
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 10,
-                  fontFamily: "DMSans",
-                  fontWeight: FontWeight.w400,
-                  height: 1.2,
-                ),
-              ),
-            ],
+        // ── Mid price — sell mode ya all mode ke baad sell list ke niche ──────
+        if (selectedOrderSort != FromKey.buy)
+          MidPriceBlock(
+            lastPData: lastPData,
+            priceColor: selectedOrderSort == FromKey.sell
+                ? const Color(0xFFD05858)
+                : (lastPData?.priceOrderType == FromKey.buy
+                      ? const Color(0xFF4ED78E)
+                      : const Color(0xFFD05858)),
           ),
 
-        if (selectedOrderSort == FromKey.all) vSpacer5(),
+        if (selectedOrderSort != FromKey.buy) vSpacer5(),
 
         // ── BUY LIST ──────────────────────────────────────────────────────────
         if (selectedOrderSort != FromKey.sell)
@@ -206,15 +192,23 @@ class OderBookFixedView extends StatelessWidget {
             ),
           ),
 
+        // ── Mid price — buy-only mode mein buy list ke niche ─────────────────
+        if (selectedOrderSort == FromKey.buy)
+          MidPriceBlock(
+            lastPData: lastPData,
+            priceColor: const Color(0xFF4ED78E),
+          ),
+        if (selectedOrderSort == FromKey.buy) vSpacer5(),
+
         vSpacer5(),
 
         // ── Bottom controls ───────────────────────────────────────────────────
         Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            const CustomDropdown(),
+            Expanded(
+              child: CustomDropdown(), //  ab ye full space lega
+            ),
             const SizedBox(width: 8),
-            // ✅ 3-state dot toggle button
             _DotToggleButton(
               selectedOrderSort: selectedOrderSort,
               onToggle: onShortChange,
@@ -250,6 +244,53 @@ class OderBookFixedView extends StatelessWidget {
       }),
     );
     showBottomSheetDynamic(context, view, title: "Choose".tr);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MID PRICE BLOCK
+// ─────────────────────────────────────────────────────────────────────────────
+class MidPriceBlock extends StatelessWidget {
+  const MidPriceBlock({super.key, required this.lastPData, required this.priceColor});
+
+  final PriceData? lastPData;
+  final Color priceColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Flexible(
+              child: Text(
+                _fmt2(lastPData?.price),
+                style: TextStyle(
+                  color: priceColor,
+                  fontSize: 15,
+                  fontFamily: "DMSans",
+                  fontWeight: FontWeight.w600,
+                  height: 1.33,
+                ),
+                maxLines: 1,
+              ),
+            ),
+          ],
+        ),
+        vSpacer5(),
+        Text(
+          "= \$${_fmt2(lastPData?.lastPrice)}",
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 10,
+            fontFamily: "DMSans",
+            fontWeight: FontWeight.w400,
+            height: 1.2,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -410,15 +451,14 @@ class _OderBookItemMinViewState extends State<OderBookItemMinView>
       duration: const Duration(milliseconds: 400),
     );
 
-    _currentPercent =
-        _safePercent(getPercentageValue(1, widget.order.percentage));
+    _currentPercent = _safePercent(
+      getPercentageValue(1, widget.order.percentage),
+    );
 
     _animation = Tween<double>(
       begin: _currentPercent,
       end: _currentPercent,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _controller.value = 1.0;
 
@@ -431,17 +471,15 @@ class _OderBookItemMinViewState extends State<OderBookItemMinView>
   void didUpdateWidget(covariant OderBookItemMinView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final newPercent =
-        _safePercent(getPercentageValue(1, widget.order.percentage));
+    final newPercent = _safePercent(
+      getPercentageValue(1, widget.order.percentage),
+    );
 
     if ((newPercent - _currentPercent).abs() > 0.001) {
       final fromPercent = _currentPercent;
       _currentPercent = newPercent;
 
-      _animation = Tween<double>(
-        begin: fromPercent,
-        end: newPercent,
-      ).animate(
+      _animation = Tween<double>(begin: fromPercent, end: newPercent).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
       );
 
@@ -465,7 +503,7 @@ class _OderBookItemMinViewState extends State<OderBookItemMinView>
 
     final value = widget.isTotal
         ? numberFormatCompact(widget.order.total, decimals: _kOrderDecimal)
-        : coinFormat(widget.order.amount, fixed: _kOrderDecimal);
+        : _fmt2(widget.order.amount);
 
     return Stack(
       children: [
@@ -489,7 +527,7 @@ class _OderBookItemMinViewState extends State<OderBookItemMinView>
               children: [
                 Expanded(
                   child: Text(
-                    coinFormat(widget.order.price, fixed: _kOrderDecimal),
+                    _fmt2(widget.order.price),
                     style: TextStyle(
                       color: widget.priceColor,
                       fontSize: 12,
@@ -587,12 +625,8 @@ class DetailsOrderBookView extends StatelessWidget {
         : Column(
             children: List.generate(listLength, (index) {
               final order = list[index];
-              final fText = isBuy
-                  ? coinFormat(order.amount, fixed: _kOrderDecimal)
-                  : currencyFormat(order.price, fixed: _kOrderDecimal);
-              final sText = isBuy
-                  ? currencyFormat(order.price, fixed: _kOrderDecimal)
-                  : coinFormat(order.amount, fixed: _kOrderDecimal);
+              final fText = isBuy ? _fmt2(order.amount) : _fmt2(order.price);
+              final sText = isBuy ? _fmt2(order.price) : _fmt2(order.amount);
 
               return _OrderBookDetailRow(
                 key: ValueKey('${isBuy ? "buy" : "sell"}_${order.price}'),
@@ -647,15 +681,14 @@ class _OrderBookDetailRowState extends State<_OrderBookDetailRow>
       duration: const Duration(milliseconds: 400),
     );
 
-    _currentPercent =
-        _safePercent(getPercentageValue(1, widget.order.percentage));
+    _currentPercent = _safePercent(
+      getPercentageValue(1, widget.order.percentage),
+    );
 
     _animation = Tween<double>(
       begin: _currentPercent,
       end: _currentPercent,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _controller.value = 1.0;
 
@@ -668,17 +701,15 @@ class _OrderBookDetailRowState extends State<_OrderBookDetailRow>
   void didUpdateWidget(covariant _OrderBookDetailRow oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final newPercent =
-        _safePercent(getPercentageValue(1, widget.order.percentage));
+    final newPercent = _safePercent(
+      getPercentageValue(1, widget.order.percentage),
+    );
 
     if ((newPercent - _currentPercent).abs() > 0.001) {
       final fromPercent = _currentPercent;
       _currentPercent = newPercent;
 
-      _animation = Tween<double>(
-        begin: fromPercent,
-        end: newPercent,
-      ).animate(
+      _animation = Tween<double>(begin: fromPercent, end: newPercent).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
       );
 
@@ -740,6 +771,8 @@ class _OrderBookDetailRowState extends State<_OrderBookDetailRow>
 // ─────────────────────────────────────────────────────────────────────────────
 // CUSTOM DROPDOWN
 // ─────────────────────────────────────────────────────────────────────────────
+
+
 class CustomDropdown extends StatefulWidget {
   const CustomDropdown({super.key});
 
@@ -748,39 +781,148 @@ class CustomDropdown extends StatefulWidget {
 }
 
 class _CustomDropdownState extends State<CustomDropdown> {
+  // Initial selected value
   String selectedValue = "0.01";
   final List<String> items = ["0.01", "0.1", "1"];
 
+  // Overlay logic ke liye variable
+  OverlayEntry? overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+  bool isOpen = false;
+
+  @override
+  void dispose() {
+    // Widget destroy hone par overlay hata dena taaki memory leak na ho
+    closeDropdown();
+    super.dispose();
+  }
+
+  // Method to open the custom dropdown
+  void openDropdown() {
+    if (isOpen) return;
+    setState(() => isOpen = true);
+
+    // RenderBox se parent ki size nikalna (Width match karne ke liye)
+    final renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        // Width bahar wale container jitni set ki hai
+        width: size.width,
+        // Top position niche set ki hai dropdown button ke
+        top: offset.dy + size.height,
+        left: offset.dx,
+        child: GestureDetector(
+          // Dropdown ke bahar click karne par band karne ke liye behavior
+          behavior: HitTestBehavior.translucent,
+          onTap: closeDropdown,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              // Card ka design (Background color dark)
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C2C2C), // Dark grey/black for list
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              // Item list
+              child: ListView(
+                // Padding + shrink wrap taaki height content ke hisaab se ho
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                children: items.map((item) {
+                  final bool isSelected = item == selectedValue;
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedValue = item;
+                      });
+                      closeDropdown();
+                    },
+                    child: Container(
+                      height: 40, // Har item ki height
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      alignment: Alignment.centerLeft,
+                      decoration: BoxDecoration(
+                        // Yahan logic hai: Selected item ka color Green
+                        color: isSelected ? const Color(0xFF1DB954) : Colors.transparent,
+                      ),
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontFamily: "DMSans",
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(overlayEntry!);
+  }
+
+  // Method to close dropdown
+  void closeDropdown() {
+    if (!isOpen) return;
+    overlayEntry?.remove();
+    overlayEntry = null;
+    setState(() => isOpen = false);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: selectedValue,
-          dropdownColor: const Color(0xFF1A1A1A),
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color: Colors.white.withOpacity(0.7),
-            size: 18,
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: () {
+          if (isOpen) {
+            closeDropdown();
+          } else {
+            openDropdown();
+          }
+        },
+        child: Container(
+          height: 28, // Apni di height
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(10),
           ),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontFamily: "DMSans",
-            fontWeight: FontWeight.w400,
+          // UI jo dikhega jab dropdown band ho
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                selectedValue,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontFamily: "DMSans",
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              Icon(
+                Icons.arrow_drop_down,
+                color: Colors.white.withOpacity(0.7),
+                size: 18,
+              ),
+            ],
           ),
-          onChanged: (value) {
-            setState(() => selectedValue = value!);
-          },
-          items: items.map((item) {
-            return DropdownMenuItem(value: item, child: Text(item));
-          }).toList(),
         ),
       ),
     );
