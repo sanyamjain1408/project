@@ -139,7 +139,7 @@ class Trade {
   String? time;
 
   factory Trade.fromJson(Map<String, dynamic> json) => Trade(
-        type: json["type"] ?? json["order_type"],
+        type: json["type"] ?? json["order_type"] ?? json["coin_trade_type"],
         id: json["id"],
         transactionId: json["transaction_id"],
         status: json["status"],

@@ -692,36 +692,6 @@ class SpotOrderHistoryItemView extends StatelessWidget {
                 ),
                 const Spacer(),
                 // ✅ Delete icon — same row as coin pair
-                GestureDetector(
-                  onTap: () {}, // khali — baad mein wire karenge
-                  child: Image.asset(
-                    "assets/icons/delete.png",
-                    width: 20,
-                    height: 20,
-                    color: Color(0XFFD05858),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── ROW 2: Buy/Sell Limit + Date ──────────────────────────────────
-          Container(
-            color: Colors.transparent,
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Row(
-              children: [
-                Text(
-                  "${isBuy ? "Buy" : "Sell"} Limit",
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: "DMSans",
-                    height: 1.066,
-                  ),
-                ),
-                const Spacer(),
                 Text(
                   formatDate(
                         trade.createdAt,
@@ -736,6 +706,27 @@ class SpotOrderHistoryItemView extends StatelessWidget {
                     height: 1.33,
                   ),
                 ),
+              ],
+            ),
+          ),
+
+          // ── ROW 2: Buy/Sell Limit + Date ──────────────────────────────────
+          Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Text(
+                  "${isBuy ? "Buy" : "Sell"}",
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 1.066,
+                  ),
+                ),
+                const Spacer(),
               ],
             ),
           ),
@@ -855,7 +846,6 @@ class SpotTraderHistoryItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-   
     final isBuy = trade.type == FromKey.buy;
     final color = isBuy ? gBuyColor : gSellColor;
     final tradeCoin = orderData?.tradeCoin ?? "";
@@ -936,8 +926,7 @@ class SpotTraderHistoryItemView extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  // ✅ int? ko String mein convert karo
-                  trade.transactionId?.toString() ?? "—",
+                  trimTransactionId(trade.transactionId?.toString()),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
@@ -964,10 +953,10 @@ class SpotTraderHistoryItemView extends StatelessWidget {
                       ),
                     );
                   },
-                  child: Icon(
-                    Icons.copy_rounded,
-                    size: 14,
-                    color: Colors.white.withOpacity(0.5),
+                  child: Image.asset(
+                    "assets/icons/copy.png",
+                    width: 14,
+                    height: 14,
                   ),
                 ),
               ],
@@ -1031,6 +1020,11 @@ class SpotTraderHistoryItemView extends StatelessWidget {
       ),
     );
   }
+}
+
+String trimTransactionId(String? id) {
+  if (id == null || id.length <= 8) return id ?? "—";
+  return "${id.substring(0, 4)}....${id.substring(id.length - 4)}";
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
