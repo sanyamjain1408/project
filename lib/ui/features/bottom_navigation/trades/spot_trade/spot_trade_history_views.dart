@@ -505,6 +505,7 @@ class _OrderHistoryViewState extends State<_OrderHistoryView> {
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
             child: _OrderHistoryFilterBar(
               trades: _allList,
+              currentBaseCoin: widget.controller.dashboardData.value.orderData?.baseCoin ?? "",
               onFiltered: (filtered) {
                 setState(() {
                   _filteredList = filtered;
@@ -587,11 +588,13 @@ class _TradeHistoryView extends StatelessWidget {
 class _OrderHistoryFilterBar extends StatefulWidget {
   const _OrderHistoryFilterBar({
     required this.trades,
+    required this.currentBaseCoin,
     required this.onFiltered,
     required this.onReset,
   });
 
   final List<Trade> trades;
+  final String currentBaseCoin;
   final Function(List<Trade>) onFiltered;
   final VoidCallback onReset;
 
@@ -619,7 +622,7 @@ class _OrderHistoryFilterBarState extends State<_OrderHistoryFilterBar> {
     if (selectedPair != null) {
       result = result
           .where((t) =>
-              (t.baseCoin ?? "").toUpperCase() ==
+              (t.baseCoin ?? widget.currentBaseCoin).toUpperCase() ==
               selectedPair!.toUpperCase())
           .toList();
     }
@@ -735,15 +738,10 @@ class _FilterChipBtn extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isActive
-              ? const Color(0xFFD4F000).withOpacity(0.15)
+              ? const Color(0xFF2A2A2A)
               : const Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isActive
-                ? const Color(0xFFD4F000)
-                : Colors.white.withOpacity(0.15),
-            width: 1,
-          ),
+         
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -986,9 +984,7 @@ class SpotOrderHistoryItemView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    print("------------------------------------------------------------------------------------------------------------------------");
-    debugPrint("🔍 Trade fields: type=${trade.type} | baseCoin=${trade.tradeCoin} ");
-    
+   
     final isBuy = (trade.type ?? "").toLowerCase() == "buy";
     final color = isBuy ? gBuyColor : gSellColor;
     final tradeCoin = orderData?.tradeCoin ?? "";
