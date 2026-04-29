@@ -59,12 +59,13 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
             GestureDetector(
               onTap: () => _openHistorySheet(context),
               child: Container(
-                padding: const EdgeInsets.only(right: 20),
+                padding: const EdgeInsets.only(right: 5),
                 decoration: BoxDecoration(color: Colors.transparent),
                 child: Image.asset(
                   "assets/icons/history.png",
                   width: 18,
-                  height: 18,),
+                  height: 18,
+                ),
               ),
             ),
           ],
@@ -635,7 +636,7 @@ class _TradeHistoryViewState extends State<_TradeHistoryView> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.symmetric(horizontal: 10),
                     itemCount: displayList.length,
                     itemBuilder: (_, i) => SpotTraderHistoryItemView(
                       trade: displayList[i],
@@ -1074,7 +1075,7 @@ class _DrawerOption extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  OPEN ORDER CARD
+//  OPEN ORDER ITEM  (flat style — same as Order History / Trade History)
 // ══════════════════════════════════════════════════════════════════════════════
 class _OpenOrderCard extends StatelessWidget {
   const _OpenOrderCard({
@@ -1100,107 +1101,123 @@ class _OpenOrderCard extends StatelessWidget {
     final typeLabel = "${isBuy ? "Buy" : "Sell"} $orderTypeCap";
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _borderClr, width: 0.8),
-      ),
+      margin: const EdgeInsets.only(bottom: 0),
+      padding: EdgeInsets.symmetric(horizontal: 5),
+      color: Colors.transparent,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+          // ── Header row: coin pair | date | delete icon ──────────────
+          Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.fromLTRB(0, 10, 0, 5),
             child: Row(
               children: [
                 Text(
                   "$tradeCoin/$baseCoin",
                   style: const TextStyle(
-                    color: _valueClr,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
                     fontFamily: "DMSans",
+                    height: 1.5,
                   ),
                 ),
                 const Spacer(),
+
+                const SizedBox(width: 10),
                 GestureDetector(
                   onTap: onDelete,
-                  child: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.redAccent,
-                    size: 18,
+                  child: Image.asset(
+                    "assets/icons/delete.png",
+                    width: 20,
+                    height: 20,
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 0.5, color: _borderClr),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-            child: Column(
+          // ── Type label row (Buy Limit / Sell Limit) ──────────────────
+          Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.fromLTRB(0, 10, 0, 5),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      typeLabel,
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 13,
-                        fontFamily: "DMSans",
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      formatDate(
-                        trade.createdAt,
-                        format: dateTimeFormatYyyyMMDdHhMm,
-                      ),
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: 11,
-                        fontFamily: "DMSans",
-                      ),
-                    ),
-                  ],
+                Text(
+                  typeLabel,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 1.066,
+                  ),
                 ),
-                const SizedBox(height: 8),
-                _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
-                _row("Fee ($baseCoin)", coinFormat(trade.fees)),
-                _row("Price ($baseCoin)", coinFormat(trade.price)),
-                _row("Processed ($tradeCoin)", coinFormat(trade.processed)),
-                _row("Total ($baseCoin)", coinFormat(trade.total)),
+                const Spacer(),
+                Text(
+                  formatDate(
+                    trade.createdAt,
+                    format: dateTimeFormatYyyyMMDdHhMm,
+                  ),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 1.33,
+                  ),
+                ),
               ],
+            ),
+          ),
+          // ── Field rows ───────────────────────────────────────────────
+          _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
+          _row("Fee ($baseCoin)", coinFormat(trade.fees)),
+          _row("Price ($baseCoin)", coinFormat(trade.price)),
+          _row("Processed ($tradeCoin)", coinFormat(trade.processed)),
+          _row("Total ($baseCoin)", coinFormat(trade.total)),
+          const SizedBox(height: 10),
+          Divider(
+            height: 0,
+            thickness: 0.5,
+            color: Colors.white.withOpacity(0.1),
+          ),
+          const SizedBox(height: 2),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.33,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.066,
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _row(String label, String value) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: _labelClr,
-            fontSize: 12,
-            fontFamily: "DMSans",
-          ),
-        ),
-        const Spacer(),
-        Text(
-          value,
-          style: const TextStyle(
-            color: _valueClr,
-            fontSize: 12,
-            fontFamily: "DMSans",
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1301,6 +1318,7 @@ class SpotOrderHistoryItemView extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 0),
+      padding: EdgeInsets.symmetric(horizontal: 5),
       color: Colors.transparent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
