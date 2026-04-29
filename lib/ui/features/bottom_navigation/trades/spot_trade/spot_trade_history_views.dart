@@ -550,7 +550,7 @@ class _OrderHistoryViewState extends State<_OrderHistoryView> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemCount: displayList.length,
                     itemBuilder: (_, i) => SpotOrderHistoryItemView(
                       trade: displayList[i],
@@ -636,7 +636,7 @@ class _TradeHistoryViewState extends State<_TradeHistoryView> {
                     ),
                   )
                 : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemCount: displayList.length,
                     itemBuilder: (_, i) => SpotTraderHistoryItemView(
                       trade: displayList[i],
@@ -1235,7 +1235,7 @@ class _OpenOrderFullView extends StatelessWidget {
         return handleEmptyViewWithLoading(controller.isHistoryLoading.value);
       }
       return ListView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: list.length,
         itemBuilder: (_, i) => _OpenOrderCard(
           trade: list[i],
