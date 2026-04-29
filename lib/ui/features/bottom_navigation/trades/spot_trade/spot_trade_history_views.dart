@@ -14,6 +14,7 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import 'spot_trade_controller.dart';
 import 'dart:convert';
+import 'package:flutter/services.dart'; // Clipboard ke liye
 
 const _cardBg = Color(0xFF161A1E);
 const _labelClr = Color(0xFF848E9C);
@@ -123,7 +124,7 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
           : Column(
               children: list
                   .map(
-                    (t) => SpotTradeHistoryItemView(
+                    (t) => SpotOrderHistoryItemView(
                       trade: t,
                       fromKey: FromKey.buySell,
                       onCancel: (trade) => _controller.cancelOpenOrderApp(
@@ -493,7 +494,7 @@ class _SpotTradeHistoryFullScreenState extends State<SpotTradeHistoryFullScreen>
                 : ListView.builder(
                     padding: const EdgeInsets.all(12),
                     itemCount: list.length,
-                    itemBuilder: (_, i) => SpotTradeHistoryItemView(
+                    itemBuilder: (_, i) => SpotTraderHistoryItemView(
                       trade: list[i],
                       fromKey: FromKey.trade,
                       onCancel: (_) {},
@@ -541,7 +542,7 @@ class _OrderHistoryView extends StatelessWidget {
       return ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: list.length,
-        itemBuilder: (_, i) => SpotTradeHistoryItemView(
+        itemBuilder: (_, i) => SpotOrderHistoryItemView(
           trade: list[i],
           fromKey: list[i].type == FromKey.buy ? FromKey.buy : FromKey.sell,
           onCancel: (_) {}, // History mein cancel nahi hota usually
@@ -645,10 +646,10 @@ class _UpcomingStopLimitWidget extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  COMMON ORDER CARD (USED EVERYWHERE)
+//  spot ORDER History CARD (USED EVERYWHERE)
 // ══════════════════════════════════════════════════════════════════════════════
-class SpotTradeHistoryItemView extends StatelessWidget {
-  const SpotTradeHistoryItemView({
+class SpotOrderHistoryItemView extends StatelessWidget {
+  const SpotOrderHistoryItemView({
     super.key,
     required this.trade,
     required this.orderData,
@@ -662,7 +663,6 @@ class SpotTradeHistoryItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final isBuy = trade.type == FromKey.buy;
     final color = isBuy ? gBuyColor : gSellColor;
     final tradeCoin = orderData?.tradeCoin ?? "";
@@ -718,7 +718,7 @@ class SpotTradeHistoryItemView extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.w400,
                     fontFamily: "DMSans",
-                    height: 1.066
+                    height: 1.066,
                   ),
                 ),
                 const Spacer(),
@@ -733,7 +733,7 @@ class SpotTradeHistoryItemView extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     fontFamily: "DMSans",
-                    height: 1.33
+                    height: 1.33,
                   ),
                 ),
               ],
@@ -747,14 +747,20 @@ class SpotTradeHistoryItemView extends StatelessWidget {
           if (fromKey != FromKey.buy)
             _row("Processed ($tradeCoin)", coinFormat(trade.processed)),
           if (fromKey != FromKey.trade)
-            _row("Total ($baseCoin)", coinFormat(trade.total)),
+            _row("Price ($baseCoin)", coinFormat(trade.price)),
           if (fromKey == FromKey.trade)
             _row("TX ID", trade.transactionId ?? "—"),
+
+          _statusRow(trade.status),
 
           const SizedBox(height: 10),
 
           // ✅ White divider line — data ke baad, next card se pehle
-           Divider(height: 0, thickness: 0.5, color: Colors.white.withOpacity(0.1)),
+          Divider(
+            height: 0,
+            thickness: 0.5,
+            color: Colors.white.withOpacity(0.1),
+          ),
 
           const SizedBox(height: 2),
         ],
@@ -774,7 +780,7 @@ class SpotTradeHistoryItemView extends StatelessWidget {
               fontSize: 12,
               fontFamily: "DMSans",
               fontWeight: FontWeight.w400,
-              height: 1.33
+              height: 1.33,
             ),
           ),
           const Spacer(),
@@ -785,7 +791,240 @@ class SpotTradeHistoryItemView extends StatelessWidget {
               fontSize: 15,
               fontFamily: "DMSans",
               fontWeight: FontWeight.w400,
-              height: 1.066
+              height: 1.066,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusRow(int? status) {
+    final bool isSuccess = status == 1;
+    final String label = isSuccess ? "Success" : "Failed";
+    final Color color = isSuccess
+        ? const Color(0xFF00B052) // green
+        : const Color(0xFFD05858); // red
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        children: [
+          Text(
+            "Status",
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.33,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 15, // ← font size yahan badlo
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400, // ← weight yahan badlo
+              height: 1.066,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  spot Trade History CARD (USED EVERYWHERE)
+// ══════════════════════════════════════════════════════════════════════════════
+class SpotTraderHistoryItemView extends StatelessWidget {
+  const SpotTraderHistoryItemView({
+    super.key,
+    required this.trade,
+    required this.orderData,
+    required this.fromKey,
+    required this.onCancel,
+  });
+  final Trade trade;
+  final OrderData? orderData;
+  final String fromKey;
+  final Function(Trade) onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+   
+    final isBuy = trade.type == FromKey.buy;
+    final color = isBuy ? gBuyColor : gSellColor;
+    final tradeCoin = orderData?.tradeCoin ?? "";
+    final baseCoin = orderData?.baseCoin ?? "";
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 0),
+      color: Colors.transparent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── ROW 1: Coin pair + Delete icon ──────────────────────────
+          Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.fromLTRB(0, 10, 0, 5),
+            child: Row(
+              children: [
+                Text(
+                  "$tradeCoin/$baseCoin",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 1.5,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  formatDate(
+                        trade.createdAt,
+                        format: dateTimeFormatYyyyMMDdHhMm,
+                      ) ??
+                      "",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 1.33,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── ROW 2: Buy/Sell + Date ───────────────────────────────────
+          Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              // ✅ isBuy variable pe depend mat karo — directly compare karo
+              trade.type == "buy" ? "Buy" : "Sell",
+              style: TextStyle(
+                color: trade.type == "buy" ? gBuyColor : gSellColor,
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                fontFamily: "DMSans",
+                height: 1.066,
+              ),
+            ),
+          ),
+          // ── Order No. with copy icon ─────────────────────────────────
+          // ── Order No. with copy icon ─────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Row(
+              children: [
+                Text(
+                  "Order No.",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w400,
+                    height: 1.33,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  // ✅ int? ko String mein convert karo
+                  trade.transactionId?.toString() ?? "—",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w400,
+                    height: 1.066,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(
+                      ClipboardData(text: trade.id?.toString() ?? ""),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text("Order No. copied"),
+                        duration: const Duration(seconds: 1),
+                        backgroundColor: const Color(0xFF1A1A1A),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    );
+                  },
+                  child: Icon(
+                    Icons.copy_rounded,
+                    size: 14,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Price ────────────────────────────────────────────────────
+          _row("Price ($baseCoin)", coinFormat(trade.price)),
+
+          // ── Amount ───────────────────────────────────────────────────
+          _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
+
+          // ── Fee ──────────────────────────────────────────────────────
+          _row("Fee ($baseCoin)", coinFormat(trade.fees)),
+
+          // ── Total ────────────────────────────────────────────────────
+          _row("Total ($baseCoin)", coinFormat(trade.total)),
+
+          const SizedBox(height: 10),
+
+          // ── Divider ──────────────────────────────────────────────────
+          Divider(
+            height: 0,
+            thickness: 0.5,
+            color: Colors.white.withOpacity(0.1),
+          ),
+
+          const SizedBox(height: 2),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.33,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.066,
             ),
           ),
         ],
