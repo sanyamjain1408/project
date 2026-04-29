@@ -114,14 +114,13 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
           : Column(
               children: list
                   .map(
-                    (t) => SpotOrderHistoryItemView(
+                    (t) => _OpenOrderCard(
                       trade: t,
-                      fromKey: FromKey.buySell,
-                      onCancel: (trade) => _controller.cancelOpenOrderApp(
-                        trade.type ?? '',
-                        trade.id ?? 0,
-                      ),
                       orderData: _controller.dashboardData.value.orderData,
+                      onDelete: () => _controller.cancelOpenOrderApp(
+                        t.type ?? '',
+                        t.id ?? 0,
+                      ),
                     ),
                   )
                   .toList(),
@@ -465,7 +464,7 @@ class _SpotTradeHistoryFullScreenState extends State<SpotTradeHistoryFullScreen>
       body: TabBarView(
         controller: _tab,
         children: [
-          const _UpcomingOpenOrderWidget(),
+          _OpenOrderFullView(controller: widget.controller),
           _OrderHistoryView(controller: widget.controller),
           _TradeHistoryView(controller: widget.controller),
           const _UpcomingStopLimitWidget(),
@@ -1075,48 +1074,162 @@ class _DrawerOption extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  UPCOMING PLACEHOLDERS
+//  OPEN ORDER CARD
 // ══════════════════════════════════════════════════════════════════════════════
-class _UpcomingOpenOrderWidget extends StatelessWidget {
-  const _UpcomingOpenOrderWidget();
+class _OpenOrderCard extends StatelessWidget {
+  const _OpenOrderCard({
+    required this.trade,
+    required this.orderData,
+    required this.onDelete,
+  });
+
+  final Trade trade;
+  final OrderData? orderData;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    final isBuy = (trade.type ?? "").toLowerCase() == "buy";
+    final color = isBuy ? gBuyColor : gSellColor;
+    final tradeCoin = trade.tradeCoin ?? orderData?.tradeCoin ?? "";
+    final baseCoin = trade.baseCoin ?? orderData?.baseCoin ?? "";
+    final rawType = trade.priceOrderType ?? "Limit";
+    final orderTypeCap = rawType.isNotEmpty
+        ? rawType[0].toUpperCase() + rawType.substring(1).toLowerCase()
+        : "Limit";
+    final typeLabel = "${isBuy ? "Buy" : "Sell"} $orderTypeCap";
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _borderClr, width: 0.8),
+      ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: _cardBg,
-              shape: BoxShape.circle,
-              border: Border.all(color: _borderClr),
-            ),
-            child: const Icon(
-              Icons.pending_actions_rounded,
-              color: _labelClr,
-              size: 40,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+            child: Row(
+              children: [
+                Text(
+                  "$tradeCoin/$baseCoin",
+                  style: const TextStyle(
+                    color: _valueClr,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "DMSans",
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: onDelete,
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.redAccent,
+                    size: 18,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            "Upcoming",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              fontFamily: "DMSans",
+          const Divider(height: 1, thickness: 0.5, color: _borderClr),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      typeLabel,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 13,
+                        fontFamily: "DMSans",
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      formatDate(
+                        trade.createdAt,
+                        format: dateTimeFormatYyyyMMDdHhMm,
+                      ),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 11,
+                        fontFamily: "DMSans",
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
+                _row("Fee ($baseCoin)", coinFormat(trade.fees)),
+                _row("Price ($baseCoin)", coinFormat(trade.price)),
+                _row("Processed ($tradeCoin)", coinFormat(trade.processed)),
+                _row("Total ($baseCoin)", coinFormat(trade.total)),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            "Open Orders feature is coming soon",
-            style: TextStyle(color: _labelClr, fontSize: 13),
           ),
         ],
       ),
     );
+  }
+
+  Widget _row(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: _labelClr,
+            fontSize: 12,
+            fontFamily: "DMSans",
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: const TextStyle(
+            color: _valueClr,
+            fontSize: 12,
+            fontFamily: "DMSans",
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  OPEN ORDER FULL VIEW (for history screen tab)
+// ══════════════════════════════════════════════════════════════════════════════
+class _OpenOrderFullView extends StatelessWidget {
+  const _OpenOrderFullView({required this.controller});
+  final SpotTradeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final list = controller.allMyHistories.value.orders ?? [];
+      if (list.isEmpty) {
+        return handleEmptyViewWithLoading(controller.isHistoryLoading.value);
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: list.length,
+        itemBuilder: (_, i) => _OpenOrderCard(
+          trade: list[i],
+          orderData: controller.dashboardData.value.orderData,
+          onDelete: () => controller.cancelOpenOrderApp(
+            list[i].type ?? '',
+            list[i].id ?? 0,
+          ),
+        ),
+      );
+    });
   }
 }
 
