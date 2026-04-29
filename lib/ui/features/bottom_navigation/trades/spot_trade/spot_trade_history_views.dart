@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -11,6 +13,7 @@ import 'package:tradexpro_flutter/utils/common_widgets.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import 'spot_trade_controller.dart';
+import 'dart:convert';
 
 const _cardBg = Color(0xFF161A1E);
 const _labelClr = Color(0xFF848E9C);
@@ -200,7 +203,7 @@ class _AssetCoinCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: Colors.blue,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _borderClr, width: 0.8),
       ),
@@ -440,8 +443,12 @@ class _SpotTradeHistoryFullScreenState extends State<SpotTradeHistoryFullScreen>
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             indicatorColor: Colors.transparent,
+            indicator: const BoxDecoration(),
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white.withOpacity(0.5),
+
+            overlayColor: WidgetStateProperty.all(Colors.transparent),
+            splashFactory: NoSplash.splashFactory,
             labelStyle: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -490,7 +497,8 @@ class _SpotTradeHistoryFullScreenState extends State<SpotTradeHistoryFullScreen>
                       trade: list[i],
                       fromKey: FromKey.trade,
                       onCancel: (_) {},
-                      orderData: widget.controller.dashboardData.value.orderData,
+                      orderData:
+                          widget.controller.dashboardData.value.orderData,
                     ),
                   );
           }),
@@ -654,50 +662,63 @@ class SpotTradeHistoryItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     final isBuy = trade.type == FromKey.buy;
     final color = isBuy ? gBuyColor : gSellColor;
     final tradeCoin = orderData?.tradeCoin ?? "";
     final baseCoin = orderData?.baseCoin ?? "";
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _borderClr, width: 0.8),
-      ),
+      margin: const EdgeInsets.only(bottom: 0),
+      color: Colors.transparent, // ✅ transparent background
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+          // ── ROW 1: Coin pair + Delete icon ────────────────────────────────
+          Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.fromLTRB(0, 10, 0, 5),
             child: Row(
               children: [
                 Text(
                   "$tradeCoin/$baseCoin",
                   style: const TextStyle(
-                    color: _valueClr,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 1.5,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 2,
+                const Spacer(),
+                // ✅ Delete icon — same row as coin pair
+                GestureDetector(
+                  onTap: () {}, // khali — baad mein wire karenge
+                  child: Image.asset(
+                    "assets/icons/delete.png",
+                    width: 20,
+                    height: 20,
+                    color: Color(0XFFD05858),
                   ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: color.withValues(alpha: 0.35)),
-                  ),
-                  child: Text(
-                    "${(trade.type ?? '').toUpperCase()} Limit",
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── ROW 2: Buy/Sell Limit + Date ──────────────────────────────────
+          Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Text(
+                  "${isBuy ? "Buy" : "Sell"} Limit",
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 1.066
                   ),
                 ),
                 const Spacer(),
@@ -707,54 +728,70 @@ class SpotTradeHistoryItemView extends StatelessWidget {
                         format: dateTimeFormatYyyyMMDdHhMm,
                       ) ??
                       "",
-                  style: const TextStyle(color: _labelClr, fontSize: 10),
-                ),
-                if (fromKey == FromKey.buySell) ...[
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () => onCancel(trade),
-                    child: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.redAccent,
-                      size: 16,
-                    ),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 1.33
                   ),
-                ],
+                ),
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 0.5, color: _borderClr),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-            child: Column(
-              children: [
-                _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
-                _row("Fee ($baseCoin)", coinFormat(trade.fees)),
-                _row("Price ($baseCoin)", coinFormat(trade.price)),
-                if (fromKey != FromKey.buy)
-                  _row("Processed ($tradeCoin)", coinFormat(trade.processed)),
-                if (fromKey != FromKey.trade)
-                  _row("Total ($baseCoin)", coinFormat(trade.total)),
-                if (fromKey == FromKey.trade)
-                  _row("TX ID", trade.transactionId ?? "—"),
-              ],
+
+          // ── DATA ROWS ─────────────────────────────────────────────────────
+          _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
+          _row("Fee ($baseCoin)", coinFormat(trade.fees)),
+          _row("Price ($baseCoin)", coinFormat(trade.price)),
+          if (fromKey != FromKey.buy)
+            _row("Processed ($tradeCoin)", coinFormat(trade.processed)),
+          if (fromKey != FromKey.trade)
+            _row("Total ($baseCoin)", coinFormat(trade.total)),
+          if (fromKey == FromKey.trade)
+            _row("TX ID", trade.transactionId ?? "—"),
+
+          const SizedBox(height: 10),
+
+          // ✅ White divider line — data ke baad, next card se pehle
+           Divider(height: 0, thickness: 0.5, color: Colors.white.withOpacity(0.1)),
+
+          const SizedBox(height: 2),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.33
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.066
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _row(String l, String v) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Row(
-      children: [
-        Text(l, style: const TextStyle(color: _labelClr, fontSize: 12)),
-        const Spacer(),
-        Text(v, style: const TextStyle(color: _valueClr, fontSize: 12)),
-      ],
-    ),
-  );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
