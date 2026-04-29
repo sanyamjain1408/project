@@ -40,32 +40,31 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
       children: [
         Row(
           children: [
-            Obx(() => _TabChip(
-                  label: "Open order".tr,
-                  selected: _mainTab.value == 0,
-                  onTap: () => _mainTab.value = 0,
-                )),
+            Obx(
+              () => _TabChip(
+                label: "Open order".tr,
+                selected: _mainTab.value == 0,
+                onTap: () => _mainTab.value = 0,
+              ),
+            ),
             const SizedBox(width: 4),
-            Obx(() => _TabChip(
-                  label: "Assets".tr,
-                  selected: _mainTab.value == 1,
-                  onTap: () => _mainTab.value = 1,
-                )),
+            Obx(
+              () => _TabChip(
+                label: "Assets".tr,
+                selected: _mainTab.value == 1,
+                onTap: () => _mainTab.value = 1,
+              ),
+            ),
             const Spacer(),
             GestureDetector(
               onTap: () => _openHistorySheet(context),
               child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _cardBg,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: _borderClr),
-                ),
-                child: const Icon(
-                  Icons.history_rounded,
-                  color: _labelClr,
-                  size: 18,
-                ),
+                padding: const EdgeInsets.only(right: 20),
+                decoration: BoxDecoration(color: Colors.transparent),
+                child: Image.asset(
+                  "assets/icons/history.png",
+                  width: 18,
+                  height: 18,),
               ),
             ),
           ],
@@ -114,15 +113,17 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
           ? handleEmptyViewWithLoading(_controller.isHistoryLoading.value)
           : Column(
               children: list
-                  .map((t) => SpotOrderHistoryItemView(
-                        trade: t,
-                        fromKey: FromKey.buySell,
-                        onCancel: (trade) => _controller.cancelOpenOrderApp(
-                          trade.type ?? '',
-                          trade.id ?? 0,
-                        ),
-                        orderData: _controller.dashboardData.value.orderData,
-                      ))
+                  .map(
+                    (t) => SpotOrderHistoryItemView(
+                      trade: t,
+                      fromKey: FromKey.buySell,
+                      onCancel: (trade) => _controller.cancelOpenOrderApp(
+                        trade.type ?? '',
+                        trade.id ?? 0,
+                      ),
+                      orderData: _controller.dashboardData.value.orderData,
+                    ),
+                  )
                   .toList(),
             );
     });
@@ -235,34 +236,45 @@ class _AssetCoinCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text("Total",
-                  style: TextStyle(color: _labelClr, fontSize: 12)),
+              const Text(
+                "Total",
+                style: TextStyle(color: _labelClr, fontSize: 12),
+              ),
               const Spacer(),
-              Text(total,
-                  style: const TextStyle(
-                      color: _valueClr,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500)),
+              Text(
+                total,
+                style: const TextStyle(
+                  color: _valueClr,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
           Row(
             children: [
-              const Text("Available",
-                  style: TextStyle(color: _labelClr, fontSize: 12)),
+              const Text(
+                "Available",
+                style: TextStyle(color: _labelClr, fontSize: 12),
+              ),
               const Spacer(),
-              Text(available,
-                  style: const TextStyle(
-                      color: _valueClr,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500)),
+              Text(
+                available,
+                style: const TextStyle(
+                  color: _valueClr,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
-                  child: _ActionBtn(label: "Buy/Sell", onTap: () => Get.back())),
+                child: _ActionBtn(label: "Buy/Sell", onTap: () => Get.back()),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: _ActionBtn(
@@ -271,22 +283,25 @@ class _AssetCoinCard extends StatelessWidget {
                     final total = controller.selfBalance.value.total;
                     final wallet =
                         coinType == (total?.baseWallet?.coinType ?? "")
-                            ? total?.baseWallet
-                            : total?.tradeWallet;
+                        ? total?.baseWallet
+                        : total?.tradeWallet;
                     if (wallet != null) {
-                      Get.to(() => WalletCryptoDepositScreen(
-                            wallet: wallet.createWallet(),
-                          ));
+                      Get.to(
+                        () => WalletCryptoDepositScreen(
+                          wallet: wallet.createWallet(),
+                        ),
+                      );
                     }
                   },
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                  child: _ActionBtn(
-                      label: "⇄ Swap",
-                      onTap: () =>
-                          Get.to(() => SwapScreen(prePair: coinPair)))),
+                child: _ActionBtn(
+                  label: "⇄ Swap",
+                  onTap: () => Get.to(() => SwapScreen(prePair: coinPair)),
+                ),
+              ),
             ],
           ),
         ],
@@ -312,11 +327,14 @@ class _ActionBtn extends StatelessWidget {
           border: Border.all(color: _borderClr),
         ),
         child: Center(
-          child: Text(label,
-              style: const TextStyle(
-                  color: _valueClr,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500)),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: _valueClr,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ),
     );
@@ -340,22 +358,19 @@ class _TabChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? _cardBg : Colors.transparent,
+          color: selected ? Colors.transparent : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: selected
-                ? Theme.of(context).focusColor
-                : Colors.transparent,
+            color: selected ? Colors.transparent : Colors.transparent,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected
-                ? Theme.of(context).primaryColor
-                : _labelClr,
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            color: selected ? Colors.white : Colors.white.withOpacity(0.5),
+            fontSize: 16,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+            fontFamily: "DMSans",
           ),
         ),
       ),
@@ -375,8 +390,7 @@ class SpotTradeHistoryFullScreen extends StatefulWidget {
       _SpotTradeHistoryFullScreenState();
 }
 
-class _SpotTradeHistoryFullScreenState
-    extends State<SpotTradeHistoryFullScreen>
+class _SpotTradeHistoryFullScreenState extends State<SpotTradeHistoryFullScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab;
 
@@ -480,10 +494,8 @@ class _OrderHistoryViewState extends State<_OrderHistoryView> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final buys =
-          widget.controller.allMyHistories.value.buyOrders ?? [];
-      final sells =
-          widget.controller.allMyHistories.value.sellOrders ?? [];
+      final buys = widget.controller.allMyHistories.value.buyOrders ?? [];
+      final sells = widget.controller.allMyHistories.value.sellOrders ?? [];
 
       _allList = [...buys, ...sells].cast<Trade>();
       _allList.sort((a, b) {
@@ -493,7 +505,8 @@ class _OrderHistoryViewState extends State<_OrderHistoryView> {
 
       if (_allList.isEmpty) {
         return handleEmptyViewWithLoading(
-            widget.controller.isHistoryLoading.value);
+          widget.controller.isHistoryLoading.value,
+        );
       }
 
       final displayList = _isFilterActive ? _filteredList : _allList;
@@ -505,7 +518,9 @@ class _OrderHistoryViewState extends State<_OrderHistoryView> {
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
             child: _OrderHistoryFilterBar(
               trades: _allList,
-              currentBaseCoin: widget.controller.dashboardData.value.orderData?.baseCoin ?? "",
+              currentBaseCoin:
+                  widget.controller.dashboardData.value.orderData?.baseCoin ??
+                  "",
               onFiltered: (filtered) {
                 setState(() {
                   _filteredList = filtered;
@@ -539,8 +554,8 @@ class _OrderHistoryViewState extends State<_OrderHistoryView> {
                     itemCount: displayList.length,
                     itemBuilder: (_, i) => SpotOrderHistoryItemView(
                       trade: displayList[i],
-                      fromKey: (displayList[i].type ?? "").toLowerCase() ==
-                              "buy"
+                      fromKey:
+                          (displayList[i].type ?? "").toLowerCase() == "buy"
                           ? FromKey.buy
                           : FromKey.sell,
                       onCancel: (_) {},
@@ -558,27 +573,192 @@ class _OrderHistoryViewState extends State<_OrderHistoryView> {
 // ══════════════════════════════════════════════════════════════════════════════
 //  TAB 2: TRADE HISTORY VIEW
 // ══════════════════════════════════════════════════════════════════════════════
-class _TradeHistoryView extends StatelessWidget {
+class _TradeHistoryView extends StatefulWidget {
   const _TradeHistoryView({required this.controller});
   final SpotTradeController controller;
 
   @override
+  State<_TradeHistoryView> createState() => _TradeHistoryViewState();
+}
+
+class _TradeHistoryViewState extends State<_TradeHistoryView> {
+  List<Trade> _allList = [];
+  List<Trade> _filteredList = [];
+  bool _isFilterActive = false;
+
+  @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final list = controller.allMyHistories.value.transactions ?? [];
-      return list.isEmpty
-          ? handleEmptyViewWithLoading(controller.isHistoryLoading.value)
-          : ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: list.length,
-              itemBuilder: (_, i) => SpotTraderHistoryItemView(
-                trade: list[i],
-                fromKey: FromKey.trade,
-                onCancel: (_) {},
-                orderData: controller.dashboardData.value.orderData,
-              ),
-            );
+      _allList = (widget.controller.allMyHistories.value.transactions ?? [])
+          .cast<Trade>();
+
+      if (_allList.isEmpty) {
+        return handleEmptyViewWithLoading(
+          widget.controller.isHistoryLoading.value,
+        );
+      }
+
+      final displayList = _isFilterActive ? _filteredList : _allList;
+
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            child: _TradeHistoryFilterBar(
+              trades: _allList,
+              currentBaseCoin:
+                  widget.controller.dashboardData.value.orderData?.baseCoin ??
+                  "",
+              onFiltered: (filtered) {
+                setState(() {
+                  _filteredList = filtered;
+                  _isFilterActive = true;
+                });
+              },
+              onReset: () {
+                setState(() {
+                  _filteredList = [];
+                  _isFilterActive = false;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: displayList.isEmpty
+                ? Center(
+                    child: Text(
+                      "No records found",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 14,
+                        fontFamily: "DMSans",
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: displayList.length,
+                    itemBuilder: (_, i) => SpotTraderHistoryItemView(
+                      trade: displayList[i],
+                      fromKey: FromKey.trade,
+                      onCancel: (_) {},
+                      orderData:
+                          widget.controller.dashboardData.value.orderData,
+                    ),
+                  ),
+          ),
+        ],
+      );
     });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  TRADE HISTORY FILTER BAR
+// ══════════════════════════════════════════════════════════════════════════════
+class _TradeHistoryFilterBar extends StatefulWidget {
+  const _TradeHistoryFilterBar({
+    required this.trades,
+    required this.currentBaseCoin,
+    required this.onFiltered,
+    required this.onReset,
+  });
+
+  final List<Trade> trades;
+  final String currentBaseCoin;
+  final Function(List<Trade>) onFiltered;
+  final VoidCallback onReset;
+
+  @override
+  State<_TradeHistoryFilterBar> createState() => _TradeHistoryFilterBarState();
+}
+
+class _TradeHistoryFilterBarState extends State<_TradeHistoryFilterBar> {
+  String? selectedPair;
+  String? selectedType;
+
+  void _applyFilters() {
+    if (selectedPair == null && selectedType == null) {
+      widget.onReset();
+      return;
+    }
+
+    List<Trade> result = List.from(widget.trades);
+
+    if (selectedPair != null) {
+      result = result
+          .where(
+            (t) =>
+                (t.baseCoin ?? widget.currentBaseCoin).toUpperCase() ==
+                selectedPair!.toUpperCase(),
+          )
+          .toList();
+    }
+
+    if (selectedType != null) {
+      result = result.where((t) {
+        // transactions use price_order_type; orders use type
+        final typeRaw =
+            ((t.type ?? t.priceOrderType)?.toLowerCase().trim()) ?? "";
+        return selectedType == "Buy" ? typeRaw == "buy" : typeRaw == "sell";
+      }).toList();
+    }
+
+    widget.onFiltered(result);
+  }
+
+  void _showFilterDrawer({
+    required String title,
+    required List<String> options,
+    required String? selected,
+    required void Function(String?) onSelect,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _FilterDrawer(
+        title: title,
+        options: options,
+        selected: selected,
+        onSelect: (val) {
+          Navigator.pop(context);
+          setState(() => onSelect(val));
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _applyFilters();
+          });
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _FilterChipBtn(
+          label: "Pair",
+          selected: selectedPair,
+          onTap: () => _showFilterDrawer(
+            title: "Select Pair",
+            options: const ["USDT", "USDC", "BTC"],
+            selected: selectedPair,
+            onSelect: (v) => selectedPair = v,
+          ),
+        ),
+        const SizedBox(width: 8),
+        _FilterChipBtn(
+          label: "Order Type",
+          selected: selectedType,
+          onTap: () => _showFilterDrawer(
+            title: "Select Order Type",
+            options: ["Buy", "Sell"],
+            selected: selectedType,
+            onSelect: (v) => selectedType = v,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -599,8 +779,7 @@ class _OrderHistoryFilterBar extends StatefulWidget {
   final VoidCallback onReset;
 
   @override
-  State<_OrderHistoryFilterBar> createState() =>
-      _OrderHistoryFilterBarState();
+  State<_OrderHistoryFilterBar> createState() => _OrderHistoryFilterBarState();
 }
 
 class _OrderHistoryFilterBarState extends State<_OrderHistoryFilterBar> {
@@ -621,27 +800,29 @@ class _OrderHistoryFilterBarState extends State<_OrderHistoryFilterBar> {
 
     if (selectedPair != null) {
       result = result
-          .where((t) =>
-              (t.baseCoin ?? widget.currentBaseCoin).toUpperCase() ==
-              selectedPair!.toUpperCase())
+          .where(
+            (t) =>
+                (t.baseCoin ?? widget.currentBaseCoin).toUpperCase() ==
+                selectedPair!.toUpperCase(),
+          )
           .toList();
     }
 
     if (selectedType != null) {
       result = result
-          .where((t) =>
-              selectedType == "Buy"
-                  ? (t.type ?? "").toLowerCase() == "buy"
-                  : (t.type ?? "").toLowerCase() == "sell")
+          .where(
+            (t) => selectedType == "Buy"
+                ? (t.type ?? "").toLowerCase() == "buy"
+                : (t.type ?? "").toLowerCase() == "sell",
+          )
           .toList();
     }
 
     if (selectedStatus != null) {
       result = result
-          .where((t) =>
-              selectedStatus == "Success"
-                  ? t.status == 1
-                  : t.status != 1)
+          .where(
+            (t) => selectedStatus == "Success" ? t.status == 1 : t.status != 1,
+          )
           .toList();
     }
 
@@ -737,11 +918,8 @@ class _FilterChipBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive
-              ? const Color(0xFF2A2A2A)
-              : const Color(0xFF2A2A2A),
+          color: isActive ? const Color(0xFF2A2A2A) : const Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(8),
-         
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -827,11 +1005,13 @@ class _FilterDrawer extends StatelessWidget {
             isSelected: selected == null,
             onTap: () => onSelect(null),
           ),
-          ...options.map((opt) => _DrawerOption(
-                label: opt,
-                isSelected: selected == opt,
-                onTap: () => onSelect(opt),
-              )),
+          ...options.map(
+            (opt) => _DrawerOption(
+              label: opt,
+              isSelected: selected == opt,
+              onTap: () => onSelect(opt),
+            ),
+          ),
         ],
       ),
     );
@@ -877,14 +1057,16 @@ class _DrawerOption extends StatelessWidget {
                     : Colors.white.withOpacity(0.85),
                 fontSize: 15,
                 fontFamily: "DMSans",
-                fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
             const Spacer(),
             if (isSelected)
-              const Icon(Icons.check_rounded,
-                  color: Color(0xFFD4F000), size: 18),
+              const Icon(
+                Icons.check_rounded,
+                color: Color(0xFFD4F000),
+                size: 18,
+              ),
           ],
         ),
       ),
@@ -911,19 +1093,27 @@ class _UpcomingOpenOrderWidget extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: _borderClr),
             ),
-            child: const Icon(Icons.pending_actions_rounded,
-                color: _labelClr, size: 40),
+            child: const Icon(
+              Icons.pending_actions_rounded,
+              color: _labelClr,
+              size: 40,
+            ),
           ),
           const SizedBox(height: 16),
-          const Text("Upcoming",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: "DMSans")),
+          const Text(
+            "Upcoming",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              fontFamily: "DMSans",
+            ),
+          ),
           const SizedBox(height: 8),
-          const Text("Open Orders feature is coming soon",
-              style: TextStyle(color: _labelClr, fontSize: 13)),
+          const Text(
+            "Open Orders feature is coming soon",
+            style: TextStyle(color: _labelClr, fontSize: 13),
+          ),
         ],
       ),
     );
@@ -946,19 +1136,27 @@ class _UpcomingStopLimitWidget extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: _borderClr),
             ),
-            child: const Icon(Icons.price_change_rounded,
-                color: _labelClr, size: 40),
+            child: const Icon(
+              Icons.price_change_rounded,
+              color: _labelClr,
+              size: 40,
+            ),
           ),
           const SizedBox(height: 16),
-          const Text("Upcoming Stop Limit",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: "DMSans")),
+          const Text(
+            "Upcoming Stop Limit",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              fontFamily: "DMSans",
+            ),
+          ),
           const SizedBox(height: 8),
-          const Text("Stop Limit Orders feature is coming soon",
-              style: TextStyle(color: _labelClr, fontSize: 13)),
+          const Text(
+            "Stop Limit Orders feature is coming soon",
+            style: TextStyle(color: _labelClr, fontSize: 13),
+          ),
         ],
       ),
     );
@@ -983,8 +1181,6 @@ class SpotOrderHistoryItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-   
     final isBuy = (trade.type ?? "").toLowerCase() == "buy";
     final color = isBuy ? gBuyColor : gSellColor;
     final tradeCoin = orderData?.tradeCoin ?? "";
@@ -1013,8 +1209,10 @@ class SpotOrderHistoryItemView extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  formatDate(trade.createdAt,
-                          format: dateTimeFormatYyyyMMDdHhMm) ??
+                  formatDate(
+                        trade.createdAt,
+                        format: dateTimeFormatYyyyMMDdHhMm,
+                      ) ??
                       "",
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.5),
@@ -1053,9 +1251,10 @@ class SpotOrderHistoryItemView extends StatelessWidget {
           _statusRow(trade.status),
           const SizedBox(height: 10),
           Divider(
-              height: 0,
-              thickness: 0.5,
-              color: Colors.white.withOpacity(0.1)),
+            height: 0,
+            thickness: 0.5,
+            color: Colors.white.withOpacity(0.1),
+          ),
           const SizedBox(height: 2),
         ],
       ),
@@ -1073,21 +1272,27 @@ class SpotOrderHistoryItemView extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 5),
       child: Row(
         children: [
-          Text(label,
-              style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 12,
-                  fontFamily: "DMSans",
-                  fontWeight: FontWeight.w400,
-                  height: 1.33)),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.33,
+            ),
+          ),
           const Spacer(),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontFamily: "DMSans",
-                  fontWeight: FontWeight.w400,
-                  height: 1.066)),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.066,
+            ),
+          ),
         ],
       ),
     );
@@ -1096,28 +1301,35 @@ class SpotOrderHistoryItemView extends StatelessWidget {
   Widget _statusRow(int? status) {
     final bool isSuccess = status == 1;
     final String label = isSuccess ? "Success" : "Failed";
-    final Color statusColor =
-        isSuccess ? const Color(0xFF00B052) : const Color(0xFFD05858);
+    final Color statusColor = isSuccess
+        ? const Color(0xFF00B052)
+        : const Color(0xFFD05858);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
       child: Row(
         children: [
-          Text("Status",
-              style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 12,
-                  fontFamily: "DMSans",
-                  fontWeight: FontWeight.w400,
-                  height: 1.33)),
+          Text(
+            "Status",
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.33,
+            ),
+          ),
           const Spacer(),
-          Text(label,
-              style: TextStyle(
-                  color: statusColor,
-                  fontSize: 15,
-                  fontFamily: "DMSans",
-                  fontWeight: FontWeight.w400,
-                  height: 1.066)),
+          Text(
+            label,
+            style: TextStyle(
+              color: statusColor,
+              fontSize: 15,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.066,
+            ),
+          ),
         ],
       ),
     );
@@ -1142,8 +1354,8 @@ class SpotTraderHistoryItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    final isBuy = (trade.type ?? "").toLowerCase() == "buy";
+    final isBuy =
+        ((trade.type ?? trade.priceOrderType) ?? "").toLowerCase() == "buy";
     final tradeCoin = orderData?.tradeCoin ?? "";
     final baseCoin = orderData?.baseCoin ?? "";
 
@@ -1170,8 +1382,10 @@ class SpotTraderHistoryItemView extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  formatDate(trade.createdAt,
-                          format: dateTimeFormatYyyyMMDdHhMm) ??
+                  formatDate(
+                        trade.createdAt,
+                        format: dateTimeFormatYyyyMMDdHhMm,
+                      ) ??
                       "",
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.5),
@@ -1203,28 +1417,33 @@ class SpotTraderHistoryItemView extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 5),
             child: Row(
               children: [
-                Text("Order No.",
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: 12,
-                        fontFamily: "DMSans",
-                        fontWeight: FontWeight.w400,
-                        height: 1.33)),
+                Text(
+                  "Order No.",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w400,
+                    height: 1.33,
+                  ),
+                ),
                 const Spacer(),
                 Text(
                   trimTransactionId(trade.transactionId?.toString()),
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontFamily: "DMSans",
-                      fontWeight: FontWeight.w400,
-                      height: 1.066),
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w400,
+                    height: 1.066,
+                  ),
                 ),
                 const SizedBox(width: 6),
                 GestureDetector(
                   onTap: () {
-                    Clipboard.setData(ClipboardData(
-                        text: trade.id?.toString() ?? ""));
+                    Clipboard.setData(
+                      ClipboardData(text: trade.id?.toString() ?? ""),
+                    );
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: const Text("Order No. copied"),
@@ -1232,12 +1451,16 @@ class SpotTraderHistoryItemView extends StatelessWidget {
                         backgroundColor: const Color(0xFF1A1A1A),
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     );
                   },
-                  child: Image.asset("assets/icons/copy.png",
-                      width: 14, height: 14),
+                  child: Image.asset(
+                    "assets/icons/copy.png",
+                    width: 14,
+                    height: 14,
+                  ),
                 ),
               ],
             ),
@@ -1248,9 +1471,10 @@ class SpotTraderHistoryItemView extends StatelessWidget {
           _row("Total ($baseCoin)", coinFormat(trade.total)),
           const SizedBox(height: 10),
           Divider(
-              height: 0,
-              thickness: 0.5,
-              color: Colors.white.withOpacity(0.1)),
+            height: 0,
+            thickness: 0.5,
+            color: Colors.white.withOpacity(0.1),
+          ),
           const SizedBox(height: 2),
         ],
       ),
@@ -1262,21 +1486,27 @@ class SpotTraderHistoryItemView extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 5),
       child: Row(
         children: [
-          Text(label,
-              style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 12,
-                  fontFamily: "DMSans",
-                  fontWeight: FontWeight.w400,
-                  height: 1.33)),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.33,
+            ),
+          ),
           const Spacer(),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontFamily: "DMSans",
-                  fontWeight: FontWeight.w400,
-                  height: 1.066)),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1.066,
+            ),
+          ),
         ],
       ),
     );
@@ -1325,34 +1555,42 @@ class SpotTradeHistoryStopLimitItemView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
             child: Row(
               children: [
-                Text("$tradeCoin/$baseCoin",
-                    style: const TextStyle(
-                        color: _valueClr,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold)),
+                Text(
+                  "$tradeCoin/$baseCoin",
+                  style: const TextStyle(
+                    color: _valueClr,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 7, vertical: 2),
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(4),
-                    border:
-                        Border.all(color: color.withOpacity(0.35)),
+                    border: Border.all(color: color.withOpacity(0.35)),
                   ),
                   child: Text(
                     "${(trade.type ?? '').toUpperCase()} Stop Limit",
                     style: TextStyle(
-                        color: color,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600),
+                      color: color,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => onCancel(trade),
-                  child: const Icon(Icons.delete_outline,
-                      color: Colors.redAccent, size: 16),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.redAccent,
+                    size: 16,
+                  ),
                 ),
               ],
             ),
@@ -1376,15 +1614,13 @@ class SpotTradeHistoryStopLimitItemView extends StatelessWidget {
   }
 
   Widget _row(String l, String v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(
-          children: [
-            Text(l,
-                style: const TextStyle(color: _labelClr, fontSize: 12)),
-            const Spacer(),
-            Text(v,
-                style: const TextStyle(color: _valueClr, fontSize: 12)),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      children: [
+        Text(l, style: const TextStyle(color: _labelClr, fontSize: 12)),
+        const Spacer(),
+        Text(v, style: const TextStyle(color: _valueClr, fontSize: 12)),
+      ],
+    ),
+  );
 }

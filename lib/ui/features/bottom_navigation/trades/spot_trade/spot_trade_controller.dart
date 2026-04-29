@@ -231,12 +231,6 @@ class SpotTradeController extends GetxController implements SocketListener {
     APIRepository().getTradeHistoryList(orderData?.baseCoinId ?? 0, orderData?.tradeCoinId ?? 0, FromKey.buySell).then((resp) {
       isHistoryLoading.value = false;
       if (resp.success && resp.data != null) {
-        // DEBUG: log raw transaction fields to find type field name
-        final rawTxList = resp.data["transactions"];
-        if (rawTxList is List && rawTxList.isNotEmpty) {
-          debugPrint(">>> RAW TRANSACTION KEYS: ${rawTxList.first.keys.toList()}");
-          debugPrint(">>> FIRST TX RAW: ${rawTxList.first}");
-        }
         allMyHistories.value = SpotAllMyHistories.fromJson(resp.data);
       } else {
         showToast(resp.message);
