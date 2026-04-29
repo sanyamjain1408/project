@@ -885,7 +885,7 @@ class _OrderHistoryFilterBarState extends State<_OrderHistoryFilterBar> {
           selected: selectedStatus,
           onTap: () => _showFilterDrawer(
             title: "Select Status",
-            options: ["Success", "Failed"],
+            options: ["Success", "Pending"],
             selected: selectedStatus,
             onSelect: (v) => selectedStatus = v,
           ),
@@ -1223,30 +1223,190 @@ class _OpenOrderCard extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════════════════════
 //  OPEN ORDER FULL VIEW (for history screen tab)
 // ══════════════════════════════════════════════════════════════════════════════
-class _OpenOrderFullView extends StatelessWidget {
+class _OpenOrderFullView extends StatefulWidget {
   const _OpenOrderFullView({required this.controller});
   final SpotTradeController controller;
 
   @override
+  State<_OpenOrderFullView> createState() => _OpenOrderFullViewState();
+}
+
+class _OpenOrderFullViewState extends State<_OpenOrderFullView> {
+  List<Trade> _allList = [];
+  List<Trade> _filteredList = [];
+  bool _isFilterActive = false;
+
+  @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final list = controller.allMyHistories.value.orders ?? [];
-      if (list.isEmpty) {
-        return handleEmptyViewWithLoading(controller.isHistoryLoading.value);
+      _allList = (widget.controller.allMyHistories.value.orders ?? []).cast<Trade>();
+
+      if (_allList.isEmpty) {
+        return handleEmptyViewWithLoading(widget.controller.isHistoryLoading.value);
       }
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: list.length,
-        itemBuilder: (_, i) => _OpenOrderCard(
-          trade: list[i],
-          orderData: controller.dashboardData.value.orderData,
-          onDelete: () => controller.cancelOpenOrderApp(
-            list[i].type ?? '',
-            list[i].id ?? 0,
+
+      final displayList = _isFilterActive ? _filteredList : _allList;
+
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            child: _OpenOrderFilterBar(
+              trades: _allList,
+              currentBaseCoin:
+                  widget.controller.dashboardData.value.orderData?.baseCoin ?? "",
+              onFiltered: (filtered) {
+                setState(() {
+                  _filteredList = filtered;
+                  _isFilterActive = true;
+                });
+              },
+              onReset: () {
+                setState(() {
+                  _filteredList = [];
+                  _isFilterActive = false;
+                });
+              },
+            ),
           ),
-        ),
+          Expanded(
+            child: displayList.isEmpty
+                ? Center(
+                    child: Text(
+                      "No records found",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 14,
+                        fontFamily: "DMSans",
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: displayList.length,
+                    itemBuilder: (_, i) => _OpenOrderCard(
+                      trade: displayList[i],
+                      orderData: widget.controller.dashboardData.value.orderData,
+                      onDelete: () => widget.controller.cancelOpenOrderApp(
+                        displayList[i].type ?? '',
+                        displayList[i].id ?? 0,
+                      ),
+                    ),
+                  ),
+          ),
+        ],
       );
     });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  OPEN ORDER FILTER BAR
+// ══════════════════════════════════════════════════════════════════════════════
+class _OpenOrderFilterBar extends StatefulWidget {
+  const _OpenOrderFilterBar({
+    required this.trades,
+    required this.currentBaseCoin,
+    required this.onFiltered,
+    required this.onReset,
+  });
+
+  final List<Trade> trades;
+  final String currentBaseCoin;
+  final Function(List<Trade>) onFiltered;
+  final VoidCallback onReset;
+
+  @override
+  State<_OpenOrderFilterBar> createState() => _OpenOrderFilterBarState();
+}
+
+class _OpenOrderFilterBarState extends State<_OpenOrderFilterBar> {
+  String? selectedPair;
+  String? selectedType;
+
+  void _applyFilters() {
+    if (selectedPair == null && selectedType == null) {
+      widget.onReset();
+      return;
+    }
+
+    List<Trade> result = List.from(widget.trades);
+
+    if (selectedPair != null) {
+      result = result
+          .where(
+            (t) =>
+                (t.baseCoin ?? widget.currentBaseCoin).toUpperCase() ==
+                selectedPair!.toUpperCase(),
+          )
+          .toList();
+    }
+
+    if (selectedType != null) {
+      result = result
+          .where(
+            (t) => selectedType == "Buy"
+                ? (t.type ?? "").toLowerCase() == "buy"
+                : (t.type ?? "").toLowerCase() == "sell",
+          )
+          .toList();
+    }
+
+    widget.onFiltered(result);
+  }
+
+  void _showFilterDrawer({
+    required String title,
+    required List<String> options,
+    required String? selected,
+    required void Function(String?) onSelect,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _FilterDrawer(
+        title: title,
+        options: options,
+        selected: selected,
+        onSelect: (val) {
+          Navigator.pop(context);
+          setState(() => onSelect(val));
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _applyFilters();
+          });
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _FilterChipBtn(
+          label: "Pair",
+          selected: selectedPair,
+          onTap: () => _showFilterDrawer(
+            title: "Select Pair",
+            options: const ["USDT", "USDC", "BTC"],
+            selected: selectedPair,
+            onSelect: (v) => selectedPair = v,
+          ),
+        ),
+        const SizedBox(width: 8),
+        _FilterChipBtn(
+          label: "Order Type",
+          selected: selectedType,
+          onTap: () => _showFilterDrawer(
+            title: "Select Order Type",
+            options: ["Buy", "Sell"],
+            selected: selectedType,
+            onSelect: (v) => selectedType = v,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1431,10 +1591,10 @@ class SpotOrderHistoryItemView extends StatelessWidget {
 
   Widget _statusRow(int? status) {
     final bool isSuccess = status == 1;
-    final String label = isSuccess ? "Success" : "Failed";
+    final String label = isSuccess ? "Success" : "Pending";
     final Color statusColor = isSuccess
         ? const Color(0xFF00B052)
-        : const Color(0xFFD05858);
+        : const Color(0xFFD4F000);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
