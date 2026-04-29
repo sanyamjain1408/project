@@ -24,6 +24,7 @@ import '../../side_navigation/profile/profile_screen.dart';
 import '../../side_navigation/referrals/referrals_screen.dart';
 import '../../side_navigation/staking/staking_screen.dart';
 import '../../side_navigation/fiat/fiat_screen.dart';
+import '../../side_navigation/earn/earn_screen.dart';
 import '../wallet/swap/swap_screen.dart';
 import '../wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import '../wallet/wallet_crypto_withdraw/wallet_crypto_withdraw_screen.dart';
@@ -68,138 +69,131 @@ class _LandingScreenState extends State<LandingScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Column(
-      
         children: [
-        const AppBarHomeView(),
-        Expanded(child: Obx(() {
-          final lData = _controller.landingData.value;
-          return _controller.isLoading.value
-              ? const ShimmerViewLanding()
-              : ListView(
-                  shrinkWrap: true,
-                  children: [
-                   
-                    if (lData.landingSecondSectionStatus == 1) const CryptoTrustBannerView(),
-                    buildViewCard(),
-                    if (lData.announcementList.isValid) AnnouncementView(announcementList: lData.announcementList!), 
-                   ///_exploreView(),
-                    if (lData.landingThirdSectionStatus == 1) const LandingMarketView(),
-                    const MarketEmptyStateWidget(),
-                    
-                   ///  _getLandingButtonView(),
-                    ///_featureView(),
-                   ///_latestBlogView()
-                  ],
-                );
-        })),
-      ]),
-    );
-  }
-Widget buildViewCard() {
-  return InkWell(
-    child: Container(
-      // --- CARD STYLING ---
-      
-      decoration: BoxDecoration(
-         color: const Color(0xFF1A1A1A), // Dark Background (Image jaisa)
-        borderRadius: BorderRadius.circular(16), // Rounded Corners
-        border: Border.all(
-          color: const Color(0xFF1A1A1A),
-          width: 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.all(15), // Inside Padding
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // --- TOP SECTION: LOGO + TITLE ---
-          Row(
-            children: [
-              // Logo
-              ClipRRect(
-                borderRadius: BorderRadius.circular(50),
-                child: Image.asset(
-                 "assets/images/usdt.png", 
-                  width: 32,
-                  height: 32,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Title
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Text(
-                "USDT",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                "Simple Earn",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              ],
-              )
-            ],
-          ),
-          
-          const SizedBox(height: 20), // Gap between Title and Graph
-
-          // --- MIDDLE SECTION: GRAPH ---
-          // Graph ko center rakha hai taaki flow sahi lage
-          Align(
-            alignment: Alignment.center,
-            child: Image.asset(
-             "assets/images/graph.png",
-              width: double.infinity, // Full width
-              height: 70, // Fixed height for graph
-              fit: BoxFit.fitWidth,
-            ),
-          ),
-
-          const SizedBox(height: 20), // Gap between Graph and Bottom Text
-
-          // --- BOTTOM SECTION: TEXT + PERCENTAGE ---
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Subtitle Text
-              Text(
-                "Highest APR",
-                style: const TextStyle(
-                  color: Color(0xFF9CA3AF), // Grey Color
-                  fontSize: 15,
-                ),
-              ),
-              // Percentage Text
-              Text(
-                "2.8%",
-                style: const TextStyle(
-                  color: Color(0xFF4ED78E), // Green Color
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+          const AppBarHomeView(),
+          Expanded(child: Obx(() {
+            final lData = _controller.landingData.value;
+            return _controller.isLoading.value
+                ? const ShimmerViewLanding()
+                : ListView(
+                    shrinkWrap: true,
+                    children: [
+                      if (lData.landingSecondSectionStatus == 1) const CryptoTrustBannerView(),
+                      buildViewCard(),
+                      if (lData.announcementList.isValid) AnnouncementView(announcementList: lData.announcementList!),
+                      ///_exploreView(),
+                      if (lData.landingThirdSectionStatus == 1) const LandingMarketView(),
+                      const MarketEmptyStateWidget(),
+                      ///_getLandingButtonView(),
+                      ///_featureView(),
+                      ///_latestBlogView()
+                    ],
+                  );
+          })),
         ],
       ),
-    ),
-  );
-}
-  
+    );
+  }
+
+  // ✅ ONLY CHANGE: added onTap to open EarnScreen
+  Widget buildViewCard() {
+    return InkWell(
+      onTap: () => checkLoggedInStatus(context, () => Get.to(() => const EarnScreen())),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF1A1A1A),
+            width: 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- TOP SECTION: LOGO + TITLE ---
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: Image.asset(
+                    "assets/images/usdt.png",
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "USDT",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Simple Earn",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // --- MIDDLE SECTION: GRAPH ---
+            Align(
+              alignment: Alignment.center,
+              child: Image.asset(
+                "assets/images/graph.png",
+                width: double.infinity,
+                height: 70,
+                fit: BoxFit.fitWidth,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // --- BOTTOM SECTION: TEXT + PERCENTAGE ---
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Highest APR",
+                  style: const TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 15,
+                  ),
+                ),
+                Text(
+                  "2.8%",
+                  style: const TextStyle(
+                    color: Color(0xFF4ED78E),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Padding _getLandingButtonView() {
     final hasUser = gUserRx.value.id > 0;
@@ -210,7 +204,9 @@ Widget buildViewCard() {
             text: title,
             buttonHeight: Dimens.btnHeightMid,
             textColor: Colors.white,
-            onPress: () => hasUser ? getRootController().changeBottomNavIndex(AppBottomNavKey.trade) : Get.offAll(() => const SignInPage())));
+            onPress: () => hasUser
+                ? getRootController().changeBottomNavIndex(AppBottomNavKey.trade)
+                : Get.offAll(() => const SignInPage())));
   }
 
   Widget _featureView() {
@@ -231,7 +227,9 @@ Widget buildViewCard() {
                 runSpacing: Dimens.paddingMid,
                 alignment: WrapAlignment.center,
                 runAlignment: WrapAlignment.center,
-                children: List.generate(lData.featureList!.length, (index) => LatestFeatureItemView(feature: lData.featureList![index])),
+                children: List.generate(
+                    lData.featureList!.length,
+                    (index) => LatestFeatureItemView(feature: lData.featureList![index])),
               )
             ],
           ));
@@ -256,15 +254,24 @@ Widget buildViewCard() {
             crossAxisAlignment: WrapCrossAlignment.start,
             runAlignment: WrapAlignment.center,
             children: [
-              ExploreItemView(title: "Deposit".tr, icon: Icons.file_download, onTap: () => checkLoggedInStatus(context, () => Get.to(() => WalletCryptoDepositScreen()))),
-              ExploreItemView(title: "Withdraw".tr, icon: Icons.file_upload, onTap: () => checkLoggedInStatus(context, () => Get.to(() => WalletCryptoWithdrawScreen()))),
+              ExploreItemView(
+                  title: "Deposit".tr,
+                  icon: Icons.file_download,
+                  onTap: () => checkLoggedInStatus(context, () => Get.to(() => WalletCryptoDepositScreen()))),
+              ExploreItemView(
+                  title: "Withdraw".tr,
+                  icon: Icons.file_upload,
+                  onTap: () => checkLoggedInStatus(context, () => Get.to(() => WalletCryptoWithdrawScreen()))),
               if (settings?.swapStatus == 1)
                 ExploreItemView(
                     title: "Swap".tr,
                     icon: Icons.swap_horizontal_circle,
                     onTap: () => checkLoggedInStatus(context, () => Get.to(() => const SwapScreen()))),
               if (settings?.enableGiftCard == 1)
-                ExploreItemView(title: "Gift Card".tr, icon: Icons.card_giftcard, onTap: () => Get.to(() => const GiftCardsScreen())),
+                ExploreItemView(
+                    title: "Gift Card".tr,
+                    icon: Icons.card_giftcard,
+                    onTap: () => Get.to(() => const GiftCardsScreen())),
               if (hasUser)
                 ExploreItemView(
                     title: "Wallet".tr,
@@ -274,21 +281,52 @@ Widget buildViewCard() {
                       getRootController().changeBottomNavIndex(AppBottomNavKey.wallet);
                     }),
               if (settings?.enableStaking == 1)
-                ExploreItemView(title: "Staking".tr, icon: Icons.punch_clock_outlined, onTap: () => Get.to(() => const StakingScreen())),
-
-              if (hasUser) ExploreItemView(title: "Fiat".tr, icon: Icons.account_balance, onTap: () => Get.to(() => const FiatScreen())),
-              if (hasUser) ExploreItemView(title: "Reports".tr, icon: Icons.history, onTap: () => Get.to(() => const ActivityScreen())),
-              if (hasUser) ExploreItemView(title: "Profile".tr, icon: Icons.person, onTap: () => Get.to(() => const ProfileScreen())),
-
-              if (settings?.blogNewsModule == 1) ExploreItemView(title: "Blog".tr, icon: Icons.rss_feed, onTap: () => Get.to(() => const BlogScreen())),
-              ExploreItemView(title: "FAQ".tr, icon: Icons.help, onTap: () => Get.to(() => const FAQPage())),
+                ExploreItemView(
+                    title: "Staking".tr,
+                    icon: Icons.punch_clock_outlined,
+                    onTap: () => Get.to(() => const StakingScreen())),
+              if (hasUser)
+                ExploreItemView(
+                    title: "Fiat".tr,
+                    icon: Icons.account_balance,
+                    onTap: () => Get.to(() => const FiatScreen())),
+              if (hasUser)
+                ExploreItemView(
+                    title: "Reports".tr,
+                    icon: Icons.history,
+                    onTap: () => Get.to(() => const ActivityScreen())),
+              if (hasUser)
+                ExploreItemView(
+                    title: "Profile".tr,
+                    icon: Icons.person,
+                    onTap: () => Get.to(() => const ProfileScreen())),
+              if (settings?.blogNewsModule == 1)
+                ExploreItemView(
+                    title: "Blog".tr,
+                    icon: Icons.rss_feed,
+                    onTap: () => Get.to(() => const BlogScreen())),
+              ExploreItemView(
+                  title: "FAQ".tr,
+                  icon: Icons.help,
+                  onTap: () => Get.to(() => const FAQPage())),
               if (settings?.p2pModule == 1)
-                ExploreItemView(title: "P2P".tr, icon: Icons.people, onTap: () {
-                  TemporaryData.changingPageId = 1;
-                  getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
-                }),
+                ExploreItemView(
+                    title: "P2P".tr,
+                    icon: Icons.people,
+                    onTap: () {
+                      TemporaryData.changingPageId = 1;
+                      getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
+                    }),
+              ExploreItemView(
+                title: "Earn".tr,
+                icon: Icons.savings_outlined,
+                onTap: () => checkLoggedInStatus(context, () => Get.to(() => const EarnScreen())),
+              ),
               if (settings?.navbar?["ico"]?.status == true)
-                ExploreItemView(title: "ICO".tr, icon: Icons.local_atm, onTap: () => Get.to(() => const ICOScreen())),
+                ExploreItemView(
+                    title: "ICO".tr,
+                    icon: Icons.local_atm,
+                    onTap: () => Get.to(() => const ICOScreen())),
             ],
           ),
         ],
@@ -338,147 +376,101 @@ class CryptoTrustBannerView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-  // color: Colors.black, // <--- COLOR HATA DIYA (Yahan decoration use karenge)
-  padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-  decoration: const BoxDecoration(
-    color: Colors.black, // <--- COLOR IDHER DAALA
-    borderRadius: BorderRadius.only(
-      bottomLeft: Radius.circular(30), // Neeche left side round
-      bottomRight: Radius.circular(30), // Neeche right side round
-    ),
-  ),
-  child: Column(
-    children: [
-      RichText(
-        textAlign: TextAlign.center,
-        text: const TextSpan(
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, height: 1.3),
-          children: [
-            TextSpan(text: "Unleash ", style: TextStyle(color: _green)),
-            TextSpan(text: "the ", style: TextStyle(color: Colors.white)),
-            TextSpan(text: "Power ", style: TextStyle(color: _green)),
-            TextSpan(text: "of ", style: TextStyle(color: Colors.white)),
-            TextSpan(text: "Crypto ", style: TextStyle(color: _green)),
-          ],
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
       ),
-      const SizedBox(height: 6),
-      const Text(
-        "Most Secure. Transparent. Compliant.",
-        textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.grey, fontSize: 12),
-      ),
-      const SizedBox(height: 24),
-      _bigXHero(),
-      const SizedBox(height: 28),
-      _badgeRow(),
-      const SizedBox(height: 24),
-      Row(
+      child: Column(
         children: [
-          Expanded(child: _signInBtn()),
-          const SizedBox(width: 12),
-          Expanded(child: _signUpBtn()),
+          RichText(
+            textAlign: TextAlign.center,
+            text: const TextSpan(
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, height: 1.3),
+              children: [
+                TextSpan(text: "Unleash ", style: TextStyle(color: _green)),
+                TextSpan(text: "the ", style: TextStyle(color: Colors.white)),
+                TextSpan(text: "Power ", style: TextStyle(color: _green)),
+                TextSpan(text: "of ", style: TextStyle(color: Colors.white)),
+                TextSpan(text: "Crypto ", style: TextStyle(color: _green)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Most Secure. Transparent. Compliant.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+          const SizedBox(height: 24),
+          _bigXHero(),
+          const SizedBox(height: 28),
+          _badgeRow(),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(child: _signInBtn()),
+              const SizedBox(width: 12),
+              Expanded(child: _signUpBtn()),
+            ],
+          ),
         ],
       ),
-    ],
-  ),
-  
-);
-
+    );
   }
 
-
-
   Widget _bigXHero() {
-  // Video Controller banana padega, isliye Widget ko StatefulWidget banana padega
-  // Niche diya gaya pura class copy karein:
-  return const VideoHeroWidget();
-}
+    return const VideoHeroWidget();
+  }
 
   Widget _badge({required String imagePath, required String title, required String sub}) {
     return Column(
       children: [
-
         Row(
           children: [
             Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: showImageAsset(
-            imagePath: imagePath,
-            height: 30,
-            width: 30,
-            boxFit: BoxFit.cover,
-          ),
-        ),
-        SizedBox(width: 5,),
-        Text(
-          title,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.3,
-          ),
-        ),
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
+              child: showImageAsset(imagePath: imagePath, height: 30, width: 30, boxFit: BoxFit.cover),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.3),
+            ),
           ],
         ),
-        //  Square rounded box instead of Circle
-        SizedBox(height: 8,),
-        //  Chhota aur dim text
+        const SizedBox(height: 8),
         if (sub.isNotEmpty)
-          Text(
-            sub,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.45),
-              fontSize: 10,
-            ),
-          ),
+          Text(sub, style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 10)),
       ],
     );
   }
-  
 
   Widget _badgeRow() {
-  return Container(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _badge(
-          imagePath: "assets/images/user.png",
-          title: "1M+",
-          sub: "REGISTERED USER",
-        ),
-        _badge(
-          imagePath: "assets/images/crypto.png",
-          title: "500+",
-          sub: "CRYPTO ASSETS",
-        ),
-        _badge(
-          imagePath: "assets/images/iec.png",
-          title: "ISO/IEC ",
-          sub: "27001:2022",
-        ),
-      ],
-    ),
-  );
-}
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _badge(imagePath: "assets/images/user.png", title: "1M+", sub: "REGISTERED USER"),
+          _badge(imagePath: "assets/images/crypto.png", title: "500+", sub: "CRYPTO ASSETS"),
+          _badge(imagePath: "assets/images/iec.png", title: "ISO/IEC ", sub: "27001:2022"),
+        ],
+      ),
+    );
+  }
 
-
-Widget _signInBtn() {
+  Widget _signInBtn() {
     return GestureDetector(
       onTap: () => Get.offAll(() => const SignInPage()),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(12),
-          
-        ),
+        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12)),
         child: const Center(child: Text("Sign In", style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600))),
       ),
     );
@@ -489,10 +481,7 @@ Widget _signInBtn() {
       onTap: () => Get.offAll(() => const SignInPage()),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          color: _green,
-          borderRadius: BorderRadius.circular(12),
-        ),
+        decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(12)),
         child: const Center(child: Text("Sign Up", style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold))),
       ),
     );
@@ -503,52 +492,25 @@ Widget _signInBtn() {
       children: [
         Icon(icon, color: iconColor, size: 26),
         const SizedBox(height: 6),
-        Text(
-          value, 
-          style: const TextStyle(
-            color: Colors.white, 
-            fontWeight: FontWeight.w700, 
-            fontSize: 16
-          )
-        ),
+        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
         const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.5), 
-            fontSize: 9, 
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.2
-          ),
-          textAlign: TextAlign.center,
-        ),
+        Text(label,
+            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 9, fontWeight: FontWeight.w500, letterSpacing: 0.2),
+            textAlign: TextAlign.center),
       ],
     );
   }
 
   Widget _buildDivider() {
-    return Container(
-      height: 40, 
-      width: 1, 
-      color: Colors.white.withOpacity(0.15)
-    );
+    return Container(height: 40, width: 1, color: Colors.white.withOpacity(0.15));
   }
 }
 
-
-
-
- // <--- Import karein file ke upar
-
-// ... purane code ...
-
 Widget _bigXHero() {
-  // Video Controller banana padega, isliye Widget ko StatefulWidget banana padega
-  // Niche diya gaya pura class copy karein:
   return const VideoHeroWidget();
 }
 
-// --- NAYA STATEFUL WIDGET FOR VIDEO ---
+// --- VIDEO HERO WIDGET ---
 class VideoHeroWidget extends StatefulWidget {
   const VideoHeroWidget({super.key});
 
@@ -566,19 +528,16 @@ class _VideoHeroWidgetState extends State<VideoHeroWidget> {
     _initializeVideo();
   }
 
-    void _initializeVideo() async {
+  void _initializeVideo() async {
     try {
       _controller = VideoPlayerController.asset('assets/videos/hero.mp4')
         ..initialize().then((_) {
-          setState(() {
-            _isInitialized = true;
-          });
+          setState(() => _isInitialized = true);
           _controller.setLooping(true);
           _controller.play();
         });
     } catch (e) {
-      // Agar error aayi to console print hogi
-      print("Video Error: $e"); 
+      print("Video Error: $e");
     }
   }
 
@@ -588,28 +547,21 @@ class _VideoHeroWidgetState extends State<VideoHeroWidget> {
     super.dispose();
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 280,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Background Container
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black,
-            ),
-          ),
-          
-          // --- GESTURE DETECTOR WRAPPER ---
+          Container(decoration: const BoxDecoration(color: Colors.black)),
           GestureDetector(
             onTap: () {
               setState(() {
                 if (_controller.value.isPlaying) {
-                  _controller.pause(); // Agar chal rahi hai to RUKO
+                  _controller.pause();
                 } else {
-                  _controller.play(); // Agar ruki hai to CHALAO
+                  _controller.play();
                 }
               });
             },
@@ -628,13 +580,10 @@ class _VideoHeroWidgetState extends State<VideoHeroWidget> {
                   )
                 : const CircularProgressIndicator(color: Colors.white),
           ),
-          // -------------------------------
-
-          // OPTIONAL: Agar pause ho to ek Icon dikhana chahte hain
           if (!_isInitialized)
-             const SizedBox() // Loading state
+            const SizedBox()
           else if (!_controller.value.isPlaying)
-             const Icon(Icons.play_arrow, color: Colors.white, size: 50), // Play Icon jab pause ho
+            const Icon(Icons.play_arrow, color: Colors.white, size: 50),
         ],
       ),
     );
@@ -642,7 +591,7 @@ class _VideoHeroWidgetState extends State<VideoHeroWidget> {
 }
 
 // ─────────────────────────────────────────────
-// UPDATED MARKET EMPTY STATE WIDGET (With Controller)
+// MARKET EMPTY STATE WIDGET
 // ─────────────────────────────────────────────
 class MarketEmptyStateWidget extends StatefulWidget {
   const MarketEmptyStateWidget({super.key});
@@ -652,10 +601,7 @@ class MarketEmptyStateWidget extends StatefulWidget {
 }
 
 class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
-  int _currentTab = 0; // 0=Discover, 1=Blogs, 2=News, 3=Announcement
-
-  // --- CONTROLLER LENE KE LIYE GET.PUT ---
-  // Yeh LandingScreen ka same controller hai
+  int _currentTab = 0;
   final LandingController _controller = Get.find<LandingController>();
 
   @override
@@ -665,19 +611,10 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
       color: Colors.black,
       child: Column(
         children: [
-          // --- 1. HEADER ---
           CommonTabHeader(
-            onTabChanged: (index) {
-              setState(() {
-                _currentTab = index;
-              });
-            },
+            onTabChanged: (index) => setState(() => _currentTab = index),
           ),
-
-          // --- 2. CONTENT LOGIC ---
-          Expanded(
-            child: _buildContent(),
-          ),
+          Expanded(child: _buildContent()),
         ],
       ),
     );
@@ -685,57 +622,55 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
 
   Widget _buildContent() {
     switch (_currentTab) {
-      case 0: // DISCOVER
-        return const Center(child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-             Icon(Icons.folder_off, color: Colors.grey, size: 40),
-             SizedBox(height: 10),
-             Text("No Data", style: TextStyle(color: Colors.grey)),
-          ],
-        ));
-      
-      case 1: // BLOGS
-        // --- BLOGS WIDGET ---
+      case 0:
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.folder_off, color: Colors.grey, size: 40),
+              SizedBox(height: 10),
+              Text("No Data", style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        );
+      case 1:
         return _buildBlogsContent();
-
-      case 2: // NEWS
-        return const Center(child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-             Icon(Icons.newspaper, color: Colors.grey, size: 40),
-             SizedBox(height: 10),
-             Text("No News Data", style: TextStyle(color: Colors.grey)),
-          ],
-        ));
-
-      case 3: // ANNOUNCEMENT
-        return const Center(child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-             Icon(Icons.announcement, color: Colors.grey, size: 40),
-             SizedBox(height: 10),
-             Text("No Announcements", style: TextStyle(color: Colors.grey)),
-          ],
-        ));
-
+      case 2:
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.newspaper, color: Colors.grey, size: 40),
+              SizedBox(height: 10),
+              Text("No News Data", style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        );
+      case 3:
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.announcement, color: Colors.grey, size: 40),
+              SizedBox(height: 10),
+              Text("No Announcements", style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        );
       default:
         return const SizedBox();
     }
   }
 
-  // --- LOCAL METHOD JO REAL DATA BLOGS SE LAAYEGA ---
   Widget _buildBlogsContent() {
     return Obx(() {
       final settings = getSettingsLocal();
-      // Controller ki list check karein
       if (_controller.latestBlogList.isNotEmpty && settings?.blogNewsModule == 1) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Column(
             children: [
               const SizedBox(height: 10),
-              // Header Row
               Row(
                 children: [
                   Text(
@@ -747,17 +682,13 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
                 ],
               ),
               const SizedBox(height: 10),
-              // Divider
               Container(height: 1, color: Colors.grey.withOpacity(0.2)),
-              
-              // Blog List
               Expanded(
                 child: ListView.builder(
                   itemCount: _controller.latestBlogList.length,
                   itemBuilder: (context, index) {
                     final blog = _controller.latestBlogList[index];
-                    // Yahan 'LatestBlogItemView' use ho raha hai jo imports me hai
-                    return LatestBlogItemView(blog: blog); 
+                    return LatestBlogItemView(blog: blog);
                   },
                 ),
               ),
@@ -765,19 +696,17 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
           ),
         );
       } else {
-        // Agar data nahi hai
         return const Center(child: Text("No Blogs Available", style: TextStyle(color: Colors.grey)));
       }
     });
   }
 }
 
-
 // ─────────────────────────────────────────────
-// COMMON HEADER WIDGET (Reusable)
+// COMMON TAB HEADER WIDGET
 // ─────────────────────────────────────────────
 class CommonTabHeader extends StatefulWidget {
-  final Function(int) onTabChanged; // Callback function
+  final Function(int) onTabChanged;
 
   const CommonTabHeader({super.key, required this.onTabChanged});
 
@@ -793,18 +722,15 @@ class _CommonTabHeaderState extends State<CommonTabHeader> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: Colors.black, // Background color
+      color: Colors.black,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(_tabs.length, (index) {
           final isSelected = _selectedIndex == index;
           return GestureDetector(
             onTap: () {
-              setState(() {
-                _selectedIndex = index;
-              });
-              // Parent ko batao ki index change ho gaya
-              widget.onTabChanged(_selectedIndex); 
+              setState(() => _selectedIndex = index);
+              widget.onTabChanged(_selectedIndex);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
