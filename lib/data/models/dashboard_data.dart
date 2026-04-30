@@ -188,6 +188,7 @@ class TradeWallet {
     this.priceChange,
     this.walletId,
     this.pairDecimal,
+    this.coinIcon,
   });
 
   double? balance;
@@ -200,6 +201,7 @@ class TradeWallet {
   double? priceChange;
   int? walletId;
   int? pairDecimal;
+  String? coinIcon;
 
   factory TradeWallet.fromJson(Map<String, dynamic> json) => TradeWallet(
         balance: makeDouble(json["balance"]),
@@ -212,6 +214,7 @@ class TradeWallet {
         priceChange: makeDouble(json["price_change"]),
         walletId: makeInt(json["wallet_id"]),
         pairDecimal: makeInt(json["pair_decimal"]),
+        coinIcon: json["coin_icon"],
       );
 
   Wallet createWallet() {

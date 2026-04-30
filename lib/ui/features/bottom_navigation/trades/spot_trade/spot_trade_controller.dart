@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/data/models/currency.dart';
 import 'package:tradexpro_flutter/data/models/dashboard_data.dart';
 import 'package:tradexpro_flutter/data/models/exchange_order.dart';
 import 'package:tradexpro_flutter/data/models/trade_info_socket.dart';
@@ -19,6 +20,7 @@ class SpotTradeController extends GetxController implements SocketListener {
   Rx<SelfBalance> selfBalance = SelfBalance().obs;
   Rx<CoinPair> selectedCoinPair = CoinPair().obs;
   RxList<CoinPair> coinPairs = <CoinPair>[].obs;
+  Map<String, String> coinIconMap = {};
   RxList<ExchangeOrder> buyExchangeOrder = <ExchangeOrder>[].obs;
   RxList<ExchangeOrder> sellExchangeOrder = <ExchangeOrder>[].obs;
   RxList<ExchangeTrade> exchangeTrades = <ExchangeTrade>[].obs;
@@ -37,6 +39,24 @@ class SpotTradeController extends GetxController implements SocketListener {
   RxInt selectedHeaderIndex = 0.obs;
   TradeTolerance? tolerance;
 
+  @override
+  void onInit() {
+    super.onInit();
+    _loadCoinIcons();
+  }
+
+  void _loadCoinIcons() {
+    APIRepository().getCoinList().then((resp) {
+      if (resp.success && resp.data != null) {
+        final list = List<Currency>.from(resp.data!.map((x) => Currency.fromJson(x)));
+        for (final c in list) {
+          if (c.coinType != null && c.coinIcon != null) {
+            coinIconMap[c.coinType!.toUpperCase()] = c.coinIcon!;
+          }
+        }
+      }
+    });
+  }
 
   @override
   void onDataGet(channel, event, data) {

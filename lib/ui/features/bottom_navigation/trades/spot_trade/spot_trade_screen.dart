@@ -116,7 +116,7 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
                       ),
                     ],
                   ),
-                  vSpacer10(),
+                  vSpacer5(),
                   const SpotTradeHistoryView(),
                 ],
               ),
