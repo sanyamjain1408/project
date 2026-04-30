@@ -9,10 +9,13 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/announcement_view.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/home_grid_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/more_card_screen.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
+import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart'; // ✅ FIXED
+import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'dart:ui';
 
 const _green = Color(0xFFB5F000);
-const _bgcolor =   Color.fromARGB(255, 17, 17, 17);
+const _bgcolor = Color.fromARGB(255, 17, 17, 17);
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -23,22 +26,13 @@ class HomeDashboardScreen extends StatefulWidget {
 
 class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     with SingleTickerProviderStateMixin {
-  // LandingController is probably already put in your main.dart or binding, so Get.find is okay here.
   final LandingController _controller = Get.find<LandingController>();
-
-  // CHANGE THIS: Remove Get.find here and use Get.put or lazy initialization.
-  // 'Get.put' will register it if it doesn't exist, or find it if it does.
   final HomeGridController _gridController = Get.put(HomeGridController());
-
   late AnimationController _rotationController;
 
   @override
   void initState() {
     super.initState();
-
-    // REMOVE THIS LINE: It is redundant now because we did it above.
-    // Get.put(HomeGridController());
-
     _rotationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 15),
@@ -73,32 +67,31 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         const begin = Offset(1.0, 0.0);
         const end = Offset.zero;
         const curve = Curves.easeInOut;
-        var tween = Tween(
-          begin: begin,
-          end: end,
-        ).chain(CurveTween(curve: curve));
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         var offsetAnimation = animation.drive(tween);
         return SlideTransition(position: offsetAnimation, child: child);
       },
     );
   }
 
+  void _openEarnScreen() {
+    final hasUser = gUserRx.value.id > 0;
+    if (hasUser) {
+      Get.to(() => const EarnScreen());
+    } else {
+      Get.to(() => const SignInPage());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgcolor,
-
-      // AppBar hata diya taaki wo scroll ho sake
-
-      // ── SCROLLABLE BODY ──
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── SCROLLABLE HEADER (Yeh ab upar scroll hoga) ──
-
-            // ── MAIN TOP CONTAINER (Total Assets) ──
             Container(
               width: double.infinity,
               margin: const EdgeInsets.all(0),
@@ -121,7 +114,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                 ),
                 child: Stack(
                   children: [
-                    // ── CIRCLE BACKGROUND ──
                     Positioned(
                       top: -55,
                       left: 143,
@@ -139,23 +131,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                         ),
                       ),
                     ),
-                    // ── CONTENT ──
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 10),
-
                           Container(
                             color: Colors.transparent,
                             padding: EdgeInsets.only(
-                              top: MediaQuery.of(
-                                context,
-                              ).padding.top, // Status bar ke liye space
+                              top: MediaQuery.of(context).padding.top,
                               bottom: 10,
                               left: 10,
                               right: 10,
@@ -163,8 +148,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                             child: Row(
                               children: [
                                 GestureDetector(
-                                  onTap: () =>
-                                      Scaffold.of(context).openDrawer(),
+                                  onTap: () => Scaffold.of(context).openDrawer(),
                                   child: Image.asset(
                                     'assets/images/icon.png',
                                     height: 30,
@@ -181,73 +165,39 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                   child: Container(
                                     height: 35,
                                     decoration: BoxDecoration(
-                                      color: const Color.fromARGB(
-                                        255,
-                                        25,
-                                        24,
-                                        24,
-                                      ),
+                                      color: const Color.fromARGB(255, 25, 24, 24),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Row(
+                                    child: const Row(
                                       children: [
-                                        const SizedBox(width: 10),
-                                        Icon(
-                                          Icons.local_fire_department,
-                                          color: Colors.orange,
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          "BTC/USDT",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                          ),
-                                        ),
+                                        SizedBox(width: 10),
+                                        Icon(Icons.local_fire_department, color: Colors.orange, size: 18),
+                                        SizedBox(width: 5),
+                                        Text("BTC/USDT", style: TextStyle(color: Colors.white, fontSize: 14)),
                                         Spacer(),
-                                        Icon(
-                                          Icons.search,
-                                          color: _green,
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 10),
+                                        Icon(Icons.search, color: _green, size: 18),
+                                        SizedBox(width: 10),
                                       ],
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 5),
-                                const Icon(
-                                  Icons.headphones,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
+                                const Icon(Icons.headphones, color: Colors.white, size: 22),
                                 const SizedBox(width: 10),
                                 GestureDetector(
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    _createRoute(const NotificationsPage()),
-                                  ),
-                                  child: const Icon(
-                                    Icons.notifications_none,
-                                    color: Colors.white,
-                                    size: 22,
-                                  ),
+                                  onTap: () => Navigator.push(context, _createRoute(const NotificationsPage())),
+                                  child: const Icon(Icons.notifications_none, color: Colors.white, size: 22),
                                 ),
                                 const SizedBox(width: 10),
                               ],
                             ),
                           ),
-
-                          // ── TOTAL ASSETS ──
                           Row(
                             children: [
                               Text(
                                 "Total Assets",
                                 style: TextStyle(
-                                  color: const Color(
-                                    0xFFFFFFFF,
-                                  ).withOpacity(0.5),
+                                  color: const Color(0xFFFFFFFF).withOpacity(0.5),
                                   fontWeight: FontWeight.normal,
                                   fontFamily: "DMSans",
                                   fontSize: 16,
@@ -261,9 +211,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 6),
-
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
@@ -282,101 +230,52 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                 child: Text(
                                   "USDT",
                                   style: TextStyle(
-                                    color: const Color(
-                                      0xFFFFFFFF,
-                                    ).withOpacity(0.5),
+                                    color: const Color(0xFFFFFFFF).withOpacity(0.5),
                                     fontSize: 14,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-
                           const Row(
                             children: [
                               Text(
                                 "Today's PNL",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w300,
-                                  fontFamily: "DMSans",
-                                ),
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300, fontFamily: "DMSans"),
                               ),
                               SizedBox(width: 10),
-                              Text(
-                                "+14.51 (1.16%)",
-                                style: TextStyle(color: _green),
-                              ),
+                              Text("+14.51 (1.16%)", style: TextStyle(color: _green)),
                             ],
                           ),
-
                           const SizedBox(height: 20),
-
-                          // ── GRID (DYNAMIC) ──
                           Obx(() {
                             List<Map<String, dynamic>> userItems =
                                 _gridController.selectedIcons.isNotEmpty
-                                ? _gridController.selectedIcons
-                                      .cast<Map<String, dynamic>>()
-                                : [
-                                    {
-                                      "image": "assets/images/deposit.png",
-                                      "title": "Deposit",
-                                    },
-                                    {
-                                      "image": "assets/images/champion.png",
-                                      "title": "Champion",
-                                    },
-                                    {
-                                      "image": "assets/images/swap.png",
-                                      "title": "Swap",
-                                    },
-                                    {
-                                      "image": "assets/images/earn.png",
-                                      "title": "Earn",
-                                    },
-                                    {
-                                      "image": "assets/images/buy.png",
-                                      "title": "Buy",
-                                    },
-                                    {
-                                      "image": "assets/images/future.png",
-                                      "title": "Future",
-                                    },
-                                    {
-                                      "image": "assets/images/transfer.png",
-                                      "title": "Transfer",
-                                    },
-                                    {
-                                      "image": "assets/images/spot.png",
-                                      "title": "Spot",
-                                    },
-                                    {
-                                      "image": "assets/images/funds.png",
-                                      "title": "Funds",
-                                    },
-                                  ];
+                                    ? _gridController.selectedIcons.cast<Map<String, dynamic>>()
+                                    : [
+                                        {"image": "assets/images/deposit.png",  "title": "Deposit"},
+                                        {"image": "assets/images/champion.png", "title": "Champion"},
+                                        {"image": "assets/images/swap.png",     "title": "Swap"},
+                                        {"image": "assets/images/earn.png",     "title": "Earn"},
+                                        {"image": "assets/images/buy.png",      "title": "Buy"},
+                                        {"image": "assets/images/future.png",   "title": "Future"},
+                                        {"image": "assets/images/transfer.png", "title": "Transfer"},
+                                        {"image": "assets/images/spot.png",     "title": "Spot"},
+                                        {"image": "assets/images/funds.png",    "title": "Funds"},
+                                      ];
 
                             List<Map<String, dynamic>> finalGridItems = [];
                             for (var item in userItems) {
                               finalGridItems.add({
                                 "image": item['image'],
                                 "title": item['title'],
-                                "onTap": () =>
-                                    _navigateTo(context, item['title']),
+                                "onTap": () => _navigateTo(context, item['title']),
                               });
                             }
-
                             finalGridItems.add({
                               "image": "assets/images/more.png",
                               "title": "More",
-                              "onTap": () {
-                                Navigator.push(
-                                  context,
-                                  _createRoute(const MoreCardScreen()),
-                                );
-                              },
+                              "onTap": () => Navigator.push(context, _createRoute(const MoreCardScreen())),
                             });
 
                             return GridView.count(
@@ -385,9 +284,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               physics: const NeverScrollableScrollPhysics(),
                               mainAxisSpacing: 5,
                               crossAxisSpacing: 5,
-                              children: List.generate(finalGridItems.length, (
-                                index,
-                              ) {
+                              children: List.generate(finalGridItems.length, (index) {
                                 final item = finalGridItems[index];
                                 return _buildGridItem(
                                   item['image'] as String,
@@ -397,32 +294,20 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               }),
                             );
                           }),
-
                           const SizedBox(height: 20),
-
-                          // ── BUTTONS ──
                           Row(
                             children: [
                               Expanded(
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: _green,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   ),
                                   onPressed: () {},
                                   child: const Text(
                                     "Add Funds",
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 12,
-                                      fontFamily: "DMSans",
-                                    ),
+                                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 12, fontFamily: "DMSans"),
                                   ),
                                 ),
                               ),
@@ -430,36 +315,19 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               Expanded(
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color.fromARGB(
-                                      255,
-                                      25,
-                                      24,
-                                      24,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
+                                    backgroundColor: const Color.fromARGB(255, 25, 24, 24),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   ),
                                   onPressed: () {},
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Image.asset(
-                                        "assets/images/deposit.png",
-                                        height: 25,
-                                        width: 25,
-                                      ),
+                                      Image.asset("assets/images/deposit.png", height: 25, width: 25),
                                       const SizedBox(width: 8),
                                       const Text(
                                         "Deposit Crypto",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontFamily: "DMSans",
-                                        ),
+                                        style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: "DMSans"),
                                       ),
                                     ],
                                   ),
@@ -478,11 +346,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
 
             const SizedBox(height: 10),
 
-            // ── ANNOUNCEMENT BAR ──
             Obx(() {
               final lData = _controller.landingData.value;
-              if (lData.announcementList != null &&
-                  lData.announcementList!.isNotEmpty) {
+              if (lData.announcementList != null && lData.announcementList!.isNotEmpty) {
                 return Container(
                   width: double.infinity,
                   height: 20,
@@ -492,11 +358,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                     children: [
                       const Icon(Icons.volume_up, color: _green, size: 20),
                       const SizedBox(width: 1),
-                      Expanded(
-                        child: AnnouncementView(
-                          announcementList: lData.announcementList!,
-                        ),
-                      ),
+                      Expanded(child: AnnouncementView(announcementList: lData.announcementList!)),
                     ],
                   ),
                 );
@@ -507,7 +369,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
 
             const SizedBox(height: 10),
 
-            // ── GIFT CARD ──
             Container(
               width: 362,
               height: 48,
@@ -516,8 +377,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
               decoration: BoxDecoration(
                 image: const DecorationImage(
                   image: AssetImage("assets/images/frame.png"),
-                  fit: BoxFit
-                      .cover, // Image ko container ke hisab bha set karega
+                  fit: BoxFit.cover,
                 ),
                 color: const Color(0XFF1A1A1A),
                 borderRadius: BorderRadius.circular(5),
@@ -532,35 +392,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                       children: [
                         Text(
                           "Build Your Trading Empire & Claim",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w300,
-                            fontFamily: "DMSans",
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300, fontFamily: "DMSans"),
                         ),
                         SizedBox(height: 2),
                         Row(
                           children: [
-                            Text(
-                              "30%",
-                              style: TextStyle(
-                                color: _green,
-                                fontSize: 12,
-                                fontFamily: "DMSans",
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                            Text("30%", style: TextStyle(color: _green, fontSize: 12, fontFamily: "DMSans", fontWeight: FontWeight.w700)),
                             SizedBox(width: 3),
-                            Text(
-                              "Lifetime Rewards!",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w300,
-                                fontFamily: "DMSans",
-                              ),
-                            ),
+                            Text("Lifetime Rewards!", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300, fontFamily: "DMSans")),
                           ],
                         ),
                       ],
@@ -571,150 +410,95 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _bgcolor,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: -10,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: -10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(
-                            color: Colors.white24,
-                            width: 0.5,
-                          ),
+                          side: const BorderSide(color: Colors.white24, width: 0.5),
                         ),
                       ),
                       onPressed: () {},
-                      child: const Text(
-                        "Join Now",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontFamily: "DMSans",
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
+                      child: const Text("Join Now", style: TextStyle(color: Colors.white, fontSize: 10, fontFamily: "DMSans", fontWeight: FontWeight.w400)),
                     ),
                   ),
                 ],
               ),
             ),
 
-            // ── EARN SECTION ──
             const SizedBox(height: 6),
-            Container(
-              width: 382,
-              margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _bgcolor,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 210,
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: const Color(0XFF1A1A1A),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Image.asset("assets/images/usdt.png", height: 30),
-                              const SizedBox(width: 10),
-                              const Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "USDT",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Simple Earn",
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Image.asset(
-                            "assets/images/img.png",
-                            height: 65,
-                            fit: BoxFit.cover,
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            "Highest APR",
-                            style: TextStyle(color: Colors.grey, fontSize: 15),
-                          ),
-                          const SizedBox(height: 5),
-                          const Text(
-                            "2.8%",
-                            style: TextStyle(
-                              color: _green,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: "DMSans",
+            GestureDetector(
+              onTap: _openEarnScreen,
+              child: Container(
+                width: 382,
+                margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _bgcolor,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 210,
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: const Color(0XFF1A1A1A),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Image.asset("assets/images/usdt.png", height: 30),
+                                const SizedBox(width: 10),
+                                const Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("USDT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                    Text("Simple Earn", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ),
+                            const SizedBox(height: 10),
+                            Image.asset("assets/images/img.png", height: 65, fit: BoxFit.cover),
+                            const SizedBox(height: 10),
+                            const Text("Highest APR", style: TextStyle(color: Colors.grey, fontSize: 15)),
+                            const SizedBox(height: 5),
+                            const Text("2.8%", style: TextStyle(color: _green, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: "DMSans")),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildSmallBox(icon: "assets/images/btc.png", title: "BTC", value: "200%"),
+                          const SizedBox(height: 10),
+                          _buildSmallBox(icon: "assets/images/ltc.png", title: "LTC", value: "200%"),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _buildSmallBox(
-                          icon: "assets/images/btc.png",
-                          title: "BTC",
-                          value: "200%",
-                        ),
-                        const SizedBox(height: 10),
-                        _buildSmallBox(
-                          icon: "assets/images/ltc.png",
-                          title: "LTC",
-                          value: "200%",
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
-            // ── MARKET LIST ──
             const LandingMarketView(),
 
             const SizedBox(height: 20),
 
-            Align(
+            const Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 "    Earn",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: "DMSans",
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: "DMSans"),
               ),
             ),
             const SizedBox(height: 5),
 
-            // ── EARN CARDS ──
             _buildEarnCards(),
 
             Container(),
@@ -740,19 +524,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
               imagePath,
               height: 25,
               width: 25,
-              errorBuilder: (c, o, s) =>
-                  const Icon(Icons.broken_image, size: 20, color: Colors.grey),
+              errorBuilder: (c, o, s) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
             ),
           ),
-          const SizedBox(height: 0),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w300,
-              fontFamily: "DMSans",
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300, fontFamily: "DMSans"),
             textAlign: TextAlign.center,
           ),
         ],
@@ -760,46 +537,32 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     );
   }
 
-  Widget _buildSmallBox({
-    required String icon,
-    required String title,
-    required String value,
-  }) {
-    return Container(
-      height: 100,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0XFF1A1A1A),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Image.asset(icon, height: 25),
-              const SizedBox(width: 10),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            "Simple Earn",
-            style: TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(color: _green, fontWeight: FontWeight.bold),
-          ),
-        ],
+  Widget _buildSmallBox({required String icon, required String title, required String value}) {
+    return GestureDetector(
+      onTap: _openEarnScreen,
+      child: Container(
+        height: 100,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0XFF1A1A1A),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Image.asset(icon, height: 25),
+                const SizedBox(width: 10),
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Text("Simple Earn", style: TextStyle(color: Colors.grey, fontSize: 12)),
+            const Spacer(),
+            Text(value, style: const TextStyle(color: _green, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
@@ -810,62 +573,50 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     required String icon,
     required List<Color> colors,
   }) {
-    return ClipRRect(
-      // 1. Yeh Border Radius (15px) ko maintain karega
-      borderRadius: BorderRadius.circular(15),
-      child: BackdropFilter(
-        // 2. Yeh Blur Effect lagaega
-        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4), // Figma wala blur(4px)
-        child: Container(
-          width: 230,
-          margin: const EdgeInsets.only(right: 10),
-          padding: const EdgeInsets.all(12),
-          // 3. Background Color thoda transparent rakhein taaki blur dikhe
-          decoration: BoxDecoration(
-            color: Color(0XFF1A1A1A), // Opacity kam zyada kar sakte hain
-            borderRadius: BorderRadius.circular(15), // Yeh zaroori hai
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Earn up to",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (bounds) => LinearGradient(
-                            colors: colors,
-                          ).createShader(bounds),
-                          child: Text(
-                            percent,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+    return GestureDetector(
+      onTap: _openEarnScreen,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+          child: Container(
+            width: 230,
+            margin: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0XFF1A1A1A),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Earn up to", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(colors: colors).createShader(bounds),
+                            child: Text(
+                              percent,
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 5),
-                        const Text(
-                          "/ year",
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(name, style: const TextStyle(color: Colors.white)),
-                  ],
+                          const SizedBox(width: 5),
+                          const Text("/ year", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(name, style: const TextStyle(color: Colors.white)),
+                    ],
+                  ),
                 ),
-              ),
-              Center(child: Image.asset(icon, height: 40)),
-            ],
+                Center(child: Image.asset(icon, height: 40)),
+              ],
+            ),
           ),
         ),
       ),
@@ -881,30 +632,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         child: ListView(
           scrollDirection: Axis.horizontal,
           children: [
-            _buildCardItem(
-              percent: "26.78%",
-              name: "Ravencoin",
-              icon: "assets/images/cardo.png",
-              colors: [Colors.blue, Colors.orange],
-            ),
-            _buildCardItem(
-              percent: "17.28%",
-              name: "Ponke",
-              icon: "assets/images/cardt.png",
-              colors: [Colors.green, Colors.purple],
-            ),
-            _buildCardItem(
-              percent: "9.56%",
-              name: "Tellor",
-              icon: "assets/images/cardt.png",
-              colors: [Colors.teal, Colors.purple],
-            ),
-            _buildCardItem(
-              percent: "15.47%",
-              name: "ether.fi",
-              icon: "assets/images/cardf.png",
-              colors: [Colors.pink, Colors.orange],
-            ),
+            _buildCardItem(percent: "26.78%", name: "Ravencoin", icon: "assets/images/cardo.png", colors: [Colors.blue, Colors.orange]),
+            _buildCardItem(percent: "17.28%", name: "Ponke",     icon: "assets/images/cardt.png", colors: [Colors.green, Colors.purple]),
+            _buildCardItem(percent: "9.56%",  name: "Tellor",    icon: "assets/images/cardt.png", colors: [Colors.teal, Colors.purple]),
+            _buildCardItem(percent: "15.47%", name: "ether.fi",  icon: "assets/images/cardf.png", colors: [Colors.pink, Colors.orange]),
           ],
         ),
       ),
@@ -913,38 +644,38 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
 
   void _navigateTo(BuildContext context, String route) {
     switch (route) {
-      case "deposit":
+      case "Earn":
+        _openEarnScreen();
+        break;
+      case "Deposit":
         print("Navigate to Deposit");
         break;
-      case "champion":
+      case "Champion":
         print("Navigate to Champion");
         break;
-      case "swap":
+      case "Swap":
         print("Navigate to Swap");
         break;
-      case "earn":
-        print("Navigate to Earn");
-        break;
-      case "buy":
+      case "Buy":
         print("Navigate to Buy");
         break;
-      case "future":
+      case "Future":
         print("Navigate to Future");
         break;
-      case "transfer":
+      case "Transfer":
         print("Navigate to Transfer");
         break;
-      case "spot":
+      case "Spot":
         print("Navigate to Spot");
         break;
-      case "funds":
+      case "Funds":
         print("Navigate to Funds");
         break;
-      case "more":
+      case "More":
         Navigator.push(context, _createRoute(const MoreCardScreen()));
         break;
       default:
-        print("Unknown route");
+        print("Unknown route: $route");
     }
   }
 }
