@@ -20,7 +20,7 @@ import 'trade_widgets.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
-const int _kMaxOrderBookRows = 16; // greendot/reddot mode
+const int _kMaxOrderBookRows = 18; // greendot/reddot mode
 const int _kAllModeRows = 9; // dot (all) mode
 const int _kOrderDecimal = 5;
 const double _kMinFillPercent = 0.05;
@@ -162,7 +162,7 @@ class OderBookFixedView extends StatelessWidget {
                 ),
               ),
 
-            vSpacer10(),
+            if (selectedOrderSort != FromKey.buy) vSpacer10(),
 
             // ── Mid price — sell mode ya all mode ke baad sell list ke niche ──────
             if (selectedOrderSort != FromKey.buy)
@@ -197,12 +197,13 @@ class OderBookFixedView extends StatelessWidget {
               ),
 
             // ── Mid price — buy-only mode mein buy list ke niche ─────────────────
+            if (selectedOrderSort == FromKey.buy) vSpacer10(),
             if (selectedOrderSort == FromKey.buy)
               MidPriceBlock(
                 lastPData: lastPData,
                 priceColor: const Color(0xFF4ED78E),
               ),
-            if (selectedOrderSort == FromKey.buy) vSpacer5(),
+            if (selectedOrderSort == FromKey.buy) vSpacer10(),
 
             if (bounded) const Spacer() else vSpacer5(),
 
