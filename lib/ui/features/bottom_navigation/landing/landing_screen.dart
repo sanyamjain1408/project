@@ -34,13 +34,12 @@ import 'landing_market_view.dart';
 import 'landing_widgets.dart';
 import 'package:video_player/video_player.dart';
 
-
-const _bg        = Color(0xFF0A0B0D);
-const _card      = Color(0xFF111318);
-const _green     = Color(0xFFB5F000);
-const _border    = Color(0xFF1E2128);
-const _textDim   = Color(0xFF6B7280);
-const _textMid   = Color(0xFFB0B8C1);
+const _bg      = Color(0xFF0A0B0D);
+const _card    = Color(0xFF111318);
+const _green   = Color(0xFFB5F000);
+const _border  = Color(0xFF1E2128);
+const _textDim = Color(0xFF6B7280);
+const _textMid = Color(0xFFB0B8C1);
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -95,98 +94,57 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // ✅ ONLY CHANGE: added onTap to open EarnScreen
   Widget buildViewCard() {
     return InkWell(
-      onTap: () => checkLoggedInStatus(context, () => Get.to(() => const EarnScreen())),
+      onTap: () {
+        final hasUser = gUserRx.value.id > 0;
+        if (hasUser) {
+          Get.to(() => EarnScreen());
+        } else {
+          Get.to(() => const SignInPage());
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF1A1A1A),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFF1A1A1A),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFF1A1A1A), width: 1),
         ),
         padding: const EdgeInsets.all(20),
         margin: const EdgeInsets.all(15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- TOP SECTION: LOGO + TITLE ---
             Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(50),
-                  child: Image.asset(
-                    "assets/images/usdt.png",
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.asset("assets/images/usdt.png", width: 32, height: 32, fit: BoxFit.cover),
                 ),
                 const SizedBox(width: 10),
-                Column(
+                const Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "USDT",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "Simple Earn",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
+                    Text("USDT", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w400)),
+                    SizedBox(height: 2),
+                    Text("Simple Earn", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w400)),
                   ],
-                )
+                ),
               ],
             ),
-
             const SizedBox(height: 20),
-
-            // --- MIDDLE SECTION: GRAPH ---
             Align(
               alignment: Alignment.center,
-              child: Image.asset(
-                "assets/images/graph.png",
-                width: double.infinity,
-                height: 70,
-                fit: BoxFit.fitWidth,
-              ),
+              child: Image.asset("assets/images/graph.png", width: double.infinity, height: 70, fit: BoxFit.fitWidth),
             ),
-
             const SizedBox(height: 20),
-
-            // --- BOTTOM SECTION: TEXT + PERCENTAGE ---
-            Column(
+            const Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Highest APR",
-                  style: const TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  "2.8%",
-                  style: const TextStyle(
-                    color: Color(0xFF4ED78E),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text("Highest APR", style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 15)),
+                Text("2.8%", style: TextStyle(color: Color(0xFF4ED78E), fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
           ],
@@ -199,40 +157,43 @@ class _LandingScreenState extends State<LandingScreen> {
     final hasUser = gUserRx.value.id > 0;
     final title = hasUser ? "Start Trading Now".tr : "Sign_Up_Sign_In".tr;
     return Padding(
-        padding: const EdgeInsets.all(Dimens.paddingLargeExtra),
-        child: buttonRoundedMain(
-            text: title,
-            buttonHeight: Dimens.btnHeightMid,
-            textColor: Colors.white,
-            onPress: () => hasUser
-                ? getRootController().changeBottomNavIndex(AppBottomNavKey.trade)
-                : Get.offAll(() => const SignInPage())));
+      padding: const EdgeInsets.all(Dimens.paddingLargeExtra),
+      child: buttonRoundedMain(
+        text: title,
+        buttonHeight: Dimens.btnHeightMid,
+        textColor: Colors.white,
+        onPress: () => hasUser
+            ? getRootController().changeBottomNavIndex(AppBottomNavKey.trade)
+            : Get.offAll(() => const SignInPage()),
+      ),
+    );
   }
 
   Widget _featureView() {
     final lData = _controller.landingData.value;
     if (lData.landingSixSectionStatus == 1 && lData.featureList.isValid) {
       return Container(
-          decoration: boxDecorationRoundCorner(color: context.theme.dialogTheme.backgroundColor),
-          padding: const EdgeInsets.all(Dimens.paddingMid),
-          margin: const EdgeInsets.symmetric(vertical: Dimens.paddingMid),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (lData.landingFeatureTitle.isValid)
-                Align(alignment: Alignment.centerLeft, child: TextRobotoAutoBold(lData.landingFeatureTitle ?? "")),
-              vSpacer10(),
-              Wrap(
-                spacing: Dimens.paddingMid,
-                runSpacing: Dimens.paddingMid,
-                alignment: WrapAlignment.center,
-                runAlignment: WrapAlignment.center,
-                children: List.generate(
-                    lData.featureList!.length,
-                    (index) => LatestFeatureItemView(feature: lData.featureList![index])),
-              )
-            ],
-          ));
+        decoration: boxDecorationRoundCorner(color: context.theme.dialogTheme.backgroundColor),
+        padding: const EdgeInsets.all(Dimens.paddingMid),
+        margin: const EdgeInsets.symmetric(vertical: Dimens.paddingMid),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (lData.landingFeatureTitle.isValid)
+              Align(alignment: Alignment.centerLeft, child: TextRobotoAutoBold(lData.landingFeatureTitle ?? "")),
+            vSpacer10(),
+            Wrap(
+              spacing: Dimens.paddingMid,
+              runSpacing: Dimens.paddingMid,
+              alignment: WrapAlignment.center,
+              runAlignment: WrapAlignment.center,
+              children: List.generate(
+                  lData.featureList!.length,
+                  (index) => LatestFeatureItemView(feature: lData.featureList![index])),
+            ),
+          ],
+        ),
+      );
     } else {
       return vSpacer0();
     }
@@ -240,7 +201,7 @@ class _LandingScreenState extends State<LandingScreen> {
 
   Container _exploreView() {
     final settings = getSettingsLocal();
-    final hasUser = gUserRx.value.id > 0;
+    final hasUser  = gUserRx.value.id > 0;
     return Container(
       decoration: boxDecorationRoundCorner(context: context),
       padding: const EdgeInsets.all(Dimens.paddingMid),
@@ -255,78 +216,98 @@ class _LandingScreenState extends State<LandingScreen> {
             runAlignment: WrapAlignment.center,
             children: [
               ExploreItemView(
-                  title: "Deposit".tr,
-                  icon: Icons.file_download,
-                  onTap: () => checkLoggedInStatus(context, () => Get.to(() => WalletCryptoDepositScreen()))),
+                title: "Deposit".tr,
+                icon: Icons.file_download,
+                onTap: () => checkLoggedInStatus(context, () => Get.to(() => WalletCryptoDepositScreen())),
+              ),
               ExploreItemView(
-                  title: "Withdraw".tr,
-                  icon: Icons.file_upload,
-                  onTap: () => checkLoggedInStatus(context, () => Get.to(() => WalletCryptoWithdrawScreen()))),
+                title: "Withdraw".tr,
+                icon: Icons.file_upload,
+                onTap: () => checkLoggedInStatus(context, () => Get.to(() => WalletCryptoWithdrawScreen())),
+              ),
               if (settings?.swapStatus == 1)
                 ExploreItemView(
-                    title: "Swap".tr,
-                    icon: Icons.swap_horizontal_circle,
-                    onTap: () => checkLoggedInStatus(context, () => Get.to(() => const SwapScreen()))),
+                  title: "Swap".tr,
+                  icon: Icons.swap_horizontal_circle,
+                  onTap: () => checkLoggedInStatus(context, () => Get.to(() => const SwapScreen())),
+                ),
               if (settings?.enableGiftCard == 1)
                 ExploreItemView(
-                    title: "Gift Card".tr,
-                    icon: Icons.card_giftcard,
-                    onTap: () => Get.to(() => const GiftCardsScreen())),
+                  title: "Gift Card".tr,
+                  icon: Icons.card_giftcard,
+                  onTap: () => Get.to(() => const GiftCardsScreen()),
+                ),
               if (hasUser)
                 ExploreItemView(
-                    title: "Wallet".tr,
-                    icon: Icons.wallet,
-                    onTap: () {
-                      TemporaryData.changingPageId = 1;
-                      getRootController().changeBottomNavIndex(AppBottomNavKey.wallet);
-                    }),
+                  title: "Wallet".tr,
+                  icon: Icons.wallet,
+                  onTap: () {
+                    TemporaryData.changingPageId = 1;
+                    getRootController().changeBottomNavIndex(AppBottomNavKey.wallet);
+                  },
+                ),
               if (settings?.enableStaking == 1)
                 ExploreItemView(
-                    title: "Staking".tr,
-                    icon: Icons.punch_clock_outlined,
-                    onTap: () => Get.to(() => const StakingScreen())),
+                  title: "Staking".tr,
+                  icon: Icons.punch_clock_outlined,
+                  onTap: () => Get.to(() => const StakingScreen()),
+                ),
               if (hasUser)
                 ExploreItemView(
-                    title: "Fiat".tr,
-                    icon: Icons.account_balance,
-                    onTap: () => Get.to(() => const FiatScreen())),
+                  title: "Fiat".tr,
+                  icon: Icons.account_balance,
+                  onTap: () => Get.to(() => const FiatScreen()),
+                ),
               if (hasUser)
                 ExploreItemView(
-                    title: "Reports".tr,
-                    icon: Icons.history,
-                    onTap: () => Get.to(() => const ActivityScreen())),
+                  title: "Reports".tr,
+                  icon: Icons.history,
+                  onTap: () => Get.to(() => const ActivityScreen()),
+                ),
               if (hasUser)
                 ExploreItemView(
-                    title: "Profile".tr,
-                    icon: Icons.person,
-                    onTap: () => Get.to(() => const ProfileScreen())),
+                  title: "Profile".tr,
+                  icon: Icons.person,
+                  onTap: () => Get.to(() => const ProfileScreen()),
+                ),
               if (settings?.blogNewsModule == 1)
                 ExploreItemView(
-                    title: "Blog".tr,
-                    icon: Icons.rss_feed,
-                    onTap: () => Get.to(() => const BlogScreen())),
+                  title: "Blog".tr,
+                  icon: Icons.rss_feed,
+                  onTap: () => Get.to(() => const BlogScreen()),
+                ),
               ExploreItemView(
-                  title: "FAQ".tr,
-                  icon: Icons.help,
-                  onTap: () => Get.to(() => const FAQPage())),
+                title: "FAQ".tr,
+                icon: Icons.help,
+                onTap: () => Get.to(() => const FAQPage()),
+              ),
               if (settings?.p2pModule == 1)
                 ExploreItemView(
-                    title: "P2P".tr,
-                    icon: Icons.people,
-                    onTap: () {
-                      TemporaryData.changingPageId = 1;
-                      getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
-                    }),
+                  title: "P2P".tr,
+                  icon: Icons.people,
+                  onTap: () {
+                    TemporaryData.changingPageId = 1;
+                    getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
+                  },
+                ),
               ExploreItemView(
                 title: "Earn".tr,
                 icon: Icons.savings_outlined,
-                onTap: () => checkLoggedInStatus(context, () => Get.to(() => const EarnScreen())),
+                onTap: () {
+                  final hasUser = gUserRx.value.id > 0;
+                  if (hasUser) {
+                    Get.to(() => EarnScreen());
+                  } else {
+                    Get.to(() => const SignInPage());
+                  }
+                },
               ),
               if (settings?.navbar?["ico"]?.status == true)
                 ExploreItemView(
-                    title: "ICO".tr,
-                    icon: Icons.local_atm,
-                    onTap: () => Get.to(() => const ICOScreen())),
+                  title: "ICO".tr,
+                  icon: Icons.local_atm,
+                  onTap: () => Get.to(() => const ICOScreen()),
+                ),
             ],
           ),
         ],
@@ -339,27 +320,29 @@ class _LandingScreenState extends State<LandingScreen> {
       final settings = getSettingsLocal();
       if (_controller.latestBlogList.isNotEmpty && settings?.blogNewsModule == 1) {
         return Container(
-            decoration: boxDecorationRoundCorner(color: context.theme.dialogTheme.backgroundColor),
-            padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
-            child: Column(
-              children: [
-                vSpacer10(),
-                Row(
-                  children: [
-                    TextRobotoAutoBold(settings?.blogSectionHeading ?? "", maxLines: 2),
-                    hSpacer5(),
-                    const Spacer(),
-                    buttonOnlyIcon(
-                        iconData: Icons.arrow_forward_ios,
-                        onPress: () => Get.to(() => const BlogScreen()),
-                        visualDensity: minimumVisualDensity,
-                        size: Dimens.iconSizeMin)
-                  ],
-                ),
-                dividerHorizontal(),
-                for (final blog in _controller.latestBlogList) LatestBlogItemView(blog: blog)
-              ],
-            ));
+          decoration: boxDecorationRoundCorner(color: context.theme.dialogTheme.backgroundColor),
+          padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+          child: Column(
+            children: [
+              vSpacer10(),
+              Row(
+                children: [
+                  TextRobotoAutoBold(settings?.blogSectionHeading ?? "", maxLines: 2),
+                  hSpacer5(),
+                  const Spacer(),
+                  buttonOnlyIcon(
+                    iconData: Icons.arrow_forward_ios,
+                    onPress: () => Get.to(() => const BlogScreen()),
+                    visualDensity: minimumVisualDensity,
+                    size: Dimens.iconSizeMin,
+                  ),
+                ],
+              ),
+              dividerHorizontal(),
+              for (final blog in _controller.latestBlogList) LatestBlogItemView(blog: blog),
+            ],
+          ),
+        );
       } else {
         return vSpacer0();
       }
@@ -368,7 +351,7 @@ class _LandingScreenState extends State<LandingScreen> {
 }
 
 // ─────────────────────────────────────────────
-// NEW CRYPTO TRUST BANNER UI WIDGET
+// CRYPTO TRUST BANNER
 // ─────────────────────────────────────────────
 class CryptoTrustBannerView extends StatelessWidget {
   const CryptoTrustBannerView({super.key});
@@ -392,10 +375,10 @@ class CryptoTrustBannerView extends StatelessWidget {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, height: 1.3),
               children: [
                 TextSpan(text: "Unleash ", style: TextStyle(color: _green)),
-                TextSpan(text: "the ", style: TextStyle(color: Colors.white)),
-                TextSpan(text: "Power ", style: TextStyle(color: _green)),
-                TextSpan(text: "of ", style: TextStyle(color: Colors.white)),
-                TextSpan(text: "Crypto ", style: TextStyle(color: _green)),
+                TextSpan(text: "the ",     style: TextStyle(color: Colors.white)),
+                TextSpan(text: "Power ",   style: TextStyle(color: _green)),
+                TextSpan(text: "of ",      style: TextStyle(color: Colors.white)),
+                TextSpan(text: "Crypto ",  style: TextStyle(color: _green)),
               ],
             ),
           ),
@@ -422,9 +405,7 @@ class CryptoTrustBannerView extends StatelessWidget {
     );
   }
 
-  Widget _bigXHero() {
-    return const VideoHeroWidget();
-  }
+  Widget _bigXHero() => const VideoHeroWidget();
 
   Widget _badge({required String imagePath, required String title, required String sub}) {
     return Column(
@@ -432,16 +413,12 @@ class CryptoTrustBannerView extends StatelessWidget {
         Row(
           children: [
             Container(
-              width: 30,
-              height: 30,
+              width: 30, height: 30,
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
               child: showImageAsset(imagePath: imagePath, height: 30, width: 30, boxFit: BoxFit.cover),
             ),
             const SizedBox(width: 5),
-            Text(
-              title,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.3),
-            ),
+            Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.3)),
           ],
         ),
         const SizedBox(height: 8),
@@ -457,9 +434,9 @@ class CryptoTrustBannerView extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _badge(imagePath: "assets/images/user.png", title: "1M+", sub: "REGISTERED USER"),
-          _badge(imagePath: "assets/images/crypto.png", title: "500+", sub: "CRYPTO ASSETS"),
-          _badge(imagePath: "assets/images/iec.png", title: "ISO/IEC ", sub: "27001:2022"),
+          _badge(imagePath: "assets/images/user.png",   title: "1M+",     sub: "REGISTERED USER"),
+          _badge(imagePath: "assets/images/crypto.png", title: "500+",    sub: "CRYPTO ASSETS"),
+          _badge(imagePath: "assets/images/iec.png",    title: "ISO/IEC", sub: "27001:2022"),
         ],
       ),
     );
@@ -501,16 +478,14 @@ class CryptoTrustBannerView extends StatelessWidget {
     );
   }
 
-  Widget _buildDivider() {
-    return Container(height: 40, width: 1, color: Colors.white.withOpacity(0.15));
-  }
+  Widget _buildDivider() => Container(height: 40, width: 1, color: Colors.white.withOpacity(0.15));
 }
 
-Widget _bigXHero() {
-  return const VideoHeroWidget();
-}
+Widget _bigXHero() => const VideoHeroWidget();
 
-// --- VIDEO HERO WIDGET ---
+// ─────────────────────────────────────────────
+// VIDEO HERO WIDGET
+// ─────────────────────────────────────────────
 class VideoHeroWidget extends StatefulWidget {
   const VideoHeroWidget({super.key});
 
@@ -611,9 +586,7 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
       color: Colors.black,
       child: Column(
         children: [
-          CommonTabHeader(
-            onTabChanged: (index) => setState(() => _currentTab = index),
-          ),
+          CommonTabHeader(onTabChanged: (index) => setState(() => _currentTab = index)),
           Expanded(child: _buildContent()),
         ],
       ),
@@ -686,10 +659,7 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
               Expanded(
                 child: ListView.builder(
                   itemCount: _controller.latestBlogList.length,
-                  itemBuilder: (context, index) {
-                    final blog = _controller.latestBlogList[index];
-                    return LatestBlogItemView(blog: blog);
-                  },
+                  itemBuilder: (context, index) => LatestBlogItemView(blog: _controller.latestBlogList[index]),
                 ),
               ),
             ],
@@ -703,11 +673,10 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
 }
 
 // ─────────────────────────────────────────────
-// COMMON TAB HEADER WIDGET
+// COMMON TAB HEADER
 // ─────────────────────────────────────────────
 class CommonTabHeader extends StatefulWidget {
   final Function(int) onTabChanged;
-
   const CommonTabHeader({super.key, required this.onTabChanged});
 
   @override

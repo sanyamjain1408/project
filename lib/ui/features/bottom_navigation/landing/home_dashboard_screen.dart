@@ -10,7 +10,7 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/announce
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/home_grid_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/more_card_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
-import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart'; // ✅ FIXED
+import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'dart:ui';
 
@@ -77,7 +77,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   void _openEarnScreen() {
     final hasUser = gUserRx.value.id > 0;
     if (hasUser) {
-      Get.to(() => const EarnScreen());
+      Get.to(() => EarnScreen());
     } else {
       Get.to(() => const SignInPage());
     }
