@@ -66,7 +66,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         int subIndex = _controller.selectedBuySellTab.value == 0
             ? selectedBuySubTabIndex.value
             : selectedSellSubTabIndex.value;
-        if (subIndex == 0) {
+        if (subIndex == 0 || subIndex == 1) {
           priceEditController.text = setSelectedPrice.value.toString();
         } else if (subIndex == 2) {
           limitEditController.text = setSelectedPrice.value.toString();
@@ -136,13 +136,16 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
 
                 _clearInputViews();
 
-                if (index == 2) {
-                  final prices = _controller.dashboardData.value.lastPriceData;
-                  if (prices?.isNotEmpty ?? false) {
-                    final price = prices!.first.price;
-                    if (price != null && price > 0) {
-                      limitEditController.text = price.toStringAsFixed(2);
-                    }
+                final prices = _controller.dashboardData.value.lastPriceData;
+                final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
+
+                if (index == 0 || index == 1) {
+                  if (price != null && price > 0) {
+                    priceEditController.text = price.toStringAsFixed(2);
+                  }
+                } else if (index == 2) {
+                  if (price != null && price > 0) {
+                    limitEditController.text = price.toStringAsFixed(2);
                   }
                 }
               },
@@ -152,8 +155,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
             // ── Limit / Stop Price ─────────────────────────────────────
             TradeTextFieldCalculate(
               controller: priceEditController,
-              isEnable: subIndex != 1,
-              text: subIndex == 1 ? "Market".tr : null,
               sTitle: subIndex == 2 ? "Stop".tr : "Limit Price",
               sSubtitle: baseCType,
             ),
@@ -278,7 +279,8 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       price = makeDouble(priceEditController.text.trim());
     } else if ((isBuy && selectedBuySubTabIndex.value == 1) ||
         (!isBuy && selectedSellSubTabIndex.value == 1)) {
-      return;
+      price = makeDouble(priceEditController.text.trim());
+      if (price <= 0) return;
     } else if ((isBuy && selectedBuySubTabIndex.value == 2) ||
         (!isBuy && selectedSellSubTabIndex.value == 2)) {
       price = makeDouble(limitEditController.text.trim());
@@ -295,10 +297,11 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
     var price = 0.0;
 
     if (isBuy) {
-      if (selectedBuySubTabIndex.value == 0) {
+      if (selectedBuySubTabIndex.value == 0 || selectedBuySubTabIndex.value == 1) {
         price = makeDouble(priceEditController.text.trim());
-      } else if (selectedBuySubTabIndex.value == 1) {
-        price = _controller.dashboardData.value.orderData?.buyPrice ?? 0;
+        if (price <= 0 && selectedBuySubTabIndex.value == 1) {
+          price = _controller.dashboardData.value.orderData?.buyPrice ?? 0;
+        }
       } else if (selectedBuySubTabIndex.value == 2) {
         price = makeDouble(limitEditController.text.trim());
       }
@@ -326,10 +329,11 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         totalEditController.text = coinFormat(total - fees);
       }
     } else {
-      if (selectedSellSubTabIndex.value == 0) {
+      if (selectedSellSubTabIndex.value == 0 || selectedSellSubTabIndex.value == 1) {
         price = makeDouble(priceEditController.text.trim());
-      } else if (selectedSellSubTabIndex.value == 1) {
-        price = _controller.dashboardData.value.orderData?.sellPrice ?? 0;
+        if (price <= 0 && selectedSellSubTabIndex.value == 1) {
+          price = _controller.dashboardData.value.orderData?.sellPrice ?? 0;
+        }
       } else if (selectedSellSubTabIndex.value == 2) {
         price = makeDouble(limitEditController.text.trim());
       }
@@ -399,7 +403,10 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       );
     } else if ((isBuy && selectedBuySubTabIndex.value == 1) ||
         (!isBuy && selectedSellSubTabIndex.value == 1)) {
-      final price = isBuy ? dData?.sellPrice ?? 0 : dData?.buyPrice ?? 0;
+      final enteredPrice = makeDouble(priceEditController.text.trim());
+      final price = enteredPrice > 0
+          ? enteredPrice
+          : (isBuy ? dData?.sellPrice ?? 0 : dData?.buyPrice ?? 0);
       hideKeyboard();
       _controller.placeOrderMarket(
         isBuy,
