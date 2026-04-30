@@ -460,24 +460,31 @@ class _TpSlToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         GestureDetector(
           onTap: () => onToggle(!enabled),
-          child: Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              color: enabled ? gBuyColor : Colors.transparent,
-              border: Border.all(
-                color: enabled
-                    ? gBuyColor
-                    : Theme.of(context).primaryColorLight,
+          child: SizedBox(
+            width: 12,
+            height: 12,
+            child: Center(
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: enabled ? gBuyColor : Colors.transparent,
+                  border: Border.all(
+                    color: enabled
+                        ? gBuyColor
+                        : Theme.of(context).primaryColorLight,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: enabled
+                    ? const Icon(Icons.check, size: 9, color: Colors.white)
+                    : null,
               ),
-              borderRadius: BorderRadius.circular(4),
             ),
-            child: enabled
-                ? const Icon(Icons.check, size: 12, color: Colors.white)
-                : null,
           ),
         ),
         hSpacer5(),
