@@ -167,16 +167,8 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                 sSubtitle: baseCType,
               ),
             if (subIndex == 2) vSpacer5(),
-            if (subIndex == 2)
-              Obx(() {
-                final prices = _controller.dashboardData.value.lastPriceData;
-                final lastPData = (prices?.isNotEmpty ?? false) ? prices!.first : null;
-                final priceColor = lastPData?.priceOrderType == FromKey.buy
-                    ? const Color(0xFF4ED78E)
-                    : const Color(0xFFD05858);
-                return MidPriceBlock(lastPData: lastPData, priceColor: priceColor);
-              }),
-            if (subIndex == 2) vSpacer5(),
+           
+            
 
             // ── Qty ───────────────────────────────────────────────────
             TradeTextFieldCalculate(
@@ -539,8 +531,8 @@ class _SliderPercentRowState extends State<_SliderPercentRow> {
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
               activeTrackColor: Colors.white.withOpacity(0.5),
-              inactiveTrackColor: Colors.white.withOpacity(0.1),
-              thumbColor: Colors.white.withOpacity(0.5),
+              inactiveTrackColor: Color(0XFF1A1A1A),
+              thumbColor: Colors.transparent,
             ),
             child: Slider(
               value: _sliderValue,
@@ -566,7 +558,7 @@ class _SliderPercentRowState extends State<_SliderPercentRow> {
                     decoration: BoxDecoration(
                       color: isActive
                           ? Colors.white.withOpacity(0.5)
-                          : Colors.grey.withOpacity(0.4),
+                          : Color(0XFF1A1A1A),
                       shape: BoxShape.circle,
                     ),
                   );
@@ -766,21 +758,26 @@ class _CustomDropdownState extends State<CustomDropdown> {
             color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              Text(
-                widget.items[widget.selectedIndex],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontFamily: "DMSans",
+              Center(
+                child: Text(
+                  widget.items[widget.selectedIndex],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontFamily: "DMSans",
+                  ),
                 ),
               ),
-              Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.white.withOpacity(0.7),
-                size: 18,
+              Positioned(
+                right: 0,
+                child: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  size: 18,
+                ),
               ),
             ],
           ),

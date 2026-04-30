@@ -1612,10 +1612,8 @@ class SpotOrderHistoryItemView extends StatelessWidget {
             ),
           ),
           _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
-          _row("Fee ($baseCoin)", coinFormat(trade.fees)),
           _row("Price ($baseCoin)", coinFormat(trade.price)),
-          if (fromKey != FromKey.buy)
-            _row("Processed ($tradeCoin)", coinFormat(trade.processed)),
+           _row("Fee ($baseCoin)", coinFormat(trade.fees)),
           if (fromKey != FromKey.trade)
             _row("Total ($baseCoin)", coinFormat(trade.total)),
           if (fromKey == FromKey.trade)
