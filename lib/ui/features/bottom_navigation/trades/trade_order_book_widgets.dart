@@ -21,7 +21,7 @@ import 'trade_widgets.dart';
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 const int _kMaxOrderBookRows = 16; // greendot/reddot mode
-const int _kAllModeRows = 8; // dot (all) mode
+const int _kAllModeRows = 9; // dot (all) mode
 const int _kOrderDecimal = 5;
 const double _kMinFillPercent = 0.05;
 
@@ -86,31 +86,21 @@ class OderBookFixedView extends StatelessWidget {
     const double rowH = 18.0;
     final double sectionH = maxRows * rowH;
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        vSpacer5(),
-
-        // ── Header ────────────────────────────────────────────────────────────
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bounded = constraints.maxHeight != double.infinity;
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: bounded ? MainAxisSize.max : MainAxisSize.min,
           children: [
-            Text(
-              "${"Price".tr}\n(${total?.baseWallet?.coinType ?? ""})",
-              style: TextStyle(
-                fontSize: 10,
-                fontFamily: "DMSans",
-                fontWeight: FontWeight.w400,
-                color: Colors.white.withOpacity(0.5),
-                height: 1.2,
-              ),
-              maxLines: 2,
-            ),
-            InkWell(
-              onTap: () => _onArrowTap(context),
-              child: Text.rich(
-                TextSpan(
-                  text: selectedHeaderIndex == 1 ? "Total".tr : "Amount".tr,
+            vSpacer5(),
+
+            // ── Header ────────────────────────────────────────────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "${"Price".tr}\n(${total?.baseWallet?.coinType ?? ""})",
                   style: TextStyle(
                     fontSize: 10,
                     fontFamily: "DMSans",
@@ -118,9 +108,13 @@ class OderBookFixedView extends StatelessWidget {
                     color: Colors.white.withOpacity(0.5),
                     height: 1.2,
                   ),
-                  children: [
+                  maxLines: 2,
+                ),
+                InkWell(
+                  onTap: () => _onArrowTap(context),
+                  child: Text.rich(
                     TextSpan(
-                      text: "\n(${total?.tradeWallet?.coinType ?? ""})",
+                      text: selectedHeaderIndex == 1 ? "Total".tr : "Amount".tr,
                       style: TextStyle(
                         fontSize: 10,
                         fontFamily: "DMSans",
@@ -128,94 +122,106 @@ class OderBookFixedView extends StatelessWidget {
                         color: Colors.white.withOpacity(0.5),
                         height: 1.2,
                       ),
+                      children: [
+                        TextSpan(
+                          text: "\n(${total?.tradeWallet?.coinType ?? ""})",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontFamily: "DMSans",
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white.withOpacity(0.5),
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-                maxLines: 2,
-                textAlign: TextAlign.center,
+              ],
+            ),
+            vSpacer5(),
+
+            // ── SELL LIST ─────────────────────────────────────────────────────────
+            if (selectedOrderSort != FromKey.buy)
+              SizedBox(
+                height: sectionH,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: List.generate(sList.length, (index) {
+                    return OderBookItemMinView(
+                      key: ValueKey('sell_${sList[index].price}'),
+                      sList[index],
+                      FromKey.sell,
+                      selectedHeaderIndex == 1,
+                      priceColor: const Color(0xFFD05858),
+                      rowIndex: index,
+                    );
+                  }),
+                ),
               ),
+
+            vSpacer10(),
+
+            // ── Mid price — sell mode ya all mode ke baad sell list ke niche ──────
+            if (selectedOrderSort != FromKey.buy)
+              MidPriceBlock(
+                lastPData: lastPData,
+                priceColor: selectedOrderSort == FromKey.sell
+                    ? const Color(0xFFD05858)
+                    : (lastPData?.priceOrderType == FromKey.buy
+                          ? const Color(0xFF4ED78E)
+                          : const Color(0xFFD05858)),
+              ),
+
+            if (selectedOrderSort != FromKey.buy) vSpacer10(),
+
+            // ── BUY LIST ──────────────────────────────────────────────────────────
+            if (selectedOrderSort != FromKey.sell)
+              SizedBox(
+                height: sectionH,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: List.generate(bList.length, (index) {
+                    return OderBookItemMinView(
+                      key: ValueKey('buy_${bList[index].price}'),
+                      bList[index],
+                      FromKey.buy,
+                      selectedHeaderIndex == 1,
+                      priceColor: const Color(0xFF4ED78E),
+                      rowIndex: index,
+                    );
+                  }),
+                ),
+              ),
+
+            // ── Mid price — buy-only mode mein buy list ke niche ─────────────────
+            if (selectedOrderSort == FromKey.buy)
+              MidPriceBlock(
+                lastPData: lastPData,
+                priceColor: const Color(0xFF4ED78E),
+              ),
+            if (selectedOrderSort == FromKey.buy) vSpacer5(),
+
+            if (bounded) const Spacer() else vSpacer5(),
+
+            // ── Bottom controls ───────────────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: CustomDropdown(), //  ab ye full space lega
+                ),
+                const SizedBox(width: 8),
+                _DotToggleButton(
+                  selectedOrderSort: selectedOrderSort,
+                  onToggle: onShortChange,
+                ),
+              ],
             ),
           ],
-        ),
-        vSpacer5(),
-
-        // ── SELL LIST ─────────────────────────────────────────────────────────
-        if (selectedOrderSort != FromKey.buy)
-          SizedBox(
-            height: sectionH,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: List.generate(sList.length, (index) {
-                return OderBookItemMinView(
-                  key: ValueKey('sell_${sList[index].price}'),
-                  sList[index],
-                  FromKey.sell,
-                  selectedHeaderIndex == 1,
-                  priceColor: const Color(0xFFD05858),
-                  rowIndex: index,
-                );
-              }),
-            ),
-          ),
-
-        vSpacer5(),
-
-        // ── Mid price — sell mode ya all mode ke baad sell list ke niche ──────
-        if (selectedOrderSort != FromKey.buy)
-          MidPriceBlock(
-            lastPData: lastPData,
-            priceColor: selectedOrderSort == FromKey.sell
-                ? const Color(0xFFD05858)
-                : (lastPData?.priceOrderType == FromKey.buy
-                      ? const Color(0xFF4ED78E)
-                      : const Color(0xFFD05858)),
-          ),
-
-        if (selectedOrderSort != FromKey.buy) vSpacer5(),
-
-        // ── BUY LIST ──────────────────────────────────────────────────────────
-        if (selectedOrderSort != FromKey.sell)
-          SizedBox(
-            height: sectionH,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: List.generate(bList.length, (index) {
-                return OderBookItemMinView(
-                  key: ValueKey('buy_${bList[index].price}'),
-                  bList[index],
-                  FromKey.buy,
-                  selectedHeaderIndex == 1,
-                  priceColor: const Color(0xFF4ED78E),
-                  rowIndex: index,
-                );
-              }),
-            ),
-          ),
-
-        // ── Mid price — buy-only mode mein buy list ke niche ─────────────────
-        if (selectedOrderSort == FromKey.buy)
-          MidPriceBlock(
-            lastPData: lastPData,
-            priceColor: const Color(0xFF4ED78E),
-          ),
-        if (selectedOrderSort == FromKey.buy) vSpacer5(),
-
-        vSpacer5(),
-
-        // ── Bottom controls ───────────────────────────────────────────────────
-        Row(
-          children: [
-            Expanded(
-              child: CustomDropdown(), //  ab ye full space lega
-            ),
-            const SizedBox(width: 8),
-            _DotToggleButton(
-              selectedOrderSort: selectedOrderSort,
-              onToggle: onShortChange,
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -251,7 +257,11 @@ class OderBookFixedView extends StatelessWidget {
 // MID PRICE BLOCK
 // ─────────────────────────────────────────────────────────────────────────────
 class MidPriceBlock extends StatelessWidget {
-  const MidPriceBlock({super.key, required this.lastPData, required this.priceColor});
+  const MidPriceBlock({
+    super.key,
+    required this.lastPData,
+    required this.priceColor,
+  });
 
   final PriceData? lastPData;
   final Color priceColor;
@@ -527,7 +537,7 @@ class _OderBookItemMinViewState extends State<OderBookItemMinView>
               children: [
                 Expanded(
                   child: Text(
-                    _fmt2(widget.order.price),
+                    (widget.order.price ?? 0).toDouble().toStringAsFixed(2),
                     style: TextStyle(
                       color: widget.priceColor,
                       fontSize: 12,
@@ -772,7 +782,6 @@ class _OrderBookDetailRowState extends State<_OrderBookDetailRow>
 // CUSTOM DROPDOWN
 // ─────────────────────────────────────────────────────────────────────────────
 
-
 class CustomDropdown extends StatefulWidget {
   const CustomDropdown({super.key});
 
@@ -853,7 +862,9 @@ class _CustomDropdownState extends State<CustomDropdown> {
                       alignment: Alignment.centerLeft,
                       decoration: BoxDecoration(
                         // Yahan logic hai: Selected item ka color Green
-                        color: isSelected ? const Color(0xFF1DB954) : Colors.transparent,
+                        color: isSelected
+                            ? const Color(0xFF1DB954)
+                            : Colors.transparent,
                       ),
                       child: Text(
                         item,
