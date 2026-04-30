@@ -219,35 +219,37 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── TP/SL Toggle Row ───────────────────────────────────────────
                   _TpSlToggleRow(
                     enabled: enabled,
                     onToggle: (v) => _tpSlEnabled.value = v,
                   ),
-
-                  // ── ON: 2 fields dikhao | OFF: fixed SizedBox gap ──────────────
-                  // ✅ Dono cases mein button ki position SAME rehti hai
-                  if (enabled) ...[
-                    const SizedBox(height: 5),
-                    TradeTextFieldCalculate(
-                      controller: takeProfitController,
-                      sTitle: "Take-Profit Price".tr,
-                      sSubtitle: baseCType,
+                  // Fields always occupy space; only visibility changes
+                  Visibility(
+                    visible: enabled,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 5),
+                        TradeTextFieldCalculate(
+                          controller: takeProfitController,
+                          sTitle: "Take-Profit Price".tr,
+                          sSubtitle: baseCType,
+                        ),
+                        const SizedBox(height: 5),
+                        TradeTextFieldCalculate(
+                          controller: takeLossController,
+                          sTitle: "Take-Loss Price".tr,
+                          sSubtitle: baseCType,
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                     ),
-                    const SizedBox(height: 5),
-                    TradeTextFieldCalculate(
-                      controller: takeLossController,
-                      sTitle: "Take-Loss Price".tr,
-                      sSubtitle: baseCType,
-                    ),
-                    const SizedBox(height: 10),
-                  ] else ...[
-                    // ✅ Same total height jitni 2 fields + spacers ki hoti hai
-                    // 40 + 5 + 40 + 5 + 10 = 100
-                    const SizedBox(height: 100),
-                  ],
-
-                  // ✅ BUY/SELL BUTTON — BILKUL FIXED, KABHI NAHI HILEGA
+                  ),
+                  // Limit/Market me Limit field nahi hota (45px) — woh gap yahan dete hai
+                  if (subIndex != 2) const SizedBox(height: 45),
                   if (isLoggedIn)
                     buttonRoundedMain(
                       text: "${isBuy ? "Buy".tr : "Sell".tr} ",
