@@ -22,7 +22,7 @@ import '../../side_navigation/blog/blog_screen.dart';
 import '../../side_navigation/faq/faq_page.dart';
 import '../../side_navigation/gift_cards/gift_cards_screen.dart';
 import '../../side_navigation/profile/profile_screen.dart';
-import '../../side_navigation/referrals/referrals_screen.dart';
+import '../../side_navigation/referrals/referral_screen.dart';
 import '../../side_navigation/staking/staking_screen.dart';
 import '../../side_navigation/fiat/fiat_screen.dart';
 import '../../side_navigation/earn/earn_screen.dart';

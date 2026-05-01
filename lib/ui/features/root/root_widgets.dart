@@ -14,7 +14,7 @@ import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:tradexpro_flutter/utils/text_util.dart';
 
 import '../side_navigation/profile/profile_screen.dart';
-import '../side_navigation/referrals/referrals_screen.dart';
+import '../side_navigation/referrals/referral_screen.dart';
 
 class DrawerProfileView extends StatelessWidget {
   const DrawerProfileView({super.key, this.user});
@@ -87,7 +87,7 @@ class DrawerReferralView extends StatelessWidget {
         title: TextRobotoAutoBold("Referrals".tr),
         subtitle: TextRobotoAutoNormal("Refer friend to earn rewards".tr),
         trailing: Icon(Icons.account_tree_rounded, size: Dimens.iconSizeLarge, color: context.theme.primaryColorLight),
-        onTap: () => hasUser ? Get.to(() => const ReferralsScreen()) : Get.offAll(() => const SignInPage()),
+        onTap: () => hasUser ? Get.to(() => const ReferralScreen()) : Get.offAll(() => const SignInPage()),
       ),
     );
   }

@@ -31,29 +31,30 @@ import '../side_navigation/fiat/fiat_screen.dart';
 import '../side_navigation/gift_cards/gift_cards_screen.dart';
 import '../side_navigation/news/news_screen.dart';
 import '../side_navigation/profile/profile_screen.dart';
-import '../side_navigation/referrals/referrals_screen.dart';
 import '../side_navigation/settings/settings_screen.dart';
 import '../side_navigation/staking/staking_screen.dart';
 import '../auth/sign_in/sign_in_screen.dart';
+import '../side_navigation/referrals/referral_screen.dart';
+import '../side_navigation/ib_program/ib_screen.dart';
 import 'root_controller.dart';
 import 'root_widgets.dart';
 import 'dart:ui';
 
 // ── EXACT FIGMA COLORS ───────────────────────────────────────────────────────
-const _green = Color(0xFFCCFF00); // EXACT Figma secondary #CCFF00
-const _drawerBg = Color(0xFF121212); // near-black background
-const _cardBg = Color(0xFF1E1E1E); // card / icon box background
-const _sectionClr = Color(0xFFCCFF00); // section header color
+const _green = Color(0xFFCCFF00);
+const _drawerBg = Color(0xFF121212);
+const _cardBg = Color(0xFF1E1E1E);
+const _sectionClr = Color(0xFFCCFF00);
 const _textWhite = Color(0xFFFFFFFF);
 const _textGrey = Color(0xFF8A8A8A);
 const _divider = Color(0xFF2A2A2A);
 const _dmSans = 'DMSans';
-const _bgcolor = Color.fromARGB(255, 17, 17, 17); // DM Sans font family
+const _bgcolor = Color.fromARGB(255, 17, 17, 17);
 
 class AppColors {
-  static const Color primary = Color(0xFF111111); // --Primary
-  static const Color secondary = Color(0xFF1A1A1A); // --Secondary
-  static const Color textSecondary = Color(0xFFCCFF00); // textSecondary
+  static const Color primary = Color(0xFF111111);
+  static const Color secondary = Color(0xFF1A1A1A);
+  static const Color textSecondary = Color(0xFFCCFF00);
 }
 
 class RootScreen extends StatefulWidget {
@@ -103,7 +104,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── BOTTOM NAV — UNCHANGED ───────────────────────────────────────────────
   Widget _getBottomNavigationBar() {
     navList = AppBottomNavHelper.getBottomNavList();
 
@@ -122,21 +122,16 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
               color: Colors.transparent,
               padding: EdgeInsets.all(4),
               margin: EdgeInsets.only(bottom: 10, top: 0, left: 10, right: 10),
-              // <--- Yahan gap control karo
               child: Column(
                 children: [
-                  // ── ICON — same for selected & unselected ──
                   SizedBox(
                     width: 30,
                     height: 30,
                     child: Image.asset(
                       navList[index].imagePath,
-                      // koi color filter nahi — icon same rahega
                     ),
                   ),
-
                   const SizedBox(height: 0),
-                  // ── LABEL — green if selected, white54 if not ──
                   Text(
                     navList[index].name ?? "",
                     style: TextStyle(
@@ -157,7 +152,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── BODY — UNCHANGED ────────────────────────────────────────────────────
   Widget _getBody() {
     final id = navList[_controller.bottomNavIndex].id;
     final bool isLoggedIn = gUserRx.value.id > 0;
@@ -177,14 +171,11 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     }
   }
 
-  // ── FIGMA DRAWER ─────────────────────────────────────────────────────────
   Drawer _getDrawerNew() {
     return Drawer(
       elevation: 0,
       width: context.width,
       backgroundColor: AppColors.primary,
-
-      ///background: var(--Primary, rgba(17, 17, 17, 1));
       child: SafeArea(
         child: Obx(() {
           final hasUser = gUserRx.value.id > 0;
@@ -195,7 +186,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
             padding: EdgeInsets.zero,
             physics: const BouncingScrollPhysics(),
             children: [
-              // ── TOP BAR: ← bell settings ────────────────────────────
+              // ── TOP BAR ────────────────────────────────────────────
               Container(
                 color: Colors.transparent,
                 child: Padding(
@@ -219,7 +210,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                         child: Padding(
                           padding: const EdgeInsets.all(10),
                           child: Image.asset(
-                            'assets/icons/light.png', // apna path
+                            'assets/icons/light.png',
                             height: 20,
                             width: 20,
                           ),
@@ -231,7 +222,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                         child: Padding(
                           padding: const EdgeInsets.all(10),
                           child: Image.asset(
-                            'assets/icons/setting.png', // apna path
+                            'assets/icons/setting.png',
                             height: 20,
                             width: 20,
                           ),
@@ -257,7 +248,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(width: 10),
-                      // Avatar circle with green border
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -272,10 +262,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 4),
-
-                          // Verified badge (ab neeche aa gaya)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 7,
@@ -283,9 +270,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                             ),
                             decoration: BoxDecoration(
                               color: Color(0xFF015629).withOpacity(0.4),
-                              borderRadius: BorderRadius.circular(
-                                10,
-                              ), // pill shape
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Text(
                               "Verified",
@@ -300,6 +285,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                         ],
                       ),
                       const SizedBox(width: 20),
+<<<<<<< Updated upstream
                       // Name / email / uid
                       Expanded(
                         child: Column(
@@ -319,6 +305,14 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                             ),
                             if (hasUser) ...[
                               const SizedBox(height: 5),
+=======
+                      Container(
+                        color: Colors.transparent,
+                        child: Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+>>>>>>> Stashed changes
                               Text(
                                 _maskEmail(user.email ?? ""),
                                 style: const TextStyle(
@@ -340,6 +334,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                                       fontFamily: _dmSans,
                                     ),
                                   ),
+<<<<<<< Updated upstream
                                   const SizedBox(width: 5),
                                   Image.asset(
                                     'assets/icons/uid.png',
@@ -348,6 +343,30 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                                   ),
                                 ],
                               ),
+=======
+                                ),
+                                const SizedBox(height: 5),
+                                Row(
+                                  children: [
+                                    Text(
+                                      "UID: ${user.id}",
+                                      style: const TextStyle(
+                                        color: _textWhite,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                        fontFamily: _dmSans,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Image.asset(
+                                      'assets/icons/uid.png',
+                                      height: 14,
+                                      width: 13,
+                                    ),
+                                  ],
+                                ),
+                              ],
+>>>>>>> Stashed changes
                             ],
                           ],
                         ),
@@ -376,7 +395,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                               filter: ImageFilter.blur(
                                 sigmaX: 4,
                                 sigmaY: 4,
-                              ), // blur 4px
+                              ),
                               child: Container(
                                 height: 80,
                                 padding: const EdgeInsets.fromLTRB(
@@ -446,7 +465,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                                         ),
                                       ),
                                     ),
-
                                     RotatingSpinner(),
                                   ],
                                 ),
@@ -456,11 +474,11 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      // Refer and Earn
+                      // Refer Banner - UPDATED to use ReferralScreen
                       Expanded(
                         child: GestureDetector(
                           onTap: () => hasUser
-                              ? Get.to(() => const ReferralsScreen())
+                              ? Get.to(() => const ReferralScreen())
                               : Get.offAll(() => const SignInPage()),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
@@ -468,7 +486,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                               filter: ImageFilter.blur(
                                 sigmaX: 4,
                                 sigmaY: 4,
-                              ), // blur 4px
+                              ),
                               child: Container(
                                 height: 80,
                                 padding: const EdgeInsets.fromLTRB(
@@ -538,12 +556,11 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                                         ),
                                       ),
                                     ),
-
                                     Container(
                                       height: 50,
                                       width: 26,
                                       child: Image.asset(
-                                        'assets/icons/refer.png', // apna path
+                                        'assets/icons/refer.png',
                                         height: 14,
                                         width: 13,
                                       ),
@@ -619,12 +636,20 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _menuRow("assets/icons/listing.png", "Listing", () {}),
 
                     // ── REWARDS ──────────────────────────────────────────────
+                    // OLD "Refer & Earn" REMOVED. Now replaced with IB and Referral
                     _sectionHeader("Rewards"),
                     _menuRow(
                       "assets/icons/refer_earn.png",
-                      "Refer & Earn",
+                      "IB Program",
                       () => hasUser
-                          ? Get.to(() => const ReferralsScreen())
+                          ? Get.to(() => const IGScreen())
+                          : Get.offAll(() => const SignInPage()),
+                    ),
+                    _menuRow(
+                      "assets/icons/refer_earn.png",
+                      "Referral",
+                      () => hasUser
+                          ? Get.to(() => const ReferralScreen())
                           : Get.offAll(() => const SignInPage()),
                     ),
                     _menuRow("assets/icons/help.png", "Spin & Win", () {}),
@@ -652,7 +677,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     const SizedBox(height: 6),
                     Divider(color: _divider, thickness: 1, height: 1),
 
-                    // ── ORIGINAL MENUS — KEPT EXACTLY ────────────────────────
+                    // ── ORIGINAL MENUS ────────────────────────────────────────
                     if (hasUser)
                       _menuRow(
                         "assets/icons/help.png",
@@ -725,7 +750,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
-                              elevation: 0, // flat look
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -753,7 +778,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── SECTION HEADER — green label like Figma ──────────────────────────────
   Widget _sectionHeader(String title) {
     return Container(
       color: Colors.transparent,
@@ -772,7 +796,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── MENU ROW — icon + label + arrow ─────────────────────────────────────
   Widget _menuRow(String iconPath, String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
@@ -783,10 +806,9 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
         child: Row(
           children: [
             Image.asset(
-              iconPath, // 👈 asset icon
-              width: 20, // 👈 size control
+              iconPath,
+              width: 20,
               height: 20,
-              // optional tint
             ),
             const SizedBox(width: 20),
             Expanded(
@@ -807,7 +829,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── QUICK ICON BUTTON ────────────────────────────────────────────────────
   Widget _quickIcon(String iconPath, String label) {
     return GestureDetector(
       onTap: () {},
@@ -828,7 +849,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── EMAIL MASK ───────────────────────────────────────────────────────────
   String _maskEmail(String email) {
     if (email.isEmpty) return "";
     final parts = email.split("@");
@@ -840,7 +860,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     return "$masked@${parts[1]}";
   }
 
-  // ── LOGOUT ALERT — UNCHANGED ─────────────────────────────────────────────
   void _showLogOutAlert() {
     alertForAction(
       context,
@@ -854,7 +873,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── BOTTOM SOCIAL — UNCHANGED ────────────────────────────────────────────
   Container _bottomView(CommonSettings? cSettings) {
     final socialView = _socialMediaView();
     return Container(
@@ -930,11 +948,10 @@ class _RotatingSpinnerState extends State<RotatingSpinner>
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat(); // continuous rotate
+    )..repeat();
   }
 
   @override
