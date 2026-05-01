@@ -3,7 +3,7 @@ import 'package:tradexpro_flutter/data/models/referral.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 
-class ReferralsController extends GetxController {
+class ReferralController extends GetxController {
   Rx<ReferralData> referralData = ReferralData().obs;
 
   void getReferralData() {
