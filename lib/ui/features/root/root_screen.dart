@@ -301,58 +301,55 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       ),
                       const SizedBox(width: 20),
                       // Name / email / uid
-                      Container(
-                        color: Colors.transparent,
-                        child: Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              hasUser
+                                  ? getName(user.firstName, user.lastName)
+                                  : "Sign In".tr,
+                              style: const TextStyle(
+                                color: _textWhite,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: _dmSans,
+                                letterSpacing: 0,
+                              ),
+                            ),
+                            if (hasUser) ...[
+                              const SizedBox(height: 5),
                               Text(
-                                hasUser
-                                    ? getName(user.firstName, user.lastName)
-                                    : "Sign In".tr,
+                                _maskEmail(user.email ?? ""),
                                 style: const TextStyle(
                                   color: _textWhite,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
                                   fontFamily: _dmSans,
-                                  letterSpacing: 0,
                                 ),
                               ),
-                              if (hasUser) ...[
-                                const SizedBox(height: 5),
-                                Text(
-                                  _maskEmail(user.email ?? ""),
-                                  style: const TextStyle(
-                                    color: _textWhite,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
-                                    fontFamily: _dmSans,
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  Text(
+                                    "UID: ${user.id}",
+                                    style: const TextStyle(
+                                      color: _textWhite,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      fontFamily: _dmSans,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 5),
-                                Row(
-                                  children: [
-                                    Text(
-                                      "UID: ${user.id}",
-                                      style: const TextStyle(
-                                        color: _textWhite,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w400,
-                                        fontFamily: _dmSans,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Image.asset(
-                                      'assets/icons/uid.png', // apna path
-                                      height: 14,
-                                      width: 13,
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                  const SizedBox(width: 5),
+                                  Image.asset(
+                                    'assets/icons/uid.png',
+                                    height: 14,
+                                    width: 13,
+                                  ),
+                                ],
+                              ),
                             ],
-                          ),
+                          ],
                         ),
                       ),
                       const Spacer(),
