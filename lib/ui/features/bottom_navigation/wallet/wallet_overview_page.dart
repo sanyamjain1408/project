@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/history.dart';
@@ -825,18 +824,15 @@ class _SvgCard extends StatelessWidget {
     return SizedBox(
       width: 36,
       height: 36,
-      child: SvgPicture.asset(
-        svgPath,
+      child: Image.asset(
+        pngPath,
+        width: 36,
+        height: 36,
         fit: BoxFit.contain,
-        placeholderBuilder: (_) => Image.asset(
-          pngPath,
-          width: 36,
-          height: 36,
-          errorBuilder: (_, __, ___) => const Icon(
-            Icons.account_balance_wallet_outlined,
-            color: _green,
-            size: 28,
-          ),
+        errorBuilder: (_, __, _) => const Icon(
+          Icons.account_balance_wallet_outlined,
+          color: _green,
+          size: 28,
         ),
       ),
     );
