@@ -17,44 +17,49 @@ class SignInPage extends StatefulWidget {
 class SignInPageState extends State<SignInPage> {
   final _controller = Get.put(SignInController());
 
-  // ─── BACK PRESS LOGIC ───
-  Future<bool> _onWillPop() async {
-    // Landing Screen par wapas jayega (Route name '/' hai)
-    Get.offAllNamed('/'); 
-    // Ya specific page: Get.offAll(() => LandingPage());
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    final bottomPad = MediaQuery.of(context).viewInsets.bottom;
+    final screenH = MediaQuery.of(context).size.height;
+    final topPad = MediaQuery.of(context).padding.top;
+    final botPad = MediaQuery.of(context).padding.bottom;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Get.offAllNamed('/');
+      },
       child: Scaffold(
         backgroundColor: Colors.black,
         resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
-            // Background Image
             Positioned.fill(
               child: Image.asset(
                 "assets/images/bgimage.png",
                 fit: BoxFit.cover,
               ),
             ),
-
             SafeArea(
               child: GestureDetector(
                 onTap: () => FocusScope.of(context).unfocus(),
                 child: SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets.only(
-                    left: 25,
-                    right: 25,
-                    bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                    top: 20,
-                  ),
-                  child: const Center(
-                    child: _SignInContent(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: screenH - topPad - botPad,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: 25,
+                        right: 25,
+                        top: 20,
+                        bottom: bottomPad + 20,
+                      ),
+                      child: const IntrinsicHeight(
+                        child: _SignInContent(),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -64,23 +69,18 @@ class SignInPageState extends State<SignInPage> {
       ),
     );
   }
-
-  // Helper method to access decoration easily or define it here if preferred
-  // But since we moved content to separate widget, let's keep decoration logic clean.
 }
 
 class _SignInContent extends StatelessWidget {
   const _SignInContent();
 
-  // ─── INPUT DECORATION HELPER ───
   InputDecoration _inputDecoration(String hint, {Widget? suffix}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.white, fontSize: 14),
       filled: true,
       fillColor: const Color(0xFF1A1A1A),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide.none,
@@ -91,8 +91,7 @@ class _SignInContent extends StatelessWidget {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide:
-            const BorderSide(color: Colors.transparent, width: 1),
+        borderSide: const BorderSide(color: Colors.transparent, width: 1),
       ),
       suffixIcon: suffix,
     );
@@ -100,19 +99,19 @@ class _SignInContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _controller = Get.find<SignInController>();
+    final controller = Get.find<SignInController>();
 
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 30),
+        const SizedBox(height: 10),
         Image.asset(
           "assets/images/tlogo_dark.png",
           height: 35,
           width: 145,
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 30),
         const Text(
           "Welcome",
           style: TextStyle(
@@ -122,7 +121,7 @@ class _SignInContent extends StatelessWidget {
             height: 1,
           ),
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         const Text(
           "Back to",
           style: TextStyle(
@@ -132,7 +131,7 @@ class _SignInContent extends StatelessWidget {
             height: 1,
           ),
         ),
-       SizedBox(height: 5),
+        const SizedBox(height: 5),
         const Text(
           "Trapix",
           style: TextStyle(
@@ -142,9 +141,9 @@ class _SignInContent extends StatelessWidget {
             height: 1,
           ),
         ),
-        const SizedBox(height: 49),
+        const Spacer(flex: 2),
         TextField(
-          controller: _controller.emailEditController,
+          controller: controller.emailEditController,
           style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.emailAddress,
           decoration: _inputDecoration("Email"),
@@ -152,21 +151,21 @@ class _SignInContent extends StatelessWidget {
         const SizedBox(height: 20),
         Obx(() {
           return TextField(
-            controller: _controller.passEditController,
-            obscureText: !_controller.isShowPassword.value,
+            controller: controller.passEditController,
+            obscureText: !controller.isShowPassword.value,
             style: const TextStyle(color: Colors.white),
             decoration: _inputDecoration(
               "Password",
               suffix: IconButton(
                 icon: Icon(
-                  _controller.isShowPassword.value
+                  controller.isShowPassword.value
                       ? Icons.visibility
                       : Icons.visibility_off,
                   color: Colors.white70,
                 ),
                 onPressed: () {
-                  _controller.isShowPassword.value =
-                      !_controller.isShowPassword.value;
+                  controller.isShowPassword.value =
+                      !controller.isShowPassword.value;
                 },
               ),
             ),
@@ -188,7 +187,7 @@ class _SignInContent extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 63),
+        const Spacer(flex: 3),
         Container(
           width: double.infinity,
           height: 52,
@@ -206,9 +205,9 @@ class _SignInContent extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Material(
-            color: Colors.transparent, // FIXED: Removed space between Colors and transparent
+            color: Colors.transparent,
             child: InkWell(
-              onTap: () => _controller.isInPutDataValid(context),
+              onTap: () => controller.isInPutDataValid(context),
               borderRadius: BorderRadius.circular(12),
               child: const Center(
                 child: Text(
@@ -224,7 +223,7 @@ class _SignInContent extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 20), // FIXED: Removed 'par'
+        const SizedBox(height: 20),
         Row(
           children: const [
             Expanded(child: Divider(color: Colors.white24, thickness: 1)),
@@ -257,7 +256,7 @@ class _SignInContent extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 80),
+        const SizedBox(height: 20),
       ],
     );
   }

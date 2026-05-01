@@ -1,21 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// Assuming these imports exist based on your previous code
-import 'package:tradexpro_flutter/ui/features/auth/auth_widgets.dart'; 
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
-import 'package:tradexpro_flutter/ui/features/auth/sign_up/sign_up_screen.dart';
-import 'package:tradexpro_flutter/utils/spacers.dart';
-import 'package:tradexpro_flutter/utils/dimens.dart';
-import 'package:tradexpro_flutter/utils/text_field_util.dart';
-import 'package:tradexpro_flutter/utils/text_util.dart';
-import 'package:tradexpro_flutter/data/local/constants.dart';
-import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'forgot_password_controller.dart';
-
-// ─────────────────────────────────────────────
-// MAIN FORGOT PASSWORD PAGE
-// ─────────────────────────────────────────────
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -25,46 +11,55 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  final _controller = Get.put(ForgotPasswordController());
-
-  // --- BACK PRESS HANDLER ---
-  Future<bool> _onWillPop() async {
-    // SignInScreen par navigate karein
-    Get.off(() => const SignInPage());
-    return false;
+  @override
+  void initState() {
+    super.initState();
+    Get.put(ForgotPasswordController());
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    final bottomPad = MediaQuery.of(context).viewInsets.bottom;
+    final screenH = MediaQuery.of(context).size.height;
+    final topPad = MediaQuery.of(context).padding.top;
+    final botPad = MediaQuery.of(context).padding.bottom;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Get.off(() => const SignInPage());
+      },
       child: Scaffold(
-        backgroundColor: Colors.black, // Base background
+        backgroundColor: Colors.black,
         resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
-            // ── UPDATED: Background Image (Same as SignIn) ──
             Positioned.fill(
               child: Image.asset(
                 "assets/images/bgimage.png",
                 fit: BoxFit.cover,
               ),
             ),
-
             SafeArea(
               child: GestureDetector(
                 onTap: () => FocusScope.of(context).unfocus(),
                 child: SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets.only(
-                    left: 25,
-                    right: 25,
-                    bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                    top: 20, // Top padding for scrolling
-                  ),
-                  // ── CENTER: Content ko screen ke beech mein laya ──
-                  child: const Center(
-                    child: _ForgotPasswordContent(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: screenH - topPad - botPad,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: 25,
+                        right: 25,
+                        top: 20,
+                        bottom: bottomPad + 20,
+                      ),
+                      child: const IntrinsicHeight(
+                        child: _ForgotPasswordContent(),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -76,38 +71,31 @@ class ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 }
 
-// ─────────────────────────────────────────────
-// SEPARATE CONTENT WIDGET
-// ─────────────────────────────────────────────
 class _ForgotPasswordContent extends StatelessWidget {
   const _ForgotPasswordContent();
 
   @override
   Widget build(BuildContext context) {
-    final _controller = Get.find<ForgotPasswordController>();
+    final controller = Get.find<ForgotPasswordController>();
 
     return Column(
-      mainAxisSize: MainAxisSize.min, // Content wrap karega, stretch nahi hoga
+      mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 30),
-        
-        // Logo
+        const SizedBox(height: 10),
         Image.asset(
           "assets/images/tlogo_dark.png",
           height: 35,
           width: 145,
         ),
-        const SizedBox(height: 40),
-
-        // Titles (Colors changed to White for contrast)
+        const SizedBox(height: 30),
         const Text(
           "Welcome",
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Colors.white,
-            height: 1, // Line height for better spacing
+            height: 1,
           ),
         ),
         const SizedBox(height: 5),
@@ -117,7 +105,7 @@ class _ForgotPasswordContent extends StatelessWidget {
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Colors.white,
-            height: 1, // Line height for better spacing
+            height: 1,
           ),
         ),
         const SizedBox(height: 5),
@@ -127,22 +115,21 @@ class _ForgotPasswordContent extends StatelessWidget {
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Color(0xFFB5F000),
-            height: 1, // Line height for better spacing
+            height: 1,
           ),
         ),
-        const SizedBox(height: 49),
-
-        // Input Field
+        const Spacer(flex: 2),
         TextField(
-          controller: _controller.emailEditController,
+          controller: controller.emailEditController,
           style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
             hintText: "Email",
             hintStyle: const TextStyle(color: Colors.white, fontSize: 14),
             filled: true,
-            fillColor: const Color(0xFF1A1A1A), // Dark input background
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            fillColor: const Color(0xFF1A1A1A),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
@@ -153,21 +140,19 @@ class _ForgotPasswordContent extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Colors.transparent, width: 1),
+              borderSide:
+                  const BorderSide(color: Colors.transparent, width: 1),
             ),
           ),
         ),
-
         const SizedBox(height: 20),
-
-        // Warning Row
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                shape: BoxShape.circle, // Circle look for icon
+                shape: BoxShape.circle,
                 color: Colors.transparent,
                 border: Border.all(
                   color: const Color(0xFFB5F000),
@@ -194,20 +179,17 @@ class _ForgotPasswordContent extends StatelessWidget {
             ),
           ],
         ),
-
-        const SizedBox(height: 90), // Space before button
-
-        // Reset Password Button
+        const Spacer(flex: 3),
         Container(
           width: double.infinity,
           height: 52,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-             colors: [
+              colors: [
                 Color(0xFF00E6FF),
                 Color(0xFFCCFF00),
                 Color(0xFF77D215),
-              ], // Updated to match theme
+              ],
               stops: [0.0, 0.50, 1.0],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
@@ -217,7 +199,7 @@ class _ForgotPasswordContent extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => _controller.isInPutDataValid(context),
+              onTap: () => controller.isInPutDataValid(context),
               borderRadius: BorderRadius.circular(12),
               child: const Center(
                 child: Text(
@@ -233,8 +215,29 @@ class _ForgotPasswordContent extends StatelessWidget {
             ),
           ),
         ),
-        
-        const SizedBox(height: 180), // Extra bottom space
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Back to ",
+              style: TextStyle(color: Colors.white),
+            ),
+            InkWell(
+              onTap: () => Get.off(() => const SignInPage()),
+              highlightColor: Colors.transparent,
+              splashColor: Colors.transparent,
+              child: const Text(
+                "Sign In",
+                style: TextStyle(
+                  color: Color(0xFFCCFF00),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
       ],
     );
   }
