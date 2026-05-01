@@ -149,11 +149,13 @@ Container textFieldSearch({
   double? width,
   double? margin,
   Color? bgColor,
+  Color? iconColor,
 }) {
   height = 30;
 
+  final m = margin ?? 10;
   return Container(
-    margin: EdgeInsets.only(left: 10, right: 10),
+    margin: EdgeInsets.symmetric(horizontal: m),
     child: ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: BackdropFilter(
@@ -184,7 +186,7 @@ Container textFieldSearch({
                   'assets/icons/search.png',
                   height: 15,
                   width: 15,
-                  color: Colors.white54,
+                  color: iconColor ?? Colors.white54,
                 ),
                 onPressed: () {
                   if (onSearch != null) onSearch();

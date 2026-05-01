@@ -822,12 +822,12 @@ class _SvgCard extends StatelessWidget {
 
   Widget _iconWidget(String svgPath, String pngPath) {
     return SizedBox(
-      width: 36,
-      height: 36,
+      width: 25,
+      height: 25,
       child: Image.asset(
         pngPath,
-        width: 36,
-        height: 36,
+        width: 25,
+        height: 25,
         fit: BoxFit.contain,
         errorBuilder: (_, __, _) => const Icon(
           Icons.account_balance_wallet_outlined,

@@ -569,6 +569,51 @@ class CurrencyPairDetailsView extends StatelessWidget {
   }
 }
 
+class _CoinIcon extends StatelessWidget {
+  const _CoinIcon({required this.icon, required this.name});
+  final String? icon;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 20.0;
+    final fallback = Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A1A1A),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        style: const TextStyle(
+          color: Color(0xFFCCFF00),
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          fontFamily: "DMSans",
+        ),
+      ),
+    );
+
+    if (icon == null || icon!.isEmpty) return fallback;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: ClipOval(
+        child: Image.network(
+          icon!,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, _) => fallback,
+        ),
+      ),
+    );
+  }
+}
+
 class CoinPairItemView extends StatelessWidget {
   const CoinPairItemView({
     super.key,
@@ -581,30 +626,106 @@ class CoinPairItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final child = coinPair.childCoinName ?? '';
+    final parent = coinPair.parentCoinName ?? '';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Dimens.paddingMid),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: InkWell(
         onTap: onTap,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // ── Icon + Name + Volume column ──────────────────────────────────
             Expanded(
-              child: TextRobotoAutoNormal(
-                coinPair.coinPairName ?? "",
-                color: context.theme.primaryColor,
+              flex: 2,
+              child: Row(
+                children: [
+                  _CoinIcon(icon: coinPair.icon, name: child),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        RichText(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                            text: child,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: "DMSans",
+                              height: 20 / 15,
+                            ),
+                            children: [
+                              if (parent.isNotEmpty)
+                                TextSpan(
+                                  text: '/$parent',
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w300,
+                                    fontFamily: "DMSans",
+                                    height: 20 / 15,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        if ((coinPair.volume ?? 0) > 0)
+                          Text(
+                            "\$${numberFormatCompact(coinPair.volume, decimals: 2)}",
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: "DMSans",
+                            ),
+                            maxLines: 1,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
+            // ── Last price ───────────────────────────────────────────────────
             Expanded(
-              child: TextRobotoAutoNormal(
-                coinFormat(coinPair.lastPrice),
-                color: context.theme.primaryColor,
-                textAlign: TextAlign.center,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Text(
+                  coinPair.lastPrice != null
+                      ? "${double.parse(coinPair.lastPrice.toString()).toStringAsFixed(4)}..."
+                      : "0.0000...",
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 20 / 15,
+                  ),
+                ),
               ),
             ),
+            // ── Change % ─────────────────────────────────────────────────────
             Expanded(
-              child: TextRobotoAutoNormal(
-                "${coinFormat(coinPair.priceChange)}%",
+              child: Text(
+                "${coinFormat(coinPair.priceChange, fixed: 2)}%",
                 textAlign: TextAlign.end,
-                color: getNumberColor(coinPair.priceChange),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: getNumberColor(coinPair.priceChange),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: "DMSans",
+                  height: 20 / 15,
+                ),
               ),
             ),
           ],
@@ -626,6 +747,33 @@ class TradeLoginButton extends StatelessWidget {
       buttonHeight: Dimens.btnHeightMid,
       borderRadius: Dimens.radiusCornerLarge,
       onPress: () => Get.offAll(() => const SignInPage()),
+    );
+  }
+}
+
+class _CoinPairHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      color: Colors.white54,
+      fontSize: 15,
+      fontWeight: FontWeight.w400,
+      fontFamily: "DMSans",
+      height: 20 / 15,
+    );
+    return Row(
+      children: [
+        const Expanded(flex: 2, child: Text("Coin", style: style)),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Text("Last", textAlign: TextAlign.end, style: style),
+          ),
+        ),
+        const Expanded(
+          child: Text("Change", textAlign: TextAlign.end, style: style),
+        ),
+      ],
     );
   }
 }
@@ -677,10 +825,11 @@ class TradeCurrencyPairSelectionView extends StatelessWidget {
               height: Dimens.btnHeightMid,
               margin: 0,
               onTextChange: onTextChange,
+              bgColor: const Color(0xFF111111),
+              iconColor: const Color(0xFFCCFF00),
             ),
             vSpacer10(),
-            listHeaderView("Coin".tr, "Last".tr, "Change".tr),
-            dividerHorizontal(),
+            _CoinPairHeader(),
             Expanded(
               child: ListView(
                 shrinkWrap: true,
@@ -933,7 +1082,7 @@ class TradeBalanceView extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(width: 5,),
+        SizedBox(width: 5),
         InkWell(
           onTap: onTap,
           child: Icon(
