@@ -196,22 +196,21 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
             vSpacer2(),
 
             // ── Available balance ──────────────────────────────────────
-            isLoggedIn
-                ? TradeBalanceView(
-                    balance: balance,
-                    coinType: coinType,
-                    onTap: () {
-                      showBottomSheetDynamic(
-                        context,
-                        TradeBalanceAddView(
-                          coinPair: _controller.selectedCoinPair.value,
-                          isBuy: _controller.selectedBuySellTab.value == 0,
-                        ),
-                        title: "Fund Your Account".tr,
-                      );
-                    },
-                  )
-                : const TradeLoginButton(),
+            if (isLoggedIn)
+              TradeBalanceView(
+                balance: balance,
+                coinType: coinType,
+                onTap: () {
+                  showBottomSheetDynamic(
+                    context,
+                    TradeBalanceAddView(
+                      coinPair: _controller.selectedCoinPair.value,
+                      isBuy: _controller.selectedBuySellTab.value == 0,
+                    ),
+                    title: "Fund Your Account".tr,
+                  );
+                },
+              ),
             vSpacer5(),
 
             // ── TP/SL section + Button — ek saath fixed structure ──────
@@ -261,7 +260,9 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                       buttonHeight: 40,
                       borderRadius: 5,
                       onPress: () => _checkInputData(),
-                    ),
+                    )
+                  else
+                    const TradeLoginButton(),
                 ],
               );
             }),

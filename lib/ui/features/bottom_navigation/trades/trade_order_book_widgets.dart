@@ -162,7 +162,7 @@ class OderBookFixedView extends StatelessWidget {
                 ),
               ),
 
-            if (selectedOrderSort != FromKey.buy) vSpacer10(),
+            if (selectedOrderSort != FromKey.buy) vSpacer5(),
 
             // ── Mid price — sell mode ya all mode ke baad sell list ke niche ──────
             if (selectedOrderSort != FromKey.buy)
@@ -175,7 +175,7 @@ class OderBookFixedView extends StatelessWidget {
                           : const Color(0xFFD05858)),
               ),
 
-            if (selectedOrderSort != FromKey.buy) vSpacer10(),
+            if (selectedOrderSort != FromKey.buy) vSpacer5(),
 
             // ── BUY LIST ──────────────────────────────────────────────────────────
             if (selectedOrderSort != FromKey.sell)
@@ -197,13 +197,13 @@ class OderBookFixedView extends StatelessWidget {
               ),
 
             // ── Mid price — buy-only mode mein buy list ke niche ─────────────────
-            if (selectedOrderSort == FromKey.buy) vSpacer10(),
+            if (selectedOrderSort == FromKey.buy) vSpacer5(),
             if (selectedOrderSort == FromKey.buy)
               MidPriceBlock(
                 lastPData: lastPData,
                 priceColor: const Color(0xFF4ED78E),
               ),
-            if (selectedOrderSort == FromKey.buy) vSpacer10(),
+            if (selectedOrderSort == FromKey.buy) vSpacer5(),
 
             if (bounded) const Spacer() else vSpacer5(),
 
