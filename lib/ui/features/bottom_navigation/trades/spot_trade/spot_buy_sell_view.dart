@@ -119,7 +119,9 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
             ? (total?.baseWallet?.balance, baseCType)
             : (total?.tradeWallet?.balance, tradeCType);
 
-        return Column(
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -264,6 +266,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
               );
             }),
           ],
+          ),
         );
       }),
     );
