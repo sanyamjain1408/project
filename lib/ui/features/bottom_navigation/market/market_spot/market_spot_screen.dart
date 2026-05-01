@@ -87,6 +87,7 @@ class MarketSpotState extends State<MarketSpotScreen>
                   margin: 0,
                   borderRadius: Dimens.radiusCornerMid,
                   onTextChange: _controller.onTextChanged,
+                  bgColor: const Color(0xFF1A1A1A),
                 ),
               ),
             ),

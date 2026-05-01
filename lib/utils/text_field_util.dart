@@ -148,6 +148,7 @@ Container textFieldSearch({
   double? height,
   double? width,
   double? margin,
+  Color? bgColor,
 }) {
   height = 30;
 
@@ -161,7 +162,7 @@ Container textFieldSearch({
           height: height,
           width: width,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: bgColor ?? Colors.white,
             borderRadius: BorderRadius.circular(10),
           ),
           child: TextField(

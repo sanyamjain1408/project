@@ -54,6 +54,7 @@ class SpotTradeController extends GetxController implements SocketListener {
             coinIconMap[c.coinType!.toUpperCase()] = c.coinIcon!;
           }
         }
+        selfBalance.refresh();
       }
     });
   }
