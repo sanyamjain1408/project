@@ -6,6 +6,7 @@ import '../../../../addons/ico/ico_ui/ico_screen.dart';
 import '../../../../data/local/constants.dart';
 import '../../../../helper/app_helper.dart';
 import '../../../../ui/features/auth/sign_in/sign_in_screen.dart';
+import '../../../../ui/features/auth/sign_up/sign_up_screen.dart';
 import '../../../../utils/button_util.dart';
 import '../../../../utils/common_utils.dart';
 import '../../../../utils/decorations.dart';
@@ -455,7 +456,7 @@ class CryptoTrustBannerView extends StatelessWidget {
 
   Widget _signUpBtn() {
     return GestureDetector(
-      onTap: () => Get.offAll(() => const SignInPage()),
+      onTap: () => Get.offAll(() => const SignUpScreen()),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(12)),
