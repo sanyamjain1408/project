@@ -72,9 +72,11 @@ class SignUpController extends GetxController {
             phone: phone)
         .then((resp) {
       hideLoadingDialog();
-      showToast(resp.message, isError: !resp.success);
       if (resp.success) {
+        showToast("Verification code sent to your email", isError: false);
         Get.off(() => EmailVerifyPage(registrationId: emailEditController.text.trim()));
+      } else {
+        showToast(resp.message, isError: true);
       }
     }, onError: (err) {
       hideLoadingDialog();

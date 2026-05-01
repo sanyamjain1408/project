@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
-import 'package:tradexpro_flutter/ui/features/auth/signup_success_page.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
+import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import '../../../../data/local/api_constants.dart';
 
 class EmailVerifyController extends GetxController {
@@ -25,9 +25,11 @@ class EmailVerifyController extends GetxController {
       if (resp.success) {
         final success = resp.data[APIKeyConstants.success] as bool? ?? false;
         final message = resp.data[APIKeyConstants.message] as String? ?? "";
-        showToast(message, isError: !success);
         if (success) {
-          Get.off(() => const SignUpSuccessPage());
+          showToast("Login successfully", isError: false);
+          Get.offAll(() => const SignInPage());
+        } else {
+          showToast(message, isError: true);
         }
       }
     }, onError: (err) {
