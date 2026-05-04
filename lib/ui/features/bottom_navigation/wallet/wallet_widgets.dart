@@ -711,14 +711,14 @@ class WalletTopButtonsView extends StatelessWidget {
               iconPath: null, //  NO ICON
               isMain: true,
               width: btnWidth,
-              onTap: () => Get.to(() => WalletCryptoDepositScreen()),
+              onTap: () => _showAddFundsSheet(context),
             ),
             _WalletActionButton(
               label: "Withdraw".tr,
               iconPath: "assets/images/withdraw.png", // asset icon
               isMain: false,
               width: btnWidth,
-              onTap: () => Get.to(() => WalletCryptoWithdrawScreen()),
+              onTap: () => _showWithdrawSheet(context),
             ),
             if (getSettingsLocal()?.swapStatus == 1)
               _WalletActionButton(
@@ -799,6 +799,281 @@ class _WalletActionButton extends StatelessWidget {
                   fontFamily: 'DMSans',
                   color: textColor,
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void _showAddFundsSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => const _AddFundsSheet(),
+  );
+}
+
+class _AddFundsSheet extends StatelessWidget {
+  const _AddFundsSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF111111),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            width: 40,
+            height: 4,
+           
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
+            child: Row(
+              children: [
+                const Text(
+                  "Select Deposit Method",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'DMSans',
+                    height: 24/16
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Get.back(),
+                  child: const Icon(Icons.close, color: Colors.white, size: 22),
+                ),
+              ],
+            ),
+          ),
+          _item(
+            icon: 'assets/images/deposit.png',
+            title: 'Deposit Crypto',
+            subtitle: 'Deposit Crypto from other exchanges/wallet to Trapix Exchange.',
+            onTap: () {
+              Get.back();
+              Get.to(() => WalletCryptoDepositScreen());
+            },
+          ),
+          _item(
+            icon: 'assets/icons/deposit.png',
+            title: 'Deposit Fiat',
+            subtitle: 'Deposit INR to buy with wallet balance or spot.',
+            onTap: () {},
+          ),
+          _item(
+            icon: 'assets/icons/passport.png',
+            title: 'Buy crypto',
+            subtitle: 'Buy instantly using Visa, Mastercard and More.',
+            onTap: () {},
+          ),
+          _item(
+            icon: 'assets/icons/p2p.png',
+            title: 'P2P Trading',
+            subtitle: 'Buy directly from user. Competitive Pricing. Local Payment.',
+            onTap: () {},
+          ),
+          _item(
+            icon: 'assets/images/icon.png',
+            title: 'Receive Via Trapix User',
+            subtitle: 'Receive crypto from other Trapix user',
+            onTap: () {},
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _item({
+    required String icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          children: [
+            Image.asset(icon, width: 20, height: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'DMSans',
+                      height: 24/16,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'DMSans',
+                      height: 12/10
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void _showWithdrawSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => const _WithdrawSheet(),
+  );
+}
+
+class _WithdrawSheet extends StatelessWidget {
+  const _WithdrawSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF111111),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            width: 40,
+            height: 4,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
+            child: Row(
+              children: [
+                const Text(
+                  "Select Withdraw Method",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'DMSans',
+                    height: 24 / 16,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Get.back(),
+                  child: const Icon(Icons.close, color: Colors.white, size: 22),
+                ),
+              ],
+            ),
+          ),
+          _item(
+            icon: 'assets/images/deposit.png',
+            title: 'Withdraw Crypto',
+            subtitle: 'Withdraw Crypto to other exchanges/wallet from Trapix Exchange.',
+            onTap: () {
+              Get.back();
+              Get.to(() => WalletCryptoWithdrawScreen());
+            },
+          ),
+          _item(
+            icon: 'assets/icons/deposit.png',
+            title: 'Withdraw Fiat',
+            subtitle: 'Withdraw INR from wallet balance or spot.',
+            onTap: () {},
+          ),
+          _item(
+            icon: 'assets/icons/passport.png',
+            title: 'Sell crypto',
+            subtitle: 'Sell instantly using Visa, Mastercard and More.',
+            onTap: () {},
+          ),
+          _item(
+            icon: 'assets/icons/p2p.png',
+            title: 'P2P Trading',
+            subtitle: 'Sell directly to user. Competitive Pricing. Local Payment.',
+            onTap: () {},
+          ),
+          _item(
+            icon: 'assets/images/icon.png',
+            title: 'Receive Via Trapix User',
+            subtitle: 'Receive crypto from other Trapix user',
+            onTap: () {},
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _item({
+    required String icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          children: [
+            Image.asset(icon, width: 20, height: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'DMSans',
+                      height: 24 / 16,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'DMSans',
+                      height: 12 / 10,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
