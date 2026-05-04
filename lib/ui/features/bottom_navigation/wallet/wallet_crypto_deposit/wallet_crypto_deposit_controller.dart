@@ -13,6 +13,16 @@ import '../../../../../data/models/response.dart';
 import '../../../../../data/remote/api_repository.dart';
 import '../../../../../utils/common_utils.dart';
 
+String _cleanError(Object err) {
+  final msg = err.toString();
+  if (msg.contains('<html') || msg.contains('<!DOCTYPE')) {
+    final statusMatch = RegExp(r'(\d{3})\s').firstMatch(msg);
+    final code = statusMatch?.group(1);
+    return code != null ? 'Server error ($code). Please try again later.' : 'Server error. Please try again later.';
+  }
+  return msg;
+}
+
 class WalletCryptoDepositController extends GetxController {
 
   RxList<FAQ> faqList = <FAQ>[].obs;
@@ -50,7 +60,7 @@ class WalletCryptoDepositController extends GetxController {
       }
     }, onError: (err) {
       isLoading.value = false;
-      showToast(err.toString());
+      showToast(_cleanError(err));
     });
   }
 
@@ -75,7 +85,7 @@ class WalletCryptoDepositController extends GetxController {
       }
     }, onError: (err) {
       isLoading.value = false;
-      showToast(err.toString());
+      showToast(_cleanError(err));
     });
   }
 
@@ -98,7 +108,7 @@ class WalletCryptoDepositController extends GetxController {
       }
     }, onError: (err) {
       isLoading.value = false;
-      showToast(err.toString());
+      showToast(_cleanError(err));
     });
   }
 
@@ -119,7 +129,7 @@ class WalletCryptoDepositController extends GetxController {
       }
     }, onError: (err) {
       isLoading.value = false;
-      showToast(err.toString());
+      showToast(_cleanError(err));
     });
   }
 
@@ -139,7 +149,7 @@ class WalletCryptoDepositController extends GetxController {
       }
     }, onError: (err) {
       isLoading.value = false;
-      showToast(err.toString());
+      showToast(_cleanError(err));
     });
   }
 
@@ -155,15 +165,19 @@ class WalletCryptoDepositController extends GetxController {
   }
 
   Future<void> getHistoryListData() async {
-    APIRepository().getActivityList(0, HistoryType.deposit).then((resp) {
+    APIRepository().getActivityList(1, HistoryType.deposit).then((resp) {
       if (resp.success && resp.data != null) {
         final historyResponse = HistoryResponse.fromJson(resp.data);
         final listResponse = historyResponse.histories;
         if (listResponse != null) {
-          historyList.value = List<History>.from(listResponse.data!.map((x) => History.fromJson(x)));
+          historyList.value = List<History>.from(
+            (listResponse.data ?? []).map((x) => History.fromJson(x)),
+          );
         }
+      } else {
+        showToast(resp.message);
       }
-    }, onError: (err) {});
+    }, onError: (err) => showToast(err.toString()));
   }
 }
 
@@ -204,7 +218,7 @@ class WalletCryptoDepositController extends GetxController {
 //       }
 //     }, onError: (err) {
 //       isLoading.value = false;
-//       showToast(err.toString());
+//       showToast(_cleanError(err));
 //     });
 //   }
 //
@@ -223,7 +237,7 @@ class WalletCryptoDepositController extends GetxController {
 //       }
 //     }, onError: (err) {
 //       isLoading.value = false;
-//       showToast(err.toString());
+//       showToast(_cleanError(err));
 //     });
 //   }
 //
@@ -244,7 +258,7 @@ class WalletCryptoDepositController extends GetxController {
 //       }
 //     }, onError: (err) {
 //       isLoading.value = false;
-//       showToast(err.toString());
+//       showToast(_cleanError(err));
 //     });
 //   }
 //
@@ -264,7 +278,7 @@ class WalletCryptoDepositController extends GetxController {
 //       }
 //     }, onError: (err) {
 //       isLoading.value = false;
-//       showToast(err.toString());
+//       showToast(_cleanError(err));
 //     });
 //   }
 //
