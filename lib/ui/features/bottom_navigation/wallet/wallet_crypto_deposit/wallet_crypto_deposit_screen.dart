@@ -30,7 +30,7 @@ const _white = Color(0xFFFFFFFF);
 const _grey = Color(0xFF8A8A8A);
 
 // Popular coins shown as chips at the top
-const _popularSymbols = ['ETH', 'BTC', 'BNS', 'USDT', 'SHIB', 'XRP'];
+const _popularSymbols = ['ETH', 'BTC', 'BAS', 'USDT', 'SHIB', 'XRP'];
 
 // ── SCREEN 1: COIN SELECTION ──────────────────────────────────────────────────
 class WalletCryptoDepositScreen extends StatefulWidget {
