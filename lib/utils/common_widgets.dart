@@ -51,13 +51,14 @@ class EmptyView extends StatelessWidget {
   }
 }
 
-Widget showEmptyView({String? message, double height = 20}) {
+Widget showEmptyView({String? message, double height = 40}) {
   message = message ?? "No data available".tr;
   return SizedBox(
     width: Get.width,
     height: height,
     child: Center(
       child: TextRobotoAutoNormal(message, textAlign: TextAlign.center),
+      
     ),
   );
 }

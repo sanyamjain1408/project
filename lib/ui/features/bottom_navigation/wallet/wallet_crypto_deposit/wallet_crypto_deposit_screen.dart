@@ -30,7 +30,7 @@ const _white = Color(0xFFFFFFFF);
 const _grey = Color(0xFF8A8A8A);
 
 // Popular coins shown as chips at the top
-const _popularSymbols = ['ETH', 'BTC', 'BNB', 'USDT', 'SHIB', 'XRP'];
+const _popularSymbols = ['ETH', 'BTC', 'BNS', 'USDT', 'SHIB', 'XRP'];
 
 // ── SCREEN 1: COIN SELECTION ──────────────────────────────────────────────────
 class WalletCryptoDepositScreen extends StatefulWidget {
@@ -236,8 +236,8 @@ class _WalletCryptoDepositScreenState extends State<WalletCryptoDepositScreen>
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Wrap(
-                  spacing: 8, // horizontal gap
-                  runSpacing: 8, // vertical gap
+                  spacing: 10, // horizontal gap
+                  runSpacing: 10, // vertical gap
                   children: popular.map((coin) {
                     final sel = _selectedChip == coin.coinType;
 
@@ -247,15 +247,13 @@ class _WalletCryptoDepositScreenState extends State<WalletCryptoDepositScreen>
                       ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                          horizontal: 10,
+                          vertical: 3,
                         ),
                         decoration: BoxDecoration(
                           color: sel ? _card : _card,
                           borderRadius: BorderRadius.circular(20),
-                          border: sel
-                              ? Border.all(color: Colors.transparent, width: 1)
-                              : null,
+                         
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -414,8 +412,8 @@ class _CoinItem extends StatelessWidget {
           children: [
             showImageNetwork(
               imagePath: coin.coinIcon,
-              height: 36,
-              width: 36,
+              height: 30,
+              width: 30,
               bgColor: Colors.transparent,
             ),
             const SizedBox(width: 12),
@@ -427,17 +425,20 @@ class _CoinItem extends StatelessWidget {
                     coin.coinType ?? '',
                     style: const TextStyle(
                       color: _white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
                       fontFamily: _dmSans,
+                      height: 24/16
                     ),
                   ),
                   Text(
                     coin.name ?? '',
-                    style: const TextStyle(
-                      color: _grey,
+                    style:  TextStyle(
+                      color: Colors.white.withOpacity(0.5),
                       fontSize: 12,
                       fontFamily: _dmSans,
+                      fontWeight: FontWeight.w400,
+                      height: 16/12,
                     ),
                   ),
                 ],
@@ -788,10 +789,18 @@ class _WalletCryptoDepositDetailScreenState
 
           // ── HOLD TO EARN ─────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
+            margin: EdgeInsets.symmetric(horizontal: 0),
             decoration: BoxDecoration(
-              color: const Color(0xFF122A14),
               borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color(0x3377D215), // rgba(119, 210, 21, 0.2)
+                  Color(0x33DEFF9E), // rgba(222, 255, 158, 0.2)
+                ],
+              ),
             ),
             child: Row(
               children: [
@@ -803,18 +812,20 @@ class _WalletCryptoDepositDetailScreenState
                         'Hold to Earn',
                         style: TextStyle(
                           color: _white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
                           fontFamily: _dmSans,
+                          height: 24 / 16,
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
                         'No lock-up. Trade anytime with daily earnings credited automatically.',
                         style: TextStyle(
-                          color: Color(0xFF8AAE8C),
+                          color: _white,
                           fontSize: 12,
                           fontFamily: _dmSans,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -827,15 +838,22 @@ class _WalletCryptoDepositDetailScreenState
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: _green.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Color(0xFF53F8A0), // #53F8A0
+                        Color(0xFF00E5AB), // #00E5AB
+                      ],
+                    ),
                   ),
                   child: const Text(
                     'APR up to 3.2%',
                     style: TextStyle(
-                      color: _green,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF000000),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
                       fontFamily: _dmSans,
                     ),
                   ),
@@ -852,11 +870,12 @@ class _WalletCryptoDepositDetailScreenState
             style: TextStyle(
               color: _white,
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               fontFamily: _dmSans,
+              height: 24/15
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 20),
           Obx(() {
             final list = _controller.historyList;
             if (list.isEmpty) return showEmptyView(height: 60);
@@ -1127,82 +1146,80 @@ class CheckDepositButtonView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: 500,
-        ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: SizedBox(
           width: double.infinity,
           child: Row(
-              children: [
-                /// 📝 LEFT TEXT
-                Expanded(
-                  flex: 4,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Having trouble with your deposit".tr,
+            children: [
+              /// 📝 LEFT TEXT
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Having trouble with your deposit".tr,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontFamily: "DMSans",
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        height: 20 / 15,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      "You can manually check the status of your transaction?"
+                          .tr,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontFamily: "DMSans",
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        height: 16 / 12,
+                      ),
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 7),
+
+              /// 🔘 BUTTON
+              Expanded(
+                flex: 1,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => Get.to(() => CheckDepositPage()),
+                    child: Container(
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.green, width: 0.5),
+                      ),
+                      child: Text(
+                        "Check".tr,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontFamily: "DMSans",
                           fontSize: 15,
+                          fontFamily: "DMSans",
                           fontWeight: FontWeight.w400,
                           height: 20 / 15,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        "You can manually check the status of your transaction?".tr,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontFamily: "DMSans",
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          height: 16 / 12,
-                        ),
-                        maxLines: 2,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 7),
-
-                /// 🔘 BUTTON
-                Expanded(
-                  flex: 1,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: () => Get.to(() => CheckDepositPage()),
-                      child: Container(
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.green,width: 0.5),
-                        ),
-                        child: Text(
-                          "Check".tr,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontFamily: "DMSans",
-                            fontWeight: FontWeight.w400,
-                            height: 20/15
-                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 }

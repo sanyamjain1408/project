@@ -59,7 +59,14 @@ class FAQRelatedView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         vSpacer20(),
-        TextRobotoAutoBold("FAQ".tr),
+        Text("FAQ".tr, 
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          fontFamily: "DMSans",
+          height: 24/16
+        ),),
         vSpacer10(),
         if (faqList.isEmpty)
           showEmptyView(message: "Related FAQ not found".tr)
