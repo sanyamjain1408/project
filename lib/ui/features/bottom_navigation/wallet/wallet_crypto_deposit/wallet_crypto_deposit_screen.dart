@@ -146,6 +146,7 @@ class _WalletCryptoDepositScreenState extends State<WalletCryptoDepositScreen>
           backgroundColor: _bg,
           elevation: 0,
           scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
           leadingWidth: 48,
           leading: GestureDetector(
             onTap: () => Get.back(),

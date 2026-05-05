@@ -148,6 +148,7 @@ class _WalletCryptoWithdrawScreenState
           backgroundColor: _bg,
           elevation: 0,
           scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
           leadingWidth: 48,
           leading: GestureDetector(
             onTap: () => Get.back(),
@@ -610,7 +611,7 @@ class _WalletCryptoWithdrawDetailScreenState
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _bg,
         elevation: 0,
         leadingWidth: 48,
         leading: GestureDetector(
