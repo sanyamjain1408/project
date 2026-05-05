@@ -47,7 +47,7 @@ class _LandingMarketViewState extends State<LandingMarketView> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return ColoredBox(
       color: _bg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

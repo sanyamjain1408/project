@@ -45,7 +45,7 @@ AppBar appBarBackWithActions({
   );
 }
 
-TabBar tabBarUnderline(
+Widget tabBarUnderline(
   List<String> titles,
   TabController? controller, {
   Function(int)? onTap,
@@ -57,48 +57,41 @@ TabBar tabBarUnderline(
   Decoration? indicator,
   EdgeInsetsGeometry? labelPadding,
 }) {
-  return TabBar(
-    controller: controller,
-    isScrollable: isScrollable,
-    tabAlignment: isScrollable ? TabAlignment.start : TabAlignment.center,
-
-    labelPadding: labelPadding ?? const EdgeInsets.symmetric(horizontal: 16),
-
-    labelColor: Colors.white,
-    labelStyle: TextStyle(
-      fontSize: fontSize ?? Dimens.fontSizeLarge,
-      fontWeight: FontWeight.bold,
-      fontFamily: "DMSans",
+  return Material(
+    color: Colors.transparent,
+    child: TabBar(
+      controller: controller,
+      isScrollable: isScrollable,
+      tabAlignment: isScrollable ? TabAlignment.start : TabAlignment.center,
+      labelPadding: labelPadding ?? const EdgeInsets.symmetric(horizontal: 16),
+      labelColor: Colors.white,
+      labelStyle: TextStyle(
+        fontSize: fontSize ?? Dimens.fontSizeLarge,
+        fontWeight: FontWeight.bold,
+        fontFamily: "DMSans",
+      ),
+      unselectedLabelColor: Colors.grey,
+      unselectedLabelStyle: TextStyle(
+        fontSize: fontSize ?? Dimens.fontSizeLarge,
+        fontWeight: FontWeight.normal,
+        fontFamily: "DMSans",
+      ),
+      dividerColor: Colors.transparent,
+      splashFactory: NoSplash.splashFactory,
+      overlayColor: WidgetStateProperty.all(Colors.transparent),
+      indicatorColor: Colors.transparent,
+      indicator: UnderlineTabIndicator(
+        borderSide: BorderSide(color: _green, width: 4.0),
+        insets: EdgeInsets.zero,
+      ),
+      indicatorSize: indicatorSize,
+      indicatorWeight: 0,
+      tabs: List.generate(
+        titles.length,
+        (index) => Tab(child: Text(titles[index])),
+      ),
+      onTap: (index) => onTap == null ? () {} : onTap(index),
     ),
-
-    unselectedLabelColor: Colors.grey,
-    unselectedLabelStyle: TextStyle(
-      fontSize: fontSize ?? Dimens.fontSizeLarge,
-      fontWeight: FontWeight.normal,
-      fontFamily: "DMSans",
-    ),
-
-    dividerColor: Colors.transparent,
-    splashFactory: NoSplash.splashFactory,
-    overlayColor: WidgetStateProperty.all(Colors.transparent),
-
-    // <--- IMPORTANT CHANGE: Default indicatorColor ko transparent kar do --->
-    indicatorColor: Colors.transparent,
-
-    // <--- CUSTOM INDICATOR: Sirf Green Line --->
-    indicator: UnderlineTabIndicator(
-      borderSide: BorderSide(color: _green, width: 4.0),
-      insets: EdgeInsets.zero,
-    ),
-
-    indicatorSize: indicatorSize,
-    indicatorWeight: 0, // Default indicator ki weight 0 kar di
-
-    tabs: List.generate(
-      titles.length,
-      (index) => Tab(child: Text(titles[index])),
-    ),
-    onTap: (index) => onTap == null ? () {} : onTap(index),
   );
 }
 

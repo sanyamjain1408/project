@@ -58,7 +58,9 @@ class FutureTradeScreenState extends State<FutureTradeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return ColoredBox(
+      color: const Color(0xFF0F0F0F),
+      child: Column(
       children: [
         vSpacer5(),
         Obx(() {
@@ -129,6 +131,7 @@ class FutureTradeScreenState extends State<FutureTradeScreen> {
           ),
         ),
       ],
+    ),
     );
   }
 

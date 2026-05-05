@@ -58,43 +58,45 @@ class _TradesScreenState extends State<TradesScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      
-      children: [
-        // ── Top tab bar: Swap / Spot / Future / Earn / P2P ──────────────────
-        Container(
-          color: Color(0xFF111111),
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            indicator: const BoxDecoration(), // no underline
-            indicatorSize: TabBarIndicatorSize.label,
-            dividerColor: Colors.transparent,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white.withOpacity(0.5),
-            labelPadding: const EdgeInsets.symmetric(horizontal: 10),
-            labelStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              fontFamily: "DMSans",
-              height: 1.5
+    return ColoredBox(
+      color: const Color(0xFF0F0F0F),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Top tab bar: Swap / Spot / Future / Earn / P2P ──────────────────
+          Material(
+            color: const Color(0xFF111111),
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              indicator: const BoxDecoration(),
+              indicatorSize: TabBarIndicatorSize.label,
+              dividerColor: Colors.transparent,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white.withValues(alpha: 0.5),
+              labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+              labelStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: "DMSans",
+                height: 1.5,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: "DMSans",
+                height: 1.5,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              tabs: _tabs.map((t) => Tab(text: t.tr)).toList(),
             ),
-            unselectedLabelStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              fontFamily: "DMSans",
-              height: 1.5
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            tabs: _tabs.map((t) => Tab(text: t.tr)).toList(),
           ),
-        ),
 
-        // ── Tab body ─────────────────────────────────────────────────────────
-        _buildTabBody(),
-      ],
+          // ── Tab body ─────────────────────────────────────────────────────────
+          _buildTabBody(),
+        ],
+      ),
     );
   }
 
