@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,7 +10,11 @@ import 'colors.dart';
 class Themes {
   static final light = ThemeData.light().copyWith(
     textTheme: lightTextTheme,
-    colorScheme: ThemeData.light().colorScheme.copyWith( primary: const Color(0xFFCCFF00),),
+    colorScheme: ThemeData.light().colorScheme.copyWith(
+      primary: const Color(0xFFCCFF00),
+      surface: lightBG,
+      onSurface: lightTextPrimary,
+    ),
     primaryColor: darkBG,
     primaryColorLight: lightTextSecondary,
     scaffoldBackgroundColor: lightBG,
@@ -18,6 +23,13 @@ class Themes {
     dividerColor: lightDivider,
     focusColor: focus,
     iconTheme: const IconThemeData(color: darkBG, size: Dimens.iconSizeMin),
+    appBarTheme: const AppBarTheme(
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+    ),
   );
 
   static final lightTextTheme = TextTheme(
@@ -27,7 +39,11 @@ class Themes {
 
   static final dark = ThemeData.dark().copyWith(
     textTheme: darkTextTheme,
-    colorScheme: ThemeData.light().colorScheme.copyWith(primary: const Color(0xFFCCFF00) ),
+    colorScheme: ThemeData.dark().colorScheme.copyWith(
+      primary: const Color(0xFFCCFF00),
+      surface: darkBG,
+      onSurface: darkTextPrimary,
+    ),
     primaryColor: darkTextPrimary,
     primaryColorLight: darkTextSecondary,
     scaffoldBackgroundColor: darkBG,
@@ -35,8 +51,14 @@ class Themes {
     dialogTheme: const DialogThemeData(backgroundColor: darkBGLight),
     dividerColor: darkDivider,
     focusColor: focus,
-
     iconTheme: const IconThemeData(color: darkTextPrimary, size: Dimens.iconSizeMid),
+    appBarTheme: const AppBarTheme(
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+    ),
   );
 
   static final darkTextTheme = TextTheme(
@@ -49,7 +71,7 @@ class Themes {
 class ThemeService {
   ThemeMode get theme => loadThemeFromBox() ? ThemeMode.dark : ThemeMode.light;
 
-  bool loadThemeFromBox() => GetStorage().read(PreferenceKey.isDark) ?? false;
+  bool loadThemeFromBox() => GetStorage().read(PreferenceKey.isDark) ?? true;
 
   void _saveThemeToBox(bool isDarkMode) => GetStorage().write(PreferenceKey.isDark, isDarkMode);
 

@@ -42,6 +42,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
         systemNavigationBarColor: Colors.black,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
@@ -197,7 +198,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               Text(
                                 "Total Assets",
                                 style: TextStyle(
-                                  color: const Color(0xFFFFFFFF).withOpacity(0.5),
+                                  color: const Color(0xFFFFFFFF).withValues(alpha: 0.5),
                                   fontWeight: FontWeight.normal,
                                   fontFamily: "DMSans",
                                   fontSize: 16,
@@ -206,7 +207,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               const SizedBox(width: 5),
                               Icon(
                                 Icons.remove_red_eye_outlined,
-                                color: const Color(0xFFFFFFFF).withOpacity(0.5),
+                                color: const Color(0xFFFFFFFF).withValues(alpha: 0.5),
                                 size: 15,
                               ),
                             ],
@@ -230,7 +231,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                 child: Text(
                                   "USDT",
                                   style: TextStyle(
-                                    color: const Color(0xFFFFFFFF).withOpacity(0.5),
+                                    color: const Color(0xFFFFFFFF).withValues(alpha: 0.5),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -517,7 +518,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
           Container(
             padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
-              color: const Color(0xFF111111).withOpacity(0.5),
+              color: const Color(0xFF111111).withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Image.asset(
@@ -648,34 +649,26 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         _openEarnScreen();
         break;
       case "Deposit":
-        print("Navigate to Deposit");
         break;
       case "Champion":
-        print("Navigate to Champion");
         break;
       case "Swap":
-        print("Navigate to Swap");
         break;
       case "Buy":
-        print("Navigate to Buy");
         break;
       case "Future":
-        print("Navigate to Future");
         break;
       case "Transfer":
-        print("Navigate to Transfer");
         break;
       case "Spot":
-        print("Navigate to Spot");
         break;
       case "Funds":
-        print("Navigate to Funds");
         break;
       case "More":
         Navigator.push(context, _createRoute(const MoreCardScreen()));
         break;
       default:
-        print("Unknown route: $route");
+        break;
     }
   }
 }

@@ -12,11 +12,11 @@ const _textDim   = Color(0xFF6B7280);
 const _textMid   = Color(0xFFB0B8C1);
 
 Rx<User> gUserRx = User(id: 0).obs;
-bool gIsDarkMode = false;
+bool gIsDarkMode = true;
 bool gIsLandingScreenShowed = false;
 String gUserAgent = "";
 Color gBuyColor = _green;
-Color gSellColor = Color(0xD73C3C);
+Color gSellColor = const Color(0xFFD73C3C);
 BuildContext? currentContext;
 RxBool gIsBalanceHide = false.obs;
 int tradeDecimal = DefaultValue.decimal;

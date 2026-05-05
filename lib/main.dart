@@ -86,6 +86,7 @@ class MyApp extends StatelessWidget {
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: ThemeService().getBrightness(),
+        statusBarBrightness: ThemeService().loadThemeFromBox() ? Brightness.dark : Brightness.light,
       ),
     );
     final isOnBoarding = GetStorage().read(PreferenceKey.isOnBoardingDone);
