@@ -145,6 +145,7 @@ class _WalletCryptoDepositScreenState extends State<WalletCryptoDepositScreen>
         appBar: AppBar(
           backgroundColor: _bg,
           elevation: 0,
+          scrolledUnderElevation: 0,
           leadingWidth: 48,
           leading: GestureDetector(
             onTap: () => Get.back(),

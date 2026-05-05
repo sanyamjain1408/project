@@ -6,7 +6,6 @@ import 'package:tradexpro_flutter/data/models/history.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/activity/activity_screen.dart';
-import 'package:tradexpro_flutter/ui/ui_helper/app_widgets.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
@@ -1096,31 +1095,89 @@ class WalletRecentTransactionItemView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusData = AppChecker.getStatusData(history.status ?? 0);
+    final statusText = statusData.first as String;
+    final statusColor = statusData.last as Color;
+    final isPending = (history.status ?? 0) == 0;
+
+    final label = type == HistoryType.withdraw ? 'Withdraw' : 'Deposit';
+    final date = formatDate(
+      history.createdAt,
+      format: dateTimeFormatDdMMMYyyyHhMm,
+    );
+    final amount = '\$${(history.amount ?? 0).toStringAsFixed(2)}';
+
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: Dimens.paddingMid,
-        horizontal: Dimens.paddingMid,
-      ),
-      child: Column(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
         children: [
-          TwoTextSpaceFixed(
-            history.coinType ?? "",
-            statusData.first,
-            subColor: statusData.last,
-            color: context.theme.primaryColor,
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isPending ? Icons.arrow_upward : Icons.arrow_downward,
+              color: statusColor,
+              size: 22,
+            ),
           ),
-          TwoTextSpaceFixed('Amount'.tr, coinFormat(history.amount)),
-          TwoTextSpaceFixed('Fees'.tr, coinFormat(history.fees)),
-          TwoTextSpaceFixed(
-            'Address'.tr,
-            history.address ?? "",
-            color: context.theme.primaryColorLight,
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: _dmSans,
+                    height: 24/16
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  date,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: _dmSans,
+                    height: 16/12
+                  ),
+                ),
+              ],
+            ),
           ),
-          TwoTextSpaceFixed(
-            'Created At'.tr,
-            formatDate(history.createdAt, format: dateTimeFormatDdMMMYyyyHhMm),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                amount,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: _dmSans,
+                  height: 24/16
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                statusText,
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 12,
+                  fontFamily: _dmSans,
+                  fontWeight: FontWeight.w400,
+                  height: 16/12
+                ),
+              ),
+            ],
           ),
-          dividerHorizontal(),
         ],
       ),
     );
