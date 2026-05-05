@@ -315,6 +315,9 @@ class _WalletCryptoDepositScreenState extends State<WalletCryptoDepositScreen>
                   children: [
                     ListView.builder(
                       controller: _scrollCtrl,
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewPadding.bottom,
+                      ),
                       itemCount: flat.length,
                       itemBuilder: (_, idx) {
                         final item = flat[idx];
@@ -538,6 +541,8 @@ class _WalletCryptoDepositDetailScreenState
       appBar: AppBar(
         backgroundColor: const Color(0xFF111111),
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leadingWidth: 48,
         leading: GestureDetector(
           onTap: () => Get.back(),
@@ -578,7 +583,9 @@ class _WalletCryptoDepositDetailScreenState
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.fromLTRB(
+          16, 0, 16, MediaQuery.of(context).viewPadding.bottom + 16,
+        ),
         children: [
           const SizedBox(height: 16),
 

@@ -319,6 +319,9 @@ class _WalletCryptoWithdrawScreenState
                   children: [
                     ListView.builder(
                       controller: _scrollCtrl,
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewPadding.bottom,
+                      ),
                       itemCount: flat.length,
                       itemBuilder: (_, idx) {
                         final item = flat[idx];
@@ -613,6 +616,8 @@ class _WalletCryptoWithdrawDetailScreenState
       appBar: AppBar(
         backgroundColor: _bg,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leadingWidth: 48,
         leading: GestureDetector(
           onTap: () => Get.back(),
@@ -1160,8 +1165,9 @@ class _WalletCryptoWithdrawDetailScreenState
 
 
   Widget _buildBottomButton() {
+    final bottomPad = MediaQuery.of(context).viewPadding.bottom;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad > 0 ? bottomPad : 16),
       color: const Color(0xFF111111),
       child: SizedBox(
         width: double.infinity,
@@ -1169,8 +1175,9 @@ class _WalletCryptoWithdrawDetailScreenState
         child: ElevatedButton(
           onPressed: _checkInputData,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF1A1A1A),
+            backgroundColor: const Color(0xFF1A1A1A),
             elevation: 0,
+            overlayColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -1182,7 +1189,7 @@ class _WalletCryptoWithdrawDetailScreenState
               fontSize: 16,
               fontWeight: FontWeight.w400,
               fontFamily: _dmSans,
-              height: 24/16
+              height: 24 / 16,
             ),
           ),
         ),
