@@ -119,7 +119,7 @@ class MyApp extends StatelessWidget {
           );
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: scale),
-            child: child!,
+            child: SafeArea(child: child!),
           );
         },
         home: screen,
