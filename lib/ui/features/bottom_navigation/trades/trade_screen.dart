@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/addons/p2p_trade/ui/p2p_trade_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/text_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
@@ -22,6 +23,7 @@ class _TradesScreenState extends State<TradesScreen>
 
   static const List<String> _tabs = ['Swap', 'Spot', 'Future', 'Earn', 'P2P'];
   int _selectedTab = 1; // default: Spot
+  int _previousTab = 1;
 
   @override
   void initState() {
@@ -32,8 +34,20 @@ class _TradesScreenState extends State<TradesScreen>
       initialIndex: 1,
     );
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() => _selectedTab = _tabController.index);
+      if (_tabController.indexIsChanging) return;
+      final newIndex = _tabController.index;
+      if (newIndex == 0) {
+        // Navigate to SwapScreen as a full page, then pop back here
+        Get.to(() => const SwapScreen());
+        // Reset tab bar back to previous tab without showing Swap inline
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _tabController.animateTo(_previousTab, duration: Duration.zero);
+          }
+        });
+      } else {
+        _previousTab = newIndex;
+        setState(() => _selectedTab = newIndex);
       }
     });
 
@@ -102,8 +116,6 @@ class _TradesScreenState extends State<TradesScreen>
 
   Widget _buildTabBody() {
     switch (_selectedTab) {
-      case 0:
-        return _placeholderView('Swap');
       case 1:
         return const SpotTradeScreen();
       case 2:

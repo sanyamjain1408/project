@@ -22,6 +22,7 @@ import 'package:tradexpro_flutter/utils/text_util.dart';
 
 import '../../../../helper/app_checker.dart';
 import 'swap/swap_screen.dart';
+import 'transfer_screen.dart';
 import 'wallet_controller.dart';
 import 'wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import 'wallet_crypto_withdraw/wallet_crypto_withdraw_screen.dart';
@@ -725,7 +726,7 @@ class WalletTopButtonsView extends StatelessWidget {
                 iconPath: "assets/images/transfer.png", // asset icon
                 isMain: false,
                 width: btnWidth,
-                onTap: () => Get.to(() => const SwapScreen()),
+                onTap: () => Get.to(() => const TransferScreen()),
               )
             else
               SizedBox(width: btnWidth),
