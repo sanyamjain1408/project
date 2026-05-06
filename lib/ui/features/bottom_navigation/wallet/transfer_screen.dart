@@ -128,41 +128,6 @@ class _TransferScreenState extends State<TransferScreen>
       ),
 
       // ── CONFIRM BUTTON ──────────────────────────────────────────────────────
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          12,
-          16,
-          bottomPad > 0 ? bottomPad : 16,
-        ),
-        color: _bg,
-        child: SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: () => Get.to(() => const SwapScreen()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _card,
-              elevation: 0,
-              overlayColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: const Text(
-              'Confirm',
-              style: TextStyle(
-                color: _white,
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                fontFamily: _dmSans,
-                height: 24 / 16,
-              ),
-            ),
-          ),
-        ),
-      ),
-
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: ListView(
@@ -184,10 +149,7 @@ class _TransferScreenState extends State<TransferScreen>
                       gradient: const LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [
-                          Color(0xFF53F8A0), // #53F8A0
-                          Color(0xFF00E5AB), // #00E5AB
-                        ],
+                        colors: [Color(0xFF53F8A0), Color(0xFF00E5AB)],
                       ),
                     ),
                     child: const Text(
@@ -207,10 +169,10 @@ class _TransferScreenState extends State<TransferScreen>
                       'Financial Account transfer are now supported. Transfers in or out will automatically subscribe to redeem from their respective flexible-term Earn products.',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
-                        fontSize: 12,
+                        fontSize: 10,
                         fontFamily: _dmSans,
                         fontWeight: FontWeight.w400,
-                        height: 16 / 12,
+                        height: 16 / 10,
                       ),
                     ),
                   ),
@@ -218,12 +180,12 @@ class _TransferScreenState extends State<TransferScreen>
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // ── TRANSFER DIRECTION CARD ─────────────────────────────────────
             _TransferDirectionCard(screenW: screenW),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 40),
 
             // ── CURRENCY SELECTOR ───────────────────────────────────────────
             GestureDetector(
@@ -231,12 +193,14 @@ class _TransferScreenState extends State<TransferScreen>
               child: Obx(() {
                 final coin = _selectedCoin.value;
                 return Container(
+                  height: 50,
+                  width: double.infinity,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 14,
+                    horizontal: 10,
+                    vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: _card,
+                    color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -244,8 +208,8 @@ class _TransferScreenState extends State<TransferScreen>
                       if ((coin.coinIcon ?? '').isNotEmpty) ...[
                         showImageNetwork(
                           imagePath: coin.coinIcon,
-                          height: 28,
-                          width: 28,
+                          height: 30,
+                          width: 30,
                           bgColor: Colors.transparent,
                         ),
                         const SizedBox(width: 10),
@@ -275,12 +239,14 @@ class _TransferScreenState extends State<TransferScreen>
               }),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // ── AMOUNT INPUT ────────────────────────────────────────────────
             Obx(() {
               final coinType = _selectedCoin.value.coinType ?? 'USDT';
               return Container(
+                height: 50,
+                width: double.infinity,
                 decoration: BoxDecoration(
                   color: _card,
                   borderRadius: BorderRadius.circular(10),
@@ -296,51 +262,51 @@ class _TransferScreenState extends State<TransferScreen>
                         style: const TextStyle(
                           color: _white,
                           fontFamily: _dmSans,
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w400,
-                          height: 24 / 16,
+                          height: 20 / 15,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Minimum 0',
+                          hintText: 'Min : 0.0000001',
                           hintStyle: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: Colors.white.withOpacity(0.5),
                             fontFamily: _dmSans,
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w400,
-                            height: 24 / 16,
+                            height: 20 / 15,
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 13,
+                            horizontal: 10,
+                            vertical: 15,
                           ),
                         ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(right: 14),
+                      padding: const EdgeInsets.only(right: 20),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             coinType,
-                            style: const TextStyle(
-                              color: _white,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
                               fontFamily: _dmSans,
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.w400,
-                              height: 24 / 16,
+                              height: 20 / 15,
                             ),
                           ),
                           const SizedBox(width: 8),
                           const Text(
                             'Max',
                             style: TextStyle(
-                              color: _green,
+                              color: Color(0xFF4ED78E),
                               fontFamily: _dmSans,
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.w400,
-                              height: 24 / 16,
+                              height: 20 / 15,
                             ),
                           ),
                         ],
@@ -351,7 +317,7 @@ class _TransferScreenState extends State<TransferScreen>
               );
             }),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             // ── MIN / COIN / MAX + AVAILABLE ────────────────────────────────
             Obx(() {
@@ -359,47 +325,10 @@ class _TransferScreenState extends State<TransferScreen>
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Min : 0.0000001',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 12,
-                          fontFamily: _dmSans,
-                          fontWeight: FontWeight.w400,
-                          height: 16 / 12,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        coinType,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 12,
-                          fontFamily: _dmSans,
-                          fontWeight: FontWeight.w400,
-                          height: 16 / 12,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Max',
-                        style: TextStyle(
-                          color: _green,
-                          fontSize: 12,
-                          fontFamily: _dmSans,
-                          fontWeight: FontWeight.w400,
-                          height: 16 / 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
                   Text(
                     'Available: 0.00 $coinType',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: Colors.white.withOpacity(0.5),
                       fontSize: 12,
                       fontFamily: _dmSans,
                       fontWeight: FontWeight.w400,
@@ -414,21 +343,25 @@ class _TransferScreenState extends State<TransferScreen>
 
             // ── HOLD TO EARN CARD ───────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
+              margin: EdgeInsets.symmetric(horizontal: 0),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: const LinearGradient(
+                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
-                  colors: [Color(0x3377D215), Color(0x33DEFF9E)],
+                  colors: [
+                    Color(0x3377D215), // rgba(119, 210, 21, 0.2)
+                    Color(0x33DEFF9E), // rgba(222, 255, 158, 0.2)
+                  ],
                 ),
               ),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                      children: const [
                         Text(
                           'Hold to Earn',
                           style: TextStyle(
@@ -439,7 +372,7 @@ class _TransferScreenState extends State<TransferScreen>
                             height: 24 / 16,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        SizedBox(height: 5),
                         Text(
                           'No lock-up. Trade anytime with daily earnings credited automatically.',
                           style: TextStyle(
@@ -447,30 +380,32 @@ class _TransferScreenState extends State<TransferScreen>
                             fontSize: 12,
                             fontFamily: _dmSans,
                             fontWeight: FontWeight.w400,
-                            height: 1.4,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: 5,
+                      vertical: 1,
                     ),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(5),
                       gradient: const LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [Color(0xFF53F8A0), Color(0xFF00E5AB)],
+                        colors: [
+                          Color(0xFF53F8A0), // #53F8A0
+                          Color(0xFF00E5AB), // #00E5AB
+                        ],
                       ),
                     ),
                     child: const Text(
                       'APR up to 3.2%',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Color(0xFF000000),
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                         fontFamily: _dmSans,
@@ -482,6 +417,35 @@ class _TransferScreenState extends State<TransferScreen>
             ),
 
             const SizedBox(height: 20),
+
+            Container(
+              color: _bg,
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () => Get.to(() => const SwapScreen()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _card,
+                    elevation: 0,
+                    overlayColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'Confirm',
+                    style: TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: _dmSans,
+                      height: 24 / 16,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -499,7 +463,7 @@ class _TransferDirectionCard extends StatefulWidget {
 }
 
 class _TransferDirectionCardState extends State<_TransferDirectionCard> {
-  bool _spotIsFrom = true; // true = Spot→Future, false = Future→Spot
+  bool _spotIsFrom = true;
 
   void _swap() => setState(() => _spotIsFrom = !_spotIsFrom);
 
@@ -507,12 +471,10 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
   Widget build(BuildContext context) {
     final screenW = widget.screenW;
 
-    // Preserve SVG aspect ratio: 362 × 204
     final cardH = screenW * _svgNH / _svgNW;
     final sx = screenW / _svgNW;
     final sy = cardH / _svgNH;
 
-    // Circle center and radius from SVG (center = 181,102 ; radius = 20)
     final circleCx = 181.0 * sx;
     final circleCy = 102.0 * sy;
     final circleR = 20.0 * sx;
@@ -520,13 +482,16 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
     final fromLabel = _spotIsFrom ? 'Spot' : 'Future';
     final toLabel = _spotIsFrom ? 'Future' : 'Spot';
 
+    // Wave width
+    final waveW = screenW * 0.36;
+
     return SizedBox(
       width: screenW,
       height: cardH,
       child: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-          // ── 1. Dark base ────────────────────────────────────────────────
+          // ── 1. Dark base ─────────────────────────────────────────────────
           Positioned.fill(
             child: ClipPath(
               clipper: _TransferOuterClipper(sx: sx, sy: sy),
@@ -534,12 +499,12 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
             ),
           ),
 
-          // ── 2. Left wave (horizontally flipped), clipped to card shape ──
+          // ── 2. Left wave — clipped to card outer shape ───────────────────
           Positioned(
             left: 0,
             top: 0,
             bottom: 0,
-            width: screenW * 0.36,
+            width: waveW,
             child: ClipPath(
               clipper: _TransferOuterClipper(sx: sx, sy: sy),
               child: Transform(
@@ -547,7 +512,7 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
                 transform: Matrix4.diagonal3Values(-1.0, 1.0, 1.0),
                 child: Image.asset(
                   'assets/images/wallet_green_wave.png',
-                  width: screenW * 0.36,
+                  width: waveW,
                   height: cardH,
                   fit: BoxFit.cover,
                 ),
@@ -555,28 +520,32 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
             ),
           ),
 
-          // ── 3. Right wave, clipped to card shape ────────────────────────
+          // ── 3. Right wave — clipped properly to card right boundary ──────
+          // ✅ FIX: _RightWaveClipper translates the card path into the
+          //         right-wave widget's local coordinate space so the clip
+          //         exactly follows the card's right curved edge.
           Positioned(
-            right: 0,
+            right: -2,
             top: 0,
-            bottom: 0,
-            width: screenW * 0.36,
+            bottom: 1,
+            width: waveW,
             child: ClipPath(
-              clipper: _TransferOuterClipper(
+              clipper: _RightWaveClipper(
                 sx: sx,
                 sy: sy,
-                offsetX: screenW * 0.64,
+                cardW: screenW,
+                waveW: waveW,
               ),
               child: Image.asset(
                 'assets/images/wallet_green_wave.png',
-                width: screenW * 0.36,
+                width: waveW,
                 height: cardH,
                 fit: BoxFit.cover,
               ),
             ),
           ),
 
-          // ── 4. SVG card shape (dark fill + circle hole) ─────────────────
+          // ── 4. SVG card shape (dark fill + circle hole) ──────────────────
           Positioned.fill(
             child: SvgPicture.asset(
               'assets/svg/transfer.svg',
@@ -586,7 +555,7 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
             ),
           ),
 
-          // ── 5. Border glow (notch only) + center divider lines ─────────
+          // ── 5. Border glow + center divider lines ────────────────────────
           Positioned.fill(
             child: CustomPaint(
               painter: _TransferBorderGlowPainter(
@@ -601,7 +570,7 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
             ),
           ),
 
-          // ── 7. "From" + fromLabel — top half ───────────────────────────
+          // ── 6. "From" + fromLabel — top half ─────────────────────────────
           Positioned(
             top: 10,
             left: 5,
@@ -635,7 +604,7 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
             ),
           ),
 
-          // ── 8. Swap arrows — inside the SVG circle hole ─────────────────
+          // ── 7. Swap arrows — inside the SVG circle hole ──────────────────
           Positioned(
             left: circleCx - circleR,
             top: circleCy - circleR,
@@ -644,26 +613,26 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
             child: GestureDetector(
               onTap: _swap,
               child: Container(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
+                    color: Colors.white.withOpacity(0.3),
                     width: 1,
                   ),
                 ),
                 child: Image.asset(
-                  'assets/icons/arrow.png', 
+                  'assets/icons/arrow.png',
                   width: circleR * 1.1,
                   height: circleR * 1.1,
-                  color: _white, 
+                  color: _white,
                   fit: BoxFit.contain,
                 ),
               ),
             ),
           ),
 
-          // ── 9. toLabel + "To" — bottom half ────────────────────────────
+          // ── 8. toLabel + "To" — bottom half ─────────────────────────────
           Positioned(
             bottom: 10,
             left: 5,
@@ -703,7 +672,6 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
 }
 
 // ── STANDALONE PATH BUILDER ─────────────────────────────────────────────────────
-// Outer boundary of assets/svg/transfer.svg — no hole, no offset.
 Path _buildTransferCardOuterPath(double sx, double sy) {
   return Path()
     ..moveTo(132.716 * sx, 0)
@@ -790,20 +758,39 @@ Path _buildTransferCardOuterPath(double sx, double sy) {
     ..close();
 }
 
-// ── OUTER CARD CLIPPER ──────────────────────────────────────────────────────────
+// ── LEFT / OUTER CARD CLIPPER ───────────────────────────────────────────────────
+// Used for the left wave and the dark base — path origin = (0,0) = card origin.
 class _TransferOuterClipper extends CustomClipper<Path> {
-  const _TransferOuterClipper({
+  const _TransferOuterClipper({required this.sx, required this.sy});
+  final double sx, sy;
+
+  @override
+  Path getClip(Size size) => _buildTransferCardOuterPath(sx, sy);
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> old) => false;
+}
+
+// ── RIGHT WAVE CLIPPER ──────────────────────────────────────────────────────────
+// ✅ The right wave widget is positioned at `right: 0` with width = waveW.
+//    Its local origin (0,0) corresponds to (cardW - waveW, 0) in card space.
+//    We shift the full card path left by (cardW - waveW) so the clip aligns
+//    perfectly with the card's right curved boundary.
+class _RightWaveClipper extends CustomClipper<Path> {
+  const _RightWaveClipper({
     required this.sx,
     required this.sy,
-    this.offsetX = 0,
+    required this.cardW,
+    required this.waveW,
   });
-  final double sx, sy, offsetX;
+  final double sx, sy, cardW, waveW;
 
   @override
   Path getClip(Size size) {
-    final base = _buildTransferCardOuterPath(sx, sy);
-    if (offsetX == 0) return base;
-    return base.shift(Offset(-offsetX, 0));
+    final fullPath = _buildTransferCardOuterPath(sx, sy);
+    // Translate so that the card's right edge aligns with this widget's bounds
+    final shift = cardW - waveW;
+    return fullPath.shift(Offset(-shift, 0));
   }
 
   @override
@@ -811,8 +798,6 @@ class _TransferOuterClipper extends CustomClipper<Path> {
 }
 
 // ── BORDER GLOW PAINTER ─────────────────────────────────────────────────────────
-// Draws the same shimmer-border as wallet_overview_page _CardShapePainter,
-// but on BOTH the top curve AND the bottom curve of the transfer card.
 class _TransferBorderGlowPainter extends CustomPainter {
   const _TransferBorderGlowPainter({
     required this.sx,
@@ -831,41 +816,32 @@ class _TransferBorderGlowPainter extends CustomPainter {
     final path = _buildTransferCardOuterPath(sx, sy);
     final glowH = 26.0 * sy;
 
-    // Notch x range from SVG coords (132.716 … 229.284)
-    final notchLeft = 132.716 * sx;
-    final notchRight = 229.284 * sx;
-
-    // ── top glow — only inside the notch cut ────────────────────────────
+    // top glow
     canvas.save();
-    canvas.clipRect(Rect.fromLTWH(notchLeft, 0, notchRight - notchLeft, glowH));
+    canvas.clipRect(Rect.fromLTWH(0, 0, cardW, glowH));
     _drawGlow(canvas, path);
     canvas.restore();
 
-    // ── bottom glow — only inside the notch cut ─────────────────────────
+    // bottom glow
     canvas.save();
-    canvas.clipRect(
-      Rect.fromLTWH(notchLeft, cardH - glowH, notchRight - notchLeft, glowH),
-    );
+    canvas.clipRect(Rect.fromLTWH(0, cardH - glowH, cardW, glowH));
     _drawGlow(canvas, path);
     canvas.restore();
 
-    // ── center vertical divider lines ───────────────────────────────────
+    // center horizontal divider lines
     final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.25)
+      ..color = const Color(0xFF5E5955)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
-    // top: from notch bottom edge down to circle top
     canvas.drawLine(
-      Offset(cardW / 2, glowH),
-      Offset(cardW / 2, circleCy - circleR),
+      Offset(0, circleCy),
+      Offset(circleCx - circleR, circleCy),
       linePaint,
     );
-
-    // bottom: from circle bottom down to notch top edge
     canvas.drawLine(
-      Offset(cardW / 2, circleCy + circleR),
-      Offset(cardW / 2, cardH - glowH),
+      Offset(circleCx + circleR, circleCy),
+      Offset(cardW, circleCy),
       linePaint,
     );
   }
@@ -891,7 +867,7 @@ class _TransferBorderGlowPainter extends CustomPainter {
         canvas.drawPath(
           metric.extractPath(start, end),
           Paint()
-            ..color = Colors.white.withOpacity(0.5)
+            ..color = Colors.white.withOpacity(opacity)
             ..style = PaintingStyle.stroke
             ..strokeWidth = strokeW
             ..strokeCap = StrokeCap.square,
@@ -965,7 +941,7 @@ class _CurrencySelectSheet extends StatelessWidget {
                       final coin = currencies[i];
                       return InkWell(
                         onTap: () => onSelect(coin),
-                        splashColor: _green.withValues(alpha: 0.05),
+                        splashColor: _green.withOpacity(0.05),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: Row(
@@ -993,9 +969,7 @@ class _CurrencySelectSheet extends StatelessWidget {
                                   Text(
                                     coin.name ?? '',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.5,
-                                      ),
+                                      color: Colors.white.withOpacity(0.5),
                                       fontSize: 12,
                                       fontFamily: _dmSans,
                                       fontWeight: FontWeight.w400,
