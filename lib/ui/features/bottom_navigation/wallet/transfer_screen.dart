@@ -467,12 +467,23 @@ class _TransferScreenState extends State<TransferScreen>
 }
 
 // ── TRANSFER DIRECTION CARD ─────────────────────────────────────────────────────
-class _TransferDirectionCard extends StatelessWidget {
+class _TransferDirectionCard extends StatefulWidget {
   const _TransferDirectionCard({required this.screenW});
   final double screenW;
 
   @override
+  State<_TransferDirectionCard> createState() => _TransferDirectionCardState();
+}
+
+class _TransferDirectionCardState extends State<_TransferDirectionCard> {
+  bool _spotIsFrom = true; // true = Spot→Future, false = Future→Spot
+
+  void _swap() => setState(() => _spotIsFrom = !_spotIsFrom);
+
+  @override
   Widget build(BuildContext context) {
+    final screenW = widget.screenW;
+
     // Preserve SVG aspect ratio: 362 × 204
     final cardH = screenW * _svgNH / _svgNW;
     final sx = screenW / _svgNW;
@@ -482,6 +493,9 @@ class _TransferDirectionCard extends StatelessWidget {
     final circleCx = 181.0 * sx;
     final circleCy = 102.0 * sy;
     final circleR = 20.0 * sx;
+
+    final fromLabel = _spotIsFrom ? 'Spot' : 'Future';
+    final toLabel   = _spotIsFrom ? 'Future' : 'Spot';
 
     return SizedBox(
       width: screenW,
@@ -545,16 +559,16 @@ class _TransferDirectionCard extends StatelessWidget {
             ),
           ),
 
-          // ── 5. "From" + "Spot" — top half ──────────────────────────────
+          // ── 5. "From" + fromLabel — top half ───────────────────────────
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             height: circleCy - circleR,
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   'From',
                   style: TextStyle(
                     color: Colors.white54,
@@ -563,10 +577,10 @@ class _TransferDirectionCard extends StatelessWidget {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Spot',
-                  style: TextStyle(
+                  fromLabel,
+                  style: const TextStyle(
                     color: _white,
                     fontSize: 26,
                     fontWeight: FontWeight.w700,
@@ -583,42 +597,45 @@ class _TransferDirectionCard extends StatelessWidget {
             top: circleCy - circleR,
             width: circleR * 2,
             height: circleR * 2,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
+            child: GestureDetector(
+              onTap: _swap,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: Icon(
-                Icons.swap_vert,
-                color: _white,
-                size: circleR * 1.1,
+                child: Icon(
+                  Icons.swap_vert,
+                  color: _white,
+                  size: circleR * 1.1,
+                ),
               ),
             ),
           ),
 
-          // ── 7. "Future" + "To" — bottom half ───────────────────────────
+          // ── 7. toLabel + "To" — bottom half ────────────────────────────
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             height: cardH - (circleCy + circleR),
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Future',
-                  style: TextStyle(
+                  toLabel,
+                  style: const TextStyle(
                     color: _white,
                     fontSize: 26,
                     fontWeight: FontWeight.w700,
                     fontFamily: _dmSans,
                   ),
                 ),
-                SizedBox(height: 4),
-                Text(
+                const SizedBox(height: 4),
+                const Text(
                   'To',
                   style: TextStyle(
                     color: Colors.white54,
