@@ -130,7 +130,11 @@ class _TransferScreenState extends State<TransferScreen>
       // ── CONFIRM BUTTON ──────────────────────────────────────────────────────
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(
-            16, 12, 16, bottomPad > 0 ? bottomPad : 16),
+          16,
+          12,
+          16,
+          bottomPad > 0 ? bottomPad : 16,
+        ),
         color: _bg,
         child: SizedBox(
           width: double.infinity,
@@ -162,47 +166,59 @@ class _TransferScreenState extends State<TransferScreen>
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           children: [
             // ── NEW BANNER ──────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
-                      color: _green,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(5),
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color(0xFF53F8A0), // #53F8A0
+                          Color(0xFF00E5AB), // #00E5AB
+                        ],
+                      ),
                     ),
                     child: const Text(
                       'New',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Color(0xFF000000),
                         fontSize: 10,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                         fontFamily: _dmSans,
+                        height: 12 / 10,
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Financial Account transfer are now supported. Transfers in or out will automatically subscribe to redeem from their respective flexible-term Earn products.',
                       style: TextStyle(
-                        color: _white,
+                        color: Colors.white.withOpacity(0.5),
                         fontSize: 12,
                         fontFamily: _dmSans,
                         fontWeight: FontWeight.w400,
-                        height: 1.5,
+                        height: 16 / 12,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+
+            SizedBox(height: 20),
 
             // ── TRANSFER DIRECTION CARD ─────────────────────────────────────
             _TransferDirectionCard(screenW: screenW),
@@ -216,7 +232,9 @@ class _TransferScreenState extends State<TransferScreen>
                 final coin = _selectedCoin.value;
                 return Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 14),
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: _card,
                     borderRadius: BorderRadius.circular(10),
@@ -273,7 +291,8 @@ class _TransferScreenState extends State<TransferScreen>
                       child: TextField(
                         controller: _amountCtrl,
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         style: const TextStyle(
                           color: _white,
                           fontFamily: _dmSans,
@@ -292,7 +311,9 @@ class _TransferScreenState extends State<TransferScreen>
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 13),
+                            horizontal: 14,
+                            vertical: 13,
+                          ),
                         ),
                       ),
                     ),
@@ -435,7 +456,9 @@ class _TransferScreenState extends State<TransferScreen>
                   const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       gradient: const LinearGradient(
@@ -495,7 +518,7 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
     final circleR = 20.0 * sx;
 
     final fromLabel = _spotIsFrom ? 'Spot' : 'Future';
-    final toLabel   = _spotIsFrom ? 'Future' : 'Spot';
+    final toLabel = _spotIsFrom ? 'Future' : 'Spot';
 
     return SizedBox(
       width: screenW,
@@ -539,7 +562,11 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
             bottom: 0,
             width: screenW * 0.36,
             child: ClipPath(
-              clipper: _TransferOuterClipper(sx: sx, sy: sy, offsetX: screenW * 0.64),
+              clipper: _TransferOuterClipper(
+                sx: sx,
+                sy: sy,
+                offsetX: screenW * 0.64,
+              ),
               child: Image.asset(
                 'assets/images/wallet_green_wave.png',
                 width: screenW * 0.36,
@@ -559,39 +586,56 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
             ),
           ),
 
-          // ── 5. "From" + fromLabel — top half ───────────────────────────
+          // ── 5. Border glow (notch only) + center divider lines ─────────
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _TransferBorderGlowPainter(
+                sx: sx,
+                sy: sy,
+                cardW: screenW,
+                cardH: cardH,
+                circleCx: circleCx,
+                circleCy: circleCy,
+                circleR: circleR,
+              ),
+            ),
+          ),
+
+          // ── 7. "From" + fromLabel — top half ───────────────────────────
           Positioned(
-            top: 0,
-            left: 0,
+            top: 10,
+            left: 5,
             right: 0,
             height: circleCy - circleR,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'From',
                   style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
                     fontFamily: _dmSans,
                     fontWeight: FontWeight.w400,
+                    height: 16 / 12,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   fromLabel,
                   style: const TextStyle(
                     color: _white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
                     fontFamily: _dmSans,
+                    height: 28 / 20,
                   ),
                 ),
               ],
             ),
           ),
 
-          // ── 6. Swap arrows — inside the SVG circle hole ─────────────────
+          // ── 8. Swap arrows — inside the SVG circle hole ─────────────────
           Positioned(
             left: circleCx - circleR,
             top: circleCy - circleR,
@@ -600,6 +644,7 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
             child: GestureDetector(
               onTap: _swap,
               child: Container(
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -607,19 +652,21 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
                     width: 1,
                   ),
                 ),
-                child: Icon(
-                  Icons.swap_vert,
-                  color: _white,
-                  size: circleR * 1.1,
+                child: Image.asset(
+                  'assets/icons/arrow.png', 
+                  width: circleR * 1.1,
+                  height: circleR * 1.1,
+                  color: _white, 
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
           ),
 
-          // ── 7. toLabel + "To" — bottom half ────────────────────────────
+          // ── 9. toLabel + "To" — bottom half ────────────────────────────
           Positioned(
-            bottom: 0,
-            left: 0,
+            bottom: 10,
+            left: 5,
             right: 0,
             height: cardH - (circleCy + circleR),
             child: Column(
@@ -629,19 +676,21 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
                   toLabel,
                   style: const TextStyle(
                     color: _white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
                     fontFamily: _dmSans,
+                    height: 28 / 20,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
+                const SizedBox(height: 2),
+                Text(
                   'To',
                   style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
                     fontFamily: _dmSans,
                     fontWeight: FontWeight.w400,
+                    height: 16 / 12,
                   ),
                 ),
               ],
@@ -653,8 +702,95 @@ class _TransferDirectionCardState extends State<_TransferDirectionCard> {
   }
 }
 
-// ── OUTER CARD CLIPPER (SVG path without the circle hole) ──────────────────────
-// Matches the outer boundary of assets/svg/transfer.svg exactly.
+// ── STANDALONE PATH BUILDER ─────────────────────────────────────────────────────
+// Outer boundary of assets/svg/transfer.svg — no hole, no offset.
+Path _buildTransferCardOuterPath(double sx, double sy) {
+  return Path()
+    ..moveTo(132.716 * sx, 0)
+    ..cubicTo(
+      138.02 * sx,
+      0,
+      143.107 * sx,
+      2.107 * sy,
+      146.857 * sx,
+      5.857 * sy,
+    )
+    ..lineTo(155.143 * sx, 14.143 * sy)
+    ..cubicTo(
+      158.893 * sx,
+      17.893 * sy,
+      163.98 * sx,
+      20 * sy,
+      169.284 * sx,
+      20 * sy,
+    )
+    ..lineTo(192.716 * sx, 20 * sy)
+    ..cubicTo(
+      198.02 * sx,
+      20 * sy,
+      203.107 * sx,
+      17.893 * sy,
+      206.857 * sx,
+      14.143 * sy,
+    )
+    ..lineTo(215.143 * sx, 5.857 * sy)
+    ..cubicTo(218.893 * sx, 2.107 * sy, 223.98 * sx, 0, 229.284 * sx, 0)
+    ..lineTo(342 * sx, 0)
+    ..cubicTo(353.046 * sx, 0, 362 * sx, 8.954 * sy, 362 * sx, 20 * sy)
+    ..lineTo(362 * sx, 184 * sy)
+    ..cubicTo(
+      362 * sx,
+      195.046 * sy,
+      353.046 * sx,
+      204 * sy,
+      342 * sx,
+      204 * sy,
+    )
+    ..lineTo(229.284 * sx, 204 * sy)
+    ..cubicTo(
+      223.98 * sx,
+      204 * sy,
+      218.893 * sx,
+      201.893 * sy,
+      215.143 * sx,
+      198.143 * sy,
+    )
+    ..lineTo(206.857 * sx, 189.857 * sy)
+    ..cubicTo(
+      203.107 * sx,
+      186.107 * sy,
+      198.02 * sx,
+      184 * sy,
+      192.716 * sx,
+      184 * sy,
+    )
+    ..lineTo(169.284 * sx, 184 * sy)
+    ..cubicTo(
+      163.98 * sx,
+      184 * sy,
+      158.893 * sx,
+      186.107 * sy,
+      155.143 * sx,
+      189.857 * sy,
+    )
+    ..lineTo(146.857 * sx, 198.143 * sy)
+    ..cubicTo(
+      143.107 * sx,
+      201.893 * sy,
+      138.02 * sx,
+      204 * sy,
+      132.716 * sx,
+      204 * sy,
+    )
+    ..lineTo(20 * sx, 204 * sy)
+    ..cubicTo(8.954 * sx, 204 * sy, 0, 195.046 * sy, 0, 184 * sy)
+    ..lineTo(0, 20 * sy)
+    ..cubicTo(0, 8.954 * sy, 8.954 * sx, 0, 20 * sx, 0)
+    ..lineTo(132.716 * sx, 0)
+    ..close();
+}
+
+// ── OUTER CARD CLIPPER ──────────────────────────────────────────────────────────
 class _TransferOuterClipper extends CustomClipper<Path> {
   const _TransferOuterClipper({
     required this.sx,
@@ -665,86 +801,107 @@ class _TransferOuterClipper extends CustomClipper<Path> {
 
   @override
   Path getClip(Size size) {
-    final p = Path()
-      ..moveTo(132.716 * sx - offsetX, 0)
-      ..cubicTo(
-        138.02 * sx - offsetX, 0,
-        143.107 * sx - offsetX, 2.107 * sy,
-        146.857 * sx - offsetX, 5.857 * sy,
-      )
-      ..lineTo(155.143 * sx - offsetX, 14.143 * sy)
-      ..cubicTo(
-        158.893 * sx - offsetX, 17.893 * sy,
-        163.98 * sx - offsetX, 20 * sy,
-        169.284 * sx - offsetX, 20 * sy,
-      )
-      ..lineTo(192.716 * sx - offsetX, 20 * sy)
-      ..cubicTo(
-        198.02 * sx - offsetX, 20 * sy,
-        203.107 * sx - offsetX, 17.893 * sy,
-        206.857 * sx - offsetX, 14.143 * sy,
-      )
-      ..lineTo(215.143 * sx - offsetX, 5.857 * sy)
-      ..cubicTo(
-        218.893 * sx - offsetX, 2.107 * sy,
-        223.98 * sx - offsetX, 0,
-        229.284 * sx - offsetX, 0,
-      )
-      ..lineTo(342 * sx - offsetX, 0)
-      ..cubicTo(
-        353.046 * sx - offsetX, 0,
-        362 * sx - offsetX, 8.954 * sy,
-        362 * sx - offsetX, 20 * sy,
-      )
-      ..lineTo(362 * sx - offsetX, 184 * sy)
-      ..cubicTo(
-        362 * sx - offsetX, 195.046 * sy,
-        353.046 * sx - offsetX, 204 * sy,
-        342 * sx - offsetX, 204 * sy,
-      )
-      ..lineTo(229.284 * sx - offsetX, 204 * sy)
-      ..cubicTo(
-        223.98 * sx - offsetX, 204 * sy,
-        218.893 * sx - offsetX, 201.893 * sy,
-        215.143 * sx - offsetX, 198.143 * sy,
-      )
-      ..lineTo(206.857 * sx - offsetX, 189.857 * sy)
-      ..cubicTo(
-        203.107 * sx - offsetX, 186.107 * sy,
-        198.02 * sx - offsetX, 184 * sy,
-        192.716 * sx - offsetX, 184 * sy,
-      )
-      ..lineTo(169.284 * sx - offsetX, 184 * sy)
-      ..cubicTo(
-        163.98 * sx - offsetX, 184 * sy,
-        158.893 * sx - offsetX, 186.107 * sy,
-        155.143 * sx - offsetX, 189.857 * sy,
-      )
-      ..lineTo(146.857 * sx - offsetX, 198.143 * sy)
-      ..cubicTo(
-        143.107 * sx - offsetX, 201.893 * sy,
-        138.02 * sx - offsetX, 204 * sy,
-        132.716 * sx - offsetX, 204 * sy,
-      )
-      ..lineTo(20 * sx - offsetX, 204 * sy)
-      ..cubicTo(
-        8.954 * sx - offsetX, 204 * sy,
-        0 - offsetX, 195.046 * sy,
-        0 - offsetX, 184 * sy,
-      )
-      ..lineTo(0 - offsetX, 20 * sy)
-      ..cubicTo(
-        0 - offsetX, 8.954 * sy,
-        8.954 * sx - offsetX, 0,
-        20 * sx - offsetX, 0,
-      )
-      ..lineTo(132.716 * sx - offsetX, 0)
-      ..close();
-    return p;
+    final base = _buildTransferCardOuterPath(sx, sy);
+    if (offsetX == 0) return base;
+    return base.shift(Offset(-offsetX, 0));
   }
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> old) => false;
+}
+
+// ── BORDER GLOW PAINTER ─────────────────────────────────────────────────────────
+// Draws the same shimmer-border as wallet_overview_page _CardShapePainter,
+// but on BOTH the top curve AND the bottom curve of the transfer card.
+class _TransferBorderGlowPainter extends CustomPainter {
+  const _TransferBorderGlowPainter({
+    required this.sx,
+    required this.sy,
+    required this.cardW,
+    required this.cardH,
+    required this.circleCx,
+    required this.circleCy,
+    required this.circleR,
+  });
+  final double sx, sy, cardW, cardH;
+  final double circleCx, circleCy, circleR;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = _buildTransferCardOuterPath(sx, sy);
+    final glowH = 26.0 * sy;
+
+    // Notch x range from SVG coords (132.716 … 229.284)
+    final notchLeft = 132.716 * sx;
+    final notchRight = 229.284 * sx;
+
+    // ── top glow — only inside the notch cut ────────────────────────────
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(notchLeft, 0, notchRight - notchLeft, glowH));
+    _drawGlow(canvas, path);
+    canvas.restore();
+
+    // ── bottom glow — only inside the notch cut ─────────────────────────
+    canvas.save();
+    canvas.clipRect(
+      Rect.fromLTWH(notchLeft, cardH - glowH, notchRight - notchLeft, glowH),
+    );
+    _drawGlow(canvas, path);
+    canvas.restore();
+
+    // ── center vertical divider lines ───────────────────────────────────
+    final linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.25)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    // top: from notch bottom edge down to circle top
+    canvas.drawLine(
+      Offset(cardW / 2, glowH),
+      Offset(cardW / 2, circleCy - circleR),
+      linePaint,
+    );
+
+    // bottom: from circle bottom down to notch top edge
+    canvas.drawLine(
+      Offset(cardW / 2, circleCy + circleR),
+      Offset(cardW / 2, cardH - glowH),
+      linePaint,
+    );
+  }
+
+  void _drawGlow(Canvas canvas, Path path) {
+    final metrics = path.computeMetrics().toList();
+    for (final metric in metrics) {
+      const steps = 1000;
+      for (int i = 0; i < steps; i++) {
+        final t = i / steps;
+        final dist = metric.length * t;
+        final tangent = metric.getTangentForOffset(dist);
+        if (tangent == null) continue;
+
+        final x = tangent.position.dx;
+        final distFromCenter = ((x - cardW / 2) / (cardW / 2)).abs();
+        final opacity = (0.02 + (1.0 - distFromCenter) * 0.18).clamp(0.0, 1.0);
+        final strokeW = 0.3 + (1.0 - distFromCenter) * 0.9;
+
+        final start = t * metric.length;
+        final end = ((t + 1 / steps) * metric.length).clamp(0.0, metric.length);
+
+        canvas.drawPath(
+          metric.extractPath(start, end),
+          Paint()
+            ..color = Colors.white.withOpacity(0.5)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = strokeW
+            ..strokeCap = StrokeCap.square,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
 // ── CURRENCY SELECT BOTTOM SHEET ────────────────────────────────────────────────
@@ -800,9 +957,7 @@ class _CurrencySelectSheet extends StatelessWidget {
           // Coin list
           Expanded(
             child: currencies.isEmpty
-                ? const Center(
-                    child: CircularProgressIndicator(color: _green),
-                  )
+                ? const Center(child: CircularProgressIndicator(color: _green))
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                     itemCount: currencies.length,
@@ -838,8 +993,9 @@ class _CurrencySelectSheet extends StatelessWidget {
                                   Text(
                                     coin.name ?? '',
                                     style: TextStyle(
-                                      color: Colors.white
-                                          .withValues(alpha: 0.5),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       fontSize: 12,
                                       fontFamily: _dmSans,
                                       fontWeight: FontWeight.w400,
