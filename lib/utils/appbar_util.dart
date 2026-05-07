@@ -113,20 +113,38 @@ Widget tabBarText(
   int selectedIndex,
   Function(int) onTap, {
   Color? selectedColor,
+  Color? unSelectedColor,
   double? fontSize,
+  FontWeight? selectedFontWeight,
+  FontWeight? unSelectedFontWeight,
+  String? fontFamily,
 }) {
   selectedColor = selectedColor ?? Colors.green;
+  unSelectedColor = unSelectedColor ?? Colors.white.withOpacity(0.5);
+
   return Row(
     children: List.generate(
       titles.length,
       (index) => InkWell(
         onTap: () => onTap(index),
         child: Padding(
-          padding: const EdgeInsets.all(Dimens.paddingMin),
-          child: TextRobotoAutoBold(
+          padding: const EdgeInsets.only(left: 20),
+          child: Text(
             titles[index],
-            fontSize: fontSize ?? Dimens.fontSizeMid,
-            color: index == selectedIndex ? selectedColor : null,
+            style: TextStyle(
+              color: index == selectedIndex
+                  ? selectedColor
+                  : unSelectedColor,
+
+              fontSize: fontSize ?? Dimens.fontSizeMid,
+
+              fontWeight: index == selectedIndex
+                  ? (selectedFontWeight ?? FontWeight.w700)
+                  : (unSelectedFontWeight ?? FontWeight.w400),
+
+              fontFamily: fontFamily ?? "DMSans",
+              height: 24 / 16,
+            ),
           ),
         ),
       ),

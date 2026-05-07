@@ -61,77 +61,86 @@ class FutureTradeScreenState extends State<FutureTradeScreen> {
     return ColoredBox(
       color: const Color(0xFF0F0F0F),
       child: Column(
-      children: [
-        vSpacer5(),
-        Obx(() {
-          final dd = _controller.futureDashboardData.value;
-          return TradePairTopView(
-            coinPair: _controller.selectedCoinPair.value,
-            total: dd.orderData?.total,
-            onTap: () => _chooseCoinPairModal(),
-            onTapIcon: () => Get.to(() => const FutureTradeDetailsScreen()),
-          );
-        }),
-        Expanded(
-          child: Container(
-            decoration: boxDecorationTopRoundBorder(radius: Dimens.radiusCornerMid),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+        children: [
+          vSpacer5(),
+          Obx(() {
+            final dd = _controller.futureDashboardData.value;
+            return TradePairTopView(
+              coinPair: _controller.selectedCoinPair.value,
+              total: dd.orderData?.total,
+              onTap: () => _chooseCoinPairModal(),
+              onTapIcon: () => Get.to(() => const FutureTradeDetailsScreen()),
+            );
+          }),
+          Expanded(
+            child: Column(
               children: [
-                Obx(() => _controller.isLoading.value ? showLoadingSmall() : vSpacer0()),
-                Obx(() => TradeChartView(isShow: isChartShow.value, coinPair: _controller.selectedCoinPair.value, onTap: () => isChartShow.value = !isChartShow.value)),
-                Obx(() => isChartShow.value ? vSpacer0() : dividerHorizontal(height: 0)),
-                vSpacer5(),
-                Row(
-                  children: [
-                    Obx(() => _buttonWithIcon(_controller.isIsolate.value ? "Isolated".tr : "Cross".tr, () {
-                          showBottomSheetDynamic(
-                              context,
-                              title: "${_controller.selectedCoinPair.value.getCoinPairName()} ${"Perpetual Margin Mode".tr}",
-                              MarginModeView(isIsolate: _controller.isIsolate.value, onChange: (isolate) => _controller.isIsolate.value = isolate));
-                        })),
-                    hSpacer10(),
-                    Obx(() => _buttonWithIcon(
-                          "${ListConstants.leverages[_controller.selectedLeverageIndex.value]}x",
-                          () => showBottomSheetDynamic(
-                              context,
-                              title: "Leverage".tr,
-                              LeverageSelectionView(
-                                  selectedIndex: _controller.selectedLeverageIndex.value,
-                                  onSelect: (index) => _controller.selectedLeverageIndex.value = index)),
-                        )),
-                  ],
+                // Chart outside padded Container — full width, no side margins
+                Obx(() => isChartShow.value
+                    ? TradeChartView(isShow: true, coinPair: _controller.selectedCoinPair.value, onTap: () => isChartShow.value = false)
+                    : vSpacer0()),
+                Expanded(
+                  child: Container(
+                    decoration: boxDecorationTopRoundBorder(radius: Dimens.radiusCornerMid),
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+                      children: [
+                        Obx(() => _controller.isLoading.value ? showLoadingSmall() : vSpacer0()),
+                        vSpacer5(),
+                        Row(
+                          children: [
+                            Obx(() => _buttonWithIcon(_controller.isIsolate.value ? "Isolated".tr : "Cross".tr, () {
+                                  showBottomSheetDynamic(
+                                      context,
+                                      title: "${_controller.selectedCoinPair.value.getCoinPairName()} ${"Perpetual Margin Mode".tr}",
+                                      MarginModeView(isIsolate: _controller.isIsolate.value, onChange: (isolate) => _controller.isIsolate.value = isolate));
+                                })),
+                            hSpacer10(),
+                            Obx(() => _buttonWithIcon(
+                                  "${ListConstants.leverages[_controller.selectedLeverageIndex.value]}x",
+                                  () => showBottomSheetDynamic(
+                                      context,
+                                      title: "Leverage".tr,
+                                      LeverageSelectionView(
+                                          selectedIndex: _controller.selectedLeverageIndex.value,
+                                          onSelect: (index) => _controller.selectedLeverageIndex.value = index)),
+                                )),
+                          ],
+                        ),
+                        vSpacer5(),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Obx(() {
+                                return OderBookFixedView(
+                                  _controller.selectedOrderSort.value,
+                                  order: _controller.futureDashboardData.value.orderData,
+                                  prices: _controller.futureDashboardData.value.lastPriceData,
+                                  buyList: _controller.buyExchangeOrder,
+                                  sellList: _controller.sellExchangeOrder,
+                                  onShortChange: (key) => _controller.selectedOrderSort.value = key,
+                                  selectedHeaderIndex: _controller.selectedHeaderIndex.value,
+                                  onHeaderChange: (index) => _controller.selectedHeaderIndex.value = index,
+                                );
+                              }),
+                            ),
+                            hSpacer5(),
+                            const Expanded(flex: 5, child: OpenCloseTabViews(fromPage: FromKey.open)),
+                          ],
+                        ),
+                        vSpacer10(),
+                        const FutureHistoryViews(fromPage: FromKey.buy),
+                      ],
+                    ),
+                  ),
                 ),
-                vSpacer5(),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                        flex: 3,
-                        child: Obx(() {
-                          return OderBookFixedView(
-                            _controller.selectedOrderSort.value,
-                            order: _controller.futureDashboardData.value.orderData,
-                            prices: _controller.futureDashboardData.value.lastPriceData,
-                            buyList: _controller.buyExchangeOrder,
-                            sellList: _controller.sellExchangeOrder,
-                            onShortChange: (key) => _controller.selectedOrderSort.value = key,
-                            selectedHeaderIndex: _controller.selectedHeaderIndex.value,
-                            onHeaderChange: (index) => _controller.selectedHeaderIndex.value = index,
-                          );
-                        })),
-                    hSpacer5(),
-                    const Expanded(flex: 5, child: OpenCloseTabViews(fromPage: FromKey.open)),
-                  ],
-                ),
-                vSpacer10(),
-                const FutureHistoryViews(fromPage: FromKey.buy)
               ],
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 

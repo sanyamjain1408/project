@@ -633,22 +633,25 @@ class DetailsOrderBookView extends StatelessWidget {
     final color = isBuy ? gBuyColor : gSellColor;
     return list.isEmpty
         ? showEmptyView(message: "No Orders Available".tr)
-        : Column(
-            children: List.generate(listLength, (index) {
-              final order = list[index];
-              final fText = isBuy ? _fmt2(order.amount) : _fmt2(order.price);
-              final sText = isBuy ? _fmt2(order.price) : _fmt2(order.amount);
-
-              return _OrderBookDetailRow(
-                key: ValueKey('${isBuy ? "buy" : "sell"}_${order.price}'),
-                order: order,
-                color: color,
-                fText: fText,
-                sText: sText,
-                isBuy: isBuy,
-              );
-            }),
-          );
+        : Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+              children: List.generate(listLength, (index) {
+                final order = list[index];
+                final fText = isBuy ? _fmt2(order.amount) : _fmt2(order.price);
+                final sText = isBuy ? _fmt2(order.price) : _fmt2(order.amount);
+          
+                return _OrderBookDetailRow(
+                  key: ValueKey('${isBuy ? "buy" : "sell"}_${order.price}'),
+                  order: order,
+                  color: color,
+                  fText: fText,
+                  sText: sText,
+                  isBuy: isBuy,
+                );
+              }),
+            ),
+        );
   }
 }
 

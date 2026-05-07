@@ -56,11 +56,15 @@ class _FutureTradeDetailsScreenState extends State<FutureTradeDetailsScreen> {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+                
+                padding: EdgeInsets.zero,
                 children: [
-                  Obx(() => CurrencyPairDetailsView(
-                      order: _controller.futureDashboardData.value.orderData, prices: _controller.futureDashboardData.value.lastPriceData)),
-                  dividerHorizontal(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+                    child: Obx(() => CurrencyPairDetailsView(
+                        order: _controller.futureDashboardData.value.orderData, prices: _controller.futureDashboardData.value.lastPriceData)),
+                  ),
+                  // Chart — full width, no horizontal margin, no divider border
                   Obx(() => TvChartFullView(coinPair: _controller.selectedCoinPair.value)),
                   // Obx(() => tabBarText(
                   //     ["Candlestick".tr, "Depth".tr],
@@ -70,24 +74,31 @@ class _FutureTradeDetailsScreenState extends State<FutureTradeDetailsScreen> {
                   // Obx(() => chartIndex.value == 0
                   //     ? const ChartScreen(fromModal: false)
                   //     : DepthChartScreen(buyOrders: _controller.buyExchangeOrder, sellOrders: _controller.sellExchangeOrder)),
-                  vSpacer10(),
-                  Obx(() => tabBarText(
-                      ["Order Book".tr, "Trades".tr], tabIndex.value, selectedColor: context.theme.focusColor, (index) => tabIndex.value = index)),
-                  vSpacer10(),
-                  Obx(() {
-                    switch (tabIndex.value) {
-                      case 0:
-                        return DetailsOrderBookView(
-                            buyExchangeOrder: _controller.buyExchangeOrder,
-                            sellExchangeOrder: _controller.sellExchangeOrder,
-                            total: _controller.futureDashboardData.value.orderData?.total);
-                      case 1:
-                        return TradeListView(
-                            exchangeTrades: _controller.exchangeTrades, total: _controller.futureDashboardData.value.orderData?.total);
-                      default:
-                        return Container();
-                    }
-                  }),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
+                    child: Column(
+                      children: [
+                        vSpacer10(),
+                        Obx(() => tabBarText(
+                            ["Order Book".tr, "Trades".tr], tabIndex.value, selectedColor: context.theme.focusColor, (index) => tabIndex.value = index)),
+                        vSpacer10(),
+                        Obx(() {
+                          switch (tabIndex.value) {
+                            case 0:
+                              return DetailsOrderBookView(
+                                  buyExchangeOrder: _controller.buyExchangeOrder,
+                                  sellExchangeOrder: _controller.sellExchangeOrder,
+                                  total: _controller.futureDashboardData.value.orderData?.total);
+                            case 1:
+                              return TradeListView(
+                                  exchangeTrades: _controller.exchangeTrades, total: _controller.futureDashboardData.value.orderData?.total);
+                            default:
+                              return Container();
+                          }
+                        }),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

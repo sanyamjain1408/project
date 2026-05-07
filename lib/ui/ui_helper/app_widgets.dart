@@ -168,13 +168,16 @@ Widget signInNeedView({bool isDrawer = false}) {
 }
 
 Widget listHeaderView(String cFirst, String cSecond, String cThird) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      TextRobotoAutoNormal(cFirst),
-      TextRobotoAutoNormal(cSecond, textAlign: TextAlign.center),
-      TextRobotoAutoNormal(cThird, textAlign: TextAlign.end),
-    ],
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal:20 ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        TextRobotoAutoNormal(cFirst),
+        TextRobotoAutoNormal(cSecond, textAlign: TextAlign.center),
+        TextRobotoAutoNormal(cThird, textAlign: TextAlign.end),
+      ],
+    ),
   );
 }
 

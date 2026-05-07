@@ -198,44 +198,10 @@ class _TradeChartViewState extends State<TradeChartView> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.isShow) {
-      return InkWell(
-        onTap: widget.onTap,
-        child: Row(
-          children: [
-            hSpacer10(),
-            TextRobotoAutoNormal("Candlestick".tr),
-            const Spacer(),
-            TextRobotoAutoNormal("Expand".tr),
-            buttonOnlyIcon(
-              iconData: Icons.arrow_drop_down,
-              iconColor: context.theme.primaryColorLight,
-              visualDensity: minimumVisualDensity,
-            ),
-          ],
-        ),
-      );
-    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            hSpacer10(),
-            TextRobotoAutoNormal("Candlestick".tr),
-            const Spacer(),
-            InkWell(
-              onTap: widget.onTap,
-              child: Row(
-                children: [
-                  TextRobotoAutoNormal("Collapse".tr),
-                  Icon(Icons.arrow_drop_up, size: Dimens.iconSizeMin, color: context.theme.primaryColorLight),
-                ],
-              ),
-            ),
-            hSpacer5(),
-          ],
-        ),
+       
         SizedBox(
           height: Get.width * 0.75,
           child: WebViewWidget(controller: _webViewController),
@@ -1035,36 +1001,39 @@ class TradeListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final listLength = min(exchangeTrades.length, 100);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: TextRobotoAutoNormal(
-                "${"Price".tr}(${total?.baseWallet?.coinType ?? ""})",
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextRobotoAutoNormal(
+                  "${"Price".tr}(${total?.baseWallet?.coinType ?? ""})",
+                ),
               ),
-            ),
-            Expanded(
-              child: TextRobotoAutoNormal(
-                "${"Amount".tr}(${total?.tradeWallet?.coinType ?? ""})",
-                textAlign: TextAlign.center,
+              Expanded(
+                child: TextRobotoAutoNormal(
+                  "${"Amount".tr}(${total?.tradeWallet?.coinType ?? ""})",
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-            Expanded(
-              child: TextRobotoAutoNormal("Time".tr, textAlign: TextAlign.end),
-            ),
-          ],
-        ),
-        dividerHorizontal(height: Dimens.paddingMid),
-        exchangeTrades.isEmpty
-            ? showEmptyView()
-            : Column(
-                children: List.generate(listLength, (index) {
-                  return TradeItemView(exchangeTrade: exchangeTrades[index]);
-                }),
+              Expanded(
+                child: TextRobotoAutoNormal("Time".tr, textAlign: TextAlign.end),
               ),
-      ],
+            ],
+          ),
+          dividerHorizontal(height: Dimens.paddingMid),
+          exchangeTrades.isEmpty
+              ? showEmptyView()
+              : Column(
+                  children: List.generate(listLength, (index) {
+                    return TradeItemView(exchangeTrade: exchangeTrades[index]);
+                  }),
+                ),
+        ],
+      ),
     );
   }
 }
