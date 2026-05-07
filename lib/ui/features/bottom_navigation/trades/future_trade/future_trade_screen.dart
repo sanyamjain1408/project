@@ -79,7 +79,7 @@ class FutureTradeScreenState extends State<FutureTradeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
               children: [
                 Obx(() => _controller.isLoading.value ? showLoadingSmall() : vSpacer0()),
-                Obx(() => TradeChartView(isShow: isChartShow.value, onTap: () => isChartShow.value = !isChartShow.value)),
+                Obx(() => TradeChartView(isShow: isChartShow.value, coinPair: _controller.selectedCoinPair.value, onTap: () => isChartShow.value = !isChartShow.value)),
                 Obx(() => isChartShow.value ? vSpacer0() : dividerHorizontal(height: 0)),
                 vSpacer5(),
                 Row(

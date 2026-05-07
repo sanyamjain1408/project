@@ -720,7 +720,7 @@ class WalletTopButtonsView extends StatelessWidget {
               width: btnWidth,
               onTap: () => _showWithdrawSheet(context),
             ),
-            if (getSettingsLocal()?.swapStatus == 1)
+           // if (getSettingsLocal()?.swapStatus == 1)
               _WalletActionButton(
                 label: "Transfer".tr,
                 iconPath: "assets/images/transfer.png", // asset icon
@@ -728,8 +728,8 @@ class WalletTopButtonsView extends StatelessWidget {
                 width: btnWidth,
                 onTap: () => Get.to(() => const TransferScreen()),
               )
-            else
-              SizedBox(width: btnWidth),
+            // else
+            //   SizedBox(width: btnWidth),
           ],
         );
       },

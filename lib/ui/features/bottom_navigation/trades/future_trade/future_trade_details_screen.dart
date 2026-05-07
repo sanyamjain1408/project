@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/helper/favorite_helper.dart';
-import 'package:tradexpro_flutter/ui/features/charts/charts_screen.dart';
 import 'package:tradexpro_flutter/utils/appbar_util.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
@@ -62,7 +61,7 @@ class _FutureTradeDetailsScreenState extends State<FutureTradeDetailsScreen> {
                   Obx(() => CurrencyPairDetailsView(
                       order: _controller.futureDashboardData.value.orderData, prices: _controller.futureDashboardData.value.lastPriceData)),
                   dividerHorizontal(),
-                  const ChartsScreen(fromModal: false),
+                  Obx(() => TvChartFullView(coinPair: _controller.selectedCoinPair.value)),
                   // Obx(() => tabBarText(
                   //     ["Candlestick".tr, "Depth".tr],
                   //     chartIndex.value,

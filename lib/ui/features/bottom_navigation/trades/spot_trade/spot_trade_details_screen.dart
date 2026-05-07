@@ -12,7 +12,6 @@ import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:tradexpro_flutter/utils/text_util.dart';
-import 'package:tradexpro_flutter/ui/features/charts/charts_screen.dart';
 import '../../wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import '../../wallet/wallet_crypto_withdraw/wallet_crypto_withdraw_screen.dart';
 
@@ -97,7 +96,7 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                       prices:
                           _controller.dashboardData.value.lastPriceData)),
                   dividerHorizontal(),
-                  const ChartsScreen(fromModal: false),
+                  Obx(() => TvChartFullView(coinPair: _controller.selectedCoinPair.value)),
                   vSpacer10(),
                   Obx(() => tabBarText(
                       [

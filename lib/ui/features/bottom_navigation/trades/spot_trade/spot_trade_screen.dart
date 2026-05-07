@@ -95,6 +95,7 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
                   Obx(() => isChartShow.value
                       ? TradeChartView(
                           isShow: true,
+                          coinPair: _controller.selectedCoinPair.value,
                           onTap: () => isChartShow.value = false)
                       : vSpacer0()),
                   vSpacer5(),

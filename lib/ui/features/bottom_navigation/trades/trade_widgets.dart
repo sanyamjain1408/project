@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -9,7 +11,7 @@ import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/ui_helper/app_widgets.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
-import 'package:tradexpro_flutter/ui/features/charts/charts_screen.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
@@ -124,32 +126,205 @@ class TradePairTopView extends StatelessWidget {
   }
 }
 
-class TradeChartView extends StatelessWidget {
-  const TradeChartView({super.key, required this.isShow, required this.onTap});
+class TradeChartView extends StatefulWidget {
+  const TradeChartView({super.key, required this.isShow, required this.onTap, this.coinPair});
 
   final bool isShow;
   final VoidCallback onTap;
+  final CoinPair? coinPair;
+
+  @override
+  State<TradeChartView> createState() => _TradeChartViewState();
+}
+
+class _TradeChartViewState extends State<TradeChartView> {
+  late final WebViewController _webViewController;
+
+  @override
+  void initState() {
+    super.initState();
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadHtmlString(_buildChartHtml(widget.coinPair));
+  }
+
+  @override
+  void didUpdateWidget(TradeChartView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.coinPair?.coinPairId != widget.coinPair?.coinPairId) {
+      _webViewController.loadHtmlString(_buildChartHtml(widget.coinPair));
+    }
+  }
+
+  String _buildChartHtml(CoinPair? coinPair) {
+    final child = coinPair?.childCoinName?.toUpperCase() ?? '';
+    final parent = coinPair?.parentCoinName?.toUpperCase() ?? '';
+    final symbol = child.isNotEmpty && parent.isNotEmpty ? 'BINANCE:$child$parent' : 'BINANCE:BTCUSDT';
+    return '''<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e11; }
+    .tradingview-widget-container { width: 100% !important; height: 100% !important; }
+    .tradingview-widget-container__widget { width: 100% !important; height: calc(100% - 32px) !important; }
+  </style>
+</head>
+<body>
+<div class="tradingview-widget-container" style="height:100%;width:100%">
+  <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+  <div class="tradingview-widget-copyright"></div>
+  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+  {
+    "autosize": true,
+    "symbol": "$symbol",
+    "interval": "15",
+    "timezone": "Etc/UTC",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "enable_publishing": false,
+    "hide_top_toolbar": false,
+    "hide_legend": false,
+    "save_image": false,
+    "calendar": false
+  }
+  </script>
+</div>
+</body>
+</html>''';
+  }
 
   @override
   Widget build(BuildContext context) {
-    return isShow
-        ? ChartsScreen(fromModal: true, onTapClose: onTap)
-        : InkWell(
-            onTap: onTap,
-            child: Row(
-              children: [
-                hSpacer10(),
-                TextRobotoAutoNormal("Candlestick".tr),
-                const Spacer(),
-                TextRobotoAutoNormal("Expand".tr),
-                buttonOnlyIcon(
-                  iconData: Icons.arrow_drop_down,
-                  iconColor: context.theme.primaryColorLight,
-                  visualDensity: minimumVisualDensity,
-                ),
-              ],
+    if (!widget.isShow) {
+      return InkWell(
+        onTap: widget.onTap,
+        child: Row(
+          children: [
+            hSpacer10(),
+            TextRobotoAutoNormal("Candlestick".tr),
+            const Spacer(),
+            TextRobotoAutoNormal("Expand".tr),
+            buttonOnlyIcon(
+              iconData: Icons.arrow_drop_down,
+              iconColor: context.theme.primaryColorLight,
+              visualDensity: minimumVisualDensity,
             ),
-          );
+          ],
+        ),
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            hSpacer10(),
+            TextRobotoAutoNormal("Candlestick".tr),
+            const Spacer(),
+            InkWell(
+              onTap: widget.onTap,
+              child: Row(
+                children: [
+                  TextRobotoAutoNormal("Collapse".tr),
+                  Icon(Icons.arrow_drop_up, size: Dimens.iconSizeMin, color: context.theme.primaryColorLight),
+                ],
+              ),
+            ),
+            hSpacer5(),
+          ],
+        ),
+        SizedBox(
+          height: Get.width * 0.75,
+          child: WebViewWidget(controller: _webViewController),
+        ),
+      ],
+    );
+  }
+}
+
+class TvChartFullView extends StatefulWidget {
+  const TvChartFullView({super.key, this.coinPair});
+
+  final CoinPair? coinPair;
+
+  @override
+  State<TvChartFullView> createState() => _TvChartFullViewState();
+}
+
+class _TvChartFullViewState extends State<TvChartFullView> {
+  late final WebViewController _webViewController;
+
+  @override
+  void initState() {
+    super.initState();
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadHtmlString(_buildChartHtml(widget.coinPair));
+  }
+
+  @override
+  void didUpdateWidget(TvChartFullView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.coinPair?.coinPairId != widget.coinPair?.coinPairId) {
+      _webViewController.loadHtmlString(_buildChartHtml(widget.coinPair));
+    }
+  }
+
+  String _buildChartHtml(CoinPair? coinPair) {
+    final child = coinPair?.childCoinName?.toUpperCase() ?? '';
+    final parent = coinPair?.parentCoinName?.toUpperCase() ?? '';
+    final symbol = child.isNotEmpty && parent.isNotEmpty ? 'BINANCE:$child$parent' : 'BINANCE:BTCUSDT';
+    return '''<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e11; }
+    .tradingview-widget-container { width: 100% !important; height: 100% !important; }
+    .tradingview-widget-container__widget { width: 100% !important; height: calc(100% - 32px) !important; }
+  </style>
+</head>
+<body>
+<div class="tradingview-widget-container" style="height:100%;width:100%">
+  <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+  <div class="tradingview-widget-copyright"></div>
+  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+  {
+    "autosize": true,
+    "symbol": "$symbol",
+    "interval": "15",
+    "timezone": "Etc/UTC",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "enable_publishing": false,
+    "hide_top_toolbar": false,
+    "hide_legend": false,
+    "save_image": false,
+    "calendar": false
+  }
+  </script>
+</div>
+</body>
+</html>''';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: Get.width * 1.1,
+      child: WebViewWidget(
+        controller: _webViewController,
+        gestureRecognizers: {
+          Factory<ScaleGestureRecognizer>(() => ScaleGestureRecognizer()),
+          Factory<HorizontalDragGestureRecognizer>(() => HorizontalDragGestureRecognizer()),
+        },
+      ),
+    );
   }
 }
 
