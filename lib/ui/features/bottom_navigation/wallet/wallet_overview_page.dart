@@ -9,6 +9,7 @@ import 'package:tradexpro_flutter/data/models/response.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/check_deposit/check_deposit_page.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_list_page.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
@@ -1177,7 +1178,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
       return const CheckDepositPage(fromKey: FromKey.wallet);
     }
     if (type == WalletViewType.earn) {
-      return const EarnWalletView();
+      return const EarnScreen();
     }
     return WalletListView(fromType: type as int);
   }
@@ -1285,96 +1286,6 @@ class _BottomWavePainter extends CustomPainter {
 }
 
 // ── EARN WALLET VIEW ──────────────────────────────────────────────────────────
-class EarnWalletView extends StatelessWidget {
-  const EarnWalletView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Total Earning",
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 13,
-                    fontFamily: _dmSans,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  "0.00 USDT",
-                  style: TextStyle(
-                    color: _white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: _dmSans,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "≈ \$0.00",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.4),
-                    fontSize: 13,
-                    fontFamily: _dmSans,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "Staking Products",
-            style: TextStyle(
-              color: _white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              fontFamily: _dmSans,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const _EarnProductCard(
-            coin: "USDT",
-            apy: "12.5%",
-            duration: "30 Days",
-            minAmount: "100",
-            color: Color(0xFF26A17B),
-          ),
-          const SizedBox(height: 10),
-          const _EarnProductCard(
-            coin: "BTC",
-            apy: "8.2%",
-            duration: "60 Days",
-            minAmount: "0.001",
-            color: Color(0xFFF7931A),
-          ),
-          const SizedBox(height: 10),
-          const _EarnProductCard(
-            coin: "ETH",
-            apy: "9.8%",
-            duration: "90 Days",
-            minAmount: "0.01",
-            color: Color(0xFF627EEA),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ── EARN PRODUCT CARD ─────────────────────────────────────────────────────────
 class _EarnProductCard extends StatelessWidget {

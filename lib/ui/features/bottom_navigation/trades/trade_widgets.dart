@@ -1009,22 +1009,41 @@ class TradeListView extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: TextRobotoAutoNormal(
-                  "${"Price".tr}(${total?.baseWallet?.coinType ?? ""})",
+                child: Text(
+                  "${"Price".tr}(${total?.baseWallet?.coinType ?? ""})" ,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w400,
+                    height: 16/15,
+                  ),
                 ),
               ),
               Expanded(
-                child: TextRobotoAutoNormal(
+                child: Text(
                   "${"Amount".tr}(${total?.tradeWallet?.coinType ?? ""})",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w400,
+                    height: 16/15,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
               Expanded(
-                child: TextRobotoAutoNormal("Time".tr, textAlign: TextAlign.end),
+                child: Text("Time".tr,
+                style: TextStyle(
+                    fontSize: 15,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w400,
+                    height: 16/15,
+                  ),
+                   textAlign: TextAlign.end),
               ),
             ],
           ),
-          dividerHorizontal(height: Dimens.paddingMid),
+          SizedBox(height: 5,),
           exchangeTrades.isEmpty
               ? showEmptyView()
               : Column(

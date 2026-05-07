@@ -9,6 +9,7 @@ import 'package:tradexpro_flutter/helper/favorite_helper.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
 import 'package:tradexpro_flutter/utils/appbar_util.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
+import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/decorations.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
@@ -150,7 +151,9 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                             tabIndex.value,
                             (index) => tabIndex.value = index,
                             selectedColor: Colors.white,
-                            unSelectedColor: Colors.white.withValues(alpha: 0.5),
+                            unSelectedColor: Colors.white.withValues(
+                              alpha: 0.5,
+                            ),
 
                             fontSize: 16,
 
@@ -161,12 +164,13 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                           ),
                         ),
                         vSpacer10(),
+                        dividerHorizontal(height: Dimens.paddingMid),
+                        vSpacer10(),
                         Obx(() {
                           switch (tabIndex.value) {
                             case 0:
                               return DetailsOrderBookView(
-                                buyExchangeOrder:
-                                    _controller.buyExchangeOrder,
+                                buyExchangeOrder: _controller.buyExchangeOrder,
                                 sellExchangeOrder:
                                     _controller.sellExchangeOrder,
                                 total: _controller
