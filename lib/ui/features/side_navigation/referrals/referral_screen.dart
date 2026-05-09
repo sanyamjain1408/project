@@ -1,202 +1,328 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+// ─── Wave Glow Painter (Stats Cards) ────────────────────────────────────────
+class _WaveGlowPainter extends CustomPainter {
+  final List<BoxShadow> glowLayers;
+  const _WaveGlowPainter({required this.glowLayers});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final layerTopFractions = [0.55, 0.66, 0.76, 0.87];
+
+    for (int i = 0; i < 4; i++) {
+      final topY = size.height * layerTopFractions[i];
+      final shadow = glowLayers[i];
+
+      final paint = Paint()
+        ..color = shadow.color
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, shadow.blurRadius);
+
+      final path = Path();
+      path.moveTo(0, topY);
+
+      final cp1x = size.width * 0.25;
+      final cp1y = topY - size.height * 0.18;
+      final mp1x = size.width * 0.40;
+      final mp1y = topY + size.height * 0.08;
+      final mp2x = size.width * 0.72;
+      final mp2y = topY - size.height * 0.10;
+      final cp3x = size.width * 0.88;
+      final cp3y = topY - size.height * 0.22;
+
+      path.cubicTo(cp1x, cp1y, mp1x - 10, mp1y - 5, mp1x, mp1y);
+      path.cubicTo(mp1x + 20, mp1y + 5, mp2x - 20, mp2y + 5, mp2x, mp2y);
+      path.cubicTo(cp3x - 10, cp3y, cp3x + 15, cp3y + 5, size.width, topY + 5);
+
+      path.lineTo(size.width, size.height);
+      path.lineTo(0, size.height);
+      path.close();
+
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_WaveGlowPainter old) => old.glowLayers != glowLayers;
+}
+
+// ─── Pending Rewards Painter ─────────────────────────────────────────────────
+// Exact match to image 2:
+//   Left  ~40% = very dark maroon  #0D0010 → #600050
+//   Right ~60% = bright magenta/pink  #931A7E → #DF74CD → #FFC8F6
+//
+// Technique: draw blurred ovals from darkest (back) to lightest (front).
+// An S-curve overlay darkens the left zone to match image exactly.
+// ─────────────────────────────────────────────────────────────────────────────
+// ─── Pending Rewards Painter ───────────────────────────────────────────────
+class _PendingRewardWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // Background
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, w, h),
+      Paint()..color = const Color(0xFF0D0010),
+    );
+
+    // ── 1. Deep maroon blob — RIGHT TOP ─────────────────────
+    // ── 1. Deep maroon blob — LEFT BOTTOM ───────────────────
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w * 0.18, h * 0.78),
+        width: w * 0.60,
+        height: h * 1.50,
+      ),
+      Paint()
+        ..color = const Color(0xFF111111)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0),
+    );
+
+    // ── 2. Deep magenta — middle sweep ──────────────────────
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w * 0.42, h * 0.42),
+        width: w * 0.72,
+        height: h * 1.30,
+      ),
+      Paint()
+        ..color = const Color(0xFF600050)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50),
+    );
+
+    // ── 3. Bright magenta — lower RIGHT ─────────────────────
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w * 0.62, h * 0.66),
+        width: w * 0.68,
+        height: h * 1.10,
+      ),
+      Paint()
+        ..color = const Color(0xFFFFC8F6).withOpacity(0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60),
+    );
+
+    // ── 4. Light pink — BOTTOM RIGHT ────────────────────────
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w * 0.88, h * 0.84),
+        width: w * 0.48,
+        height: h * 0.72,
+      ),
+      Paint()
+        ..color = const Color(0xFFFFC8F6).withOpacity(0.80)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50),
+    );
+
+    // ── 5. Dark curve overlay from RIGHT → LEFT ───────────────
+    final curvePath = Path();
+
+    curvePath.moveTo(0, 0);
+    curvePath.lineTo(w * 0.38, 0);
+
+    curvePath.cubicTo(w * 0.26, h * 0.14, w * 0.14, h * 0.55, w * 0.06, h);
+
+    curvePath.lineTo(0, h);
+    curvePath.close();
+
+    canvas.drawPath(
+      curvePath,
+      Paint()
+        ..color = const Color(0xFF0D0010).withOpacity(0.65)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
 class ReferralScreen extends StatefulWidget {
   const ReferralScreen({super.key});
 
   @override
-  ReferralScreenState createState() => ReferralScreenState();
+  State<ReferralScreen> createState() => _ReferralScreenState();
 }
 
-class ReferralScreenState extends State<ReferralScreen> {
-  bool _showStartCalendar = false;
-  bool _showEndCalendar = false;
+class _ReferralScreenState extends State<ReferralScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
-  DateTime _startMonth = DateTime.now();
-  DateTime _endMonth = DateTime.now();
-  
-  // Mock data - replace with API call
-  int _totalReferrals = 1;
-  double _totalEarned = 1.49;
-  double _pendingBalance = 0.00595209;
-  int _activeReferrals = 1;
-  
-  final List<Map<String, dynamic>> _members = [
-    {'name': 'tytyty', 'email': 'tyt***', 'joined_at': '2026-04-02', 'trade_volume': 0, 'you_earned': 0},
-    {'name': 'gghgghgghgghg', 'email': 'ggh***', 'joined_at': '2026-04-10', 'trade_volume': 2480.04, 'you_earned': 1.488022},
-    {'name': 'nnmnnmnmnmnmnm', 'email': 'nnm***', 'joined_at': '2026-04-13', 'trade_volume': 0, 'you_earned': 0},
-    {'name': 'Test User', 'email': 'ver***', 'joined_at': '2026-04-13', 'trade_volume': 0, 'you_earned': 0},
-    {'name': 'hbhbhbhbhbh', 'email': 'hbh***', 'joined_at': '2026-04-13', 'trade_volume': 0, 'you_earned': 0},
-    {'name': 'rtrt rtrt', 'email': 'rtr***', 'joined_at': '2026-04-14', 'trade_volume': 0, 'you_earned': 0},
-  ];
 
-  String _referralLink = "https://trapix.com/signup?ref=TRX-5Q905R";
+  int _totalReferrals = 1;
+  double _totalEarned = 0.00;
+  double _pendingBalance = 0.00000000;
+  int _activeReferrals = 0;
+
+  String _referralLink = "https://trapix.com/signup?ref_code";
   String _referralCode = "TRX-5Q905R";
 
-  List<Map<String, dynamic>> get _filteredMembers {
-    return _members.where((member) {
-      if (_startDate == null && _endDate == null) return true;
-      final joinedAt = DateTime.tryParse(member['joined_at'] ?? '');
-      if (joinedAt == null) return true;
-      if (_startDate != null && joinedAt.isBefore(_startDate!)) return false;
-      if (_endDate != null && joinedAt.isAfter(_endDate!)) return false;
-      return true;
-    }).toList();
-  }
+  final List<Map<String, dynamic>> _members = [
+    {
+      'name': 'Yug Patel',
+      'joined_at': '26-04-2026',
+      'trade_volume': 0.00,
+      'you_earned': 0.00000,
+    },
+    {
+      'name': 'Yug Patel',
+      'joined_at': '26-04-2026',
+      'trade_volume': 0.00,
+      'you_earned': 0.00000,
+    },
+    {
+      'name': 'Yug Patel',
+      'joined_at': '26-04-2026',
+      'trade_volume': 0.00,
+      'you_earned': 0.00000,
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0B0F),
-      appBar: AppBar(
-        title: const Text("Referral Program", style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF0B0B0F),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-      ),
+      backgroundColor: Colors.black,
       body: ListView(
-        padding: const EdgeInsets.all(12),
-        physics: const BouncingScrollPhysics(),
         children: [
-          _buildHeroSection(),
-          const SizedBox(height: 16),
-          _buildHowItWorksSection(),
-          const SizedBox(height: 16),
-          _buildStatsSection(),
-          const SizedBox(height: 16),
-          _buildPendingRewards(),
-          const SizedBox(height: 16),
-          _buildHistorySection(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 20,),
+          Container(
+            color: Colors.transparent,
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: () => Get.back(),
+              icon: const Icon(
+                Icons.arrow_back_outlined,
+                color: Colors.white,
+                size: 25,
+              ),
+            ),
+          ),
+          Container(
+             padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                const SizedBox(height: 75),
+            _buildHeroSection(),
+            const SizedBox(height: 40),
+            _buildHowItWorksSection(),
+            const SizedBox(height: 40),
+            _buildStatsSection(),
+            const SizedBox(height: 40),
+            _buildPendingRewards(),
+            const SizedBox(height: 20),
+            _buildHistorySection(),
+            const SizedBox(height: 30),
+              ],
+            ),
+          )
         ],
       ),
     );
   }
 
   Widget _buildHeroSection() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFF1A1A1A),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFCCFF00).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                "Referral Program",
-                style: TextStyle(color: Color(0xFFCCFF00), fontSize: 11, fontWeight: FontWeight.w600),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              "Refer Friends.",
-              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const Text(
-              "Earn 20% Forever.",
-              style: TextStyle(color: Color(0xFFCCFF00), fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Invite anyone to Trapix. Every time they trade, you earn 20% of the 0.3% exchange fee — automatically, for life.",
-              style: TextStyle(color: Colors.white70, fontSize: 11, height: 1.4),
-            ),
-            const SizedBox(height: 16),
-            
-            _buildCopyRow("Referral Link", _referralLink),
-            const SizedBox(height: 12),
-            _buildCopyRow("Referral Code", _referralCode),
-            const SizedBox(height: 12),
-            
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFCCFF00).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: Color(0xFFCCFF00), size: 14),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(color: Colors.white, fontSize: 11),
-                        children: [
-                          TextSpan(text: "Receive "),
-                          TextSpan(text: "20%", style: TextStyle(color: Color(0xFFCCFF00), fontWeight: FontWeight.bold)),
-                          TextSpan(text: " commission on all trades made through your referrals"),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Get.snackbar("Copied", "Referral Link copied",
-                    backgroundColor: const Color(0xFFCCFF00), colorText: Colors.black);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFCCFF00),
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                ),
-                child: const Text("Invite Now", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCopyRow(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFFCCFF00).withOpacity(0.3)),
+        const Text(
+          "Refer Friends.\nEarn 20% Forever.",
+          style: TextStyle(
+            color: Color(0xFFD7FF00),
+            fontSize: 30,
+            height: 40 / 30,
+            fontWeight: FontWeight.w700,
+            fontFamily: "DMSans",
           ),
-          child: Row(
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Invite anyone to Trapix. Every time they trade, you earn 20% of the 0.3% exchange fee — automatically, for life.",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontFamily: "DMSans",
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 40),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white.withOpacity(0.3)),
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x33E946FF), Color(0x331A1A1A)],
+            ),
+          ),
+          child: Column(
             children: [
-              Expanded(
-                child: Text(
-                  value.length > 35 ? "${value.substring(0, 30)}..." : value,
-                  style: const TextStyle(color: Color(0xFFCCFF00), fontSize: 10),
+              const SizedBox(height: 10),
+              _buildReferralBox(value: _referralLink, isCode: false),
+              _buildReferralBox(value: _referralCode, isCode: true),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontFamily: "DMSans",
+                    ),
+                    children: [
+                      TextSpan(
+                        text: "Receive 20%",
+                        style: TextStyle(color: Color(0xFFCCFF00)),
+                      ),
+                      TextSpan(
+                        text:
+                            " commission on all trades made through your referrals",
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              InkWell(
-                onTap: () {
-                  Get.snackbar("Copied", "$label copied",
-                    backgroundColor: const Color(0xFFCCFF00), colorText: Colors.black);
-                },
-                child: const Icon(Icons.copy, color: Color(0xFFCCFF00), size: 14),
+              const SizedBox(height: 20),
+              Container(
+                margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                height: 40,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF00E6FF),
+                      Color(0xFFCCFF00),
+                      Color(0xFF77D215),
+                    ],
+                    stops: [0.0, 0.5, 1.0],
+                  ),
+                ),
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    "Invite Now",
+                    style: TextStyle(
+                      color: Color(0xFF111111),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      fontFamily: "DMSans",
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -205,122 +331,376 @@ class ReferralScreenState extends State<ReferralScreen> {
     );
   }
 
-  Widget _buildHowItWorksSection() {
-    final steps = [
-      {'icon': '📤', 'title': 'Share links', 'desc': 'Invite friends to register with Trapix.'},
-      {'icon': '✅', 'title': 'Invitation accepted', 'desc': 'Complete registration and start trading.'},
-      {'icon': '💰', 'title': 'Unlock earnings', 'desc': 'Earn commission on every friend\'s trades.'},
-    ];
-    
+  Widget _buildReferralBox({required String value, required bool isCode}) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
-      child: Row(
-        children: steps.map((step) {
-          return Expanded(
-            child: Column(
-              children: [
-                Text(step['icon']!, style: const TextStyle(fontSize: 32)),
-                const SizedBox(height: 6),
-                Text(step['title']!, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text(step['desc']!, style: const TextStyle(color: Colors.white54, fontSize: 9), textAlign: TextAlign.center),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildStatsSection() {
-    return Row(
-      children: [
-        Expanded(child: _buildStatCard("Total Referral", "$_totalReferrals", const Color(0xFFFF6F00))),
-        const SizedBox(width: 8),
-        Expanded(child: _buildStatCard("Total Earned", "$_totalEarned USDT", const Color(0xFF00E5FF))),
-        const SizedBox(width: 8),
-        Expanded(child: _buildStatCard("Commission", "20%", const Color(0xFF0062FF))),
-        const SizedBox(width: 8),
-        Expanded(child: _buildStatCard("Active Referrals", "$_activeReferrals", const Color(0xFFCCFF00))),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      height: 40,
+      margin: const EdgeInsets.fromLTRB(20, 10, 20, 0),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.4)),
+        color: const Color(0xFF111111),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Text(title, style: TextStyle(color: Colors.white54, fontSize: 9)),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 10),
+          Text(
+            isCode ? "referral code :" : "referral link :",
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+              fontFamily: "DMSans",
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              value,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontFamily: "DMSans",
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: value));
+              Get.snackbar(
+                "Copied",
+                "Copied Successfully",
+                backgroundColor: const Color(0xFFD7FF00),
+                colorText: Colors.black,
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.only(right: 10),
+              height: 25,
+              width: 25,
+              child: Image.asset("assets/icons/copy.png", fit: BoxFit.contain),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildPendingRewards() {
+  Widget _buildHowItWorksSection() {
+    final data = [
+      {"image": "assets/icons/referral1.png", "title": "Share links"},
+      {
+        "image": "assets/icons/referral2.png",
+        "title": "Invitation\naccepted by\nfriends",
+      },
+      {
+        "image": "assets/icons/referral3.png",
+        "title": "Unlock your\nearning\npotential",
+      },
+    ];
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF600050), Color(0xFF931A7E)],
-        ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
+        color: const Color(0xFF1A1A1A),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Pending Rewards", style: TextStyle(color: Colors.white70, fontSize: 11)),
-          const SizedBox(height: 4),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "${_pendingBalance.toStringAsFixed(8)} USDT",
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: _pendingBalance > 0 ? () {} : null,
+            children: List.generate(data.length, (index) {
+              return Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: Image.asset(
+                          data[index]['image']!,
+                          height: 60,
+                          width: 60,
+                        ),
+                      ),
+                    ),
+                    if (index != data.length - 1)
+                      const Text(
+                        "---->",
+                        style: TextStyle(
+                          color: Color(0xFFCCFF00),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: List.generate(data.length, (index) {
+              return Expanded(
+                child: Text(
+                  data[index]['title']!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: "DMSans",
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsSection() {
+    return GridView.count(
+      crossAxisCount: 2,
+      childAspectRatio: 1.45,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 20,
+      mainAxisSpacing: 20,
+      children: [
+        _buildGlowCard(
+          title: "Total Referral",
+          value: "$_totalReferrals",
+          boxShadow: const [
+            BoxShadow(color: Color(0xFFFF6F00), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFFFF8A30), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFFFFB781), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFFFFE6D2), blurRadius: 26.3),
+          ],
+        ),
+        _buildGlowCard(
+          title: "Total Earned",
+          value: _totalEarned.toStringAsFixed(2),
+          suffix: "USDT",
+          boxShadow: const [
+            BoxShadow(color: Color(0xFF00E5FF), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFF37EBFF), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFF9AF5FF), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFFC9FAFF), blurRadius: 26.3),
+          ],
+        ),
+        _buildGlowCard(
+          title: "Commission",
+          value: "20%",
+          boxShadow: const [
+            BoxShadow(color: Color(0xFF0062FF), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFF428AFF), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFF7EAFFF), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFFD8E7FF), blurRadius: 26.3),
+          ],
+        ),
+        _buildGlowCard(
+          title: "Active Referrals",
+          value: "$_activeReferrals",
+          boxShadow: const [
+            BoxShadow(color: Color(0xFFCCFF00), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFFD9FF41), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFFE8FF8C), blurRadius: 26.3),
+            BoxShadow(color: Color(0xFFF3FFC2), blurRadius: 26.3),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGlowCard({
+    required String title,
+    required String value,
+    required List<BoxShadow> boxShadow,
+    String suffix = "",
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: const Color(0xFF1A1A1A),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _WaveGlowPainter(glowLayers: boxShadow),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
+                    height: 1,
+                  ),
+                ),
+                const Spacer(),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: "DMSans",
+                        height: 1,
+                      ),
+                    ),
+                    if (suffix.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Text(
+                          suffix,
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── PENDING REWARDS ───────────────────────────────────────────────────────
+  Widget _buildPendingRewards() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: const Color(0xFF1A1A1A),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(painter: _PendingRewardWavePainter()),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 5),
+
+                Text(
+                  "Pending Rewards",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w400,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: _pendingBalance.toStringAsFixed(8),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: "DMSans",
+                          height: 1,
+                        ),
+                      ),
+                      TextSpan(
+                        text: "  USDT",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontFamily: "DMSans",
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+                SizedBox(
+                  height: 40,
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFCCFF00),
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: const Text("Withdraw", style: TextStyle(fontSize: 10)),
+                    icon: Image.asset(
+                      "assets/icons/withdraw.png",
+                      height: 20,
+                      width: 20,
+                      fit: BoxFit.contain,
+                    ),
+                    label: const Text(
+                      "Withdraw to Reward Wallet",
+                      style: TextStyle(
+                        color: Color(0xFF111111),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        height: 1,
+                        fontFamily: "DMSans",
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 6),
-                  OutlinedButton(
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 40,
+                  width: double.infinity,
+                  child: OutlinedButton(
                     onPressed: () {},
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white24),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      side: BorderSide(
+                        color: Colors.white.withOpacity(0.5),
+                        width: 1.2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      backgroundColor: const Color(0xFF1A1A1A).withOpacity(0.2),
                     ),
-                    child: const Text("View Wallet", style: TextStyle(color: Colors.white, fontSize: 9)),
+                    child: const Text(
+                      "View Reward Wallet",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontFamily: "DMSans",
+                        height: 1,
+                      ),
+                    ),
                   ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Colors.white24),
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                const SizedBox(height: 10),
+              ],
             ),
-            child: const Text("View My Earnings", style: TextStyle(color: Colors.white, fontSize: 10)),
           ),
         ],
       ),
@@ -328,129 +708,238 @@ class ReferralScreenState extends State<ReferralScreen> {
   }
 
   Widget _buildHistorySection() {
-    final filteredMembers = _filteredMembers;
-    
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Referral History", style: TextStyle(color: Color(0xFFCCFF00), fontSize: 14, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          
-          // Date filters
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () => _selectDate(true),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFCCFF00).withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today, color: Color(0xFFCCFF00), size: 12),
-                        const SizedBox(width: 6),
-                        Text(
-                          _startDate != null ? _formatDate(_startDate!) : "Start Date",
-                          style: const TextStyle(color: Colors.white, fontSize: 10),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              "Referral History",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                fontFamily: "DMSans",
+                height: 1,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: InkWell(
-                  onTap: () => _selectDate(false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFCCFF00).withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today, color: Color(0xFFCCFF00), size: 12),
-                        const SizedBox(width: 6),
-                        Text(
-                          _endDate != null ? _formatDate(_endDate!) : "End Date",
-                          style: const TextStyle(color: Colors.white, fontSize: 10),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+            ),
+            const Spacer(),
+            Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(10),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          
-          filteredMembers.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.all(30),
-                  child: Center(child: Text("No referrals yet", style: TextStyle(color: Colors.white54, fontSize: 11))),
-                )
-              : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columnSpacing: 12,
-                    headingRowColor: WidgetStateProperty.all(Colors.transparent),
-                    columns: const [
-                      DataColumn(label: Text("#", style: TextStyle(color: Colors.white54, fontSize: 9))),
-                      DataColumn(label: Text("Referral", style: TextStyle(color: Colors.white54, fontSize: 9))),
-                      DataColumn(label: Text("Joined", style: TextStyle(color: Colors.white54, fontSize: 9))),
-                      DataColumn(label: Text("Volume", style: TextStyle(color: Colors.white54, fontSize: 9))),
-                      DataColumn(label: Text("Earned", style: TextStyle(color: Colors.white54, fontSize: 9))),
-                    ],
-                    rows: List.generate(filteredMembers.length, (index) {
-                      final m = filteredMembers[index];
-                      final name = m['name']?.toString() ?? "";
-                      final email = m['email']?.toString() ?? "";
-                      final initial = name.isNotEmpty ? name[0].toUpperCase() : (email.isNotEmpty ? email[0].toUpperCase() : "?");
-                      final volume = (m['trade_volume'] ?? 0).toDouble();
-                      final earned = (m['you_earned'] ?? 0).toDouble();
-                      
-                      return DataRow(cells: [
-                        DataCell(Text("${index + 1}", style: const TextStyle(color: Colors.white, fontSize: 10))),
-                        DataCell(Row(
-                          children: [
-                            Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: const Color(0xFFCCFF00).withOpacity(0.2),
+              child: Row(
+                children: [
+                  _buildDateBox(
+                    text: _startDate == null
+                        ? "Start Date"
+                        : _formatDate(_startDate!),
+                    onTap: () => _selectDate(true),
+                  ),
+                  const SizedBox(width: 5),
+                  const Text("—", style: TextStyle(color: Colors.white)),
+                  const SizedBox(width: 5),
+                  _buildDateBox(
+                    text: _endDate == null
+                        ? "End Date"
+                        : _formatDate(_endDate!),
+                    onTap: () => _selectDate(false),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // ✅ Yahan horizontal scroll wrap kiya
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: MediaQuery.of(context).size.width - 32,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header row
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 36,
+                      child: Text(
+                        "No.",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 100,
+                      child: Text(
+                        "Referral",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 110,
+                      child: Text(
+                        "Joined",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 140,
+                      child: Text(
+                        "Trading Volume",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 150,
+                      child: Text(
+                        "You Earned (20%)",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Data rows
+                Column(
+                  children: List.generate(_members.length, (index) {
+                    final item = _members[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 36,
+                            child: Text(
+                              "${index + 1}",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: "DMSans",
+                                height: 1,
                               ),
-                              child: Center(child: Text(initial, style: const TextStyle(color: Color(0xFFCCFF00), fontSize: 9))),
                             ),
-                            const SizedBox(width: 6),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(name.length > 10 ? "${name.substring(0, 8)}..." : name, 
-                                    style: const TextStyle(color: Colors.white, fontSize: 10)),
-                                Text(email, style: const TextStyle(color: Colors.white54, fontSize: 8)),
-                              ],
+                          ),
+                          SizedBox(
+                            width: 100,
+                            child: Text(
+                              item['name'],
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: "DMSans",
+                                height: 1,
+                              ),
                             ),
-                          ],
-                        )),
-                        DataCell(Text(m['joined_at'] ?? "—", style: const TextStyle(color: Colors.white, fontSize: 9))),
-                        DataCell(Text("\$${volume.toStringAsFixed(2)}", 
-                            style: const TextStyle(color: Color(0xFF4BC0FF), fontSize: 9))),
-                        DataCell(Text("+${earned.toStringAsFixed(6)}", 
-                            style: const TextStyle(color: Color(0xFFCCFF00), fontSize: 9))),
-                      ]);
-                    }),
-                  ),
+                          ),
+                          SizedBox(
+                            width: 110,
+                            child: Text(
+                              item['joined_at'],
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: "DMSans",
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 140,
+                            child: Text(
+                              "\$${item['trade_volume'].toStringAsFixed(2)} USDT",
+                              style: const TextStyle(
+                                color: Color(0xFF00E5FF),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: "DMSans",
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 150,
+                            child: Text(
+                              "+${item['you_earned'].toStringAsFixed(5)} USDT",
+                              style: const TextStyle(
+                                color: Color(0xFFCCFF00),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: "DMSans",
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateBox({required String text, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(Icons.calendar_month, size: 14, color: Color(0xFFCCFF00)),
         ],
       ),
     );
@@ -459,30 +948,21 @@ class ReferralScreenState extends State<ReferralScreen> {
   Future<void> _selectDate(bool isStart) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
+      initialDate: DateTime.now(),
     );
     if (picked != null) {
       setState(() {
-        if (isStart) {
+        if (isStart)
           _startDate = picked;
-          _startMonth = picked;
-        } else {
+        else
           _endDate = picked;
-          _endMonth = picked;
-        }
       });
     }
   }
 
-  String _formatDate(DateTime date) => "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-
-  BoxDecoration _cardDecoration() {
-    return BoxDecoration(
-      color: const Color(0xFF1A1A1A),
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: Colors.white.withOpacity(0.05)),
-    );
+  String _formatDate(DateTime date) {
+    return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
   }
 }
