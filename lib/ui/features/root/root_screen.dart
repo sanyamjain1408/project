@@ -632,7 +632,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       "assets/icons/refer_earn.png",
                       "IB Program",
                       () => hasUser
-                          ? Get.to(() => const IGScreen())
+                          ? Get.to(() => const IBScreen())
                           : Get.offAll(() => const SignInPage()),
                     ),
                     _menuRow(
