@@ -1021,36 +1021,40 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
   }
 
   Widget _strategyBtn(String val, String label) {
-    final isA = _controller.strategy.value == val;
+  final isA = _controller.strategy.value == val;
 
-    return GestureDetector(
-      onTap: () => _controller.setStrategy(val),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-        decoration: BoxDecoration(
+  return GestureDetector(
+    onTap: () => _controller.setStrategy(val),
+    child: Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 25,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: isA
+            ? (val == "sell_high"
+                ? const Color(0XFFFF6F00) // SELL HIGH selected
+                : const Color(0xFF00E5FF)) // BUY LOW selected
+            : const Color(0xFF1A1A1A), // unselected
+
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
           color: isA
-              ? const Color(0xFF00E5FF) // selected
-              : const Color(0xFF1A1A1A), // unselected
+              ? const Color(0xFF111111)
+              : Colors.white.withOpacity(0.5),
 
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isA
-                ? const Color(0xFF111111)
-                : Colors.white.withOpacity(0.5),
-
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            fontFamily: "DMSans",
-            height: 1,
-          ),
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          fontFamily: "DMSans",
+          height: 1,
         ),
       ),
-    );
-  }
-
+    ),
+  );
+}
   Widget _termBtn(int? val, String label) {
     final isA = _controller.termFilter.value == val;
     return GestureDetector(
