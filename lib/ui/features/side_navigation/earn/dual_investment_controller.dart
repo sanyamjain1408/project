@@ -112,6 +112,7 @@ class DualInvestmentController extends GetxController {
 
   final RxList<DualPair>         pairs         = <DualPair>[].obs;
   final RxList<DualProduct>      products      = <DualProduct>[].obs;
+  final RxList<DualProduct>      allProducts   = <DualProduct>[].obs;
   final RxList<DualSubscription> subscriptions = <DualSubscription>[].obs;
   final RxMap<String, double>    balances      = <String, double>{}.obs;
   final RxMap<String, String>    coinIcons     = <String, String>{}.obs;
@@ -120,6 +121,7 @@ class DualInvestmentController extends GetxController {
   final RxnInt                   termFilter    = RxnInt();
   final RxBool                   isLoadingProducts = false.obs;
   final RxBool                   isLoadingSubs     = false.obs;
+  final RxDouble                 marketPrice       = 0.0.obs;
 
   String get _userId => gUserRx.value.id > 0 ? gUserRx.value.id.toString() : '';
 
@@ -127,6 +129,7 @@ class DualInvestmentController extends GetxController {
   void onInit() {
     super.onInit();
     fetchPairs();
+    _fetchMarketPrices();
     if (_userId.isNotEmpty) fetchBalances();
   }
 
@@ -139,6 +142,7 @@ class DualInvestmentController extends GetxController {
         pairs.assignAll(list);
         if (list.isNotEmpty) {
           selectedPair.value = list.first;
+          _refreshMarketPrice();
           fetchProducts();
         }
         _prefetchAllIcons();
@@ -153,7 +157,9 @@ class DualInvestmentController extends GetxController {
       final res  = await http.get(Uri.parse('$_baseUrl/api/dual/products'));
       final json = jsonDecode(res.body);
       if (json['success'] == true) {
-        for (final item in (json['data'] as List)) {
+        final items = json['data'] as List;
+        allProducts.assignAll(items.map((e) => DualProduct.fromJson(e)).toList());
+        for (final item in items) {
           final coin = item['base_coin']?.toString() ?? '';
           final icon = item['coin_icon'] ?? item['icon'] ?? item['image'];
           if (coin.isNotEmpty && icon != null && icon.toString().isNotEmpty) {
@@ -240,5 +246,37 @@ class DualInvestmentController extends GetxController {
 
   void setStrategy(String s)   { strategy.value = s;      fetchProducts(); }
   void setTermFilter(int? t)   { termFilter.value = t;    fetchProducts(); }
-  void setSelectedPair(DualPair p) { selectedPair.value = p; fetchProducts(); }
+  void setSelectedPair(DualPair p) {
+    selectedPair.value = p;
+    _refreshMarketPrice();
+    fetchProducts();
+  }
+
+  // price map fetched once; keyed by baseCoin e.g. "BTC"
+  final Map<String, double> _priceCache = {};
+
+  Future<void> _fetchMarketPrices() async {
+    try {
+      final res = await http.get(Uri.parse(
+        '$_baseUrl/api/market-overview-top-coin-list?page=1&limit=200&currency_type=USD&type=2&search=',
+      ));
+      final body = jsonDecode(res.body);
+      final list = body['data']?['data'];
+      if (list is List) {
+        for (final item in list) {
+          final coin  = item['coin_type']?.toString() ?? '';
+          final price = double.tryParse(item['price']?.toString() ?? '');
+          if (coin.isNotEmpty && price != null) _priceCache[coin] = price;
+        }
+      }
+    } catch (_) {}
+    _refreshMarketPrice();
+  }
+
+  void _refreshMarketPrice() {
+    final pair = selectedPair.value;
+    if (pair == null) return;
+    final price = _priceCache[pair.baseCoin];
+    if (price != null && price > 0) marketPrice.value = price;
+  }
 }
