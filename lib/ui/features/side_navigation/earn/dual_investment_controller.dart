@@ -26,6 +26,7 @@ class DualProduct {
   final String strategy;
   final double minAmount;
   final double maxAmount;
+  final String? coinIcon;    // ← backend icon URL
 
   DualProduct({
     required this.id,
@@ -39,6 +40,7 @@ class DualProduct {
     required this.strategy,
     required this.minAmount,
     required this.maxAmount,
+    this.coinIcon,
   });
 
   factory DualProduct.fromJson(Map<String, dynamic> json) => DualProduct(
@@ -53,6 +55,7 @@ class DualProduct {
     strategy:    json['strategy']     ?? 'sell_high',
     minAmount:   double.tryParse(json['min_amount'].toString()) ?? 0,
     maxAmount:   double.tryParse(json['max_amount'].toString()) ?? 0,
+    coinIcon:    json['coin_icon'] ?? json['icon'] ?? json['image'],
   );
 }
 
@@ -212,18 +215,7 @@ class DualInvestmentController extends GetxController {
     }
   }
 
-  void setStrategy(String s) {
-    strategy.value = s;
-    fetchProducts();
-  }
-
-  void setTermFilter(int? t) {
-    termFilter.value = t;
-    fetchProducts();
-  }
-
-  void setSelectedPair(DualPair p) {
-    selectedPair.value = p;
-    fetchProducts();
-  }
+  void setStrategy(String s)   { strategy.value = s;      fetchProducts(); }
+  void setTermFilter(int? t)   { termFilter.value = t;    fetchProducts(); }
+  void setSelectedPair(DualPair p) { selectedPair.value = p; fetchProducts(); }
 }
