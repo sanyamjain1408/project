@@ -49,6 +49,9 @@ class DualInvestmentScreen extends StatefulWidget {
 class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
   late DualInvestmentController _controller;
   final RxInt _mainTab = 0.obs; // 0=Market, 1=My Subscription
+  final RxString _searchQuery = ''.obs;
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
 
   @override
   void initState() {
@@ -57,18 +60,29 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildTabRow(),
-        const SizedBox(height: 12),
-        Obx(
-          () => _mainTab.value == 0
-              ? _buildMarketTab()
-              : _buildSubscriptionsTab(),
-        ),
-      ],
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => _searchFocus.unfocus(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTabRow(),
+          const SizedBox(height: 12),
+          Obx(
+            () => _mainTab.value == 0
+                ? _buildMarketTab()
+                : _buildSubscriptionsTab(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -107,35 +121,43 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
 
             const Spacer(),
 
-            GestureDetector(
-              onTap: () {
-                // Search action
-              },
-              child: Container(
-                height: 36,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.transparent),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      "Search Coin",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+            Container(
+              height: 36,
+              width: 130,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocus,
+                      onChanged: (v) =>
+                          _searchQuery.value = v.trim().toLowerCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 12,
                         fontFamily: "DMSans",
-                        fontWeight: FontWeight.w400,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: "Search Coin",
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontFamily: "DMSans",
+                          fontWeight: FontWeight.w400,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
                       ),
                     ),
-
-                    SizedBox(width: 5),
-
-                    Icon(Icons.search, color: Color(0xFFCCFF00), size: 20),
-                  ],
-                ),
+                  ),
+                  const Icon(Icons.search, color: Color(0xFFCCFF00), size: 20),
+                ],
               ),
             ),
           ],
@@ -181,10 +203,16 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
         const SizedBox(height: 10),
 
         Obx(
-          () => SingleChildScrollView(
+          () {
+            final q = _searchQuery.value;
+            final filtered = _controller.pairs
+                .where((p) =>
+                    q.isEmpty || p.baseCoin.toLowerCase().contains(q))
+                .toList();
+            return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: _controller.pairs.map((pair) {
+              children: filtered.map((pair) {
                 final isSel =
                     _controller.selectedPair.value?.baseCoin == pair.baseCoin;
 
@@ -259,8 +287,8 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
                 );
               }).toList(),
             ),
-          ),
-        ),
+          );
+        }),
 
         const SizedBox(height: 24),
 
@@ -657,13 +685,21 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
         );
       }
 
+      final q = _searchQuery.value;
+      final filteredSubs = _controller.subscriptions
+          .where((s) =>
+              q.isEmpty ||
+              s.baseCoin.toLowerCase().contains(q) ||
+              s.quoteCoin.toLowerCase().contains(q))
+          .toList();
+
       return ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        itemCount: _controller.subscriptions.length,
+        itemCount: filteredSubs.length,
         itemBuilder: (context, index) {
-          final sub = _controller.subscriptions[index];
+          final sub = filteredSubs[index];
 
           final isActive = sub.status == 'active';
 
