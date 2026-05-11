@@ -24,7 +24,6 @@ import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/data/models/list_response.dart';
 
 const Color _primary = Color(0xFF111111);
-const Color _secondary = Color(0xFF1A1A1A);
 const Color _green = Color(0xFFCCFF00);
 const Color _white = Color(0xFFFFFFFF);
 const String _dmSans = 'DMSans';
@@ -1129,10 +1128,11 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _secondary,
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: _secondary,
+        backgroundColor: const Color(0xFF0A0A0A),
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: _white),
           onPressed: () => Get.back(),
@@ -1153,9 +1153,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
             fontWeight: FontWeight.w400,
             fontFamily: _dmSans,
           ),
-          indicator: const UnderlineTabIndicator(
-            borderSide: BorderSide(color: _green, width: 2),
-          ),
+          indicator: const BoxDecoration(),
           dividerColor: Colors.transparent,
           tabs: _tabs.map((t) => Tab(text: t["label"] as String)).toList(),
         ),

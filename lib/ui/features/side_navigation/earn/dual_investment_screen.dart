@@ -49,79 +49,17 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Top stats banner (same style as wallet hero) ──
-        _buildHeroBanner(),
-        // ── Market / My Subscription tab ──
         _buildTabRow(),
         const SizedBox(height: 12),
-        Expanded(
-          child: Obx(() => _mainTab.value == 0 ? _buildMarketTab() : _buildSubscriptionsTab()),
-        ),
+        Obx(() => _mainTab.value == 0 ? _buildMarketTab() : _buildSubscriptionsTab()),
       ],
     );
   }
 
   // ── Hero banner ────────────────────────────────────────────────────────────
-  Widget _buildHeroBanner() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0x4D1A1A1A),
-        borderRadius: const BorderRadius.only(
-          bottomLeft:  Radius.circular(20),
-          bottomRight: Radius.circular(20),
-        ),
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft:  Radius.circular(20),
-          bottomRight: Radius.circular(20),
-        ),
-        child: Stack(
-          children: [
-            // Green wave right side
-            Positioned(
-              right: 0, top: 0, bottom: 0, width: 160,
-              child: Image.asset(
-                'assets/images/wallet_green_wave.png',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => CustomPaint(painter: _GreenWavePainter()),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Total Assets (USDT)", style: TextStyle(color: Color(0xFFFFFFFF80), fontSize: 12)),
-                  const SizedBox(height: 6),
-                  const Text("\$1,546.01", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 14),
-                  Row(children: [
-                    _bannerStat("Total Interest (USDT)", "0"),
-                    const SizedBox(width: 32),
-                    _bannerStat("Total Interest (USDT)", "0"),
-                  ]),
-                  const SizedBox(height: 18),
-                  GestureDetector(
-                    onTap: () { _mainTab.value = 1; _controller.fetchSubscriptions(); },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                      decoration: BoxDecoration(color: const Color(0xFFCCFF00), borderRadius: BorderRadius.circular(24)),
-                      child: const Text("View my History", style: TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w700)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  
   Widget _bannerStat(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,6 +118,8 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildMarketTab() {
     return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         // ── Step 1: Select Coin ──
@@ -418,6 +358,8 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
       }
 
       return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         itemCount: _controller.subscriptions.length,
         itemBuilder: (context, index) {
