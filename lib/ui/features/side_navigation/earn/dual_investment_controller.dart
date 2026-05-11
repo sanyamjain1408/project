@@ -114,6 +114,7 @@ class DualInvestmentController extends GetxController {
   final RxList<DualProduct>      products      = <DualProduct>[].obs;
   final RxList<DualSubscription> subscriptions = <DualSubscription>[].obs;
   final RxMap<String, double>    balances      = <String, double>{}.obs;
+  final RxMap<String, String>    coinIcons     = <String, String>{}.obs;
   final Rx<DualPair?>            selectedPair  = Rx<DualPair?>(null);
   final RxString                 strategy      = 'sell_high'.obs;
   final RxnInt                   termFilter    = RxnInt();
@@ -140,10 +141,27 @@ class DualInvestmentController extends GetxController {
           selectedPair.value = list.first;
           fetchProducts();
         }
+        _prefetchAllIcons();
       }
     } catch (e) {
       showToast(e.toString());
     }
+  }
+
+  Future<void> _prefetchAllIcons() async {
+    try {
+      final res  = await http.get(Uri.parse('$_baseUrl/api/dual/products'));
+      final json = jsonDecode(res.body);
+      if (json['success'] == true) {
+        for (final item in (json['data'] as List)) {
+          final coin = item['base_coin']?.toString() ?? '';
+          final icon = item['coin_icon'] ?? item['icon'] ?? item['image'];
+          if (coin.isNotEmpty && icon != null && icon.toString().isNotEmpty) {
+            coinIcons[coin] = icon.toString();
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> fetchProducts() async {
@@ -158,6 +176,11 @@ class DualInvestmentController extends GetxController {
       if (json['success'] == true) {
         final list = (json['data'] as List).map((e) => DualProduct.fromJson(e)).toList();
         products.assignAll(list);
+        for (final p in list) {
+          if (p.coinIcon != null && p.coinIcon!.isNotEmpty) {
+            coinIcons[p.baseCoin] = p.coinIcon!;
+          }
+        }
       }
     } catch (e) {
       showToast(e.toString());
