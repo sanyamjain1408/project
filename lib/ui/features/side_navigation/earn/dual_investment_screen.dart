@@ -123,7 +123,7 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
 
             Container(
               height: 36,
-              width: 130,
+              width: 120,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A1A),
@@ -363,9 +363,10 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
 
                 // Price
                 Text(
-                  _controller.marketPrice.value > 0
-                      ? coinFormat(_controller.marketPrice.value)
-                      : '--',
+                  () {
+                    final p = _controller.coinPrices[pair.baseCoin.toUpperCase()] ?? 0;
+                    return p > 0 ? coinFormat(p) : '--';
+                  }(),
                   style: const TextStyle(
                     color: Color(0xFF00B052),
                     fontSize: 12,

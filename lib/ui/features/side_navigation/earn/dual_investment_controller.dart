@@ -1,7 +1,13 @@
 import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as http; // still used for fetchPairs/fetchProducts/subscribe
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/data/models/coin_pair.dart';
+import 'package:tradexpro_flutter/data/models/list_response.dart';
+import 'package:tradexpro_flutter/data/models/market_date.dart';
+import 'package:tradexpro_flutter/data/remote/api_repository.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/market/market_spot/market_spot_controller.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 
 class DualPair {
@@ -129,7 +135,6 @@ class DualInvestmentController extends GetxController {
   void onInit() {
     super.onInit();
     fetchPairs();
-    _fetchMarketPrices();
     if (_userId.isNotEmpty) fetchBalances();
   }
 
@@ -142,7 +147,7 @@ class DualInvestmentController extends GetxController {
         pairs.assignAll(list);
         if (list.isNotEmpty) {
           selectedPair.value = list.first;
-          _refreshMarketPrice();
+          _fetchCoinPrice(list.first.baseCoin);
           fetchProducts();
         }
         _prefetchAllIcons();
@@ -248,35 +253,77 @@ class DualInvestmentController extends GetxController {
   void setTermFilter(int? t)   { termFilter.value = t;    fetchProducts(); }
   void setSelectedPair(DualPair p) {
     selectedPair.value = p;
-    _refreshMarketPrice();
+    _fetchCoinPrice(p.baseCoin);
     fetchProducts();
   }
 
-  // price map fetched once; keyed by baseCoin e.g. "BTC"
-  final Map<String, double> _priceCache = {};
+  // reactive price map keyed by baseCoin e.g. "BTC"
+  final RxMap<String, double> coinPrices = <String, double>{}.obs;
 
-  Future<void> _fetchMarketPrices() async {
+  void _fetchCoinPrice(String baseCoin) {
+    // Step 1: check already-cached price
+    final cached = coinPrices[baseCoin.toUpperCase()];
+    if (cached != null && cached > 0) {
+      marketPrice.value = cached;
+      return;
+    }
+    // Step 2: use LandingController (same live data shown in landing market)
+    _priceFromLanding(baseCoin);
+  }
+
+  void _priceFromLanding(String baseCoin) {
+    // Try MarketSpotController first — has BTC/ETH live data from Markets tab
     try {
-      final res = await http.get(Uri.parse(
-        '$_baseUrl/api/market-overview-top-coin-list?page=1&limit=200&currency_type=USD&type=2&search=',
-      ));
-      final body = jsonDecode(res.body);
-      final list = body['data']?['data'];
-      if (list is List) {
-        for (final item in list) {
-          final coin  = item['coin_type']?.toString() ?? '';
-          final price = double.tryParse(item['price']?.toString() ?? '');
-          if (coin.isNotEmpty && price != null) _priceCache[coin] = price;
+      final mc = Get.find<MarketSpotController>();
+      for (final coin in mc.marketFullList) {
+        if ((coin.coinType ?? '').toUpperCase() == baseCoin.toUpperCase() &&
+            (coin.price ?? 0) > 0) {
+          coinPrices[baseCoin.toUpperCase()] = coin.price!;
+          marketPrice.value = coin.price!;
+          return;
         }
       }
     } catch (_) {}
-    _refreshMarketPrice();
+
+    // Try LandingController (smaller altcoins)
+    try {
+      final lc = Get.find<LandingController>();
+      final allPairs = <CoinPair>[
+        ...?lc.landingList.value.assetCoinPairs,
+        ...?lc.landingList.value.hourlyCoinPairs,
+        ...?lc.landingList.value.latestCoinPairs,
+      ];
+      for (final p in allPairs) {
+        if ((p.childCoinName ?? '').toUpperCase() == baseCoin.toUpperCase() &&
+            (p.lastPrice ?? 0) > 0) {
+          coinPrices[baseCoin.toUpperCase()] = p.lastPrice!;
+          marketPrice.value = p.lastPrice!;
+          return;
+        }
+      }
+    } catch (_) {}
+
+    // Fallback: direct API call with auth headers
+    _fetchMarketPrices(baseCoin);
   }
 
-  void _refreshMarketPrice() {
-    final pair = selectedPair.value;
-    if (pair == null) return;
-    final price = _priceCache[pair.baseCoin];
-    if (price != null && price > 0) marketPrice.value = price;
+  Future<void> _fetchMarketPrices(String baseCoin) async {
+    try {
+      final resp = await APIRepository().getMarketOverviewTopCoinList(
+        1, DefaultValue.currency, 2, search: baseCoin,
+      );
+      if (resp.success && resp.data != null) {
+        final listResp = ListResponse.fromJson(resp.data);
+        for (final item in listResp.data ?? []) {
+          final coin = MarketCoin.fromJson(item);
+          if ((coin.coinType ?? '').toUpperCase() == baseCoin.toUpperCase() &&
+              (coin.price ?? 0) > 0) {
+            coinPrices[baseCoin.toUpperCase()] = coin.price!;
+            marketPrice.value = coin.price!;
+            return;
+          }
+        }
+      }
+    } catch (_) {}
   }
 }
