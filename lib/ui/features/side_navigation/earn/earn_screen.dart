@@ -1041,7 +1041,9 @@ class _EarnScreenState extends State<EarnScreen> {
                                           TextSpan(
                                             text: lockLabel, // Flexible / Fixed
                                             style: TextStyle(
-                                              color: Colors.white.withOpacity( 0.5,),
+                                              color: Colors.white.withOpacity(
+                                                0.5,
+                                              ),
                                               fontSize: 10,
                                               fontWeight: FontWeight.w400,
                                               fontFamily: "DMSans",
@@ -1066,7 +1068,7 @@ class _EarnScreenState extends State<EarnScreen> {
                                         fontSize: 12,
                                         fontWeight: FontWeight.w400,
                                         fontFamily: "DMSans",
-                                        height: 16/12,
+                                        height: 16 / 12,
                                       ),
                                     ),
 
@@ -1077,7 +1079,7 @@ class _EarnScreenState extends State<EarnScreen> {
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
                                         fontFamily: "DMSans",
-                                        height: 24/16,
+                                        height: 24 / 16,
                                       ),
                                     ),
                                   ],
@@ -1113,7 +1115,7 @@ class _EarnScreenState extends State<EarnScreen> {
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
                                       fontFamily: "DMSans",
-                                      height: 16/12,
+                                      height: 16 / 12,
                                     ),
                                   ),
                                 ),
@@ -1123,8 +1125,6 @@ class _EarnScreenState extends State<EarnScreen> {
                         ),
                       );
                     }),
-
-                  
                 ],
               );
             }).toList(),
@@ -1547,7 +1547,7 @@ class _EarnScreenState extends State<EarnScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1568,7 +1568,7 @@ class _EarnScreenState extends State<EarnScreen> {
                       color: Color(0xFF111111),
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
-                      height: 20/15,
+                      height: 20 / 15,
                     ),
                   ),
                 ),
@@ -1607,43 +1607,59 @@ class _EarnScreenState extends State<EarnScreen> {
           Text(
             label,
             style: TextStyle(
-              color: isA ? Colors.white : const Color(0xFF6B7280),
-              fontSize: 15,
-              fontWeight: isA ? FontWeight.w700 : FontWeight.w500,
+              color: isA ? Colors.white : Colors.white.withOpacity(0.5),
+              fontSize: 16,
+              fontWeight: isA ? FontWeight.w700 : FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 4),
-          if (isA)
-            Container(width: 24, height: 2, color: const Color(0xFFB5F000)),
         ],
       ),
     );
   }
 
+  // Returns coin icon URL from API response, falling back to products list
+  String? _resolveIconUrl(String coin, String? directIconUrl) {
+    if (directIconUrl != null && directIconUrl.isNotEmpty) return directIconUrl;
+    try {
+      return _controller.products.firstWhere((p) => p.coin == coin).coinIcon;
+    } catch (_) {
+      return null;
+    }
+  }
+
   // ── My Position ───────────────────────────────────────────────────────────
   Widget _buildEasyPositionsTab() {
-    if (_uid.isEmpty)
+    if (_uid.isEmpty) {
       return const Center(
         child: Text(
           "Login to view positions",
           style: TextStyle(color: Color(0xFF6B7280)),
         ),
       );
-    if (_isLoadingEasy)
+    }
+
+    if (_isLoadingEasy) {
       return const Center(
         child: CircularProgressIndicator(color: Color(0xFFB5F000)),
       );
-    if (_easyPositions.isEmpty)
+    }
+
+    if (_easyPositions.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.inbox_outlined, color: Color(0xFF6B7280), size: 48),
+
             SizedBox(height: 12),
+
             Text(
               "No active positions",
               style: TextStyle(color: Color(0xFF6B7280), fontSize: 15),
             ),
+
+            SizedBox(height: 4),
+
             Text(
               "Subscribe to a product to start earning",
               style: TextStyle(color: Color(0xFF555555), fontSize: 13),
@@ -1651,9 +1667,10 @@ class _EarnScreenState extends State<EarnScreen> {
           ],
         ),
       );
+    }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       children: [
         if (_redeemError.isNotEmpty)
           Container(
@@ -1669,142 +1686,214 @@ class _EarnScreenState extends State<EarnScreen> {
               style: const TextStyle(color: Color(0xFFFF6666), fontSize: 13),
             ),
           ),
+
         ..._easyPositions.map((pos) {
           final lockDays = (pos['lock_days'] ?? 0).toInt();
+
           final color = getLockColor(lockDays);
+
           final canRedeem = pos['is_redeemable'] == true;
+
           final planType = pos['plan_type'] ?? 'flexible';
-          final iconUrl = pos['coin_icon'] as String?;
+
           final coin = pos['coin'] ?? '';
 
+          final iconUrl = _resolveIconUrl(coin, pos['coin_icon'] as String?);
+
           return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(14),
+            margin: const EdgeInsets.only(bottom: 20, top: 20),
             decoration: BoxDecoration(
-              color: const Color(0xFF111318),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF1E2128)),
+              color: Colors.transparent,
             ),
+
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _coinIcon(
-                  iconUrl,
-                  size: 40,
-                  fallbackColor: color.withOpacity(0.2),
-                ),
-                const SizedBox(width: 12),
+                /// LEFT SIDE
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      /// TOP ROW
                       Row(
                         children: [
+                          _coinIcon(
+                            iconUrl,
+                            size: 20,
+                            fallbackColor: color.withOpacity(0.2),
+                          ),
+
+                          const SizedBox(width: 10),
+
                           Text(
                             coin,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 15,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
+                              fontFamily: "DMSans",
+                              height: 1,
                             ),
                           ),
-                          const SizedBox(width: 8),
+
+                          const SizedBox(width: 10),
+
+                          /// FLEXIBLE TAG
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
+                              horizontal: 10,
+                              vertical: 5,
                             ),
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: color.withOpacity(0.4)),
-                            ),
-                            child: Text(
-                              planType == 'flexible'
-                                  ? "Flexible"
-                                  : "${lockDays}d Fixed",
-                              style: TextStyle(
-                                color: color,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
+                              borderRadius: BorderRadius.circular(10),
+
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  color.withOpacity(0.95),
+                                  const Color(0xFF111111),
+                                ],
                               ),
+                            ),
+
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.bolt,
+                                  color: Colors.white.withOpacity(0.9),
+                                  size: 12,
+                                ),
+
+                                const SizedBox(width: 2),
+
+                                Text(
+                                  planType == 'flexible'
+                                      ? "Flexible"
+                                      : "${lockDays}d Fixed",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: "DMSans",
+                                    height: 1,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "${double.tryParse(pos['amount']?.toString() ?? '0')?.toStringAsFixed(2) ?? '0'} Staked  ·  ${double.tryParse(pos['apr']?.toString() ?? '0')?.toStringAsFixed(2) ?? '0'}% APR",
-                        style: const TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 11,
-                        ),
-                      ),
-                      if (planType == 'locked' && !canRedeem) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          "${pos['days_left']} days remaining",
-                          style: TextStyle(color: color, fontSize: 11),
-                        ),
-                      ],
-                      if (planType == 'locked' && canRedeem) ...[
-                        const SizedBox(height: 2),
-                        const Text(
-                          "Ready to redeem",
-                          style: TextStyle(
-                            color: Color(0xFF00FF88),
-                            fontSize: 11,
+
+                      const SizedBox(height: 12),
+
+                      /// STAKED + APR
+                      Row(
+                        children: [
+                          Text(
+                            "${double.tryParse(pos['amount']?.toString() ?? '0')?.toStringAsFixed(0) ?? '0'} Staked",
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: "DMSans",
+                              height: 1,
+                            ),
                           ),
-                        ),
-                      ],
+
+                          const SizedBox(width: 10),
+
+                          Text(
+                            "${double.tryParse(pos['apr']?.toString() ?? '0')?.toStringAsFixed(2) ?? '0'}% APR",
+                            style: const TextStyle(
+                              color: Color(0xFFCCFF00),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: "DMSans",
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                Column(
+
+                
+
+                /// RIGHT SIDE
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text(
-                      "Earned",
-                      style: TextStyle(color: Color(0xFF6B7280), fontSize: 10),
+                    /// EARNED
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Earned",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: "DMSans",
+                            height: 1,
+                          ),
+                        ),
+
+                        const SizedBox(height: 5),
+
+                        Text(
+                          "+${double.tryParse(pos['accrued_interest']?.toString() ?? '0')?.toStringAsFixed(0) ?? '0'} USDT",
+                          style: const TextStyle(
+                            color: Color(0xFFCCFF00),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: "DMSans",
+                            height: 1,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "+${double.tryParse(pos['accrued_interest']?.toString() ?? '0')?.toStringAsFixed(2) ?? '0'} $coin",
-                      style: const TextStyle(
-                        color: Color(0xFFCCFF00),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+
+                    const SizedBox(width: 5),
+
+                    /// REDEEM BUTTON
                     GestureDetector(
                       onTap: canRedeem
                           ? () => _handleRedeem(pos['id'].toString())
                           : null,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: canRedeem
-                              ? const LinearGradient(
-                                  colors: [
-                                    Color(0xFFFF6B35),
-                                    Color(0xFFFF3300),
-                                  ],
-                                )
-                              : null,
-                          color: canRedeem ? null : const Color(0xFF222222),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          "Redeem",
-                          style: TextStyle(
-                            color: canRedeem
-                                ? Colors.white
-                                : const Color(0xFF444444),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                      child: Expanded(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 12,
+                          ),
+                          height: 46,
+                          width: 75,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                color.withOpacity(0.95),
+                                const Color(0xFF111111),
+                              ],
+                            ),
+                          ),
+
+                          child: Text(
+                            "Redeem",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: "DMSans",
+                              height: 1,
+                            ),
                           ),
                         ),
                       ),
@@ -1935,7 +2024,7 @@ class _EarnScreenState extends State<EarnScreen> {
           final type = tx['type']?.toString().toLowerCase() ?? 'subscribe';
           final coin = tx['coin'] ?? 'USDT';
           final amount = double.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
-          final iconUrl = tx['coin_icon'] as String?;
+          final iconUrl = _resolveIconUrl(coin, tx['coin_icon'] as String?);
           String timeStr = 'Unknown';
           if (tx['created_at'] != null) {
             try {
