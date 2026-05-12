@@ -2639,6 +2639,7 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
   bool _loading = false;
   String _error = "";
   String _success = "";
+  final _earnCtrl = Get.find<EarnController>();
 
   String get _uid => gUserRx.value.id > 0 ? gUserRx.value.id.toString() : '';
 
@@ -2707,198 +2708,35 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
   @override
   Widget build(BuildContext context) {
     final isFlexible = _selectedPlan.lockDays == 0;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
-      decoration: const BoxDecoration(color: Color(0xFF111111)),
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: SingleChildScrollView(
+      color: const Color(0xFF111111),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                _coinIcon(_selectedPlan.coinIcon, size: 20),
-                const SizedBox(width: 5),
-                Text(
-                  "${widget.coin} Suscribe",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: "DMSans",
-                    height: 24 / 16,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Plan selector
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: widget.plans.map((p) {
-                  final isA = _selectedPlan.id == p.id;
-                  final label = p.lockDays == 0
-                      ? "Flexible"
-                      : "${p.lockDays} day's";
-                  final sub = "${p.apr.toStringAsFixed(2)}% Max";
-                  return GestureDetector(
-                    onTap: () => setState(() {
-                      _selectedPlan = p;
-                      _autoSub = false;
-                      _error = "";
-                    }),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 10),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 20,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isA
-                            ? Colors.transparent
-                            : const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isA
-                              ? const Color(0xFFCCFF00)
-                              : Colors.transparent,
-                          width: isA ? 0.5 : 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            label,
-                            style: TextStyle(
-                              color: isA
-                                  ? Colors.white
-                                  : Colors.white.withOpacity(0.5),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: "DMSans",
-                              height: 24 / 16,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            sub,
-                            style: TextStyle(
-                              color: isA
-                                  ? const Color(0xFFCCFF00)
-                                  : Colors.white.withOpacity(0.5),
-                              fontSize: 11,
-                              fontFamily: "DMSans",
-                              height: 24 / 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Amount
-            Row(
-              children: [
-                const Text(
-                  "Amount",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: "DMSans",
-                    height: 24 / 16,
-                  ),
-                ),
-                if (!isFlexible) ...[
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => setState(() => _autoSub = !_autoSub),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+            // ─── Scrollable content ───────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
                       children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: _autoSub
-                                  ? const Color(0xFFB5F000)
-                                  : const Color(0xFF444444),
-                              width: 2,
-                            ),
-                            color: _autoSub
-                                ? const Color(0xFFB5F000)
-                                : Colors.transparent,
-                          ),
-                          child: _autoSub
-                              ? const Icon(
-                                  Icons.check,
-                                  size: 11,
-                                  color: Colors.black,
-                                )
-                              : null,
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Icon(Icons.arrow_back,
+                              color: Colors.white, size: 20),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 10),
+                        _coinIcon(_selectedPlan.coinIcon, size: 20),
+                        const SizedBox(width: 5),
                         Text(
-                          "Auto Suscribe",
-                          style: TextStyle(
-                            color: _autoSub
-                                ? const Color(0xFFB5F000)
-                                : const Color(0xFF888888),
-                            fontSize: 12,
-                            fontFamily: "DMSans",
-                            height: 24 / 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.transparent),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _amountCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
+                          "${widget.coin} Subscribe",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -2906,293 +2744,496 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
                             fontFamily: "DMSans",
                             height: 24 / 16,
                           ),
-                          onChanged: (_) => setState(() {}),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
 
-                            hintText:
-                                "${coinFormat(_selectedPlan.minAmount)} Minimum",
-                            hintStyle: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: "DMSans",
-                              height: 24 / 16,
+                    // Plan selector
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: widget.plans.map((p) {
+                          final isA = _selectedPlan.id == p.id;
+                          final label = p.lockDays == 0
+                              ? "Flexible"
+                              : "${p.lockDays} day's";
+                          final sub = "${p.apr.toStringAsFixed(2)}% Max";
+                          return GestureDetector(
+                            onTap: () => setState(() {
+                              _selectedPlan = p;
+                              _autoSub = false;
+                              _error = "";
+                            }),
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 20),
+                              decoration: BoxDecoration(
+                                color: isA
+                                    ? Colors.transparent
+                                    : const Color(0xFF1A1A1A),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isA
+                                      ? const Color(0xFFCCFF00)
+                                      : Colors.transparent,
+                                  width: isA ? 0.5 : 1,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    label,
+                                    style: TextStyle(
+                                      color: isA
+                                          ? Colors.white
+                                          : Colors.white.withOpacity(0.5),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      fontFamily: "DMSans",
+                                      height: 24 / 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    sub,
+                                    style: TextStyle(
+                                      color: isA
+                                          ? const Color(0xFFCCFF00)
+                                          : Colors.white.withOpacity(0.5),
+                                      fontSize: 11,
+                                      fontFamily: "DMSans",
+                                      height: 24 / 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Amount label + auto subscribe toggle
+                    Row(
+                      children: [
+                        const Text(
+                          "Amount",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: "DMSans",
+                            height: 24 / 16,
                           ),
                         ),
+                        if (!isFlexible) ...[
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () =>
+                                setState(() => _autoSub = !_autoSub),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AnimatedContainer(
+                                  duration:
+                                      const Duration(milliseconds: 150),
+                                  width: 18,
+                                  height: 18,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: _autoSub
+                                          ? const Color(0xFFB5F000)
+                                          : const Color(0xFF444444),
+                                      width: 2,
+                                    ),
+                                    color: _autoSub
+                                        ? const Color(0xFFB5F000)
+                                        : Colors.transparent,
+                                  ),
+                                  child: _autoSub
+                                      ? const Icon(Icons.check,
+                                          size: 11, color: Colors.black)
+                                      : null,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  "Auto Subscribe",
+                                  style: TextStyle(
+                                    color: _autoSub
+                                        ? const Color(0xFFB5F000)
+                                        : const Color(0xFF888888),
+                                    fontSize: 12,
+                                    fontFamily: "DMSans",
+                                    height: 24 / 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.transparent),
                       ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _amountCtrl,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                          decimal: true),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: "DMSans",
+                                    height: 24 / 16,
+                                  ),
+                                  onChanged: (_) => setState(() {}),
+                                  decoration: InputDecoration(
+                                    border: InputBorder.none,
+                                    hintText:
+                                        "${coinFormat(_selectedPlan.minAmount)} Minimum",
+                                    hintStyle: TextStyle(
+                                      color: Colors.white.withOpacity(0.5),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: "DMSans",
+                                      height: 24 / 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  _amountCtrl.text = coinFormat(
+                                      _earnCtrl.balances[widget.coin] ?? 0);
+                                  setState(() {});
+                                },
+                                child: const Text(
+                                  "Max",
+                                  style: TextStyle(
+                                    color: Color(0xFFCCFF00),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: "DMSans",
+                                    height: 20 / 15,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 10),
+                                child: Text(
+                                  widget.coin,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: "DMSans",
+                                    height: 20 / 15,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            height: 1,
+                            width: double.infinity,
+                            color: Colors.white.withOpacity(0.3),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Maximum",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: "DMSans",
+                                  height: 20 / 15
+                                ),
+                              ),
+                              Text(
+                                "Balance",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: "DMSans",
+                                  height: 20 / 15
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                coinFormat(_selectedPlan.maxAmount),
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 12,
+                                  fontFamily: "DMSans",
+                                  height: 16 / 12,
+                                ),
+                              ),
+                              Obx(() => Text(
+                                    coinFormat(_earnCtrl.balances[widget.coin] ?? 0),
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.5),
+                                      fontSize: 12,
+                                      fontFamily: "DMSans",
+                                      fontWeight: FontWeight.w400,
+                                      height: 16 / 12,
+                                    ),
+                                  )),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Profit / timeline section
+                    if (isFlexible) ...[
                       Text(
-                        "Max",
+                        "Est. Daily Total Profit",
                         style: TextStyle(
-                          color: Color(0xFFCCFF00),
+                          color: Colors.white.withOpacity(0.7),
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           fontFamily: "DMSans",
                           height: 20 / 15,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 0, left: 10),
-                        child: Text(
-                          widget.coin,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: "DMSans",
-                            height: 20 / 15,
+                      const SizedBox(height: 20),
+                      _buildTierTimeline(),
+                      const SizedBox(height: 20),
+                       Text(
+                        "Hourly interest rate, access at any time",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 15,
+                          height: 20 / 15,
+                          fontFamily: "DMSans",
+                          fontWeight: FontWeight.w600
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      _buildConnectedTimeline([
+                        MapEntry("Subscription Time", _dateStr(0)),
+                        MapEntry("Interest Start Time", _dateStr(0)),
+                        MapEntry("Interest Payout Time", _dateStr(0)),
+                      ]),
+                    ] else ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Est. Total Profit",
+                            style: TextStyle(
+                                color: Color(0xFF6B7280), fontSize: 13),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    height: 1,
-                    width: double.infinity,
-                    color: Colors.white.withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Maximum",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 20 / 15,
-                        ),
-                      ),
-                      Text(
-                        "Balance",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 20 / 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "${coinFormat(_selectedPlan.maxAmount)}",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 16 / 12,
-                        ),
-                      ),
-                      Text(
-                        "0.00",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 16 / 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Profit estimate
-            if (isFlexible) ...[
-              Text(
-                "Est. Daily Total Profit",
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: "DMSans",
-                  height: 20 / 15,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ..._buildTierRows(),
-              const Text(
-                "Hourly interest rate, access at any time",
-                style: TextStyle(color: Color(0xFF555555), fontSize: 11),
-              ),
-              const SizedBox(height: 10),
-              _timelineRow("Subscription Time", _dateStr(0)),
-              _timelineRow("Interest Start Time", _dateStr(0)),
-              _timelineRow("Interest Payout Time", _dateStr(0)),
-            ] else ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Est. Total Profit",
-                    style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
-                  ),
-                  const Text(
-                    "--",
-                    style: TextStyle(color: Colors.white, fontSize: 13),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Est. APR",
-                    style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
-                  ),
-                  Text(
-                    "${_selectedPlan.apr.toStringAsFixed(2)}%",
-                    style: const TextStyle(
-                      color: Color(0xFFB5F000),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(color: Color(0xFF1A1A1A), height: 20),
-              _timelineRow("Subscription Time", _dateStr(0)),
-              _timelineRow("Interest Start Time", _dateStr(1)),
-              _timelineRow("Interest Payout Time", _dateStr(1)),
-              _timelineRow("Maturity Time", _dateStr(_selectedPlan.lockDays)),
-              _timelineRow(
-                "Fund Arrival Time",
-                _dateStr(_selectedPlan.lockDays),
-              ),
-            ],
-            const SizedBox(height: 16),
-
-            // Agreement
-            GestureDetector(
-              onTap: () => setState(() => _agreed = !_agreed),
-              behavior: HitTestBehavior.opaque,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _agreed
-                            ? const Color(0xFFB5F000)
-                            : const Color(0xFF444444),
-                        width: 2,
-                      ),
-                      color: _agreed
-                          ? const Color(0xFFB5F000)
-                          : Colors.transparent,
-                    ),
-                    child: _agreed
-                        ? const Icon(Icons.check, size: 12, color: Colors.black)
-                        : null,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        style: const TextStyle(
-                          color: Color(0xFF555555),
-                          fontSize: 12,
-                          height: 1.5,
-                        ),
-                        children: const [
-                          TextSpan(text: "I have read and agree to "),
-                          TextSpan(
-                            text: "Trapix Earn User Agreement",
-                            style: TextStyle(color: Color(0xFFB5F000)),
+                          const Text(
+                            "--",
+                            style: TextStyle(
+                                color: Colors.white, fontSize: 13),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                           Text(
+                            "Est. APR",
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                 fontSize: 15,
+                                 fontWeight: FontWeight.w600,
+                                 fontFamily: "DMSans",
+                                 height: 20 / 15),
+                          ),
+                          Text(
+                            "${_selectedPlan.apr.toStringAsFixed(2)}%",
+                            style: const TextStyle(
+                              color: Color(0xFF4ED78E),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: "DMSans",
+                              height: 20 / 15
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildConnectedTimeline([
+                        MapEntry("Subscription Time", _dateStr(0)),
+                        MapEntry("Interest Start Time", _dateStr(1)),
+                        MapEntry("Interest Payout Time", _dateStr(1)),
+                        MapEntry("Maturity Time",
+                            _dateStr(_selectedPlan.lockDays)),
+                        MapEntry("Fund Arrival Time",
+                            _dateStr(_selectedPlan.lockDays)),
+                      ]),
+                    ],
+
+                    // Error/Success messages
+                    if (_error.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A0000),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(_error,
+                            style: const TextStyle(
+                                color: Color(0xFFFF6666), fontSize: 13)),
+                      ),
+                    ],
+                    if (_success.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF001A00),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(_success,
+                            style: const TextStyle(
+                                color: Color(0xFF00FF88), fontSize: 13)),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            // ─── Fixed bottom: Agreement + Button ────────────────────────
+            Container(
+              color: Colors.transparent,
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => setState(() => _agreed = !_agreed),
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _agreed
+                                  ? const Color(0xFFCCFF00)
+                                  : Colors.white,
+                              width: 1,
+                            ),
+                            color: _agreed
+                                ? const Color(0xFFB5F000)
+                                : Colors.transparent,
+                          ),
+                          child: _agreed
+                              ? const Icon(Icons.check,
+                                  size: 12, color: Colors.black)
+                              : null,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                height: 16 / 12,
+                                fontFamily: "DMSans",
+                                fontWeight: FontWeight.w400,
+
+                              ),
+                              children: const [
+                                TextSpan(text: "I have read and agree to ",),
+                                TextSpan(
+                                  text: "Trapix Earn User Agreement",
+                                  style: TextStyle(
+                                    color: Color(0xFFCCFF00),
+                                    fontSize: 12,
+                                height: 16 / 12,
+                                fontFamily: "DMSans",
+                                fontWeight: FontWeight.w400,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Color(0xFFCCFF00),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: (_loading || _amountNum <= 0 || !_agreed)
+                          ? null
+                          : _handleConfirm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            (_loading || _amountNum <= 0 || !_agreed)
+                                ? const Color(0xFF222222)
+                                : const Color(0xFF1A1A1A),
+                        disabledBackgroundColor: const Color(0xFF1A1A1A),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                        side: BorderSide(
+                          color: (_loading || _amountNum <= 0 || !_agreed)
+                              ? Colors.transparent
+                              : Colors.transparent,
+                        ),
+                      ),
+                      child: Text(
+                        _loading ? "Processing..." : "Preview Order",
+                        style: TextStyle(
+                          color: (_loading || _amountNum <= 0 || !_agreed)
+                              ? Colors.white
+                              : Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 24 / 16,
+                        ),
+                      ),
                     ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            if (_error.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A0000),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _error,
-                  style: const TextStyle(
-                    color: Color(0xFFFF6666),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            if (_success.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF001A00),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _success,
-                  style: const TextStyle(
-                    color: Color(0xFF00FF88),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-
-            // Preview Order button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: (_loading || _amountNum <= 0 || !_agreed)
-                    ? null
-                    : _handleConfirm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: (_loading || _amountNum <= 0 || !_agreed)
-                      ? const Color(0xFF222222)
-                      : const Color(0xFF1A1A1A),
-                  disabledBackgroundColor: const Color(0xFF222222),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                  side: BorderSide(
-                    color: (_loading || _amountNum <= 0 || !_agreed)
-                        ? const Color(0xFF333333)
-                        : Colors.white.withOpacity(0.2),
-                  ),
-                ),
-                child: Text(
-                  _loading ? "Processing..." : "Preview Order",
-                  style: TextStyle(
-                    color: (_loading || _amountNum <= 0 || !_agreed)
-                        ? const Color(0xFF555555)
-                        : Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
               ),
             ),
           ],
@@ -3201,79 +3242,124 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
     );
   }
 
-  Widget _timelineRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF3A3A3A),
+  // Connected timeline (dots joined by vertical lines)
+  Widget _buildConnectedTimeline(List<MapEntry<String, String>> items) {
+    return Column(
+      children: List.generate(items.length, (i) {
+        final isLast = i == items.length - 1;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 16,
+              child: Column(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.only(top: 3),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF3A3A3A),
+                    ),
+                  ),
+                  if (!isLast)
+                    Container(width: 1, height: 34, color: const Color(0xFF3A3A3A)),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(items[i].key,
+                        style: const TextStyle(
+                            color: Color(0xFF6B7280), fontSize: 13)),
+                    Text(items[i].value,
+                        style: const TextStyle(
+                            color: Color(0xFFCCCCCC), fontSize: 13)),
+                  ],
+                ),
+              ),
             ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(color: Color(0xFFCCCCCC), fontSize: 11),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 
-  List<Widget> _buildTierRows() {
-    final flexPlans = widget.plans.where((p) => p.lockDays == 0).toList()
+  // Tier rows for flexible plan (connected timeline style)
+  Widget _buildTierTimeline() {
+    final flexPlans = widget.plans
+        .where((p) => p.lockDays == 0)
+        .toList()
       ..sort((a, b) => a.maxAmount.compareTo(b.maxAmount));
-    if (flexPlans.isEmpty) {
-      return [_tierRow(null, _selectedPlan.maxAmount, _selectedPlan.apr)];
-    }
-    return List<Widget>.generate(flexPlans.length, (i) {
-      final prevMax = i > 0 ? flexPlans[i - 1].maxAmount : null;
-      return _tierRow(prevMax, flexPlans[i].maxAmount, flexPlans[i].apr);
-    });
-  }
 
-  Widget _tierRow(double? prevMax, double maxAmount, double apr) {
-    final label = prevMax == null
-        ? "< ${coinFormat(maxAmount)}USDT"
-        : "${coinFormat(prevMax)} ~${coinFormat(maxAmount)}USDT";
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            margin: const EdgeInsets.only(right: 8),
-            decoration: const BoxDecoration(
-              color: Color(0xFF444444),
-              shape: BoxShape.circle,
+    final items = <MapEntry<String, String>>[];
+    for (int i = 0; i < flexPlans.length; i++) {
+      final prevMax = i > 0 ? flexPlans[i - 1].maxAmount : null;
+      final label = prevMax == null
+          ? "< ${coinFormat(flexPlans[i].maxAmount)}USDT"
+          : "${coinFormat(prevMax)} -${coinFormat(flexPlans[i].maxAmount)}USDT";
+      items.add(MapEntry(label, "${flexPlans[i].apr.toStringAsFixed(2)}%"));
+    }
+    if (items.isEmpty) {
+      items.add(MapEntry(
+        "< ${coinFormat(_selectedPlan.maxAmount)}USDT",
+        "${_selectedPlan.apr.toStringAsFixed(2)}%",
+      ));
+    }
+
+    return Column(
+      children: List.generate(items.length, (i) {
+        final isLast = i == items.length - 1;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 16,
+              child: Column(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.only(top: 3),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF444444),
+                    ),
+                  ),
+                  if (!isLast)
+                    Container(width: 1, height: 28, color: const Color(0xFF444444)),
+                ],
+              ),
             ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(color: Color(0xFF888888), fontSize: 12),
-          ),
-          const Spacer(),
-          Text(
-            "${apr.toStringAsFixed(2)}%",
-            style: const TextStyle(
-              color: Color(0xFFB5F000),
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(items[i].key,
+                        style: const TextStyle(
+                            color: Color(0xFF888888), fontSize: 12)),
+                    Text(items[i].value,
+                        style: const TextStyle(
+                          color: Color(0xFFB5F000),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        )),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 }
