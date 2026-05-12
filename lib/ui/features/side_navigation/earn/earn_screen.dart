@@ -3244,6 +3244,15 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
 
   // Connected timeline (dots joined by vertical lines)
   Widget _buildConnectedTimeline(List<MapEntry<String, String>> items) {
+    const dotColor = Color(0xFFD9D9D9);
+    const lineColor = Color(0x80FFFFFF);
+    const textStyle = TextStyle(
+      fontFamily: 'DMSans',
+      fontWeight: FontWeight.w400,
+      fontSize: 12,
+      height: 16 / 12,
+      color: Color(0x80FFFFFF),
+    );
     return Column(
       children: List.generate(items.length, (i) {
         final isLast = i == items.length - 1;
@@ -3251,36 +3260,32 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 16,
+              width: 20,
               child: Column(
                 children: [
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 10,
+                    height: 10,
                     margin: const EdgeInsets.only(top: 3),
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFF3A3A3A),
+                      color: dotColor,
                     ),
                   ),
                   if (!isLast)
-                    Container(width: 1, height: 34, color: const Color(0xFF3A3A3A)),
+                    Container(width: 1, height: 28, color: lineColor),
                 ],
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+                padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(items[i].key,
-                        style: const TextStyle(
-                            color: Color(0xFF6B7280), fontSize: 13)),
-                    Text(items[i].value,
-                        style: const TextStyle(
-                            color: Color(0xFFCCCCCC), fontSize: 13)),
+                    Text(items[i].key, style: textStyle),
+                    Text(items[i].value, style: textStyle),
                   ],
                 ),
               ),
@@ -3320,24 +3325,24 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 16,
+              width: 20,
               child: Column(
                 children: [
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 10,
+                    height: 10,
                     margin: const EdgeInsets.only(top: 3),
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFF444444),
+                      color: Color(0xFFD9D9D9),
                     ),
                   ),
                   if (!isLast)
-                    Container(width: 1, height: 28, color: const Color(0xFF444444)),
+                    Container(width: 1, height: 28, color: const Color(0x80FFFFFF)),
                 ],
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Padding(
                 padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
@@ -3346,12 +3351,19 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
                   children: [
                     Text(items[i].key,
                         style: const TextStyle(
-                            color: Color(0xFF888888), fontSize: 12)),
+                          fontFamily: 'DMSans',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 12,
+                          height: 16 / 12,
+                          color: Color(0x80FFFFFF),
+                        )),
                     Text(items[i].value,
                         style: const TextStyle(
-                          color: Color(0xFFB5F000),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                          fontFamily: 'DMSans',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          height: 16 / 15,
+                          color: Color(0xFF4ED78E),
                         )),
                   ],
                 ),
