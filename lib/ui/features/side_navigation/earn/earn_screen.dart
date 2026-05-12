@@ -1681,14 +1681,22 @@ class _EarnScreenState extends State<EarnScreen> {
                           Text(
                             opt,
                             style: TextStyle(
-                              color: isSel ? const Color(0xFFD4F000) : Colors.white,
+                              color: isSel
+                                  ? const Color(0xFFD4F000)
+                                  : Colors.white,
                               fontSize: 14,
                               fontFamily: "DMSans",
-                              fontWeight: isSel ? FontWeight.w600 : FontWeight.w400,
+                              fontWeight: isSel
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                             ),
                           ),
                           if (isSel)
-                            const Icon(Icons.check, color: Color(0xFFD4F000), size: 16),
+                            const Icon(
+                              Icons.check,
+                              color: Color(0xFFD4F000),
+                              size: 16,
+                            ),
                         ],
                       ),
                     ),
@@ -1700,53 +1708,50 @@ class _EarnScreenState extends State<EarnScreen> {
         );
       },
       child: Container(
-  padding: const EdgeInsets.symmetric(
-    horizontal: 10,
-    vertical: 10,
-  ),
-  decoration: BoxDecoration(
-    color: const Color(0xFF1A1A1A),
-    borderRadius: BorderRadius.circular(10),
-  ),
-  child: Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      /// FIXED STATUS TEXT
-      Text(
-        "Status",
-        style: TextStyle(
-          color: Colors.white.withOpacity(0.5),
-          fontSize: 12,
-          fontFamily: "DMSans",
-          fontWeight: FontWeight.w400,
-          height: 1,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            /// FIXED STATUS TEXT
+            Text(
+              "Status",
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 12,
+                fontFamily: "DMSans",
+                fontWeight: FontWeight.w400,
+                height: 1,
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            /// ONLY THIS VALUE CHANGES
+            Text(
+              _positionStatusFilter,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontFamily: "DMSans",
+                fontWeight: FontWeight.w400,
+                height: 1,
+              ),
+            ),
+
+            const SizedBox(width: 5),
+
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 14,
+              color: Colors.white.withOpacity(0.5),
+            ),
+          ],
         ),
       ),
-
-      const SizedBox(width: 10),
-
-      /// ONLY THIS VALUE CHANGES
-      Text(
-        _positionStatusFilter,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontFamily: "DMSans",
-          fontWeight: FontWeight.w400,
-          height: 1,
-        ),
-      ),
-
-      const SizedBox(width: 5),
-
-      Icon(
-        Icons.keyboard_arrow_down_rounded,
-        size: 14,
-        color: Colors.white.withOpacity(0.5),
-      ),
-    ],
-  ),
-),
     );
   }
 
@@ -1803,7 +1808,9 @@ class _EarnScreenState extends State<EarnScreen> {
     }
 
     final filteredPositions = _easyPositions.where((pos) {
-      final planType = (pos['plan_type'] ?? 'flexible').toString().toLowerCase();
+      final planType = (pos['plan_type'] ?? 'flexible')
+          .toString()
+          .toLowerCase();
       if (_positionStatusFilter == "Flexible") return planType == 'flexible';
       if (_positionStatusFilter == "Lock Days") return planType != 'flexible';
       return true;
@@ -1816,7 +1823,10 @@ class _EarnScreenState extends State<EarnScreen> {
           children: [
             Icon(Icons.inbox_outlined, color: Color(0xFF6B7280), size: 48),
             SizedBox(height: 12),
-            Text("No positions found", style: TextStyle(color: Color(0xFF6B7280), fontSize: 15)),
+            Text(
+              "No positions found",
+              style: TextStyle(color: Color(0xFF6B7280), fontSize: 15),
+            ),
           ],
         ),
       );
@@ -1858,23 +1868,36 @@ class _EarnScreenState extends State<EarnScreen> {
           int daysRemaining = 0;
           String unlockDateLabel = '';
           if (lockDays > 0) {
-            final endRaw = pos['end_date'] ?? pos['maturity_date'] ?? pos['unlock_date'] ?? pos['lock_end_date'];
+            final endRaw =
+                pos['end_date'] ??
+                pos['maturity_date'] ??
+                pos['unlock_date'] ??
+                pos['lock_end_date'];
             if (endRaw != null) {
               try {
                 endDate = DateTime.parse(endRaw.toString()).toLocal();
               } catch (_) {}
             }
             if (endDate == null) {
-              final startRaw = pos['start_date'] ?? pos['created_at'] ?? pos['subscribed_at'];
+              final startRaw =
+                  pos['start_date'] ??
+                  pos['created_at'] ??
+                  pos['subscribed_at'];
               if (startRaw != null) {
                 try {
-                  endDate = DateTime.parse(startRaw.toString()).toLocal().add(Duration(days: lockDays));
+                  endDate = DateTime.parse(
+                    startRaw.toString(),
+                  ).toLocal().add(Duration(days: lockDays));
                 } catch (_) {}
               }
             }
             if (endDate != null) {
-              daysRemaining = endDate.difference(DateTime.now()).inDays.clamp(0, 9999);
-              unlockDateLabel = "${endDate.month}/${endDate.day}/${endDate.year}";
+              daysRemaining = endDate
+                  .difference(DateTime.now())
+                  .inDays
+                  .clamp(0, 9999);
+              unlockDateLabel =
+                  "${endDate.month}/${endDate.day}/${endDate.year}";
             }
           }
 
@@ -1888,208 +1911,210 @@ class _EarnScreenState extends State<EarnScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                /// LEFT SIDE
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      /// TOP ROW
-                      Row(
+                    /// LEFT SIDE
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _coinIcon(
-                            iconUrl,
-                            size: 20,
-                            fallbackColor: color.withOpacity(0.2),
+                          /// TOP ROW
+                          Row(
+                            children: [
+                              _coinIcon(
+                                iconUrl,
+                                size: 20,
+                                fallbackColor: color.withOpacity(0.2),
+                              ),
+
+                              const SizedBox(width: 10),
+
+                              Text(
+                                coin,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: "DMSans",
+                                  height: 1,
+                                ),
+                              ),
+
+                              const SizedBox(width: 10),
+
+                              /// FLEXIBLE TAG
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 5,
+                                ),
+
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: color.withOpacity(0.5),
+                                  ),
+
+                                  /// FULL BUTTON COLOR EFFECT
+                                  gradient: RadialGradient(
+                                    center: Alignment.topCenter,
+                                    radius: 3.5,
+                                    colors: [
+                                      Colors.transparent,
+                                      color.withOpacity(0.35), // top strong
+                                      color.withOpacity(0.70), // middle
+                                      color.withOpacity(0.95), // fade
+                                      color,
+                                    ],
+                                    stops: const [0.0, 0.25, 0.50, 0.75, 1.0],
+                                  ),
+                                ),
+
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      planType == 'flexible'
+                                          ? Icons.bolt
+                                          : Icons.lock,
+                                      color: planType == 'flexible'
+                                          ? Colors.amber
+                                          : Colors.amber,
+                                      size: 10,
+                                    ),
+
+                                    const SizedBox(width: 2),
+
+                                    Text(
+                                      planType == 'flexible'
+                                          ? "Flexible"
+                                          : "${lockDays}d",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w400,
+                                        fontFamily: "DMSans",
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
 
-                          const SizedBox(width: 10),
+                          const SizedBox(height: 12),
 
-                          Text(
-                            coin,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: "DMSans",
-                              height: 1,
+                          /// STAKED + APR
+                          Row(
+                            children: [
+                              Text(
+                                "${double.tryParse(pos['amount']?.toString() ?? '0')?.toStringAsFixed(0) ?? '0'} Staked",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: "DMSans",
+                                  height: 1,
+                                ),
+                              ),
+
+                              const SizedBox(width: 10),
+
+                              Text(
+                                "${double.tryParse(pos['apr']?.toString() ?? '0')?.toStringAsFixed(2) ?? '0'}% APR",
+                                style: const TextStyle(
+                                  color: Color(0xFFCCFF00),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: "DMSans",
+                                  height: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    /// RIGHT SIDE
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        /// EARNED
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              "Earned",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: "DMSans",
+                                height: 1,
+                              ),
                             ),
-                          ),
 
-                          const SizedBox(width: 10),
+                            const SizedBox(height: 8),
 
-                          /// FLEXIBLE TAG
-                          Container(
+                            Text(
+                              "+${double.tryParse(pos['accrued_interest']?.toString() ?? '0')?.toStringAsFixed(0) ?? '0'} USDT",
+                              style: const TextStyle(
+                                color: Color(0xFFCCFF00),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: "DMSans",
+                                height: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(width: 5),
+
+                        /// REDEEM BUTTON
+                        GestureDetector(
+                          onTap: canRedeem
+                              ? () => _handleRedeem(pos['id'].toString())
+                              : null,
+                          child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 5,
+                              horizontal: 10,
+                              vertical: 12,
                             ),
 
                             decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: color.withOpacity(0.5),
-                          ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: color.withOpacity(0.5)),
 
-                          /// FULL BUTTON COLOR EFFECT
-                          gradient: RadialGradient(
-                            center: Alignment.topCenter,
-                            radius: 3.5,
-                            colors: [
-                              Colors.transparent,
-                              color.withOpacity(0.35), // top strong
-                              color.withOpacity(0.70), // middle
-                              color.withOpacity(0.95), // fade
-                              color,
-                            ],
-                            stops: const [0.0, 0.25, 0.50, 0.75, 1.0],
-                          ),
-                        ),
-
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  planType == 'flexible' ? Icons.bolt : Icons.lock,
-                                  color: planType == 'flexible' ? Colors.amber : Colors.amber,
-                                  size: 10,
-                                ),
-
-                                const SizedBox(width: 2),
-
-                                Text(
-                                  planType == 'flexible' ? "Flexible" : "${lockDays}d",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w400,
-                                    fontFamily: "DMSans",
-                                    height: 1,
-                                  ),
-                                ),
-                              ],
+                              /// FULL BUTTON COLOR EFFECT
+                              gradient: RadialGradient(
+                                center: Alignment.topCenter,
+                                radius: 3.5,
+                                colors: [
+                                  Colors.transparent,
+                                  color.withOpacity(0.35), // top strong
+                                  color.withOpacity(0.70), // middle
+                                  color.withOpacity(0.95), // fade
+                                  color,
+                                ],
+                                stops: const [0.0, 0.25, 0.50, 0.75, 1.0],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
 
-                      const SizedBox(height: 12),
-
-                      /// STAKED + APR
-                      Row(
-                        children: [
-                          Text(
-                            "${double.tryParse(pos['amount']?.toString() ?? '0')?.toStringAsFixed(0) ?? '0'} Staked",
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: "DMSans",
-                              height: 1,
+                            child: const Text(
+                              "Redeem",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: "DMSans",
+                              ),
                             ),
-                          ),
-
-                          const SizedBox(width: 10),
-
-                          Text(
-                            "${double.tryParse(pos['apr']?.toString() ?? '0')?.toStringAsFixed(2) ?? '0'}% APR",
-                            style: const TextStyle(
-                              color: Color(0xFFCCFF00),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: "DMSans",
-                              height: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                    ],
-                  ),
-                ),
-
-                /// RIGHT SIDE
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    /// EARNED
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Earned",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            fontFamily: "DMSans",
-                            height: 1,
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Text(
-                          "+${double.tryParse(pos['accrued_interest']?.toString() ?? '0')?.toStringAsFixed(0) ?? '0'} USDT",
-                          style: const TextStyle(
-                            color: Color(0xFFCCFF00),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: "DMSans",
-                            height: 1,
                           ),
                         ),
                       ],
                     ),
-
-                    const SizedBox(width: 5),
-
-                    /// REDEEM BUTTON
-                    GestureDetector(
-                      onTap: canRedeem
-                          ? () => _handleRedeem(pos['id'].toString())
-                          : null,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 12,
-                        ),
-
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: color.withOpacity(0.5),
-                          ),
-
-                          /// FULL BUTTON COLOR EFFECT
-                          gradient: RadialGradient(
-                            center: Alignment.topCenter,
-                            radius: 3.5,
-                            colors: [
-                              Colors.transparent,
-                              color.withOpacity(0.35), // top strong
-                              color.withOpacity(0.70), // middle
-                              color.withOpacity(0.95), // fade
-                              color,
-                            ],
-                            stops: const [0.0, 0.25, 0.50, 0.75, 1.0],
-                          ),
-                        ),
-
-                        child: const Text(
-                          "Redeem",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: "DMSans",
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
                   ],
                 ),
 
@@ -2099,11 +2124,7 @@ class _EarnScreenState extends State<EarnScreen> {
                     padding: const EdgeInsets.only(top: 5),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.lock,
-                          color: Colors.amber,
-                          size: 12,
-                        ),
+                        Icon(Icons.lock, color: Colors.amber, size: 12),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
