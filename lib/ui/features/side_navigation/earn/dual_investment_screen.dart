@@ -580,15 +580,15 @@ class _DualInvestmentScreenState extends State<DualInvestmentScreen> {
                               ),
                               GestureDetector(
                                 onTap: isLoggedIn
-                                    ? () => showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (_) => DualSubscribeModal(
-                                          product: p,
-                                          controller: _controller,
+                                    ? () => Get.to(() => Scaffold(
+                                        backgroundColor: const Color(0xFF0F0F0F),
+                                        body: SafeArea(
+                                          child: DualSubscribeModal(
+                                            product: p,
+                                            controller: _controller,
+                                          ),
                                         ),
-                                      )
+                                      ))
                                     : null,
                                 child: Container(
                                   height: 30,

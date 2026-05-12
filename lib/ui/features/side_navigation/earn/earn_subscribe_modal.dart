@@ -66,7 +66,6 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFF121212),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         left: 20, right: 20, top: 20,
@@ -80,19 +79,26 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
             // ── Header ──
             Row(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('EASY EARN', style: TextStyle(color: Color(0xFF6B7280), fontSize: 11, letterSpacing: 1.2)),
-                      const SizedBox(height: 4),
-                      Text(widget.product.coin, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                ),
                 GestureDetector(
                   onTap: () => Get.back(),
-                  child: const Icon(Icons.close, color: Color(0xFF6B7280), size: 24),
+                  child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 8),
+                ClipOval(
+                  child: widget.product.coinIcon != null && widget.product.coinIcon!.isNotEmpty
+                      ? Image.network(widget.product.coinIcon!, width: 24, height: 24, fit: BoxFit.cover,
+                          errorBuilder: (_, __, e) => Container(width: 24, height: 24,
+                              decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF1E2128)),
+                              child: const Icon(Icons.monetization_on, color: Color(0xFFB5F000), size: 14)),
+                        )
+                      : Container(width: 24, height: 24,
+                          decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF1E2128)),
+                          child: const Icon(Icons.monetization_on, color: Color(0xFFB5F000), size: 14)),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "${widget.product.coin} Suscribe",
+                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
                 ),
               ],
             ),

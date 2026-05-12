@@ -1128,9 +1128,9 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF111111),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: const Color(0xFF111111),
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(

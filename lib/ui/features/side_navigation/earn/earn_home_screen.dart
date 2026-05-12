@@ -147,12 +147,10 @@ class _EarnHomeScreenState extends State<EarnHomeScreen> {
                             ),
                           ),
                           GestureDetector(
-                            onTap: () => showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) => EarnSubscribeModal(product: product),
-                            ),
+                            onTap: () => Get.to(() => Scaffold(
+                              backgroundColor: const Color(0xFF121212),
+                              body: SafeArea(child: EarnSubscribeModal(product: product)),
+                            )),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(

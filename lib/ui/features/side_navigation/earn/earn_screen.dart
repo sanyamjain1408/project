@@ -596,7 +596,7 @@ class _EarnScreenState extends State<EarnScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF111111),
       body: SafeArea(
         child: Column(
           children: [
@@ -1009,14 +1009,16 @@ class _EarnScreenState extends State<EarnScreen> {
                           ? 'Flexible'
                           : '${plan.lockDays} Days';
                       return GestureDetector(
-                        onTap: () => showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => _EasyEarnModal(
-                            coin: coin,
-                            plans: coinProducts,
-                            initialPlan: plan,
+                        onTap: () => Get.to(
+                          () => Scaffold(
+                            backgroundColor: const Color(0xFF0F0F0F),
+                            body: SafeArea(
+                              child: _EasyEarnModal(
+                                coin: coin,
+                                plans: coinProducts,
+                                initialPlan: plan,
+                              ),
+                            ),
                           ),
                         ),
                         child: Container(
@@ -1097,14 +1099,16 @@ class _EarnScreenState extends State<EarnScreen> {
                               ),
                               const SizedBox(width: 5),
                               GestureDetector(
-                                onTap: () => showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (_) => _EasyEarnModal(
-                                    coin: coin,
-                                    plans: coinProducts,
-                                    initialPlan: plan,
+                                onTap: () => Get.to(
+                                  () => Scaffold(
+                                    backgroundColor: const Color(0xFF0F0F0F),
+                                    body: SafeArea(
+                                      child: _EasyEarnModal(
+                                        coin: coin,
+                                        plans: coinProducts,
+                                        initialPlan: plan,
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 child: Container(
@@ -1137,13 +1141,15 @@ class _EarnScreenState extends State<EarnScreen> {
                           ? 'Flexible'
                           : '${dp.termDays} Days';
                       return GestureDetector(
-                        onTap: () => showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => DualSubscribeModal(
-                            product: dp,
-                            controller: _dualController,
+                        onTap: () => Get.to(
+                          () => Scaffold(
+                            backgroundColor: const Color(0xFF0F0F0F),
+                            body: SafeArea(
+                              child: DualSubscribeModal(
+                                product: dp,
+                                controller: _dualController,
+                              ),
+                            ),
                           ),
                         ),
                         child: Container(
@@ -1224,13 +1230,15 @@ class _EarnScreenState extends State<EarnScreen> {
                               ),
                               const SizedBox(width: 5),
                               GestureDetector(
-                                onTap: () => showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (_) => DualSubscribeModal(
-                                    product: dp,
-                                    controller: _dualController,
+                                onTap: () => Get.to(
+                                  () => Scaffold(
+                                    backgroundColor: const Color(0xFF0F0F0F),
+                                    body: SafeArea(
+                                      child: DualSubscribeModal(
+                                        product: dp,
+                                        controller: _dualController,
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 child: Container(
@@ -1323,15 +1331,19 @@ class _EarnScreenState extends State<EarnScreen> {
 
   Widget _buildRecommendedCard(EarnProduct product, Color color) {
     return GestureDetector(
-      onTap: () => showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => _EasyEarnModal(
-          coin: product.coin,
-          plans:
-              _controller.products.where((p) => p.coin == product.coin).toList()
-                ..sort((a, b) => a.lockDays.compareTo(b.lockDays)),
+      onTap: () => Get.to(
+        () => Scaffold(
+          backgroundColor: const Color(0xFF0F0F0F),
+          body: SafeArea(
+            child: _EasyEarnModal(
+              coin: product.coin,
+              plans:
+                  _controller.products
+                      .where((p) => p.coin == product.coin)
+                      .toList()
+                    ..sort((a, b) => a.lockDays.compareTo(b.lockDays)),
+            ),
+          ),
         ),
       ),
       child: Container(
@@ -2654,8 +2666,6 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
   }
 
   double get _amountNum => double.tryParse(_amountCtrl.text) ?? 0;
-  double get _dailyProfit =>
-      _amountNum > 0 ? (_amountNum * _selectedPlan.apr) / 100 / 365 : 0;
 
   String _dateStr(int addDays) {
     final d = DateTime.now().add(Duration(days: addDays));
@@ -2699,10 +2709,7 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
     final isFlexible = _selectedPlan.lockDays == 0;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F0F0F),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      decoration: const BoxDecoration(color: Color(0xFF111111)),
       padding: EdgeInsets.only(
         left: 20,
         right: 20,
@@ -2717,23 +2724,25 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
             // Header
             Row(
               children: [
-                _coinIcon(_selectedPlan.coinIcon, size: 28),
-                const SizedBox(width: 10),
-                Text(
-                  "${widget.coin} Subscribe",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: const Icon(
-                    Icons.close,
-                    color: Color(0xFF555555),
-                    size: 22,
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _coinIcon(_selectedPlan.coinIcon, size: 20),
+                const SizedBox(width: 5),
+                Text(
+                  "${widget.coin} Suscribe",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
+                    height: 24 / 16,
                   ),
                 ),
               ],
@@ -2759,32 +2768,34 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
                     child: Container(
                       margin: const EdgeInsets.only(right: 10),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                        horizontal: 20,
+                        vertical: 20,
                       ),
                       decoration: BoxDecoration(
                         color: isA
-                            ? const Color(0xFF1A1A1A)
-                            : const Color(0xFF0A0A0A),
-                        borderRadius: BorderRadius.circular(12),
+                            ? Colors.transparent
+                            : const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isA
-                              ? const Color(0xFFB5F000)
-                              : const Color(0xFF222222),
-                          width: isA ? 1.5 : 1,
+                              ? const Color(0xFFCCFF00)
+                              : Colors.transparent,
+                          width: isA ? 0.5 : 1,
                         ),
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             label,
                             style: TextStyle(
                               color: isA
                                   ? Colors.white
-                                  : const Color(0xFF6B7280),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                                  : Colors.white.withOpacity(0.5),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: "DMSans",
+                              height: 24 / 16,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -2792,9 +2803,11 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
                             sub,
                             style: TextStyle(
                               color: isA
-                                  ? const Color(0xFFB5F000)
-                                  : const Color(0xFF555555),
+                                  ? const Color(0xFFCCFF00)
+                                  : Colors.white.withOpacity(0.5),
                               fontSize: 11,
+                              fontFamily: "DMSans",
+                              height: 24 / 16,
                             ),
                           ),
                         ],
@@ -2807,263 +2820,261 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
             const SizedBox(height: 20),
 
             // Amount
-            const Text(
-              "Amount",
-              style: TextStyle(
-                color: Color(0xFFCCCCCC),
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF0A0A0A),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF222222)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _amountCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      style: const TextStyle(color: Colors.white, fontSize: 15),
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        hintText:
-                            "${coinFormat(_selectedPlan.minAmount)} Minimum",
-                        hintStyle: const TextStyle(color: Color(0xFF555555)),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
-                      border: Border.all(color: const Color(0xFF333333)),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      "Max",
-                      style: TextStyle(
-                        color: Color(0xFFB5F000),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Text(
-                      widget.coin,
-                      style: const TextStyle(
-                        color: Color(0xFF888888),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Maximum  ${coinFormat(_selectedPlan.maxAmount)}",
-                  style: const TextStyle(
-                    color: Color(0xFF555555),
-                    fontSize: 11,
-                  ),
-                ),
                 const Text(
-                  "Balance  0.00",
-                  style: TextStyle(color: Color(0xFF555555), fontSize: 11),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Profit estimate
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0A0A0A),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: isFlexible
-                  ? Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Est. Daily Total Profit",
-                              style: TextStyle(
-                                color: Color(0xFF6B7280),
-                                fontSize: 12,
-                              ),
-                            ),
-                            Text(
-                              "${_dailyProfit.toStringAsFixed(8).replaceAll(RegExp(r'0+$'), '')} ${widget.coin}",
-                              style: const TextStyle(
-                                color: Color(0xFFB5F000),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Divider(color: Color(0xFF1A1A1A), height: 16),
-                        const Text(
-                          "Hourly interest rate, access at any time",
-                          style: TextStyle(
-                            color: Color(0xFF555555),
-                            fontSize: 11,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _timelineRow("Subscription Time", _dateStr(0)),
-                        _timelineRow("Interest Start Time", _dateStr(0)),
-                        _timelineRow("Interest Payout Time", _dateStr(0)),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Est. Total Profit",
-                              style: TextStyle(
-                                color: Color(0xFF6B7280),
-                                fontSize: 12,
-                              ),
-                            ),
-                            const Text(
-                              "--",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Est. APR",
-                              style: TextStyle(
-                                color: Color(0xFF6B7280),
-                                fontSize: 12,
-                              ),
-                            ),
-                            Text(
-                              "${_selectedPlan.apr.toStringAsFixed(2)}%",
-                              style: const TextStyle(
-                                color: Color(0xFFB5F000),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Divider(color: Color(0xFF1A1A1A), height: 16),
-                        _timelineRow("Subscription Time", _dateStr(0)),
-                        _timelineRow("Interest Start Time", _dateStr(1)),
-                        _timelineRow("Interest Payout Time", _dateStr(1)),
-                        _timelineRow(
-                          "Maturity Time",
-                          _dateStr(_selectedPlan.lockDays),
-                        ),
-                        _timelineRow(
-                          "Fund Arrival Time",
-                          _dateStr(_selectedPlan.lockDays),
-                        ),
-                      ],
-                    ),
-            ),
-            const SizedBox(height: 16),
-
-            // Auto Subscribe toggle
-            if (!isFlexible)
-              GestureDetector(
-                onTap: () => setState(() => _autoSub = !_autoSub),
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0A0A0A),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _autoSub
-                          ? const Color(0xFFB5F000)
-                          : const Color(0xFF1E1E1E),
-                    ),
+                  "Amount",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: "DMSans",
+                    height: 24 / 16,
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          "Auto Subscribe",
+                ),
+                if (!isFlexible) ...[
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => setState(() => _autoSub = !_autoSub),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 18,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _autoSub
+                                  ? const Color(0xFFB5F000)
+                                  : const Color(0xFF444444),
+                              width: 2,
+                            ),
+                            color: _autoSub
+                                ? const Color(0xFFB5F000)
+                                : Colors.transparent,
+                          ),
+                          child: _autoSub
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 11,
+                                  color: Colors.black,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Auto Suscribe",
                           style: TextStyle(
                             color: _autoSub
                                 ? const Color(0xFFB5F000)
-                                : const Color(0xFFAAAAAA),
-                            fontSize: 13,
+                                : const Color(0xFF888888),
+                            fontSize: 12,
+                            fontFamily: "DMSans",
+                            height: 24 / 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.transparent),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _amountCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
+                            fontFamily: "DMSans",
+                            height: 24 / 16,
+                          ),
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+
+                            hintText:
+                                "${coinFormat(_selectedPlan.minAmount)} Minimum",
+                            hintStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: "DMSans",
+                              height: 24 / 16,
+                            ),
                           ),
                         ),
                       ),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 44,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: _autoSub
-                              ? const Color(0xFFB5F000)
-                              : const Color(0xFF333333),
-                          borderRadius: BorderRadius.circular(12),
+                      Text(
+                        "Max",
+                        style: TextStyle(
+                          color: Color(0xFFCCFF00),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: "DMSans",
+                          height: 20 / 15,
                         ),
-                        child: AnimatedAlign(
-                          duration: const Duration(milliseconds: 200),
-                          alignment: _autoSub
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.all(3),
-                            child: Container(
-                              width: 18,
-                              height: 18,
-                              decoration: BoxDecoration(
-                                color: _autoSub
-                                    ? Colors.black
-                                    : const Color(0xFF555555),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 0, left: 10),
+                        child: Text(
+                          widget.coin,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: "DMSans",
+                            height: 20 / 15,
                           ),
                         ),
                       ),
                     ],
                   ),
+                  Container(
+                    height: 1,
+                    width: double.infinity,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Maximum",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 20 / 15,
+                        ),
+                      ),
+                      Text(
+                        "Balance",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 20 / 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "${coinFormat(_selectedPlan.maxAmount)}",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 16 / 12,
+                        ),
+                      ),
+                      Text(
+                        "0.00",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
+                          height: 16 / 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Profit estimate
+            if (isFlexible) ...[
+              Text(
+                "Est. Daily Total Profit",
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: "DMSans",
+                  height: 20 / 15,
                 ),
               ),
+              const SizedBox(height: 20),
+              ..._buildTierRows(),
+              const Text(
+                "Hourly interest rate, access at any time",
+                style: TextStyle(color: Color(0xFF555555), fontSize: 11),
+              ),
+              const SizedBox(height: 10),
+              _timelineRow("Subscription Time", _dateStr(0)),
+              _timelineRow("Interest Start Time", _dateStr(0)),
+              _timelineRow("Interest Payout Time", _dateStr(0)),
+            ] else ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Est. Total Profit",
+                    style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                  ),
+                  const Text(
+                    "--",
+                    style: TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Est. APR",
+                    style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                  ),
+                  Text(
+                    "${_selectedPlan.apr.toStringAsFixed(2)}%",
+                    style: const TextStyle(
+                      color: Color(0xFFB5F000),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(color: Color(0xFF1A1A1A), height: 20),
+              _timelineRow("Subscription Time", _dateStr(0)),
+              _timelineRow("Interest Start Time", _dateStr(1)),
+              _timelineRow("Interest Payout Time", _dateStr(1)),
+              _timelineRow("Maturity Time", _dateStr(_selectedPlan.lockDays)),
+              _timelineRow(
+                "Fund Arrival Time",
+                _dateStr(_selectedPlan.lockDays),
+              ),
+            ],
+            const SizedBox(height: 16),
 
             // Agreement
             GestureDetector(
@@ -3213,6 +3224,53 @@ class _EasyEarnModalState extends State<_EasyEarnModal> {
           Text(
             value,
             style: const TextStyle(color: Color(0xFFCCCCCC), fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildTierRows() {
+    final flexPlans = widget.plans.where((p) => p.lockDays == 0).toList()
+      ..sort((a, b) => a.maxAmount.compareTo(b.maxAmount));
+    if (flexPlans.isEmpty) {
+      return [_tierRow(null, _selectedPlan.maxAmount, _selectedPlan.apr)];
+    }
+    return List<Widget>.generate(flexPlans.length, (i) {
+      final prevMax = i > 0 ? flexPlans[i - 1].maxAmount : null;
+      return _tierRow(prevMax, flexPlans[i].maxAmount, flexPlans[i].apr);
+    });
+  }
+
+  Widget _tierRow(double? prevMax, double maxAmount, double apr) {
+    final label = prevMax == null
+        ? "< ${coinFormat(maxAmount)}USDT"
+        : "${coinFormat(prevMax)} ~${coinFormat(maxAmount)}USDT";
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            margin: const EdgeInsets.only(right: 8),
+            decoration: const BoxDecoration(
+              color: Color(0xFF444444),
+              shape: BoxShape.circle,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: Color(0xFF888888), fontSize: 12),
+          ),
+          const Spacer(),
+          Text(
+            "${apr.toStringAsFixed(2)}%",
+            style: const TextStyle(
+              color: Color(0xFFB5F000),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
