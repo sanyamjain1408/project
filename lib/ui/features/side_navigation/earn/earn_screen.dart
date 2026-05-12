@@ -1700,13 +1700,41 @@ class _EarnScreenState extends State<EarnScreen> {
 
           final iconUrl = _resolveIconUrl(coin, pos['coin_icon'] as String?);
 
+          // Parse unlock date for fixed plans
+          DateTime? endDate;
+          int daysRemaining = 0;
+          String unlockDateLabel = '';
+          if (lockDays > 0) {
+            final endRaw = pos['end_date'] ?? pos['maturity_date'] ?? pos['unlock_date'] ?? pos['lock_end_date'];
+            if (endRaw != null) {
+              try {
+                endDate = DateTime.parse(endRaw.toString()).toLocal();
+              } catch (_) {}
+            }
+            if (endDate == null) {
+              final startRaw = pos['start_date'] ?? pos['created_at'] ?? pos['subscribed_at'];
+              if (startRaw != null) {
+                try {
+                  endDate = DateTime.parse(startRaw.toString()).toLocal().add(Duration(days: lockDays));
+                } catch (_) {}
+              }
+            }
+            if (endDate != null) {
+              daysRemaining = endDate.difference(DateTime.now()).inDays.clamp(0, 9999);
+              unlockDateLabel = "${endDate.month}/${endDate.day}/${endDate.year}";
+            }
+          }
+
           return Container(
             margin: const EdgeInsets.only(bottom: 20, top: 20),
             decoration: BoxDecoration(color: Colors.transparent),
 
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                 /// LEFT SIDE
                 Expanded(
                   child: Column(
@@ -1768,28 +1796,15 @@ class _EarnScreenState extends State<EarnScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.bolt,
-                                  color: Colors.amber,
+                                  planType == 'flexible' ? Icons.bolt : Icons.lock,
+                                  color: planType == 'flexible' ? Colors.amber : Colors.amber,
                                   size: 10,
                                 ),
 
                                 const SizedBox(width: 2),
 
-                                // Text(
-                                //   planType == 'flexible'
-                                //       ? "Flexible"
-                                //       : "${lockDays}d Fixed",
-                                //   style: const TextStyle(
-                                //     color: Colors.white,
-                                //     fontSize: 10,
-                                //     fontWeight: FontWeight.w400,
-                                //     fontFamily: "DMSans",
-                                //     height: 1,
-                                //   ),
-                                // ),
-
                                 Text(
-                                  "Flexible",
+                                  planType == 'flexible' ? "Flexible" : "${lockDays}d",
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
@@ -1834,6 +1849,7 @@ class _EarnScreenState extends State<EarnScreen> {
                           ),
                         ],
                       ),
+
                     ],
                   ),
                 ),
@@ -1920,6 +1936,40 @@ class _EarnScreenState extends State<EarnScreen> {
                     ),
                   ],
                 ),
+
+                  ],
+                ),
+
+                if (planType != 'flexible' && lockDays > 0) ...[
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 5),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.lock,
+                          color: Colors.amber,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            unlockDateLabel.isNotEmpty
+                                ? "$daysRemaining days remaining : unlocks $unlockDateLabel"
+                                : "$lockDays days lock period",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontFamily: "DMSans",
+                              fontWeight: FontWeight.w400,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           );
