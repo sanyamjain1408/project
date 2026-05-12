@@ -13,13 +13,13 @@ const String _baseUrl = 'https://api.trapix.com';
 Color getLockColor(int days) {
   switch (days) {
     case 0:
-      return const Color(0xFFCCFF00);
+      return const Color(0xFF0062FF);
     case 30:
-      return const Color(0xFF00CCFF);
+      return const Color(0xFF00E5FF);
     case 60:
-      return const Color(0xFFAA88FF);
+      return const Color(0xFFCCFF00);
     case 90:
-      return const Color(0xFFFF9900);
+      return const Color(0xFFFF6F00);
     case 120:
       return const Color(0xFFFF4488);
     default:
@@ -1670,7 +1670,7 @@ class _EarnScreenState extends State<EarnScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
         if (_redeemError.isNotEmpty)
           Container(
@@ -1702,9 +1702,7 @@ class _EarnScreenState extends State<EarnScreen> {
 
           return Container(
             margin: const EdgeInsets.only(bottom: 20, top: 20),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-            ),
+            decoration: BoxDecoration(color: Colors.transparent),
 
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -1741,40 +1739,60 @@ class _EarnScreenState extends State<EarnScreen> {
                           /// FLEXIBLE TAG
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
+                              horizontal: 5,
                               vertical: 5,
                             ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
 
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  color.withOpacity(0.95),
-                                  const Color(0xFF111111),
-                                ],
-                              ),
-                            ),
+                            decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: color.withOpacity(0.5),
+                          ),
+
+                          /// FULL BUTTON COLOR EFFECT
+                          gradient: RadialGradient(
+                            center: Alignment.topCenter,
+                            radius: 3.5,
+                            colors: [
+                              Colors.transparent,
+                              color.withOpacity(0.35), // top strong
+                              color.withOpacity(0.70), // middle
+                              color.withOpacity(0.95), // fade
+                              color,
+                            ],
+                            stops: const [0.0, 0.25, 0.50, 0.75, 1.0],
+                          ),
+                        ),
 
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
                                   Icons.bolt,
-                                  color: Colors.white.withOpacity(0.9),
-                                  size: 12,
+                                  color: Colors.amber,
+                                  size: 10,
                                 ),
 
                                 const SizedBox(width: 2),
 
+                                // Text(
+                                //   planType == 'flexible'
+                                //       ? "Flexible"
+                                //       : "${lockDays}d Fixed",
+                                //   style: const TextStyle(
+                                //     color: Colors.white,
+                                //     fontSize: 10,
+                                //     fontWeight: FontWeight.w400,
+                                //     fontFamily: "DMSans",
+                                //     height: 1,
+                                //   ),
+                                // ),
+
                                 Text(
-                                  planType == 'flexible'
-                                      ? "Flexible"
-                                      : "${lockDays}d Fixed",
+                                  "Flexible",
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 12,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w400,
                                     fontFamily: "DMSans",
                                     height: 1,
@@ -1820,8 +1838,6 @@ class _EarnScreenState extends State<EarnScreen> {
                   ),
                 ),
 
-                
-
                 /// RIGHT SIDE
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -1841,7 +1857,7 @@ class _EarnScreenState extends State<EarnScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 8),
 
                         Text(
                           "+${double.tryParse(pos['accrued_interest']?.toString() ?? '0')?.toStringAsFixed(0) ?? '0'} USDT",
@@ -1863,37 +1879,41 @@ class _EarnScreenState extends State<EarnScreen> {
                       onTap: canRedeem
                           ? () => _handleRedeem(pos['id'].toString())
                           : null,
-                      child: Expanded(
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 12,
-                          ),
-                          height: 46,
-                          width: 75,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
 
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                color.withOpacity(0.95),
-                                const Color(0xFF111111),
-                              ],
-                            ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: color.withOpacity(0.5),
                           ),
 
-                          child: Text(
-                            "Redeem",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: "DMSans",
-                              height: 1,
-                            ),
+                          /// FULL BUTTON COLOR EFFECT
+                          gradient: RadialGradient(
+                            center: Alignment.topCenter,
+                            radius: 3.5,
+                            colors: [
+                              Colors.transparent,
+                              color.withOpacity(0.35), // top strong
+                              color.withOpacity(0.70), // middle
+                              color.withOpacity(0.95), // fade
+                              color,
+                            ],
+                            stops: const [0.0, 0.25, 0.50, 0.75, 1.0],
+                          ),
+                        ),
+
+                        child: const Text(
+                          "Redeem",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: "DMSans",
                           ),
                         ),
                       ),
