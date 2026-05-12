@@ -73,6 +73,7 @@ class _EarnScreenState extends State<EarnScreen> {
 
   String _searchCoin = "";
   String _filterStatus = "All";
+  String _positionStatusFilter = "All";
   final Set<String> _expandedCoins = {};
   bool _isLoadingEasy = false;
   List<dynamic> _easyPositions = [];
@@ -1579,6 +1580,8 @@ class _EarnScreenState extends State<EarnScreen> {
                   _easyTab("My Position", 0),
                   const SizedBox(width: 24),
                   _easyTab("History", 1),
+                  const Spacer(),
+                  if (_selectedEasyTab == 0) _buildPositionStatusDropdown(),
                 ],
               ),
             ],
@@ -1614,6 +1617,136 @@ class _EarnScreenState extends State<EarnScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPositionStatusDropdown() {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: (_) => Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Select Status",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...["All", "Flexible", "Lock Days"].map((opt) {
+                  final isSel = _positionStatusFilter == opt;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _positionStatusFilter = opt);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white.withOpacity(0.07),
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            opt,
+                            style: TextStyle(
+                              color: isSel ? const Color(0xFFD4F000) : Colors.white,
+                              fontSize: 14,
+                              fontFamily: "DMSans",
+                              fontWeight: isSel ? FontWeight.w600 : FontWeight.w400,
+                            ),
+                          ),
+                          if (isSel)
+                            const Icon(Icons.check, color: Color(0xFFD4F000), size: 16),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+      child: Container(
+  padding: const EdgeInsets.symmetric(
+    horizontal: 10,
+    vertical: 10,
+  ),
+  decoration: BoxDecoration(
+    color: const Color(0xFF1A1A1A),
+    borderRadius: BorderRadius.circular(10),
+  ),
+  child: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      /// FIXED STATUS TEXT
+      Text(
+        "Status",
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.5),
+          fontSize: 12,
+          fontFamily: "DMSans",
+          fontWeight: FontWeight.w400,
+          height: 1,
+        ),
+      ),
+
+      const SizedBox(width: 10),
+
+      /// ONLY THIS VALUE CHANGES
+      Text(
+        _positionStatusFilter,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontFamily: "DMSans",
+          fontWeight: FontWeight.w400,
+          height: 1,
+        ),
+      ),
+
+      const SizedBox(width: 5),
+
+      Icon(
+        Icons.keyboard_arrow_down_rounded,
+        size: 14,
+        color: Colors.white.withOpacity(0.5),
+      ),
+    ],
+  ),
+),
     );
   }
 
@@ -1669,6 +1802,26 @@ class _EarnScreenState extends State<EarnScreen> {
       );
     }
 
+    final filteredPositions = _easyPositions.where((pos) {
+      final planType = (pos['plan_type'] ?? 'flexible').toString().toLowerCase();
+      if (_positionStatusFilter == "Flexible") return planType == 'flexible';
+      if (_positionStatusFilter == "Lock Days") return planType != 'flexible';
+      return true;
+    }).toList();
+
+    if (filteredPositions.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox_outlined, color: Color(0xFF6B7280), size: 48),
+            SizedBox(height: 12),
+            Text("No positions found", style: TextStyle(color: Color(0xFF6B7280), fontSize: 15)),
+          ],
+        ),
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
@@ -1687,7 +1840,7 @@ class _EarnScreenState extends State<EarnScreen> {
             ),
           ),
 
-        ..._easyPositions.map((pos) {
+        ...filteredPositions.map((pos) {
           final lockDays = (pos['lock_days'] ?? 0).toInt();
 
           final color = getLockColor(lockDays);
