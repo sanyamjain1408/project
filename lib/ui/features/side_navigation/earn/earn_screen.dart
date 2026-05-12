@@ -2072,47 +2072,68 @@ class _EarnScreenState extends State<EarnScreen> {
                         const SizedBox(width: 5),
 
                         /// REDEEM BUTTON
-                        GestureDetector(
-                          onTap: canRedeem
-                              ? () => _handleRedeem(pos['id'].toString())
-                              : null,
-                          child: Container(
+                        if (canRedeem)
+                          GestureDetector(
+                            onTap: () => _handleRedeem(pos['id'].toString()),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: color.withOpacity(0.5),
+                                ),
+                                gradient: RadialGradient(
+                                  center: Alignment.topCenter,
+                                  radius: 3.5,
+                                  colors: [
+                                    Colors.transparent,
+                                    color.withOpacity(0.35),
+                                    color.withOpacity(0.70),
+                                    color.withOpacity(0.95),
+                                    color,
+                                  ],
+                                  stops: const [0.0, 0.25, 0.50, 0.75, 1.0],
+                                ),
+                              ),
+                              child: const Text(
+                                "Redeem",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: "DMSans",
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
                               vertical: 12,
                             ),
-
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: color.withOpacity(0.5)),
-
-                              /// FULL BUTTON COLOR EFFECT
-                              gradient: RadialGradient(
-                                center: Alignment.topCenter,
-                                radius: 3.5,
-                                colors: [
-                                  Colors.transparent,
-                                  color.withOpacity(0.35), // top strong
-                                  color.withOpacity(0.70), // middle
-                                  color.withOpacity(0.95), // fade
-                                  color,
-                                ],
-                                stops: const [0.0, 0.25, 0.50, 0.75, 1.0],
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
                               ),
+                              color: Colors.transparent,
                             ),
-
-                            child: const Text(
-                              "Redeem",
+                            child: Text(
+                              "Locked",
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Colors.white.withOpacity(0.2),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 fontFamily: "DMSans",
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ],
