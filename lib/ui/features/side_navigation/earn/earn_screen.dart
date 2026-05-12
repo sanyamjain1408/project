@@ -2231,60 +2231,9 @@ class _EarnScreenState extends State<EarnScreen> {
       );
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            children: const [
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'Type',
-                  style: TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'Coin',
-                  style: TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: Text(
-                  'Amount',
-                  style: TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: Text(
-                  'Time',
-                  style: TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Divider(color: Color(0xFF1E2128), height: 1),
+        
         ..._easyHistory.map((tx) {
           final type = tx['type']?.toString().toLowerCase() ?? 'subscribe';
           final coin = tx['coin'] ?? 'USDT';
@@ -2300,91 +2249,166 @@ class _EarnScreenState extends State<EarnScreen> {
               timeStr = tx['created_at'].toString();
             }
           }
-          final isSubscribe = type == 'subscribe';
-          final pillColor = isSubscribe
-              ? const Color(0xFFB5F000)
-              : const Color(0xFF00CCAA);
-          final amtColor = isSubscribe
-              ? const Color(0xFFFF5555)
-              : const Color(0xFF00FF88);
-          final amtPrefix = isSubscribe ? '-' : '+';
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Container(
+          final Color pillBg;
+          final Color pillText;
+          final Color amtColor;
+          final String amtPrefix;
+          if (type == 'subscribe') {
+            pillBg =  Color(0xFFCCFF00).withOpacity(0.3);
+            pillText = const Color(0xFFCCFF00);
+            amtColor = const Color(0xFFFF5555);
+            amtPrefix = '-';
+          } else if (type == 'interest') {
+            pillBg =  Color(0xFF00FF04).withOpacity(0.3);
+            pillText = const Color(0xFF00FF04);
+            amtColor = const Color(0xFF00FF04);
+            amtPrefix = '+';
+          } else {
+            // redeem
+            pillBg =  Color(0xFF00E5FF).withOpacity(0.3);
+            pillText = const Color(0xFF00E5FF);
+            amtColor = const Color(0xFF00FF04);
+            amtPrefix = '+';
+          }
+          final pillLabel =
+              type.isEmpty ? 'Unknown' : '${type[0].toUpperCase()}${type.substring(1)}';
+          final amtStr =
+              "$amtPrefix${amount.toStringAsFixed(7).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '')} $coin";
+
+          return Container(
+              margin: const EdgeInsets.only(bottom: 30, top: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Row 1: labels
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "Type",
+                          style:  TextStyle(
+                            color: Colors.white.withOpacity(0.5) ,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: "DMSans",
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        "Coin",
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.5) ,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: "DMSans",
+                            height: 1,
+                          ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Row 2: type pill | coin icon + name
+                  Row(
+                    children: [
+                      Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                          horizontal: 20,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: pillColor,
+                          color: pillBg,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          type == 'subscribe' ? 'Subscribe' : 'Redeem',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 11,
+                          pillLabel,
+                          style: TextStyle(
+                            color: pillText,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
+                            fontFamily: "DMSans",
+                            height: 1,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: Row(
+                      const Spacer(),
+                      Row(
                         children: [
                           _coinIcon(iconUrl, size: 20),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              coin,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                          const SizedBox(width: 10),
+                          Text(
+                            coin,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: "DMSans",
+                              height: 1,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        "$amtPrefix${amount.toStringAsFixed(7).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '')} $coin",
-                        style: TextStyle(
-                          color: amtColor,
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Row 3: labels
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "Amount",
+                          style:  TextStyle(
+                            color: Colors.white.withOpacity(0.5) ,
+                            fontSize: 12,
+                            fontFamily: "DMSans",
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        "Time",
+                        style:  TextStyle(
+                          color: Colors.white.withOpacity(0.5) ,
                           fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          fontFamily: "DMSans",
+                          height: 1,
                         ),
                       ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Text(
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Row 4: amount | time
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          amtStr,
+                          style: TextStyle(
+                            color: amtColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: "DMSans",
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                      Text(
                         timeStr,
-                        style: const TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 10,
+                        style:  TextStyle(
+                          color: Colors.white.withOpacity(0.5) ,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: "DMSans",
+                          height: 1,
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  
+                ],
               ),
-              const Divider(height: 1, color: Color(0xFF1E2128)),
-            ],
-          );
+            );
         }).toList(),
         const SizedBox(height: 20),
       ],
