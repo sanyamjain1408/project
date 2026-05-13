@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/addons/p2p_trade/ui/p2p_trade_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_overview_page.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/text_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
@@ -37,13 +39,9 @@ class _TradesScreenState extends State<TradesScreen>
       if (_tabController.indexIsChanging) return;
       final newIndex = _tabController.index;
       if (newIndex == 0) {
-        // Navigate to SwapScreen as a full page, then pop back here
         Get.to(() => const SwapScreen());
-        // Reset tab bar back to previous tab without showing Swap inline
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _tabController.animateTo(_previousTab, duration: Duration.zero);
-          }
+          if (mounted) _tabController.animateTo(_previousTab, duration: Duration.zero);
         });
       } else {
         _previousTab = newIndex;
@@ -87,6 +85,7 @@ class _TradesScreenState extends State<TradesScreen>
               indicator: const BoxDecoration(),
               indicatorSize: TabBarIndicatorSize.label,
               dividerColor: Colors.transparent,
+              overlayColor: WidgetStateProperty.all(Color(0xFF111111)),
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white.withValues(alpha: 0.5),
               labelPadding: const EdgeInsets.symmetric(horizontal: 10),
@@ -121,7 +120,7 @@ class _TradesScreenState extends State<TradesScreen>
       case 2:
         return _placeholderView('Future');
       case 3:
-        return _placeholderView('Earn');
+        return Expanded(child: const EarnScreen());
       case 4:
         return const P2PTradeScreen();
       default:

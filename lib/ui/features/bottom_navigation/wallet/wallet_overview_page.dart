@@ -1155,6 +1155,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
           ),
           indicator: const BoxDecoration(),
           dividerColor: Colors.transparent,
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
           tabs: _tabs.map((t) => Tab(text: t["label"] as String)).toList(),
         ),
       ),

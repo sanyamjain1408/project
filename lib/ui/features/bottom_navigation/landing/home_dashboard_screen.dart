@@ -9,7 +9,8 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/announcement_view.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/home_grid_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/more_card_screen.dart';
-import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_overview_page.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_controller.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'dart:ui';
@@ -78,7 +79,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   void _openEarnScreen() {
     final hasUser = gUserRx.value.id > 0;
     if (hasUser) {
-      Get.to(() => EarnScreen());
+      if (!Get.isRegistered<WalletController>()) {
+        Get.put(WalletController());
+      }
+      Get.to(() => const WalletDetailScreen(initialType: WalletViewType.earn));
     } else {
       Get.to(() => const SignInPage());
     }
@@ -427,7 +431,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
 
             const SizedBox(height: 6),
             GestureDetector(
-              onTap: _openEarnScreen,
               child: Container(
                 width: 382,
                 margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
@@ -540,7 +543,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
 
   Widget _buildSmallBox({required String icon, required String title, required String value}) {
     return GestureDetector(
-      onTap: _openEarnScreen,
       child: Container(
         height: 100,
         padding: const EdgeInsets.all(12),
