@@ -483,8 +483,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                 margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _bgcolor,
-                  borderRadius: BorderRadius.circular(5),
+                  color: const Color(0xFF111111),
                 ),
                 child: Row(
                   children: [

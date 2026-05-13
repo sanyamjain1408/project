@@ -112,9 +112,10 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     navList = AppBottomNavHelper.getBottomNavList();
 
     return Container(
-      height: 76,
-      padding: const EdgeInsets.only(left: 18, right: 18, bottom: 10),
-      decoration: const BoxDecoration(color: Color(0xFF111111)),
+      height: 52,
+      padding: const EdgeInsets.only(left: 18, right: 18,top: 5),
+
+      decoration:  BoxDecoration(color: Color(0xFF111111).withOpacity(0.5), borderRadius: BorderRadius.circular(20)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(navList.length, (index) {
@@ -124,8 +125,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
             onTap: () => changeBottomNavTab(navList[index].id),
             child: Container(
               color: Colors.transparent,
-              padding: EdgeInsets.all(4),
-              margin: EdgeInsets.only(bottom: 10, top: 0, left: 10, right: 10),
               // <--- Yahan gap control karo
               child: Column(
                 children: [
