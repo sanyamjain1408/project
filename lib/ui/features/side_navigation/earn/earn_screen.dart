@@ -534,69 +534,6 @@ class _EarnScreenState extends State<EarnScreen> {
     }
   }
 
-  Widget _buildCalcPlanCard(
-    EarnProduct? plan,
-    int? selId,
-    Function(int?) onSelect,
-  ) {
-    if (plan == null) return const Expanded(child: SizedBox.shrink());
-    final isSel = selId == plan.id;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => onSelect(plan.id),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSel ? const Color(0xFFB8E600) : const Color(0xFF2E2E2E),
-              width: 1.5,
-            ),
-            color: const Color(0xFF1E1E1E),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Easy Earn",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    "${plan.apr.toStringAsFixed(2)}%",
-                    style: const TextStyle(
-                      color: Color(0xFF00D68F),
-                      fontSize: 21,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  const Text(
-                    "APR",
-                    style: TextStyle(color: Color(0xFF555555), fontSize: 11),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Easy Earn | ${plan.lockDays == 0 ? "Flexible" : "Fixed"}",
-                style: const TextStyle(color: Color(0xFF666666), fontSize: 11),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   // ── BUILD ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -1018,7 +955,7 @@ class _EarnScreenState extends State<EarnScreen> {
                           () => Scaffold(
                             backgroundColor: const Color(0xFF0F0F0F),
                             body: SafeArea(
-                              child: _EasyEarnModal(
+                              child: EasyEarnModal(
                                 coin: coin,
                                 plans: coinProducts,
                                 initialPlan: plan,
@@ -1108,7 +1045,7 @@ class _EarnScreenState extends State<EarnScreen> {
                                   () => Scaffold(
                                     backgroundColor: const Color(0xFF0F0F0F),
                                     body: SafeArea(
-                                      child: _EasyEarnModal(
+                                      child: EasyEarnModal(
                                         coin: coin,
                                         plans: coinProducts,
                                         initialPlan: plan,
@@ -1346,7 +1283,7 @@ class _EarnScreenState extends State<EarnScreen> {
         () => Scaffold(
           backgroundColor: const Color(0xFF0F0F0F),
           body: SafeArea(
-            child: _EasyEarnModal(
+            child: EasyEarnModal(
               coin: product.coin,
               plans:
                   _controller.products
@@ -1384,7 +1321,7 @@ class _EarnScreenState extends State<EarnScreen> {
               children: [
                 Positioned.fill(
                   child: CustomPaint(
-                    painter: _RecommendedCardPainter(color: color),
+                    painter: RecommendedCardPainter(color: color),
                   ),
                 ),
                 Padding(
@@ -2572,9 +2509,9 @@ class _EarnScreenState extends State<EarnScreen> {
 }
 
 // ─── Painters ────────────────────────────────────────────────────────────────
-class _RecommendedCardPainter extends CustomPainter {
+class RecommendedCardPainter extends CustomPainter {
   final Color color;
-  _RecommendedCardPainter({required this.color});
+  RecommendedCardPainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2628,21 +2565,22 @@ class _RecommendedCardPainter extends CustomPainter {
 // ══════════════════════════════════════════════════════════════════════════════
 // EASY EARN SUBSCRIBE MODAL
 // ══════════════════════════════════════════════════════════════════════════════
-class _EasyEarnModal extends StatefulWidget {
+class EasyEarnModal extends StatefulWidget {
   final String coin;
   final List<EarnProduct> plans;
   final EarnProduct? initialPlan;
-  const _EasyEarnModal({
+  const EasyEarnModal({
+    super.key,
     required this.coin,
     required this.plans,
     this.initialPlan,
   });
 
   @override
-  State<_EasyEarnModal> createState() => _EasyEarnModalState();
+  State<EasyEarnModal> createState() => _EasyEarnModalState();
 }
 
-class _EasyEarnModalState extends State<_EasyEarnModal> {
+class _EasyEarnModalState extends State<EasyEarnModal> {
   late EarnProduct _selectedPlan;
   final _amountCtrl = TextEditingController();
   bool _agreed = false;

@@ -17,6 +17,7 @@ import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_controller.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_recommended_section.dart';
 import 'dart:ui';
 
 const _green = Color(0xFFB5F000);
@@ -640,7 +641,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
               ),
             ),
 
-            const SizedBox(height: 6),
+            const SizedBox(height: 5),
             GestureDetector(
               child: Container(
                 width: 382,
@@ -712,7 +713,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
             ),
             const SizedBox(height: 5),
 
-            _buildEarnCards(),
+            const EarnRecommendedSection(),
 
             Container(),
           ],
@@ -851,112 +852,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     );
   }
 
-  Widget _buildCardItem({
-    required String percent,
-    required String name,
-    required String icon,
-    required List<Color> colors,
-  }) {
-    return GestureDetector(
-      onTap: _openEarnScreen,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-          child: Container(
-            width: 230,
-            margin: const EdgeInsets.only(right: 10),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0XFF1A1A1A),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Earn up to",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          ShaderMask(
-                            shaderCallback: (bounds) => LinearGradient(
-                              colors: colors,
-                            ).createShader(bounds),
-                            child: Text(
-                              percent,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          const Text(
-                            "/ year",
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(name, style: const TextStyle(color: Colors.white)),
-                    ],
-                  ),
-                ),
-                Center(child: Image.asset(icon, height: 40)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildEarnCards() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      color: Colors.transparent,
-      child: SizedBox(
-        height: 110,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          children: [
-            _buildCardItem(
-              percent: "26.78%",
-              name: "Ravencoin",
-              icon: "assets/images/cardo.png",
-              colors: [Colors.blue, Colors.orange],
-            ),
-            _buildCardItem(
-              percent: "17.28%",
-              name: "Ponke",
-              icon: "assets/images/cardt.png",
-              colors: [Colors.green, Colors.purple],
-            ),
-            _buildCardItem(
-              percent: "9.56%",
-              name: "Tellor",
-              icon: "assets/images/cardt.png",
-              colors: [Colors.teal, Colors.purple],
-            ),
-            _buildCardItem(
-              percent: "15.47%",
-              name: "ether.fi",
-              icon: "assets/images/cardf.png",
-              colors: [Colors.pink, Colors.orange],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _navigateTo(BuildContext context, String route) {
     switch (route) {
