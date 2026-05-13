@@ -67,7 +67,7 @@ class MarketSpotState extends State<MarketSpotScreen>
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        color: _bgcolor,
+        color: Colors.transparent,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
