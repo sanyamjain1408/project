@@ -246,6 +246,8 @@ class WalletOverview {
   double? p2PWalletUsd;
   double? total;
   double? totalUsd;
+  double? todayPnl;
+  double? todayPnlPercent;
   List<String>? coins;
   String? selectedCoin;
   String? banner;
@@ -261,6 +263,8 @@ class WalletOverview {
     this.p2PWalletUsd,
     this.total,
     this.totalUsd,
+    this.todayPnl,
+    this.todayPnlPercent,
     this.coins,
     this.selectedCoin,
     this.banner,
@@ -277,6 +281,8 @@ class WalletOverview {
         p2PWalletUsd: makeDouble(json["p2p_wallet_usd"]),
         total: makeDouble(json["total"]),
         totalUsd: makeDouble(json["total_usd"]),
+        todayPnl: makeDouble(json["today_pnl"]),
+        todayPnlPercent: makeDouble(json["today_pnl_percent"]),
         selectedCoin: json["selected_coin"],
         banner: json["banner"],
         coins: json["coins"] == null ? null : List<String>.from(json["coins"].map((x) => x)),
@@ -288,10 +294,17 @@ class WalletOverview {
 class TotalBalance {
   String? currency;
   double? total;
+  double? todayPnl;
+  double? todayPnlPercent;
 
-  TotalBalance({this.currency, this.total});
+  TotalBalance({this.currency, this.total, this.todayPnl, this.todayPnlPercent});
 
-  factory TotalBalance.fromJson(Map<String, dynamic> json) => TotalBalance(currency: json["currency"], total: makeDouble(json["total"]));
+  factory TotalBalance.fromJson(Map<String, dynamic> json) => TotalBalance(
+        currency: json["currency"],
+        total: makeDouble(json["total"]),
+        todayPnl: makeDouble(json["today_pnl"]),
+        todayPnlPercent: makeDouble(json["today_pnl_percent"]),
+      );
 }
 
 class NetworkAddress {

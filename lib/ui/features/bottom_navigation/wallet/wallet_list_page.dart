@@ -841,28 +841,31 @@ class _SpotHeroCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: "Today's PnL  ",
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
-                                    fontSize: 12,
-                                    fontFamily: 'DMSans',
+                          if (total?.todayPnl != null)
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: "Today's PnL  ",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.5),
+                                      fontSize: 12,
+                                      fontFamily: 'DMSans',
+                                    ),
                                   ),
-                                ),
-                                const TextSpan(
-                                  text: "+\$8.84 (0.71%)",
-                                  style: TextStyle(
-                                    color: Color(0xFF4ED78E),
-                                    fontSize: 12,
-                                    fontFamily: 'DMSans',
+                                  TextSpan(
+                                    text: formatPnl(total?.todayPnl, total?.todayPnlPercent),
+                                    style: TextStyle(
+                                      color: (total?.todayPnl ?? 0) >= 0
+                                          ? const Color(0xFF4ED78E)
+                                          : Colors.redAccent,
+                                      fontSize: 12,
+                                      fontFamily: 'DMSans',
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                       ],
                     ),

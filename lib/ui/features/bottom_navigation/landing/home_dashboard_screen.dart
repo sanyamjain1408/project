@@ -9,10 +9,13 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/announcement_view.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/home_grid_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/card_container/more_card_screen.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_overview_page.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_controller.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_widgets.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'dart:ui';
 
 const _green = Color(0xFFB5F000);
@@ -30,6 +33,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   final LandingController _controller = Get.find<LandingController>();
   final HomeGridController _gridController = Get.put(HomeGridController());
   late AnimationController _rotationController;
+  late final WalletController _walletController;
 
   @override
   void initState() {
@@ -53,6 +57,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         _controller.landingData.value.announcementList!.isEmpty) {
       _controller.getLandingSettings();
     }
+
+    _walletController = Get.isRegistered<WalletController>()
+        ? Get.find<WalletController>()
+        : Get.put(WalletController());
+    _walletController.getWalletTotalValue();
   }
 
   @override
@@ -209,49 +218,87 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                 ),
                               ),
                               const SizedBox(width: 5),
-                              Icon(
-                                Icons.remove_red_eye_outlined,
-                                color: const Color(0xFFFFFFFF).withValues(alpha: 0.5),
-                                size: 15,
+                              GestureDetector(
+                                onTap: () {
+                                  GetStorage().write(PreferenceKey.isBalanceHide, !gIsBalanceHide.value);
+                                  gIsBalanceHide.value = !gIsBalanceHide.value;
+                                },
+                                child: Obx(() => Icon(
+                                  gIsBalanceHide.value
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.remove_red_eye_outlined,
+                                  color: const Color(0xFFFFFFFF).withValues(alpha: 0.5),
+                                  size: 15,
+                                )),
                               ),
                             ],
                           ),
                           const SizedBox(height: 6),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const Text(
-                                "\$10,546.40",
+                          Obx(() {
+                            final hide = gIsBalanceHide.value;
+                            final balance = _walletController.totalBalance.value;
+                            if (hide) {
+                              return const Text(
+                                "******",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 30,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 20,
                                   fontFamily: "DMSans",
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: Text(
-                                  "USDT",
-                                  style: TextStyle(
-                                    color: const Color(0xFFFFFFFF).withValues(alpha: 0.5),
-                                    fontSize: 14,
-                                  ),
+                              );
+                            }
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      "\$${currencyFormat(balance.total)}",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 30,
+                                        fontFamily: "DMSans",
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 6),
+                                      child: Text(
+                                        "USDT",
+                                        style: TextStyle(
+                                          color: const Color(0xFFFFFFFF).withValues(alpha: 0.5),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
-                          const Row(
-                            children: [
-                              Text(
-                                "Today's PNL",
-                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300, fontFamily: "DMSans"),
-                              ),
-                              SizedBox(width: 10),
-                              Text("+14.51 (1.16%)", style: TextStyle(color: _green)),
-                            ],
-                          ),
+                                if (balance.todayPnl != null) ...[
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        "Today's PNL",
+                                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300, fontFamily: "DMSans"),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        formatPnl(balance.todayPnl, balance.todayPnlPercent),
+                                        style: TextStyle(
+                                          color: (balance.todayPnl ?? 0) >= 0 ? _green : Colors.redAccent,
+                                          fontSize: 12,
+                                          fontFamily: "DMSans",
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            );
+                          }),
                           const SizedBox(height: 20),
                           Obx(() {
                             List<Map<String, dynamic>> userItems =

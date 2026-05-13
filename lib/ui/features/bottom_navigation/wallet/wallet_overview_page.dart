@@ -514,6 +514,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                             data.total,
                             title: 'Overview'.tr,
                             totalUsd: data.totalUsd,
+                            todayPnl: data.todayPnl,
+                            todayPnlPercent: data.todayPnlPercent,
                             coins: data.coins,
                             selectedCoin: selectedCoin.value,
                             onSelectCoin: (selected) {

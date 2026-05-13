@@ -498,6 +498,13 @@ class WalletBalanceView extends StatelessWidget {
   }
 }
 
+String formatPnl(double? pnl, double? percent) {
+  final sign = (pnl ?? 0) >= 0 ? '+' : '';
+  final pnlStr = '\$${(pnl ?? 0).abs().toStringAsFixed(2)}';
+  final pctStr = percent != null ? '(${percent.toStringAsFixed(2)}%)' : '';
+  return '$sign$pnlStr$pctStr';
+}
+
 class TotalBalanceView extends StatelessWidget {
   const TotalBalanceView(
     this.isHide,
@@ -506,6 +513,8 @@ class TotalBalanceView extends StatelessWidget {
     this.onHide,
     this.title,
     this.totalUsd,
+    this.todayPnl,
+    this.todayPnlPercent,
     this.onHistoryTap,
     this.coins,
     this.selectedCoin,
@@ -515,6 +524,8 @@ class TotalBalanceView extends StatelessWidget {
   final bool isHide;
   final double? totalBalance;
   final double? totalUsd;
+  final double? todayPnl;
+  final double? todayPnlPercent;
   final Function(bool)? onHide;
   final VoidCallback? onHistoryTap;
   final String? title;
@@ -625,7 +636,7 @@ class TotalBalanceView extends StatelessWidget {
 
                   const SizedBox(height: 5),
 
-                  if (!isHide)
+                  if (!isHide && todayPnl != null)
                     RichText(
                       text: TextSpan(
                         children: [
@@ -637,10 +648,12 @@ class TotalBalanceView extends StatelessWidget {
                               fontFamily: 'DMSans',
                             ),
                           ),
-                          const TextSpan(
-                            text: "+\$8.84(0.71%)",
+                          TextSpan(
+                            text: formatPnl(todayPnl, todayPnlPercent),
                             style: TextStyle(
-                              color: Color(0xFFCCFF00),
+                              color: (todayPnl ?? 0) >= 0
+                                  ? const Color(0xFFCCFF00)
+                                  : Colors.redAccent,
                               fontSize: 12,
                               fontFamily: 'DMSans',
                             ),
