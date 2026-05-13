@@ -113,9 +113,9 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
             shrinkWrap: true,
             children: [
               _buildTopHero(data),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildStackedCards(data, settings),
-              const SizedBox(height: 15),
+              const SizedBox(height: 20),
               Obx(
                 () => _buildReportWithLists(
                   depositList: depositList,
@@ -470,7 +470,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
   Widget _buildTopHero(WalletOverview data) {
     return Container(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.38,
+      height: MediaQuery.of(context).size.height * 0.42,
       decoration: BoxDecoration(
         color: Color(0x4D1A1A1A),
         borderRadius: const BorderRadius.only(
@@ -502,7 +502,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 30),
+                const SizedBox(height: 55),
                 Container(
                   color: Colors.transparent,
                   padding: const EdgeInsets.fromLTRB(20, 0, 16, 0),

@@ -584,7 +584,7 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
   Widget build(BuildContext context) {
     return Container(
       height: 500,
-      color: Colors.black,
+      color: const Color(0xFF111111),
       child: Column(
         children: [
           CommonTabHeader(onTabChanged: (index) => setState(() => _currentTab = index)),
@@ -692,7 +692,7 @@ class _CommonTabHeaderState extends State<CommonTabHeader> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: Colors.black,
+      color: const Color(0xFF111111),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(_tabs.length, (index) {
@@ -706,7 +706,7 @@ class _CommonTabHeaderState extends State<CommonTabHeader> {
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
+                color: isSelected ? Colors.transparent : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(

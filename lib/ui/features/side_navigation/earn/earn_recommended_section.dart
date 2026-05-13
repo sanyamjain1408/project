@@ -36,7 +36,7 @@ class EarnRecommendedSection extends StatelessWidget {
             )
           else
             SizedBox(
-              height: 140,
+              height: 143,
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,

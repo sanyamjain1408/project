@@ -641,21 +641,25 @@ class TotalBalanceView extends StatelessWidget {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: "Today ",
+                            text: "Today's PnL: ",
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.5),
                               fontSize: 12,
                               fontFamily: 'DMSans',
+                              fontWeight: FontWeight.w400,
+                              height: 16 / 12,
                             ),
                           ),
                           TextSpan(
                             text: formatPnl(balance.todayPnl, balance.todayPnlPercent),
                             style: TextStyle(
                               color: (balance.todayPnl ?? 0) >= 0
-                                  ? const Color(0xFFCCFF00)
+                                  ? const Color(0xFF4ED78E)
                                   : Colors.redAccent,
                               fontSize: 12,
                               fontFamily: 'DMSans',
+                              fontWeight: FontWeight.w400,
+                              height: 16 / 12,
                             ),
                           ),
                         ],

@@ -721,6 +721,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
 
             const EarnRecommendedSection(),
 
+            const MarketEmptyStateWidget(),
+
             Container(),
           ],
         ),

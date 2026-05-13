@@ -87,6 +87,7 @@ class _LandingMarketViewState extends State<LandingMarketView> with SingleTicker
             return list.isValid
                 ? ListView.separated(
                     shrinkWrap: true,
+                    padding: EdgeInsets.zero,
                     itemBuilder: (context, index) => MarketTrendItemView(coin: list![index]),
                     separatorBuilder: (context, index) => Container(height: 16, color: Colors.transparent),
                     itemCount: list?.length ?? 0,
