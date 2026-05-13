@@ -48,6 +48,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
 
   Future<void> _getOverviewData() async {
     _controller.refreshController.callRefresh();
+    _controller.getWalletTotalValue();
     _controller.getWalletOverviewData(coinType: selectedCoin.value, (overview) {
       wOverview.value = overview;
       selectedCoin.value = wOverview.value.selectedCoin ?? "";

@@ -532,18 +532,18 @@ class TotalBalanceView extends StatelessWidget {
   final List<String>? coins;
   final String? selectedCoin;
   final Function(String)? onSelectCoin;
-
   @override
   Widget build(BuildContext context) {
-    String currencyName = gUserRx.value.currency ?? DefaultValue.currency;
-
     final iconData = isHide
         ? Icons.visibility_off_rounded
         : Icons.visibility_outlined;
 
     final titleL = title ?? 'Total Balance'.tr;
 
-    return Column(
+    return Obx(() {
+      final balance = Get.find<WalletController>().totalBalance.value;
+
+      return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 🔹 TOP CONTENT (same as before)
@@ -598,7 +598,7 @@ class TotalBalanceView extends StatelessWidget {
                           textBaseline: TextBaseline.alphabetic, //  important
                           children: [
                             Text(
-                              '\$${double.parse(coinFormat(totalBalance)).toStringAsFixed(2)}',
+                              "\$${currencyFormat(balance.total)}",
                               style: const TextStyle(
                                 fontSize: 30,
                                 fontWeight: FontWeight.w700,
@@ -636,7 +636,7 @@ class TotalBalanceView extends StatelessWidget {
 
                   const SizedBox(height: 5),
 
-                  if (!isHide && todayPnl != null)
+                  if (!isHide && balance.todayPnl != null)
                     RichText(
                       text: TextSpan(
                         children: [
@@ -649,9 +649,9 @@ class TotalBalanceView extends StatelessWidget {
                             ),
                           ),
                           TextSpan(
-                            text: formatPnl(todayPnl, todayPnlPercent),
+                            text: formatPnl(balance.todayPnl, balance.todayPnlPercent),
                             style: TextStyle(
-                              color: (todayPnl ?? 0) >= 0
+                              color: (balance.todayPnl ?? 0) >= 0
                                   ? const Color(0xFFCCFF00)
                                   : Colors.redAccent,
                               fontSize: 12,
@@ -680,7 +680,8 @@ class TotalBalanceView extends StatelessWidget {
             ),
           ),
       ],
-    );
+      );
+    });
   }
 
   Row _coinNameView(String? coinType, bool showIcon) {
