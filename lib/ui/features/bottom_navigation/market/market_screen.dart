@@ -34,9 +34,9 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        color: const Color(0xFF111111),
+    return Scaffold(
+      backgroundColor: const Color(0xFF111111),
+      body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

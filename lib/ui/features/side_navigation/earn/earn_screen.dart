@@ -9,6 +9,7 @@ import 'earn_subscribe_modal.dart';
 import 'dual_investment_controller.dart';
 import 'dual_investment_screen.dart';
 import 'dual_subscribe_modal.dart';
+import 'calc_plan_card.dart';
 
 const String _baseUrl = 'https://api.trapix.com';
 
@@ -352,19 +353,23 @@ class _EarnScreenState extends State<EarnScreen> {
                           const SizedBox(height: 10),
                           Row(
                             children: [
-                              _buildCalcPlanCard(flexPlan, selectedPlanId, (
-                                id,
-                              ) {
-                                selectedPlanId = id;
-                                setStateDialog(() {});
-                              }),
+                              CalcPlanCard(
+                                plan: flexPlan,
+                                selectedId: selectedPlanId,
+                                onSelect: (id) {
+                                  selectedPlanId = id;
+                                  setStateDialog(() {});
+                                },
+                              ),
                               const SizedBox(width: 10),
-                              _buildCalcPlanCard(fixedPlan, selectedPlanId, (
-                                id,
-                              ) {
-                                selectedPlanId = id;
-                                setStateDialog(() {});
-                              }),
+                              CalcPlanCard(
+                                plan: fixedPlan,
+                                selectedId: selectedPlanId,
+                                onSelect: (id) {
+                                  selectedPlanId = id;
+                                  setStateDialog(() {});
+                                },
+                              ),
                             ],
                           ),
                           const SizedBox(height: 20),

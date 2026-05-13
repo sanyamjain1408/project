@@ -184,6 +184,8 @@ class TabBarPlain extends StatelessWidget {
       indicator: const BoxDecoration(),
       dividerHeight: 0,
       padding: EdgeInsets.zero,
+      splashFactory: NoSplash.splashFactory,
+      overlayColor: WidgetStateProperty.all(Colors.transparent),
       tabs: List.generate(
         titles.length,
         (index) => Tab(height: height, text: titles[index]),
