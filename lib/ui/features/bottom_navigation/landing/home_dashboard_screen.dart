@@ -487,40 +487,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                 ),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: Container(
-                        height: 210,
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: const Color(0XFF1A1A1A),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Image.asset("assets/images/usdt.png", height: 30),
-                                const SizedBox(width: 10),
-                                const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("USDT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                                    Text("Simple Earn", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            Image.asset("assets/images/img.png", height: 65, fit: BoxFit.cover),
-                            const SizedBox(height: 10),
-                            const Text("Highest APR", style: TextStyle(color: Colors.grey, fontSize: 15)),
-                            const SizedBox(height: 5),
-                            const Text("2.8%", style: TextStyle(color: _green, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: "DMSans")),
-                          ],
-                        ),
-                      ),
-                    ),
+                     AutoSliderCard(),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -718,5 +685,85 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       default:
         break;
     }
+  }
+}
+
+
+class AutoSliderCard extends StatefulWidget {
+  const AutoSliderCard({super.key});
+
+  @override
+  State<AutoSliderCard> createState() => _AutoSliderCardState();
+}
+
+class _AutoSliderCardState extends State<AutoSliderCard> {
+  final PageController _pageController = PageController();
+
+  final List<String> images = [
+    "assets/images/poster1.png",
+    "assets/images/poster2.png",
+    "assets/images/poster3.png",
+    "assets/images/poster4.png",
+  ];
+
+  int currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(seconds: 5), autoScroll);
+  }
+
+  void autoScroll() async {
+    while (mounted) {
+      await Future.delayed(const Duration(seconds: 5));
+
+      if (!mounted) return;
+
+      currentPage++;
+
+      if (currentPage >= images.length) {
+        currentPage = 0;
+      }
+
+      _pageController.animateToPage(
+        currentPage,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        height: 210,
+        decoration: BoxDecoration(
+          color: const Color(0XFF1A1A1A),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: PageView.builder(
+          controller: _pageController,
+          itemCount: images.length,
+          itemBuilder: (context, index) {
+            return Image.asset(
+              images[index],
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            );
+          },
+        ),
+      ),
+    );
   }
 }

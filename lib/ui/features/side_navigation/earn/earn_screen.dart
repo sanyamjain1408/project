@@ -1279,9 +1279,15 @@ class _EarnScreenState extends State<EarnScreen> {
   // Shared: Recommended horizontal scroll
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildRecommendedSection(List<EarnProduct> products) {
-    final topRec = ([
-      ...products,
-    ]..sort((a, b) => b.apr.compareTo(a.apr))).take(4).toList();
+    // One card per unique coin — pick the highest APR product for each coin
+    final Map<String, EarnProduct> bestPerCoin = {};
+    for (final p in products) {
+      if (!bestPerCoin.containsKey(p.coin) || p.apr > bestPerCoin[p.coin]!.apr) {
+        bestPerCoin[p.coin] = p;
+      }
+    }
+    final topRec = bestPerCoin.values.toList()
+      ..sort((a, b) => b.apr.compareTo(a.apr));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
