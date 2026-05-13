@@ -102,7 +102,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
         drawerScrimColor: Colors.transparent,
         drawer: _getDrawerNew(),
         bottomNavigationBar: _getBottomNavigationBar(),
-        body: SafeArea(child: Obx(() => _getBody())),
+        body: SafeArea(top: false, child: Obx(() => _getBody())),
       ),
     );
   }

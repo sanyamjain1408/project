@@ -11,6 +11,7 @@ import 'package:tradexpro_flutter/helper/data_process_helper.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/language_util.dart';
 import 'package:tradexpro_flutter/utils/network_util.dart';
+import 'package:tradexpro_flutter/utils/colors.dart';
 import 'package:tradexpro_flutter/utils/theme.dart';
 import 'data/local/constants.dart';
 import 'data/local/strings.dart';
@@ -71,6 +72,7 @@ Future<void> getCommonSettings() async {
   }
 
   // ── Har case mein runApp call hoga ──
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then(
     (_) => runApp(MyApp(maintenance: maintenance)),
   );
@@ -82,11 +84,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = ThemeService().loadThemeFromBox();
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: ThemeService().getBrightness(),
-        statusBarBrightness: ThemeService().loadThemeFromBox() ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: isDark ? const Color(0xFF111111) : lightBG,
       ),
     );
     final isOnBoarding = GetStorage().read(PreferenceKey.isOnBoardingDone);
@@ -119,7 +123,7 @@ class MyApp extends StatelessWidget {
           );
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: scale),
-            child: SafeArea(child: child!),
+            child: SafeArea(top: false, child: child!),
           );
         },
         home: screen,
