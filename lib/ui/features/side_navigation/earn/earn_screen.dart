@@ -633,7 +633,7 @@ class _EarnScreenState extends State<EarnScreen> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.only(right: 20, bottom: 5, top: 5),
               child: Text(
                 _mainTabs[index],
                 style: TextStyle(
