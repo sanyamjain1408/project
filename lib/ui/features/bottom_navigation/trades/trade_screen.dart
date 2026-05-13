@@ -71,38 +71,41 @@ class _TradesScreenState extends State<TradesScreen>
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: const Color(0xFF0F0F0F),
+      color: const Color(0xFF111111),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Top tab bar: Swap / Spot / Future / Earn / P2P ──────────────────
           Material(
             color: const Color(0xFF111111),
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              indicator: const BoxDecoration(),
-              indicatorSize: TabBarIndicatorSize.label,
-              dividerColor: Colors.transparent,
-              overlayColor: WidgetStateProperty.all(Color(0xFF111111)),
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white.withValues(alpha: 0.5),
-              labelPadding: const EdgeInsets.symmetric(horizontal: 10),
-              labelStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                fontFamily: "DMSans",
-                height: 1.5,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 30),
+              child: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                indicator: const BoxDecoration(),
+                indicatorSize: TabBarIndicatorSize.label,
+                dividerColor: Colors.transparent,
+                overlayColor: WidgetStateProperty.all(Color(0xFF111111)),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white.withValues(alpha: 0.5),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+                labelStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: "DMSans",
+                  height: 1.5,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: "DMSans",
+                  height: 1.5,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                tabs: _tabs.map((t) => Tab(text: t.tr)).toList(),
               ),
-              unselectedLabelStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                fontFamily: "DMSans",
-                height: 1.5,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              tabs: _tabs.map((t) => Tab(text: t.tr)).toList(),
             ),
           ),
 

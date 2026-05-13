@@ -249,6 +249,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               ],
                             ),
                           ),
+                          const SizedBox(height: 15),
                           Row(
                             children: [
                               Text(
@@ -285,7 +286,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 5),
                           Obx(() {
                             final hide = gIsBalanceHide.value;
                             final balance =
@@ -326,6 +327,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                             0xFFFFFFFF,
                                           ).withValues(alpha: 0.5),
                                           fontSize: 14,
+                                          height: 16/14,
+                                          fontFamily: "DMSans",
                                         ),
                                       ),
                                     ),
@@ -340,8 +343,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 12,
-                                          fontWeight: FontWeight.w300,
+                                          fontWeight: FontWeight.w400,
                                           fontFamily: "DMSans",
+                                          height: 16/12,
                                         ),
                                       ),
                                       const SizedBox(width: 10),
@@ -352,10 +356,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                         ),
                                         style: TextStyle(
                                           color: (balance.todayPnl ?? 0) >= 0
-                                              ? _green
+                                              ? Color(0xFF77D215)
                                               : Colors.redAccent,
                                           fontSize: 12,
                                           fontFamily: "DMSans",
+                                          fontWeight: FontWeight.w400,
+                                          height: 16/12,
                                         ),
                                       ),
                                     ],
@@ -364,7 +370,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               ],
                             );
                           }),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 0),
                           Obx(() {
                             List<Map<String, dynamic>> userItems =
                                 _gridController.selectedIcons.isNotEmpty
@@ -445,7 +451,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               }),
                             );
                           }),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 10),
                           Row(
                             children: [
                               Expanded(
@@ -512,7 +518,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 10),
                         ],
                       ),
                     ),
@@ -851,8 +857,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       ),
     );
   }
-
-
 
   void _navigateTo(BuildContext context, String route) {
     switch (route) {
