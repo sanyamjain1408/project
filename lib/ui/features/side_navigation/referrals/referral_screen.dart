@@ -185,25 +185,31 @@ class _ReferralScreenState extends State<ReferralScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Color(0xFF111111),
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
-          _buildHeroSection(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                _buildHowItWorksSection(),
-                const SizedBox(height: 40),
-                _buildStatsSection(),
-                const SizedBox(height: 40),
-                _buildPendingRewards(),
-                const SizedBox(height: 20),
-                _buildHistorySection(),
-                const SizedBox(height: 30),
-              ],
+         Transform.translate(
+            offset: const Offset(0, -30),
+            child: _buildHeroSection(),
+          ),
+           Transform.translate(
+            offset: const Offset(0, -30),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  _buildHowItWorksSection(),
+                  const SizedBox(height: 40),
+                  _buildStatsSection(),
+                  const SizedBox(height: 40),
+                  _buildPendingRewards(),
+                  const SizedBox(height: 20),
+                  _buildHistorySection(),
+                  const SizedBox(height: 30),
+                ],
+              ),
             ),
           ),
         ],
@@ -223,22 +229,19 @@ class _ReferralScreenState extends State<ReferralScreen> {
         ),
       ),
       child: Container(
-        padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withValues(alpha: 0.05),
-              Colors.black.withValues(alpha: 0.92),
-            ],
-            stops: const [0.3, 0.72],
+          color: Colors.transparent,
+          border: Border(
+            bottom: BorderSide(color: Colors.white.withOpacity(0.5), width: 1),
           ),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
+              margin: EdgeInsets.only(top: 10),
               color: Colors.transparent,
               alignment: Alignment.centerLeft,
               child: IconButton(
@@ -250,8 +253,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 200),
+            const SizedBox(height: 230),
             RichText(
+              textAlign: TextAlign.center,
               text: const TextSpan(
                 children: [
                   TextSpan(
@@ -288,40 +292,103 @@ class _ReferralScreenState extends State<ReferralScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              "Invite anyone to Trapix. Every time they trade, you earn 20% of the 0.3% exchange fee — automatically, for life.",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontFamily: "DMSans",
-                fontWeight: FontWeight.w400,
+            Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0),
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: const TextSpan(
+                    children: [
+                      TextSpan(
+                        text: "Invite anyone to Tripix. Every time they trade, you ",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontFamily: "DMSans",
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+      
+                      TextSpan(
+                        text: "earn up to 20% ",
+                        style: TextStyle(
+                          color: Color(0xFFCCFF00),
+                          fontSize: 12,
+                          fontFamily: "DMSans",
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+      
+                      TextSpan(
+                        text: "of",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontFamily: "DMSans",
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+      
+                      TextSpan(
+                        text: "the ",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontFamily: "DMSans",
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+      
+                      TextSpan(
+                        text: "0.3% exchange free ",
+                        style: TextStyle(
+                          color: Color(0xFFCCFF00),
+                          fontSize: 12,
+                          fontFamily: "DMSans",
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+      
+                      TextSpan(
+                        text: "automatically, for life.",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontFamily: "DMSans",
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
             const SizedBox(height: 20),
             _buildReferralBox(value: _referralLink, isCode: false),
             _buildReferralBox(value: _referralCode, isCode: true),
             const SizedBox(height: 10),
-            RichText(
-              text: const TextSpan(
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontFamily: "DMSans",
+            Padding(
+              padding: EdgeInsetsGeometry.only(left: 20, right: 20),
+              child: RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontFamily: "DMSans",
+                  ),
+                  children: [
+                    TextSpan(
+                      text: "Receive 20%",
+                      style: TextStyle(color: Color(0xFFCCFF00)),
+                    ),
+                    TextSpan(
+                      text: " commission on all trades made through your referrals",
+                    ),
+                  ],
                 ),
-                children: [
-                  TextSpan(
-                    text: "Receive 20%",
-                    style: TextStyle(color: Color(0xFFCCFF00)),
-                  ),
-                  TextSpan(
-                    text: " commission on all trades made through your referrals",
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 20),
             Container(
-              margin: const EdgeInsets.only(bottom: 20),
+              margin: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
               height: 40,
               width: double.infinity,
               decoration: BoxDecoration(
@@ -485,257 +552,276 @@ class _ReferralScreenState extends State<ReferralScreen> {
     );
   }
 
-  Widget _buildStatsSection() {
-    return GridView.count(
-      crossAxisCount: 2,
-      childAspectRatio: 1.45,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 20,
-      mainAxisSpacing: 20,
-      children: [
-        _buildGlowCard(
-          title: "Total Referral",
-          value: "$_totalReferrals",
-          boxShadow: const [
-            BoxShadow(color: Color(0xFFFF6F00), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFFFF8A30), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFFFFB781), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFFFFE6D2), blurRadius: 26.3),
-          ],
-        ),
-        _buildGlowCard(
-          title: "Total Earned",
-          value: _totalEarned.toStringAsFixed(2),
-          suffix: "USDT",
-          boxShadow: const [
-            BoxShadow(color: Color(0xFF00E5FF), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFF37EBFF), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFF9AF5FF), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFFC9FAFF), blurRadius: 26.3),
-          ],
-        ),
-        _buildGlowCard(
-          title: "Commission",
-          value: "20%",
-          boxShadow: const [
-            BoxShadow(color: Color(0xFF0062FF), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFF428AFF), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFF7EAFFF), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFFD8E7FF), blurRadius: 26.3),
-          ],
-        ),
-        _buildGlowCard(
-          title: "Active Referrals",
-          value: "$_activeReferrals",
-          boxShadow: const [
-            BoxShadow(color: Color(0xFFCCFF00), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFFD9FF41), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFFE8FF8C), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFFF3FFC2), blurRadius: 26.3),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGlowCard({
-    required String title,
-    required String value,
-    required List<BoxShadow> boxShadow,
-    String suffix = "",
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: const Color(0xFF1A1A1A),
+Widget _buildStatsSection() {
+  return GridView.count(
+    crossAxisCount: 2,
+    childAspectRatio: 1.45,
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    crossAxisSpacing: 20,
+    mainAxisSpacing: 20,
+    children: [
+      _buildGlowCard(
+        title: "Total Referral",
+        value: "$_totalReferrals",
       ),
-      clipBehavior: Clip.hardEdge,
-      child: Stack(
+
+      _buildGlowCard(
+        title: "Total Earned",
+        value: _totalEarned.toStringAsFixed(2),
+        suffix: "USDT",
+      ),
+
+      _buildGlowCard(
+        title: "Commission",
+        value: "20%",
+      ),
+
+      _buildGlowCard(
+        title: "Active Referrals",
+        value: "$_activeReferrals",
+      ),
+    ],
+  );
+}
+
+Widget _buildGlowCard({
+  required String title,
+  required String value,
+  String suffix = "",
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
+
+      /// SAME GRADIENT FOR ALL CARDS
+      gradient: const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF00391A),
+          Color(0xFF0C2600),
+          Color(0xFF081A00),
+        ],
+        stops: [0.0, 0.5962, 0.9519],
+      ),
+
+      border: Border.all(
+        color: Colors.white.withOpacity(0.06),
+      ),
+    ),
+
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _WaveGlowPainter(glowLayers: boxShadow),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              fontFamily: "DMSans",
+              height: 1,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+
+          const Spacer(),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: "DMSans",
+                  height: 1,
+                ),
+              ),
+
+              if (suffix.isNotEmpty) ...[
+                const SizedBox(width: 4),
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    suffix,
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+  // ── PENDING REWARDS ───────────────────────────────────────────────────────
+ Widget _buildPendingRewards() {
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
+
+      /// SAME GRADIENT
+      gradient: const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF00391A),
+          Color(0xFF0C2600),
+          Color(0xFF081A00),
+        ],
+        stops: [0.0, 0.5962, 0.9519],
+      ),
+
+      border: Border.all(
+        color: Colors.white.withOpacity(0.06),
+      ),
+    ),
+
+    clipBehavior: Clip.hardEdge,
+
+    child: Padding(
+      padding: const EdgeInsets.all(10),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 5),
+
+          Text(
+            "Pending Rewards",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontFamily: "DMSans",
+              fontWeight: FontWeight.w400,
+              height: 1,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          RichText(
+            text: TextSpan(
               children: [
-                Text(
-                  title,
+                TextSpan(
+                  text: _pendingBalance.toStringAsFixed(8),
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 30,
                     fontWeight: FontWeight.w700,
                     fontFamily: "DMSans",
                     height: 1,
                   ),
                 ),
-                const Spacer(),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      value,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: "DMSans",
-                        height: 1,
-                      ),
-                    ),
-                    if (suffix.isNotEmpty) ...[
-                      const SizedBox(width: 4),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Text(
-                          suffix,
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // ── PENDING REWARDS ───────────────────────────────────────────────────────
-  Widget _buildPendingRewards() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: const Color(0xFF1A1A1A),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _PendingRewardWavePainter()),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 5),
-
-                Text(
-                  "Pending Rewards",
+                TextSpan(
+                  text: "  USDT",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 15,
                     fontFamily: "DMSans",
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w700,
                     height: 1,
                   ),
                 ),
-                const SizedBox(height: 20),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: _pendingBalance.toStringAsFixed(8),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: "DMSans",
-                          height: 1,
-                        ),
-                      ),
-                      TextSpan(
-                        text: "  USDT",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontFamily: "DMSans",
-                          fontWeight: FontWeight.w700,
-                          height: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  height: 40,
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFCCFF00),
-                      shadowColor: Colors.transparent,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    icon: Image.asset(
-                      "assets/icons/withdraw.png",
-                      height: 20,
-                      width: 20,
-                      fit: BoxFit.contain,
-                    ),
-                    label: const Text(
-                      "Withdraw to Reward Wallet",
-                      style: TextStyle(
-                        color: Color(0xFF111111),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        height: 1,
-                        fontFamily: "DMSans",
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 40,
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: Colors.white.withOpacity(0.5),
-                        width: 1.2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      backgroundColor: const Color(0xFF1A1A1A).withOpacity(0.2),
-                    ),
-                    child: const Text(
-                      "View Reward Wallet",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        fontFamily: "DMSans",
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
               ],
             ),
           ),
+
+          const SizedBox(height: 40),
+
+          SizedBox(
+            height: 40,
+            width: double.infinity,
+
+            child: ElevatedButton.icon(
+              onPressed: () {},
+
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFCCFF00),
+                shadowColor: Colors.transparent,
+                elevation: 0,
+
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+
+              icon: Image.asset(
+                "assets/icons/withdraw.png",
+                height: 20,
+                width: 20,
+                fit: BoxFit.contain,
+              ),
+
+              label: const Text(
+                "Withdraw to Reward Wallet",
+                style: TextStyle(
+                  color: Color(0xFF111111),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  height: 1,
+                  fontFamily: "DMSans",
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          SizedBox(
+            height: 40,
+            width: double.infinity,
+
+            child: OutlinedButton(
+              onPressed: () {},
+
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: Colors.white.withOpacity(0.5),
+                  width: 1.2,
+                ),
+
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+
+                backgroundColor: const Color(
+                  0xFF1A1A1A,
+                ).withOpacity(0.2),
+              ),
+
+              child: const Text(
+                "View Reward Wallet",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  fontFamily: "DMSans",
+                  height: 1,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildHistorySection() {
     return Column(

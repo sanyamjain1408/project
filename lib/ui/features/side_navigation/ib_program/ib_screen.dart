@@ -348,29 +348,35 @@ class _IBScreenState extends State<IBScreen> {
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
-          _buildHeroSection(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStatsSection(),
-                const SizedBox(height: 40),
-                _buildPendingRewards(),
-                const SizedBox(height: 20),
-                _buildFlowSection(),
-                const SizedBox(height: 20),
-                _buildLevel1Section(),
-                const SizedBox(height: 20),
-                _buildLevel2Section(),
-                const SizedBox(height: 30),
-                _buildHistorySection(),
-                const SizedBox(height: 20),
-                _buildKeyRules(),
-                const SizedBox(height: 20),
-                _buildTermsSection(),
-                const SizedBox(height: 30),
-              ],
+          Transform.translate(
+            offset: const Offset(0, -30),
+            child: _buildHeroSection(),
+          ),
+          Transform.translate(
+            offset: const Offset(0, -30),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStatsSection(),
+                  const SizedBox(height: 40),
+                  _buildPendingRewards(),
+                  const SizedBox(height: 20),
+                  _buildFlowSection(),
+                  const SizedBox(height: 20),
+                  _buildLevel1Section(),
+                  const SizedBox(height: 20),
+                  _buildLevel2Section(),
+                  const SizedBox(height: 30),
+                  _buildHistorySection(),
+                  const SizedBox(height: 20),
+                  _buildKeyRules(),
+                  const SizedBox(height: 20),
+                  _buildTermsSection(),
+                  const SizedBox(height: 30),
+                ],
+              ),
             ),
           ),
         ],
@@ -380,19 +386,17 @@ class _IBScreenState extends State<IBScreen> {
 
   // ── HERO ──────────────────────────────────────────────────────────────────
   Widget _buildHeroSection() {
-    return Transform.translate(
-      offset: Offset(0, -20),
-      child: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          color: Colors.transparent,
-          image: DecorationImage(
-            image: AssetImage("assets/images/ib_screen.png"),
-            fit: BoxFit.cover,
-            alignment: Alignment.topCenter,
-          ),
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
+        image: DecorationImage(
+          image: AssetImage("assets/images/ib_screen.png"),
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
         ),
-        child: Container(
+      ),
+      child: Container(
           padding: const EdgeInsets.only(top: 60, left: 10, right: 20),
           decoration: BoxDecoration(
             color: Colors.transparent,
@@ -554,14 +558,14 @@ class _IBScreenState extends State<IBScreen> {
                 ),
               ),
       
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
               Column(
                 children: [
                   _buildReferralBox(value: _referralLink, isCode: false),
                   _buildReferralBox(value: _referralCode, isCode: true),
                   const SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.only(left: 10),
+                    padding: const EdgeInsets.only(left: 30 , right: 20),
                     child: RichText(
                       text: const TextSpan(
                         style: TextStyle(
@@ -584,7 +588,7 @@ class _IBScreenState extends State<IBScreen> {
                   ),
                   const SizedBox(height: 20),
                   Container(
-                    margin: const EdgeInsets.fromLTRB(10, 0, 0, 20),
+                    margin: const EdgeInsets.fromLTRB(30, 0, 20, 20),
                     height: 40,
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -623,14 +627,13 @@ class _IBScreenState extends State<IBScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 
   Widget _buildReferralBox({required String value, required bool isCode}) {
     return Container(
       height: 40,
-      margin: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+      margin: const EdgeInsets.fromLTRB(30, 0, 20, 0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         color: const Color(0xFF111111),
@@ -696,40 +699,20 @@ class _IBScreenState extends State<IBScreen> {
             "Total Referral",
             "${s.totalReferrals ?? 0}",
             "",
-            const [
-              BoxShadow(color: Color(0xFFFF6F00), blurRadius: 26.3),
-              BoxShadow(color: Color(0xFFFF8A30), blurRadius: 26.3),
-              BoxShadow(color: Color(0xFFFFB781), blurRadius: 26.3),
-              BoxShadow(color: Color(0xFFFFE6D2), blurRadius: 26.3),
-            ],
+            
           ),
           _buildGlowCard(
             "Total Earned",
             (s.totalEarned ?? 0).toStringAsFixed(2),
             "USDT",
-            const [
-              BoxShadow(color: Color(0xFF00E5FF), blurRadius: 26.3),
-              BoxShadow(color: Color(0xFF37EBFF), blurRadius: 26.3),
-              BoxShadow(color: Color(0xFF9AF5FF), blurRadius: 26.3),
-              BoxShadow(color: Color(0xFFC9FAFF), blurRadius: 26.3),
-            ],
+           
           ),
-          _buildGlowCard("Commission", "20%", "", const [
-            BoxShadow(color: Color(0xFF0062FF), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFF428AFF), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFF7EAFFF), blurRadius: 26.3),
-            BoxShadow(color: Color(0xFFD8E7FF), blurRadius: 26.3),
-          ]),
+          _buildGlowCard("Commission", "20%", "", ),
           _buildGlowCard(
             "Active Referrals",
             "${s.activeReferrals ?? 0}",
             "",
-            const [
-              BoxShadow(color: Color(0xFFCCFF00), blurRadius: 26.3),
-              BoxShadow(color: Color(0xFFD9FF41), blurRadius: 26.3),
-              BoxShadow(color: Color(0xFFE8FF8C), blurRadius: 26.3),
-              BoxShadow(color: Color(0xFFF3FFC2), blurRadius: 26.3),
-            ],
+           
           ),
         ],
       );
@@ -737,193 +720,222 @@ class _IBScreenState extends State<IBScreen> {
   }
 
   Widget _buildGlowCard(
-    String title,
-    String value,
-    String suffix,
-    List<BoxShadow> shadows,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: const Color(0xFF1A1A1A),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _WaveGlowPainter(glowLayers: shadows)),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 8, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.75),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: _dmSans,
-                  ),
-                ),
-                const Spacer(),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      value,
-                      style: const TextStyle(
-                        color: _white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: _dmSans,
-                        height: 1,
-                      ),
-                    ),
-                    if (suffix.isNotEmpty) ...[
-                      const SizedBox(width: 4),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Text(
-                          suffix,
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 10,
-                            fontFamily: _dmSans,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  String title,
+  String value,
+  String suffix,
+) {
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
 
-  // ── PENDING REWARDS (same painter as referral) ────────────────────────────
-  Widget _buildPendingRewards() {
-    return Obx(() {
-      final balance = _ctrl.stats.value.pendingBalance ?? 0;
-      return Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: const Color(0xFF0D0010),
-        ),
-        clipBehavior: Clip.hardEdge,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CustomPaint(painter: _PendingRewardWavePainter()),
+      /// SAME GRADIENT FOR ALL CARDS
+      gradient: const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF00391A),
+          Color(0xFF0C2600),
+          Color(0xFF081A00),
+        ],
+        stops: [0.0, 0.5962, 0.9519],
+      ),
+    ),
+
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.75),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              fontFamily: _dmSans,
             ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Pending Rewards",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.75),
-                      fontSize: 13,
+          ),
+
+          const Spacer(),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: _white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: _dmSans,
+                  height: 1,
+                ),
+              ),
+
+              if (suffix.isNotEmpty) ...[
+                const SizedBox(width: 4),
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    suffix,
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 10,
                       fontFamily: _dmSans,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: balance.toStringAsFixed(8),
-                          style: const TextStyle(
-                            color: _white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: _dmSans,
-                            height: 1.2,
-                          ),
-                        ),
-                        TextSpan(
-                          text: "  USDT",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.70),
-                            fontSize: 13,
-                            fontFamily: _dmSans,
-                          ),
-                        ),
-                      ],
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+  // ── PENDING REWARDS (same painter as referral) ────────────────────────────
+Widget _buildPendingRewards() {
+  return Obx(() {
+    final balance = _ctrl.stats.value.pendingBalance ?? 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+
+        /// SAME GRADIENT
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF00391A),
+            Color(0xFF0C2600),
+            Color(0xFF081A00),
+          ],
+          stops: [0.0, 0.5962, 0.9519],
+        ),
+      ),
+
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+
+          children: [
+            Text(
+              "Pending Rewards",
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.75),
+                fontSize: 13,
+                fontFamily: _dmSans,
+              ),
+            ),
+
+            const SizedBox(height: 6),
+
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: balance.toStringAsFixed(8),
+                    style: const TextStyle(
+                      color: _white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    height: 50,
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _green,
-                        shadowColor: Colors.transparent,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      icon: const Icon(
-                        Icons.upload_rounded,
-                        color: Colors.black,
-                        size: 20,
-                      ),
-                      label: const Text(
-                        "Withdraw to Reward Wallet",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          fontFamily: _dmSans,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 50,
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: Colors.white.withOpacity(0.25),
-                          width: 1.2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        backgroundColor: Colors.white.withOpacity(0.08),
-                      ),
-                      child: const Text(
-                        "View Reward Wallet",
-                        style: TextStyle(
-                          color: _white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          fontFamily: _dmSans,
-                        ),
-                      ),
+
+                  TextSpan(
+                    text: "  USDT",
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.70),
+                      fontSize: 13,
+                      fontFamily: _dmSans,
                     ),
                   ),
                 ],
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            SizedBox(
+              height: 50,
+              width: double.infinity,
+
+              child: ElevatedButton.icon(
+                onPressed: () {},
+
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _green,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+
+                icon: const Icon(
+                  Icons.upload_rounded,
+                  color: Colors.black,
+                  size: 20,
+                ),
+
+                label: const Text(
+                  "Withdraw to Reward Wallet",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontFamily: _dmSans,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            SizedBox(
+              height: 50,
+              width: double.infinity,
+
+              child: OutlinedButton(
+                onPressed: () {},
+
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: Colors.white.withOpacity(0.25),
+                    width: 1.2,
+                  ),
+
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+
+                  backgroundColor: Colors.white.withOpacity(0.08),
+                ),
+
+                child: const Text(
+                  "View Reward Wallet",
+                  style: TextStyle(
+                    color: _white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontFamily: _dmSans,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
-      );
-    });
-  }
+      ),
+    );
+  });
+}
 
   // ── HOW IB REWARDS FLOW ───────────────────────────────────────────────────
   Widget _buildFlowSection() {
@@ -1216,15 +1228,15 @@ class _IBScreenState extends State<IBScreen> {
             height: 1,
           ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 10),
         const Text(
-          "Commission scales with your network size",
+          "Commission scales with your network\nsize",
           style: TextStyle(
             color: _white,
             fontSize: 16,
             fontFamily: _dmSans,
             fontWeight: FontWeight.w700,
-            height: 1,
+            height: 1.4,
           ),
         ),
         const SizedBox(height: 16),
