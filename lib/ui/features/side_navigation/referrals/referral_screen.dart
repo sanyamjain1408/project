@@ -236,9 +236,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
             const SizedBox(height: 230),
             RichText(
               textAlign: TextAlign.center,
-              text: const TextSpan(
+              text: TextSpan(
                 children: [
-                  TextSpan(
+                  const TextSpan(
                     text: "Refer Friends.\nEarn ",
                     style: TextStyle(
                       color: Colors.white,
@@ -258,7 +258,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       fontFamily: "DMSans",
                     ),
                   ),
-                  TextSpan(
+                  const TextSpan(
                     text: " Forever.",
                     style: TextStyle(
                       color: Colors.white,
@@ -276,9 +276,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 0),
                 child: RichText(
                   textAlign: TextAlign.center,
-                  text: const TextSpan(
+                  text: TextSpan(
                     children: [
-                      TextSpan(
+                      const TextSpan(
                         text: "Invite anyone to Tripix. Every time they trade, you ",
                         style: TextStyle(
                           color: Colors.white,
@@ -287,18 +287,18 @@ class _ReferralScreenState extends State<ReferralScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-      
+
                       TextSpan(
                         text: "earn up to 20% ",
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Color(0xFFCCFF00),
                           fontSize: 12,
                           fontFamily: "DMSans",
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-      
-                      TextSpan(
+
+                      const TextSpan(
                         text: "of",
                         style: TextStyle(
                           color: Colors.white,
@@ -307,8 +307,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-      
-                      TextSpan(
+
+                      const TextSpan(
                         text: "the ",
                         style: TextStyle(
                           color: Colors.white,
@@ -317,7 +317,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-      
+
                       TextSpan(
                         text: "0.3% exchange free ",
                         style: TextStyle(
@@ -327,8 +327,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-      
-                      TextSpan(
+
+                      const TextSpan(
                         text: "automatically, for life.",
                         style: TextStyle(
                           color: Colors.white,
@@ -346,10 +346,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
             _buildReferralBox(value: _ctrl.referralData.value.referralCode ?? _ctrl.referralData.value.user?.affiliate?.code ?? '', isCode: true),
             const SizedBox(height: 10),
             Padding(
-              padding: EdgeInsetsGeometry.only(left: 20, right: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: RichText(
-                text: const TextSpan(
-                  style: TextStyle(
+                text: TextSpan(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
                     fontFamily: "DMSans",
@@ -359,7 +359,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       text: "Receive 20%",
                       style: TextStyle(color: Color(0xFFCCFF00)),
                     ),
-                    TextSpan(
+                    const TextSpan(
                       text: " commission on all trades made through your referrals",
                     ),
                   ],
@@ -383,7 +383,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ),
               ),
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _ctrl.copyReferralLink,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
@@ -554,7 +554,7 @@ Widget _buildStatsSection() {
 
       _buildGlowCard(
         title: "Commission",
-        value: "20%",
+        value: "${(_ctrl.referralData.value.commissionPercentage ?? 20).toStringAsFixed(0)}%",
       ),
 
       _buildGlowCard(
@@ -727,8 +727,8 @@ Widget _buildGlowCard({
             height: 40,
             width: double.infinity,
 
-            child: ElevatedButton.icon(
-              onPressed: () {},
+            child: Obx(() => ElevatedButton.icon(
+              onPressed: _ctrl.isWithdrawing.value ? null : _ctrl.withdrawToWallet,
 
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFCCFF00),
@@ -757,7 +757,7 @@ Widget _buildGlowCard({
                   fontFamily: "DMSans",
                 ),
               ),
-            ),
+            )),
           ),
 
           const SizedBox(height: 10),
@@ -887,7 +887,7 @@ Widget _buildGlowCard({
                       _refCell("Referral", 110, isHeader: true),
                       _refCell("Joined", 110, isHeader: true),
                       _refCell("Trading Volume", 140, isHeader: true),
-                      _refCell("You Earned", 150, isHeader: true),
+                      _refCell("You Earned (${(_ctrl.referralData.value.commissionPercentage ?? 20).toStringAsFixed(0)}%)", 150, isHeader: true),
                     ],
                   ),
                   Divider(color: Colors.white.withOpacity(0.08), height: 24),

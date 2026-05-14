@@ -21,6 +21,8 @@ class ReferralData {
     this.countReferrals,
     this.pendingBalance,
     this.activeReferrals,
+    this.commissionPercentage,
+    this.feePercentage,
   });
 
   String? title;
@@ -36,6 +38,8 @@ class ReferralData {
   int? countReferrals;
   double? pendingBalance;
   int? activeReferrals;
+  double? commissionPercentage;
+  double? feePercentage;
 
   factory ReferralData.fromJson(Map<String, dynamic> json) {
     final user = json["user"] == null ? null : User.fromJson(json["user"]);
@@ -59,6 +63,8 @@ class ReferralData {
       countReferrals: json["count_referrals"] ?? json["total_referrals"],
       pendingBalance: makeDouble(json["pending_balance"]),
       activeReferrals: json["active_referrals"],
+      commissionPercentage: makeDouble(json["commission"] ?? json["commission_percentage"] ?? json["percentage"]),
+      feePercentage: makeDouble(json["fee_percentage"] ?? json["trading_fee"]),
     );
   }
 
@@ -76,6 +82,8 @@ class ReferralData {
         "count_referrals": countReferrals,
         "pending_balance": pendingBalance,
         "active_referrals": activeReferrals,
+        "commission": commissionPercentage,
+        "fee_percentage": feePercentage,
       };
 }
 
