@@ -1136,29 +1136,42 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
         backgroundColor: const Color(0xFF111111),
         elevation: 0,
         scrolledUnderElevation: 0,
+
+        leadingWidth: 40, // default 56 hota hai
+
+        titleSpacing: 0, // gap remove
+
         leading: IconButton(
+          padding: EdgeInsets.symmetric(horizontal: 16),
           icon: const Icon(Icons.arrow_back, color: _white),
           onPressed: () => Get.back(),
         ),
+
         title: TabBar(
           controller: _tabController,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
           labelColor: _white,
-          unselectedLabelColor: Colors.white38,
+          unselectedLabelColor: Colors.white.withOpacity(0.5),
+
           labelStyle: const TextStyle(
-            fontSize: 15,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             fontFamily: _dmSans,
+            height: 24 / 16,
           ),
+
           unselectedLabelStyle: const TextStyle(
-            fontSize: 15,
+            fontSize: 16,
             fontWeight: FontWeight.w400,
             fontFamily: _dmSans,
+            height: 24 / 16,
           ),
+
           indicator: const BoxDecoration(),
           dividerColor: Colors.transparent,
           overlayColor: WidgetStateProperty.all(Colors.transparent),
+
           tabs: _tabs.map((t) => Tab(text: t["label"] as String)).toList(),
         ),
       ),
