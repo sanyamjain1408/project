@@ -35,12 +35,36 @@ class LandingController extends GetxController implements SocketListener {
       (resp) {
         isLoading.value = false;
         if (resp.success && resp.data != null && resp.data is Map<String, dynamic>) {
+          // debugPrint('=== [LANDING] Raw backend response keys: ${(resp.data as Map).keys.toList()}');
           DataProcessHelper.commonSettingsProcess(
             resp.data,
             onSettings: (landingSettings) {
               if (landingSettings != null) {
                 landingData.value = landingSettings;
                 landingList.value = LandingList.fromJson(resp.data);
+
+                // --- ANNOUNCEMENT LOG ---
+                // final announcements = landingSettings.announcementList;
+                // debugPrint('=== [ANNOUNCEMENT] Count: ${announcements?.length ?? 0}');
+                // if (announcements != null && announcements.isNotEmpty) {
+                //   for (int i = 0; i < announcements.length; i++) {
+                //     final a = announcements[i];
+                //     debugPrint('  [ANNOUNCEMENT $i] id=${a.id} | title=${a.title} | slug=${a.slug} | image=${a.image} | updatedAt=${a.updatedAt}');
+                //     debugPrint('  [ANNOUNCEMENT $i] description (first 200): ${(a.description ?? '').substring(0, (a.description ?? '').length > 200 ? 200 : (a.description ?? '').length)}');
+                //   }
+                // } else {
+                //   debugPrint('  [ANNOUNCEMENT] No announcements received from backend.');
+                // }
+
+                // --- BANNER LOG ---
+                // final banners = landingSettings.bannerList;
+                // debugPrint('=== [BANNER] Count: ${banners?.length ?? 0}');
+                // if (banners != null && banners.isNotEmpty) {
+                //   for (int i = 0; i < banners.length; i++) {
+                //     final b = banners[i];
+                //     debugPrint('  [BANNER $i] id=${b.id} | title=${b.title} | image=${b.image}');
+                //   }
+                // }
               }
             },
           );
@@ -49,6 +73,7 @@ class LandingController extends GetxController implements SocketListener {
       },
       onError: (err) {
         isLoading.value = false;
+        // debugPrint('=== [LANDING] Error: $err');
         showToast(err.toString());
       },
     );
@@ -59,9 +84,21 @@ class LandingController extends GetxController implements SocketListener {
       (resp) {
         if (resp.success && resp.data != null) {
           latestBlogList.value = List<Blog>.from(resp.data.map((x) => Blog.fromJson(x)));
+
+          // --- BLOG LOG ---
+          // debugPrint('=== [BLOG] Count: ${latestBlogList.length}');
+          // for (int i = 0; i < latestBlogList.length; i++) {
+          //   final b = latestBlogList[i];
+          //   debugPrint('  [BLOG $i] id=${b.id} | title=${b.title} | slug=${b.slug} | status=${b.status} | publish=${b.publish} | views=${b.views} | thumbnail=${b.thumbnail}');
+          //   debugPrint('  [BLOG $i] category=${b.category} | subCategory=${b.subCategory} | isFeatured=${b.isFetured} | publishAt=${b.publishAt}');
+          // }
         }
+        // else {
+        //   debugPrint('=== [BLOG] API failed or no data | success=${resp.success}');
+        // }
       },
       onError: (err) {
+        // debugPrint('=== [BLOG] Error: $err');
         showToast(err.toString());
       },
     );
