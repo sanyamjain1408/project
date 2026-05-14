@@ -36,6 +36,9 @@ import '../side_navigation/referrals/referral_screen.dart';
 import '../side_navigation/ib_program/ib_screen.dart';
 import '../side_navigation/settings/settings_screen.dart';
 import '../side_navigation/staking/staking_screen.dart';
+import '../side_navigation/airdrop/airdrop_screen.dart';
+import '../side_navigation/spin_win/spin_win_screen.dart';
+import '../side_navigation/listing/listing_screen.dart';
 import '../auth/sign_in/sign_in_screen.dart';
 import '../side_navigation/referrals/referral_screen.dart';
 import '../side_navigation/ib_program/ib_screen.dart';
@@ -621,9 +624,19 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _menuRow(
                       "assets/icons/airdrop.png",
                       "Airdrop Campaign",
-                      () {},
+                      () {
+                        Get.back();
+                        Get.to(() => const AirdropScreen());
+                      },
                     ),
-                    _menuRow("assets/icons/listing.png", "Listing", () {}),
+                    _menuRow(
+                      "assets/icons/listing.png",
+                      "Listing",
+                      () {
+                        Get.back();
+                        Get.to(() => const ListingScreen());
+                      },
+                    ),
 
                     // ── REWARDS ──────────────────────────────────────────────
                     _sectionHeader("Rewards"),
@@ -641,7 +654,14 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                           ? Get.to(() => const ReferralScreen())
                           : Get.offAll(() => const SignInPage()),
                     ),
-                    _menuRow("assets/icons/help.png", "Spin & Win", () {}),
+                    _menuRow(
+                      "assets/icons/spin.png",
+                      "Spin & Win",
+                      () {
+                        Get.back();
+                        Get.to(() => const SpinWinScreen());
+                      },
+                    ),
 
                     // ── ABOUT US ─────────────────────────────────────────────
                     _sectionHeader("About us"),
