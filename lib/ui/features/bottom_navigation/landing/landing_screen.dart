@@ -597,19 +597,8 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
   Widget _buildContent() {
     switch (_currentTab) {
       case 0:
-        return const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.folder_off, color: Colors.grey, size: 40),
-              SizedBox(height: 10),
-              Text("No Data", style: TextStyle(color: Colors.grey)),
-            ],
-          ),
-        );
-      case 1:
         return _buildBlogsContent();
-      case 2:
+      case 1:
         return const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -620,7 +609,7 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
             ],
           ),
         );
-      case 3:
+      case 2:
         return const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -686,7 +675,7 @@ class CommonTabHeader extends StatefulWidget {
 
 class _CommonTabHeaderState extends State<CommonTabHeader> {
   int _selectedIndex = 0;
-  final List<String> _tabs = ["Discover", "Blogs", "News", "Announcement"];
+  final List<String> _tabs = [ "Blogs", "News", "Announcement"];
 
   @override
   Widget build(BuildContext context) {

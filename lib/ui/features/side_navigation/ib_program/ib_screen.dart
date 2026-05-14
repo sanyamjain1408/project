@@ -337,31 +337,23 @@ class _IBScreenState extends State<IBScreen> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Color(0xFF111111),
       body: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          const SizedBox(height: 20),
-          // Back button
-          Container(
-            color: Colors.transparent,
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => Get.back(),
-              icon: const Icon(
-                Icons.arrow_back_outlined,
-                color: Colors.white,
-                size: 25,
-              ),
-            ),
-          ),
+          _buildHeroSection(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 15),
-                _buildHeroSection(),
                 const SizedBox(height: 30),
                 _buildStatsSection(),
                 const SizedBox(height: 40),
@@ -389,116 +381,195 @@ class _IBScreenState extends State<IBScreen> {
 
   // ── HERO ──────────────────────────────────────────────────────────────────
   Widget _buildHeroSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Refer Friends.\nEarn 20% Forever.",
-          style: TextStyle(
-            color: Color(0xFFD7FF00),
-            fontSize: 30,
-            height: 40 / 30,
-            fontWeight: FontWeight.w700,
-            fontFamily: "DMSans",
-          ),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          "Invite anyone to Trapix. Every time they trade, you earn 20% of the 0.3% exchange fee — automatically, for life.",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontFamily: "DMSans",
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        const SizedBox(height: 40),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.3)),
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x33E946FF), Color(0x331A1A1A)],
+    return Container(
+      padding: EdgeInsets.only(top: 50,left: 10, right: 20),
+      width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withOpacity(0.5)),
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0x33E946FF), Color(0x331A1A1A)],
+              ),
+            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            color: Colors.transparent,
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: () => Get.back(),
+              icon: const Icon(
+                Icons.arrow_back_outlined,
+                color: Colors.white,
+                size: 25,
+              ),
             ),
           ),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              _buildReferralBox(value: _referralLink, isCode: false),
-              _buildReferralBox(value: _referralCode, isCode: true),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontFamily: "DMSans",
-                    ),
-                    children: [
-                      TextSpan(
-                        text: "Receive 20%",
-                        style: TextStyle(color: Color(0xFFCCFF00)),
-                      ),
-                      TextSpan(
-                        text:
-                            " commission on all trades made through your referrals",
-                      ),
-                    ],
+          const SizedBox(height: 20),
+          RichText(
+            textAlign: TextAlign.center,
+            text: const TextSpan(
+              children: [
+                TextSpan(
+                  text: "Earn ",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    height: 40 / 30,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                height: 40,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF00E6FF),
-                      Color(0xFFCCFF00),
-                      Color(0xFF77D215),
-                    ],
-                    stops: [0.0, 0.5, 1.0],
+
+                TextSpan(
+                  text: "From ",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    height: 40 / 30,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
                   ),
                 ),
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text(
-                    "Invite Now",
-                    style: TextStyle(
-                      color: Color(0xFF111111),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      fontFamily: "DMSans",
-                    ),
+
+                TextSpan(
+                  text: "Every Trade\n",
+                  style: TextStyle(
+                    color: Color(0xFFD7FF00),
+                    fontSize: 30,
+                    height: 40 / 30,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
                   ),
                 ),
-              ),
-            ],
+
+                TextSpan(
+                  text: "Your ",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    height: 40 / 30,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
+                  ),
+                ),
+
+                TextSpan(
+                  text: "Network ",
+                  style: TextStyle(
+                    color: Color(0xFFD7FF00),
+                    fontSize: 30,
+                    height: 40 / 30,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
+                  ),
+                ),
+
+                TextSpan(
+                  text: "Makes",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    height: 40 / 30,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: const Text(
+              "Invite anyone to Trapix. Every time they trade, you earn 20% of the 0.3% exchange fee — automatically, for life.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontFamily: "DMSans",
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+            const SizedBox(height: 40),
+           Column(
+              children: [
+                _buildReferralBox(value: _referralLink, isCode: false),
+                _buildReferralBox(value: _referralCode, isCode: true),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontFamily: "DMSans",
+                      ),
+                      children: [
+                        TextSpan(
+                          text: "Receive 20%",
+                          style: TextStyle(color: Color(0xFFCCFF00)),
+                        ),
+                        TextSpan(
+                          text:
+                              " commission on all trades made through your referrals",
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  margin: const EdgeInsets.fromLTRB(10, 0, 0, 20),
+                  height: 40,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF00E6FF),
+                        Color(0xFFCCFF00),
+                        Color(0xFF77D215),
+                      ],
+                      stops: [0.0, 0.5, 1.0],
+                    ),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      "Invite Now",
+                      style: TextStyle(
+                        color: Color(0xFF111111),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontFamily: "DMSans",
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildReferralBox({required String value, required bool isCode}) {
     return Container(
       height: 40,
-      margin: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      margin: const EdgeInsets.fromLTRB(10, 10, 0, 0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         color: const Color(0xFF111111),
