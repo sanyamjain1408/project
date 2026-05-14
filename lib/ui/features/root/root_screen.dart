@@ -624,18 +624,12 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _menuRow(
                       "assets/icons/airdrop.png",
                       "Airdrop Campaign",
-                      () {
-                        Get.back();
-                        Get.to(() => const AirdropScreen());
-                      },
+                      () => Get.to(() => const AirdropScreen()),
                     ),
                     _menuRow(
                       "assets/icons/listing.png",
                       "Listing",
-                      () {
-                        Get.back();
-                        Get.to(() => const ListingScreen());
-                      },
+                      () => Get.to(() => const ListingScreen()),
                     ),
 
                     // ── REWARDS ──────────────────────────────────────────────
@@ -657,10 +651,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _menuRow(
                       "assets/icons/spin.png",
                       "Spin & Win",
-                      () {
-                        Get.back();
-                        Get.to(() => const SpinWinScreen());
-                      },
+                      () => Get.to(() => const SpinWinScreen()),
                     ),
 
                     // ── ABOUT US ─────────────────────────────────────────────
