@@ -1,7 +1,7 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/referrals/referral_controller.dart';
 
 // ─── Wave Glow Painter (Stats Cards) ────────────────────────────────────────
 class _WaveGlowPainter extends CustomPainter {
@@ -150,37 +150,18 @@ class ReferralScreen extends StatefulWidget {
 }
 
 class _ReferralScreenState extends State<ReferralScreen> {
+  late final ReferralController _ctrl;
   DateTime? _startDate;
   DateTime? _endDate;
 
-  int _totalReferrals = 1;
-  double _totalEarned = 0.00;
-  double _pendingBalance = 0.00000000;
-  int _activeReferrals = 0;
-
-  String _referralLink = "https://trapix.com/signup?ref_code";
-  String _referralCode = "TRX-5Q905R";
-
-  final List<Map<String, dynamic>> _members = [
-    {
-      'name': 'Yug Patel',
-      'joined_at': '26-04-2026',
-      'trade_volume': 0.00,
-      'you_earned': 0.00000,
-    },
-    {
-      'name': 'Yug Patel',
-      'joined_at': '26-04-2026',
-      'trade_volume': 0.00,
-      'you_earned': 0.00000,
-    },
-    {
-      'name': 'Yug Patel',
-      'joined_at': '26-04-2026',
-      'trade_volume': 0.00,
-      'you_earned': 0.00000,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.put(ReferralController());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ctrl.getReferralData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -189,11 +170,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
-         Transform.translate(
+          Obx(() => Transform.translate(
             offset: const Offset(0, -30),
             child: _buildHeroSection(),
-          ),
-           Transform.translate(
+          )),
+          Obx(() => Transform.translate(
             offset: const Offset(0, -30),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -201,7 +182,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 children: [
                   const SizedBox(height: 40),
                   _buildHowItWorksSection(),
-                  const SizedBox(height: 40),
                   _buildStatsSection(),
                   const SizedBox(height: 40),
                   _buildPendingRewards(),
@@ -211,7 +191,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ],
               ),
             ),
-          ),
+          )),
         ],
       ),
     );
@@ -362,8 +342,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ),
               ),
             const SizedBox(height: 20),
-            _buildReferralBox(value: _referralLink, isCode: false),
-            _buildReferralBox(value: _referralCode, isCode: true),
+            _buildReferralBox(value: _ctrl.referralData.value.referralLink ?? _ctrl.referralData.value.url ?? '', isCode: false),
+            _buildReferralBox(value: _ctrl.referralData.value.referralCode ?? _ctrl.referralData.value.user?.affiliate?.code ?? '', isCode: true),
             const SizedBox(height: 10),
             Padding(
               padding: EdgeInsetsGeometry.only(left: 20, right: 20),
@@ -563,12 +543,12 @@ Widget _buildStatsSection() {
     children: [
       _buildGlowCard(
         title: "Total Referral",
-        value: "$_totalReferrals",
+        value: "${_ctrl.referralData.value.countReferrals ?? 0}",
       ),
 
       _buildGlowCard(
         title: "Total Earned",
-        value: _totalEarned.toStringAsFixed(2),
+        value: (_ctrl.referralData.value.totalReward?.toDouble() ?? 0.0).toStringAsFixed(2),
         suffix: "USDT",
       ),
 
@@ -579,7 +559,7 @@ Widget _buildStatsSection() {
 
       _buildGlowCard(
         title: "Active Referrals",
-        value: "$_activeReferrals",
+        value: "${_ctrl.referralData.value.activeReferrals ?? 0}",
       ),
     ],
   );
@@ -599,9 +579,10 @@ Widget _buildGlowCard({
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          Color(0xFF00391A),
-          Color(0xFF0C2600),
           Color(0xFF081A00),
+          Color(0xFF0C2600),
+          Color(0xFF00391A),
+          
         ],
         stops: [0.0, 0.5962, 0.9519],
       ),
@@ -716,7 +697,7 @@ Widget _buildGlowCard({
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: _pendingBalance.toStringAsFixed(8),
+                  text: (_ctrl.referralData.value.pendingBalance ?? 0.0).toStringAsFixed(8),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 30,
@@ -842,7 +823,7 @@ Widget _buildGlowCard({
             const Spacer(),
             Container(
               height: 40,
-              padding: const EdgeInsets.symmetric(horizontal: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.circular(10),
@@ -850,18 +831,14 @@ Widget _buildGlowCard({
               child: Row(
                 children: [
                   _buildDateBox(
-                    text: _startDate == null
-                        ? "Start Date"
-                        : _formatDate(_startDate!),
+                    text: _startDate == null ? "Start Date" : _formatDate(_startDate!),
                     onTap: () => _selectDate(true),
                   ),
-                  const SizedBox(width: 5),
-                  const Text("—", style: TextStyle(color: Colors.white)),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
+                  Text("—", style: TextStyle(color: Colors.white.withOpacity(0.5))),
+                  const SizedBox(width: 6),
                   _buildDateBox(
-                    text: _endDate == null
-                        ? "End Date"
-                        : _formatDate(_endDate!),
+                    text: _endDate == null ? "End Date" : _formatDate(_endDate!),
                     onTap: () => _selectDate(false),
                   ),
                 ],
@@ -870,159 +847,83 @@ Widget _buildGlowCard({
           ],
         ),
         const SizedBox(height: 20),
+        Obx(() {
+          final all = _ctrl.referralData.value.referrals ?? [];
+          final filtered = all.where((item) {
+            if (_startDate == null && _endDate == null) return true;
+            final d = item.joiningDate;
+            if (d == null) return true;
+            if (_startDate != null && d.isBefore(_startDate!)) return false;
+            if (_endDate != null && d.isAfter(_endDate!.add(const Duration(days: 1)))) return false;
+            return true;
+          }).toList();
 
-        // ✅ Yahan horizontal scroll wrap kiya
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minWidth: MediaQuery.of(context).size.width - 32,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header row
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 36,
-                      child: Text(
-                        "No.",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 100,
-                      child: Text(
-                        "Referral",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 110,
-                      child: Text(
-                        "Joined",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 140,
-                      child: Text(
-                        "Trading Volume",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 150,
-                      child: Text(
-                        "You Earned (20%)",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                  ],
+          if (filtered.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30),
+                child: Text(
+                  "No referrals yet",
+                  style: TextStyle(
+                    color: Colors.white38,
+                    fontSize: 13,
+                    fontFamily: "DMSans",
+                  ),
                 ),
-                const SizedBox(height: 20),
+              ),
+            );
+          }
 
-                // Data rows
-                Column(
-                  children: List.generate(_members.length, (index) {
-                    final item = _members[index];
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _refCell("No.", 36, isHeader: true),
+                      _refCell("Referral", 110, isHeader: true),
+                      _refCell("Joined", 110, isHeader: true),
+                      _refCell("Trading Volume", 140, isHeader: true),
+                      _refCell("You Earned", 150, isHeader: true),
+                    ],
+                  ),
+                  Divider(color: Colors.white.withOpacity(0.08), height: 24),
+                  ...List.generate(filtered.length, (i) {
+                    final item = filtered[i];
+                    final joinedAt = item.joiningDate != null
+                        ? "${item.joiningDate!.day.toString().padLeft(2, '0')}-${item.joiningDate!.month.toString().padLeft(2, '0')}-${item.joiningDate!.year}"
+                        : '—';
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.only(bottom: 18),
                       child: Row(
                         children: [
-                          SizedBox(
-                            width: 36,
-                            child: Text(
-                              "${index + 1}",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: "DMSans",
-                                height: 1,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 100,
-                            child: Text(
-                              item['name'],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: "DMSans",
-                                height: 1,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 110,
-                            child: Text(
-                              item['joined_at'],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: "DMSans",
-                                height: 1,
-                              ),
-                            ),
-                          ),
+                          _refCell("${i + 1}", 36),
+                          _refCell(item.fullName ?? '—', 110),
+                          _refCell(joinedAt, 110),
                           SizedBox(
                             width: 140,
                             child: Text(
-                              "\$${item['trade_volume'].toStringAsFixed(2)} USDT",
+                              "\$${(item.tradeVolume ?? 0).toStringAsFixed(2)} USDT",
                               style: const TextStyle(
                                 color: Color(0xFF00E5FF),
-                                fontSize: 16,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: "DMSans",
-                                height: 1,
                               ),
                             ),
                           ),
                           SizedBox(
                             width: 150,
                             child: Text(
-                              "+${item['you_earned'].toStringAsFixed(5)} USDT",
+                              "+${(item.youEarned ?? 0).toStringAsFixed(5)} USDT",
                               style: const TextStyle(
                                 color: Color(0xFFCCFF00),
-                                fontSize: 16,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: "DMSans",
-                                height: 1,
                               ),
                             ),
                           ),
@@ -1030,12 +931,27 @@ Widget _buildGlowCard({
                       ),
                     );
                   }),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ),
+          );
+        }),
       ],
+    );
+  }
+
+  Widget _refCell(String text, double width, {bool isHeader = false}) {
+    return SizedBox(
+      width: width,
+      child: Text(
+        text,
+        style: TextStyle(
+          color: isHeader ? Colors.white.withOpacity(0.5) : Colors.white,
+          fontSize: isHeader ? 11 : 13,
+          fontWeight: isHeader ? FontWeight.w500 : FontWeight.w400,
+          fontFamily: "DMSans",
+        ),
+      ),
     );
   }
 

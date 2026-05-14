@@ -12,50 +12,70 @@ class ReferralData {
     this.user,
     this.referrals,
     this.url,
+    this.referralLink,
+    this.referralCode,
     this.referralLevel,
     this.select,
     this.maxReferralLevel,
     this.totalReward,
-    // this.monthlyEarningHistories,
     this.countReferrals,
+    this.pendingBalance,
+    this.activeReferrals,
   });
 
   String? title;
   User? user;
   List<Referral>? referrals;
   String? url;
+  String? referralLink;
+  String? referralCode;
   Map<String, int>? referralLevel;
   String? select;
   int? maxReferralLevel;
-  int? totalReward;
-  // List<Earning>? monthlyEarningHistories;
+  double? totalReward;
   int? countReferrals;
+  double? pendingBalance;
+  int? activeReferrals;
 
-  factory ReferralData.fromJson(Map<String, dynamic> json) => ReferralData(
-        title: json["title"],
-        user: json["user"] == null ? null : User.fromJson(json["user"]),
-        referrals: json["referrals"] == null ? null : List<Referral>.from(json["referrals"].map((x) => Referral.fromJson(x))),
-        url: json["url"],
-        referralLevel: json["referralLevel"] == null ? null : Map.from(json["referralLevel"]).map((k, v) => MapEntry<String, int>(k, v)),
-        select: json["select"],
-        maxReferralLevel: json["max_referral_level"],
-        totalReward: json["total_reward"],
-        // monthlyEarningHistories:
-        //     json["monthlyEarningHistories"] == null ? null : List<Earning>.from(json["monthlyEarningHistories"].map((x) => Earning.fromJson(x))),
-        countReferrals: json["count_referrals"],
-      );
+  factory ReferralData.fromJson(Map<String, dynamic> json) {
+    final user = json["user"] == null ? null : User.fromJson(json["user"]);
+    final rawLink = json["referral_link"] ?? json["url"];
+    final rawCode = json["referral_code"] ?? user?.affiliate?.code;
+    return ReferralData(
+      title: json["title"],
+      user: user,
+      referrals: json["referrals"] == null
+          ? null
+          : List<Referral>.from(json["referrals"].map((x) => Referral.fromJson(x))),
+      url: rawLink,
+      referralLink: rawLink,
+      referralCode: rawCode,
+      referralLevel: json["referralLevel"] == null
+          ? null
+          : Map.from(json["referralLevel"]).map((k, v) => MapEntry<String, int>(k, v)),
+      select: json["select"],
+      maxReferralLevel: json["max_referral_level"],
+      totalReward: makeDouble(json["total_earned"] ?? json["total_reward"]),
+      countReferrals: json["count_referrals"] ?? json["total_referrals"],
+      pendingBalance: makeDouble(json["pending_balance"]),
+      activeReferrals: json["active_referrals"],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "title": title,
         "user": user?.toJson(),
         "referrals": referrals == null ? null : List<dynamic>.from(referrals!.map((x) => x.toJson())),
         "url": url,
+        "referral_link": referralLink,
+        "referral_code": referralCode,
         "referralLevel": referralLevel == null ? null : Map.from(referralLevel!).map((k, v) => MapEntry<String, dynamic>(k, v)),
         "select": select,
         "max_referral_level": maxReferralLevel,
         "total_reward": totalReward,
-        // "monthlyEarningHistories": monthlyEarningHistories == null ? null : List<Earning>.from(monthlyEarningHistories!.map((x) => x.toJson())),
         "count_referrals": countReferrals,
+        "pending_balance": pendingBalance,
+        "active_referrals": activeReferrals,
       };
 }
 
@@ -66,6 +86,8 @@ class Referral {
     this.email,
     this.joiningDate,
     this.level,
+    this.tradeVolume,
+    this.youEarned,
   });
 
   int? id;
@@ -73,14 +95,21 @@ class Referral {
   String? email;
   DateTime? joiningDate;
   String? level;
+  double? tradeVolume;
+  double? youEarned;
 
-  factory Referral.fromJson(Map<String, dynamic> json) => Referral(
-        id: json["id"],
-        fullName: json["full_name"],
-        email: json["email"],
-        joiningDate: json["joining_date"] == null ? null : DateTime.parse(json["joining_date"]),
-        level: json["level"],
-      );
+  factory Referral.fromJson(Map<String, dynamic> json) {
+    final rawDate = json["joining_date"] ?? json["joined_at"];
+    return Referral(
+      id: json["id"],
+      fullName: json["full_name"] ?? json["name"],
+      email: json["email"],
+      joiningDate: rawDate == null ? null : DateTime.tryParse(rawDate.toString()),
+      level: json["level"],
+      tradeVolume: makeDouble(json["trade_volume"]),
+      youEarned: makeDouble(json["you_earned"]),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "id": id,
@@ -88,6 +117,8 @@ class Referral {
         "email": email,
         "joining_date": joiningDate?.toIso8601String(),
         "level": level,
+        "trade_volume": tradeVolume,
+        "you_earned": youEarned,
       };
 }
 
