@@ -329,7 +329,7 @@ class _IBScreenState extends State<IBScreen> {
                     ),
                   ),
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _ctrl.copyIBLink,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -1019,7 +1019,7 @@ class _IBScreenState extends State<IBScreen> {
                         ],
                       ),
                     ),
-                    const Text("30%",
+                    const Text("10%",
                         style: TextStyle(
                             color: Color(0xFFCCFF00), fontSize: 16,
                             fontWeight: FontWeight.w700,

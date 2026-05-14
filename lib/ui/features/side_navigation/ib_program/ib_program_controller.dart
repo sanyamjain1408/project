@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/models/referral.dart';
@@ -7,6 +8,7 @@ import 'package:tradexpro_flutter/utils/common_utils.dart';
 
 // ─── IBStats Model ────────────────────────────────────────────────────────────
 class IBStats {
+  int? userId;
   String? referralLink;
   String? referralCode;
   int? totalReferrals;
@@ -16,6 +18,7 @@ class IBStats {
   double? pendingBalance;
 
   IBStats({
+    this.userId,
     this.referralLink,
     this.referralCode,
     this.totalReferrals,
@@ -44,6 +47,7 @@ class IBController extends GetxController {
 
         // Map ReferralData → IBStats
         stats.value = IBStats(
+          userId:          data.user?.id,
           referralLink:    data.referralLink ?? data.url,
           referralCode:    data.referralCode ?? data.user?.affiliate?.code,
           totalReferrals:  data.countReferrals ?? 0,
@@ -105,6 +109,7 @@ class IBController extends GetxController {
         if (json['success'] == true && json['data'] != null) {
           final d = json['data'] as Map<String, dynamic>;
           stats.value = IBStats(
+            userId:          stats.value.userId,
             referralLink:    d['referral_link']    as String? ?? stats.value.referralLink,
             referralCode:    d['referral_code']    as String? ?? stats.value.referralCode,
             totalReferrals:  _parseInt(d['total_referrals'])  ?? stats.value.totalReferrals,
@@ -159,38 +164,28 @@ class IBController extends GetxController {
       return;
     }
 
+    final userId = stats.value.userId;
+    if (userId == null) {
+      showToast("User ID not found");
+      return;
+    }
+
     isWithdrawing.value = true;
     showLoadingDialog();
 
     try {
-      // Get userId — same pattern as getIBData()
-      final resp = await APIRepository().getReferralApp();
-      hideLoadingDialog();
-
-      if (!resp.success) {
-        showToast(resp.message);
-        return;
-      }
-
-      final data   = ReferralData.fromJson(resp.data);
-      final userId = data.user?.id; // ← correct field, no userId on ReferralData
-
-      if (userId == null) {
-        showToast("User ID not found");
-        return;
-      }
-
       final response = await http.post(
         Uri.parse('$_baseUrl/withdraw-to-wallet'),
         headers: _headers(),
         body: jsonEncode({'user_id': userId}),
       );
+      hideLoadingDialog();
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         if (json['success'] == true) {
           showToast("IB Rewards withdrawn to your Rewards Wallet!");
-          getIBData(); // refresh
+          getIBData();
         } else {
           showToast(json['message'] ?? "Withdrawal failed");
         }
@@ -203,6 +198,17 @@ class IBController extends GetxController {
     } finally {
       isWithdrawing.value = false;
     }
+  }
+
+  void copyIBLink() {
+    final link = stats.value.referralLink ?? '';
+    Clipboard.setData(ClipboardData(text: link));
+    Get.snackbar(
+      "Copied",
+      "IB referral link copied!",
+      backgroundColor: const Color(0xFFD7FF00),
+      colorText: const Color(0xFF111111),
+    );
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
