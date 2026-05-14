@@ -36,7 +36,7 @@ class EarnRecommendedSection extends StatelessWidget {
             )
           else
             SizedBox(
-              height: 143,
+              height: 120,
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
@@ -93,7 +93,7 @@ class _RecommendedCard extends StatelessWidget {
       ),
       child: Container(
         width: 220,
-        height: 110,
+        height: 100,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(

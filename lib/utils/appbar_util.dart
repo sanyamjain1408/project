@@ -132,9 +132,7 @@ Widget tabBarText(
           child: Text(
             titles[index],
             style: TextStyle(
-              color: index == selectedIndex
-                  ? selectedColor
-                  : unSelectedColor,
+              color: index == selectedIndex ? selectedColor : unSelectedColor,
 
               fontSize: fontSize ?? Dimens.fontSizeMid,
 
@@ -173,17 +171,20 @@ class TabBarPlain extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TabBar(
+      padding: const EdgeInsets.only(left: 16, right: 10),
       controller: controller,
       isScrollable: isScrollable,
       tabAlignment: isScrollable ? TabAlignment.start : TabAlignment.center,
       labelColor: context.theme.primaryColor,
       labelStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700),
       unselectedLabelColor: context.theme.primaryColorLight,
-      unselectedLabelStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w400),
+      unselectedLabelStyle: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w400,
+      ),
       labelPadding: const EdgeInsets.symmetric(horizontal: Dimens.paddingMid),
       indicator: const BoxDecoration(),
       dividerHeight: 0,
-      padding: EdgeInsets.zero,
       splashFactory: NoSplash.splashFactory,
       overlayColor: WidgetStateProperty.all(Colors.transparent),
       tabs: List.generate(

@@ -1256,7 +1256,7 @@ class _EarnScreenState extends State<EarnScreen> {
           )
         else
           SizedBox(
-            height: 140,
+            height: 120,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
@@ -1296,7 +1296,7 @@ class _EarnScreenState extends State<EarnScreen> {
       ),
       child: Container(
         width: 220,
-        height: 110,
+        height: 100,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
