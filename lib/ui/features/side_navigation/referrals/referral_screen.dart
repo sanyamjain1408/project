@@ -187,147 +187,177 @@ class _ReferralScreenState extends State<ReferralScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          const SizedBox(height: 20,),
-          Container(
-            color: Colors.transparent,
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => Get.back(),
-              icon: const Icon(
-                Icons.arrow_back_outlined,
-                color: Colors.white,
-                size: 25,
-              ),
-            ),
-          ),
-          Container(
-             padding: const EdgeInsets.symmetric(horizontal: 20),
+          _buildHeroSection(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
-                const SizedBox(height: 75),
-            _buildHeroSection(),
-            const SizedBox(height: 40),
-            _buildHowItWorksSection(),
-            const SizedBox(height: 40),
-            _buildStatsSection(),
-            const SizedBox(height: 40),
-            _buildPendingRewards(),
-            const SizedBox(height: 20),
-            _buildHistorySection(),
-            const SizedBox(height: 30),
+                const SizedBox(height: 40),
+                _buildHowItWorksSection(),
+                const SizedBox(height: 40),
+                _buildStatsSection(),
+                const SizedBox(height: 40),
+                _buildPendingRewards(),
+                const SizedBox(height: 20),
+                _buildHistorySection(),
+                const SizedBox(height: 30),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
   Widget _buildHeroSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Refer Friends.\nEarn 20% Forever.",
-          style: TextStyle(
-            color: Color(0xFFD7FF00),
-            fontSize: 30,
-            height: 40 / 30,
-            fontWeight: FontWeight.w700,
-            fontFamily: "DMSans",
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
+        image: DecorationImage(
+          image: AssetImage("assets/images/referral_screen.png"),
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withValues(alpha: 0.05),
+              Colors.black.withValues(alpha: 0.92),
+            ],
+            stops: const [0.3, 0.72],
           ),
         ),
-        const SizedBox(height: 10),
-        const Text(
-          "Invite anyone to Trapix. Every time they trade, you earn 20% of the 0.3% exchange fee — automatically, for life.",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontFamily: "DMSans",
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        const SizedBox(height: 40),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.3)),
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x33E946FF), Color(0x331A1A1A)],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              color: Colors.transparent,
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                onPressed: () => Get.back(),
+                icon: const Icon(
+                  Icons.arrow_back_outlined,
+                  color: Colors.white,
+                  size: 25,
+                ),
+              ),
             ),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              _buildReferralBox(value: _referralLink, isCode: false),
-              _buildReferralBox(value: _referralCode, isCode: true),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: RichText(
-                  text: const TextSpan(
+            const SizedBox(height: 200),
+            RichText(
+              text: const TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Refer Friends.\nEarn ",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
-                      fontFamily: "DMSans",
-                    ),
-                    children: [
-                      TextSpan(
-                        text: "Receive 20%",
-                        style: TextStyle(color: Color(0xFFCCFF00)),
-                      ),
-                      TextSpan(
-                        text:
-                            " commission on all trades made through your referrals",
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                height: 40,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF00E6FF),
-                      Color(0xFFCCFF00),
-                      Color(0xFF77D215),
-                    ],
-                    stops: [0.0, 0.5, 1.0],
-                  ),
-                ),
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text(
-                    "Invite Now",
-                    style: TextStyle(
-                      color: Color(0xFF111111),
+                      fontSize: 30,
+                      height: 40 / 30,
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
                       fontFamily: "DMSans",
                     ),
                   ),
+                  TextSpan(
+                    text: "20%",
+                    style: TextStyle(
+                      color: Color(0xFFD7FF00),
+                      fontSize: 30,
+                      height: 40 / 30,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: "DMSans",
+                    ),
+                  ),
+                  TextSpan(
+                    text: " Forever.",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 30,
+                      height: 40 / 30,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: "DMSans",
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "Invite anyone to Trapix. Every time they trade, you earn 20% of the 0.3% exchange fee — automatically, for life.",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontFamily: "DMSans",
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildReferralBox(value: _referralLink, isCode: false),
+            _buildReferralBox(value: _referralCode, isCode: true),
+            const SizedBox(height: 10),
+            RichText(
+              text: const TextSpan(
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontFamily: "DMSans",
+                ),
+                children: [
+                  TextSpan(
+                    text: "Receive 20%",
+                    style: TextStyle(color: Color(0xFFCCFF00)),
+                  ),
+                  TextSpan(
+                    text: " commission on all trades made through your referrals",
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              height: 40,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF00E6FF),
+                    Color(0xFFCCFF00),
+                    Color(0xFF77D215),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
                 ),
               ),
-            ],
-          ),
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  "Invite Now",
+                  style: TextStyle(
+                    color: Color(0xFF111111),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontFamily: "DMSans",
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
