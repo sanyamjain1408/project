@@ -379,7 +379,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       // Spin to Earn
                       Expanded(
                         child: GestureDetector(
-                          onTap: () {},
+                          onTap: () => Get.to(() => const SpinWinScreen()),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: BackdropFilter(
@@ -467,104 +467,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       ),
                       const SizedBox(width: 10),
                       // Refer and Earn
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => hasUser
-                              ? Get.to(() => const ReferralScreen())
-                              : Get.offAll(() => const SignInPage()),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(
-                                sigmaX: 4,
-                                sigmaY: 4,
-                              ), // blur 4px
-                              child: Container(
-                                height: 80,
-                                padding: const EdgeInsets.fromLTRB(
-                                  12,
-                                  10,
-                                  8,
-                                  10,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF1A1A1A),
-                                      Color(0xFF6B6B6B),
-                                    ],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.25),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: RichText(
-                                        text: const TextSpan(
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontFamily: _dmSans,
-                                          ),
-                                          children: [
-                                            TextSpan(
-                                              text: "Refer ",
-                                              style: TextStyle(
-                                                color: _green,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: "and ",
-                                              style: TextStyle(
-                                                color: _textWhite,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: "Earn\n",
-                                              style: TextStyle(
-                                                color: _green,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: "Rewards",
-                                              style: TextStyle(
-                                                color: _textWhite,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-
-                                    Container(
-                                      height: 50,
-                                      width: 26,
-                                      child: Image.asset(
-                                        'assets/icons/refer.png', // apna path
-                                        height: 14,
-                                        width: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      AnimatedReferralCard(hasUser: hasUser)
                     ],
                   ),
                 ),
@@ -636,13 +539,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _sectionHeader("Rewards"),
                     _menuRow(
                       "assets/icons/refer_earn.png",
-                      "IB Program",
-                      () => hasUser
-                          ? Get.to(() => const IBScreen())
-                          : Get.offAll(() => const SignInPage()),
-                    ),
-                    _menuRow(
-                      "assets/icons/refer_earn.png",
                       "Referral",
                       () => hasUser
                           ? Get.to(() => const ReferralScreen())
@@ -652,6 +548,13 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       "assets/icons/spin.png",
                       "Spin & Win",
                       () => Get.to(() => const SpinWinScreen()),
+                    ),
+                     _menuRow(
+                      "assets/icons/ib.png",
+                      "IB Program",
+                      () => hasUser
+                          ? Get.to(() => const IBScreen())
+                          : Get.offAll(() => const SignInPage()),
                     ),
 
                     // ── ABOUT US ─────────────────────────────────────────────
@@ -974,6 +877,167 @@ class _RotatingSpinnerState extends State<RotatingSpinner>
         width: 50,
         height: 50,
         child: Image.asset('assets/icons/spinner.png', fit: BoxFit.contain),
+      ),
+    );
+  }
+}
+
+
+class AnimatedReferralCard extends StatefulWidget {
+  final bool hasUser;
+
+  const AnimatedReferralCard({
+    super.key,
+    required this.hasUser,
+  });
+
+  @override
+  State<AnimatedReferralCard> createState() =>
+      _AnimatedReferralCardState();
+}
+
+class _AnimatedReferralCardState
+    extends State<AnimatedReferralCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => widget.hasUser
+            ? Get.to(() => const ReferralScreen())
+            : Get.offAll(() => const SignInPage()),
+
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final color1 = Color.lerp(
+              const Color(0xFF1A1A1A),
+              const Color(0xFF6B6B6B),
+              _controller.value,
+            )!;
+
+            final color2 = Color.lerp(
+              const Color(0xFF6B6B6B),
+              const Color(0xFF1A1A1A),
+              _controller.value,
+            )!;
+
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: 4,
+                  sigmaY: 4,
+                ),
+
+                child: Container(
+                  height: 80,
+                  padding: const EdgeInsets.fromLTRB(
+                    12,
+                    10,
+                    8,
+                    10,
+                  ),
+
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        color1,
+                        color2,
+                      ],
+                    ),
+
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: RichText(
+                          text: const TextSpan(
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontFamily: _dmSans,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: "Refer ",
+                                style: TextStyle(
+                                  color: _green,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              TextSpan(
+                                text: "and ",
+                                style: TextStyle(
+                                  color: _textWhite,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              TextSpan(
+                                text: "Earn\n",
+                                style: TextStyle(
+                                  color: _green,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              TextSpan(
+                                text: "Rewards",
+                                style: TextStyle(
+                                  color: _textWhite,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(
+                        height: 50,
+                        width: 26,
+                        child: Image.asset(
+                          'assets/icons/refer.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
