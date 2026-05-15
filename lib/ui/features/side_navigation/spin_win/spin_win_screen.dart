@@ -23,6 +23,51 @@ String get _uid {
   }
 }
 
+// ─────────────────────────── wheel segment config (mirrors TSX segmentConfig) ─
+//
+// spin_win.png layout — segments go CLOCKWISE, arrow is fixed at the TOP.
+// At rotation = 0 the dividing line between index-0 and index-1 is at 12 o'clock,
+// so every segment centre is offset 15° from its boundary.
+//
+// Each entry = clockwise degrees the wheel must rotate to place that segment
+// exactly under the arrow.  Equivalent to TSX's getSegmentRotation(index).
+//
+//  idx │ prize              │ centre in image │ stop angle
+//  ────┼────────────────────┼─────────────────┼───────────
+//   0  │ Better Luck Next   │  345°           │   15°
+//   1  │ 0.1 USDT           │   15°           │  345°
+//   2  │ 5 POL              │   45°           │  315°
+//   3  │ 0.5 PEPE           │   75°           │  285°
+//   4  │ 0.5 USDT           │  105°           │  255°
+//   5  │ 10 DOGE            │  135°           │  225°
+//   6  │ 5 TRX              │  165°           │  195°
+//   7  │ 2 USDT             │  195°           │  165°
+//   8  │ 10K BONK           │  225°           │  135°
+//   9  │ 0.2 USDC           │  255°           │  105°
+//  10  │ Better Luck Next   │  285°           │   75°
+//  11  │ 5 USDT (jackpot)   │  315°           │   45°
+//
+// To fine-tune one segment: change its stop angle by ±1–5°.
+// To shift the whole wheel: add the same value to every entry.
+const List<double> _kSegmentStopAngles = [
+   5.0,  // 0  – Better Luck Next Time
+  335.0,  // 1  – 0.1 USDT
+  305.0,  // 2  – 5 POL
+  275.0,  // 3  – 0.5 PEPE
+  245.0,  // 4  – 0.5 USDT
+  215.0,  // 5  – 10 DOGE
+  185.0,  // 6  – 5 TRX
+  155.0,  // 7  – 2 USDT
+  125.0,  // 8  – 10K BONK
+  95.0,   // 9  – 0.2 USDC
+  65.0,   // 10 – Better Luck Next Time
+  35.0,   // 11 – 5 USDT (jackpot)
+];
+
+// Returns the clockwise stop-angle (0–360°) for a given backend slot_index.
+double _segmentTargetDeg(int n) =>
+    (n >= 0 && n < _kSegmentStopAngles.length) ? _kSegmentStopAngles[n] : 0.0;
+
 const _winMessages = {
   'lose': '😢 Better luck next time! Try again',
   'small': '🎉 Congrats! Reward credited to your wallet',
@@ -31,51 +76,36 @@ const _winMessages = {
   'jackpot': '🚀 JACKPOT! Huge reward credited',
 };
 
-// ─────────────────────────── spinning wheel ───────────────────────────────────
-class _SpinWheel extends StatefulWidget {
-  const _SpinWheel();
-
+// ─────────────────────────── fixed arrow above wheel ──────────────────────────
+class _ArrowPainter extends CustomPainter {
   @override
-  State<_SpinWheel> createState() => _SpinWheelState();
-}
+  void paint(Canvas canvas, Size size) {
+    final fillPaint = Paint()
+      ..color = const Color(0xFFCCFF00)
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = const Color(0xFF7AAA00)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
 
-class _SpinWheelState extends State<_SpinWheel>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
+    final sx = size.width / 32;
+    final sy = size.height / 44;
 
-  @override
-  void initState() {
-    super.initState();
+    // Downward-pointing triangle (polygon points="4,0 28,0 16,32")
+    final path = Path()
+      ..moveTo(4 * sx, 0)
+      ..lineTo(28 * sx, 0)
+      ..lineTo(16 * sx, 32 * sy)
+      ..close();
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, strokePaint);
 
-    _ctrl = AnimationController(
-      vsync: this,
-
-      /// speed slow kar di
-      duration: const Duration(seconds: 30),
-    )..repeat();
+    // Circle at tip (cx=16 cy=38 r=5)
+    canvas.drawCircle(Offset(16 * sx, 38 * sy), 5 * sy, fillPaint);
   }
 
   @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return RotationTransition(
-      turns: _ctrl,
-
-      child: Image.asset(
-        'assets/icons/spin_win.png',
-
-        /// image blur fix
-        filterQuality: FilterQuality.high,
-
-        fit: BoxFit.contain,
-      ),
-    );
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ─────────────────────────── main screen ──────────────────────────────────────
@@ -86,7 +116,13 @@ class SpinWinScreen extends StatefulWidget {
   State<SpinWinScreen> createState() => _SpinWinScreenState();
 }
 
-class _SpinWinScreenState extends State<SpinWinScreen> {
+class _SpinWinScreenState extends State<SpinWinScreen>
+    with SingleTickerProviderStateMixin {
+  // ── Wheel animation ─────────────────────────────────────────────────────────
+  late AnimationController _wheelCtrl;
+  Animation<double> _wheelAnim = const AlwaysStoppedAnimation(0.0);
+  double _totalTurns = 0.0;
+
   // ── State from backend ──────────────────────────────────────────────────────
   bool _loading = true;
   bool _spinning = false;
@@ -104,17 +140,21 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
   bool _showResult = false;
   int? _expandedFaq;
   Timer? _cooldownTimer;
-  double _currentAngle = 0;
 
   @override
   void initState() {
     super.initState();
+    _wheelCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 5000),
+    );
     _fetchStatus();
   }
 
   @override
   void dispose() {
     _cooldownTimer?.cancel();
+    _wheelCtrl.dispose();
     super.dispose();
   }
 
@@ -256,13 +296,26 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
         final int winIndex =
             (reward['slot_index'] ?? reward['win_index'] ?? 0) as int;
 
-        final double segmentAngle = (2 * pi / 12) * winIndex;
-        final double fullSpins = 8 * 2 * pi;
-        final double needed =
-            (segmentAngle - (_currentAngle % (2 * pi)) + 2 * pi) % (2 * pi);
-        _currentAngle = _currentAngle + fullSpins + needed;
+        // Clockwise segment layout: bring segment winIndex to the arrow (top).
+        final double segmentAngle = _segmentTargetDeg(winIndex) / 360.0;
+        final double currentNorm = _totalTurns % 1.0;
+        double needed = (segmentAngle - currentNorm + 1.0) % 1.0;
+        if (needed < 0.01) needed += 1.0; // ensure visible motion
+        final double targetTurns = _totalTurns + 8.0 + needed; // 8 full spins
 
-        await Future.delayed(const Duration(seconds: 5));
+        // Animate the wheel — cubic-bezier matching the TSX
+        setState(() {
+          _wheelAnim = Tween<double>(
+            begin: _totalTurns,
+            end: targetTurns,
+          ).animate(CurvedAnimation(
+            parent: _wheelCtrl,
+            curve: const Cubic(0.17, 0.67, 0.12, 0.99),
+          ));
+          _totalTurns = targetTurns;
+        });
+
+        await _wheelCtrl.forward(from: 0.0);
 
         if (mounted) {
           setState(() {
@@ -355,7 +408,7 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
                         TextSpan(
                           text: 'Spin ',
                           style: TextStyle(
-                            color: Color(0xFFCCFF00), // Green
+                            color: Color(0xFFCCFF00),
                             fontSize: 30,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'DMSans',
@@ -365,7 +418,7 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
                         TextSpan(
                           text: '& ',
                           style: TextStyle(
-                            color: Colors.white, // White
+                            color: Colors.white,
                             fontSize: 30,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'DMSans',
@@ -375,7 +428,7 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
                         TextSpan(
                           text: 'Win',
                           style: TextStyle(
-                            color: Color(0xFFCCFF00), // Green
+                            color: Color(0xFFCCFF00),
                             fontSize: 30,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'DMSans',
@@ -465,10 +518,10 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          // Wheel card
+          // Wheel card with fixed arrow overlay
           Container(
             width: double.infinity,
-            height: 310,
+            height: 342,
             decoration: BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(20),
@@ -476,10 +529,48 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Glow behind wheel
+                // Wheel — only animates when button is pressed
+                SizedBox(
+                  width: 342,
+                  height: 350,
+                  child: AnimatedBuilder(
+                    animation: _wheelCtrl,
+                    builder: (context, _) {
+                      return Transform.rotate(
+                        angle: _wheelAnim.value * 2 * pi,
+                        child: Image.asset(
+                          'assets/icons/spin_win.png',
+                          filterQuality: FilterQuality.high,
+                          fit: BoxFit.contain,
+                        ),
+                      );
+                    },
+                  ),
+                ),
 
-                // Wheel
-                const SizedBox(width: 265, height: 265, child: _SpinWheel()),
+                // Fixed arrow at top center — does NOT rotate with the wheel
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color:  Color(0xFFCCFF00).withOpacity(0.5),
+                            blurRadius: 12,
+                            offset: const Offset(0, 0),
+                          ),
+                        ],
+                      ),
+                      child: CustomPaint(
+                        size: const Size(42, 54),
+                        painter: _ArrowPainter(),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -634,17 +725,6 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
 
     final totalCount = _spotSteps.length;
 
-    const milestoneColors = [
-      Color(0xFF2196F3),
-      Color(0xFF9C27B0),
-      Color(0xFF00BCD4),
-      Color(0xFFFF5722),
-      Color(0xFF4CAF50),
-      Color(0xFFFF9800),
-      Color(0xFFE91E63),
-      Color(0xFF3F51B5),
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -724,7 +804,7 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
                           Text(
                             'Your Volume',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
+                              color: Colors.white.withValues(alpha: 0.5),
                               fontSize: 16,
                               fontFamily: 'DMSans',
                               height: 1,
@@ -766,7 +846,7 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
                         Text(
                           'Completed',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                             fontSize: 12,
                             fontFamily: 'DMSans',
                             height: 1,
@@ -785,7 +865,7 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
                 child: Text(
                   '← Swipe to explore all $totalCount milestones →',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 12,
                     fontFamily: 'DMSans',
                     height: 1,
@@ -923,7 +1003,6 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
       const Color(0xFF4CAF50),
       const Color(0xFFFFD700),
     ];
-    // rows 0,1 → 1 icon; row 2 → 3 icons; rest → 1 icon
     final iconCounts = [1, 1, 3, 1, 1, 1];
 
     return Container(
