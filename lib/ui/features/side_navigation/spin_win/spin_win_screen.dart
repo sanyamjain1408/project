@@ -23,30 +23,36 @@ String get _uid {
   }
 }
 
-// Win messages — UI layer only, tier names come from backend
 const _winMessages = {
-  'lose':    '😢 Better luck next time! Try again',
-  'small':   '🎉 Congrats! Reward credited to your wallet',
-  'token':   '🎁 Bonus tokens received!',
-  'medium':  '🔥 Great win! Reward credited',
+  'lose': '😢 Better luck next time! Try again',
+  'small': '🎉 Congrats! Reward credited to your wallet',
+  'token': '🎁 Bonus tokens received!',
+  'medium': '🔥 Great win! Reward credited',
   'jackpot': '🚀 JACKPOT! Huge reward credited',
 };
 
 // ─────────────────────────── spinning wheel ───────────────────────────────────
-// Continuously rotates like the drawer's RotatingSpinner (same image, same style)
 class _SpinWheel extends StatefulWidget {
   const _SpinWheel();
+
   @override
   State<_SpinWheel> createState() => _SpinWheelState();
 }
 
-class _SpinWheelState extends State<_SpinWheel> with SingleTickerProviderStateMixin {
+class _SpinWheelState extends State<_SpinWheel>
+    with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
+
+    _ctrl = AnimationController(
+      vsync: this,
+
+      /// speed slow kar di
+      duration: const Duration(seconds: 30),
+    )..repeat();
   }
 
   @override
@@ -59,7 +65,15 @@ class _SpinWheelState extends State<_SpinWheel> with SingleTickerProviderStateMi
   Widget build(BuildContext context) {
     return RotationTransition(
       turns: _ctrl,
-      child: Image.asset('assets/icons/spinner.png', fit: BoxFit.contain),
+
+      child: Image.asset(
+        'assets/icons/spin_win.png',
+
+        /// image blur fix
+        filterQuality: FilterQuality.high,
+
+        fit: BoxFit.contain,
+      ),
     );
   }
 }
@@ -80,10 +94,10 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
   int _spinsUsedToday = 0;
   int _cooldownMs = 0;
   double _cumVolume = 0;
-  int _maxSpinsPerDay = 10;                  // from backend: max_spins_per_day
-  List<Map<String, dynamic>> _depositTiers = []; // from backend: deposit_tiers
-  List<Map<String, dynamic>> _spotSteps = [];    // from backend: spot_milestones
-  List<Map<String, dynamic>> _faqs = [];         // from backend: faqs
+  int _maxSpinsPerDay = 10;
+  List<Map<String, dynamic>> _depositTiers = [];
+  List<Map<String, dynamic>> _spotSteps = [];
+  List<Map<String, dynamic>> _faqs = [];
 
   dynamic _lastReward;
   String? _message;
@@ -104,7 +118,7 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
     super.dispose();
   }
 
-  // ── Fetch spin status — all config comes from here ──────────────────────────
+  // ── Fetch spin status ───────────────────────────────────────────────────────
   Future<void> _fetchStatus() async {
     if (_uid.isEmpty) {
       if (mounted) setState(() => _loading = false);
@@ -112,52 +126,52 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
     }
     setState(() => _loading = true);
     try {
-      final res = await http.get(Uri.parse('$_kApiBase/spin/status?user_id=$_uid'));
+      final res = await http.get(
+        Uri.parse('$_kApiBase/spin/status?user_id=$_uid'),
+      );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
-
-        // debugPrint('══════════════ SPIN STATUS RESPONSE ══════════════');
-        // debugPrint(const JsonEncoder.withIndent('  ').convert(data));
-        // debugPrint('═══════════════════════════════════════════════════');
-
         if (data['success'] == true && mounted) {
           setState(() {
-            _spinsLeft        = (data['bonus_spins'] ?? 0) as int;
-            _spinsUsedToday   = (data['spins_used_today'] ?? 0) as int;
-            _cooldownMs       = (data['cooldown_ms'] ?? 0) as int;
-            _cumVolume        = (data['cumulative_volume'] ?? 0.0).toDouble();
+            _spinsLeft = (data['bonus_spins'] ?? 0) as int;
+            _spinsUsedToday = (data['spins_used_today'] ?? 0) as int;
+            _cooldownMs = (data['cooldown_ms'] ?? 0) as int;
+            _cumVolume = (data['cumulative_volume'] ?? 0.0).toDouble();
+            _maxSpinsPerDay =
+                (data['max_per_day'] ?? data['max_spins_per_day'] ?? 10) as int;
 
-            // ── Dynamic config fields ────────────────────────────────────────
-            _maxSpinsPerDay   = (data['max_per_day'] ?? data['max_spins_per_day'] ?? 10) as int;
-
-            // deposit_tiers — expected: [{range: "$1–$20", spins: 1}, ...]
-            final rawTiers = data['deposit_tiers'] ?? data['deposit_spin_tiers'] ?? [];
+            final rawTiers =
+                data['deposit_tiers'] ?? data['deposit_spin_tiers'] ?? [];
             if (rawTiers is List && rawTiers.isNotEmpty) {
-              _depositTiers = rawTiers.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+              _depositTiers = rawTiers
+                  .map((e) => Map<String, dynamic>.from(e as Map))
+                  .toList();
             } else {
-              // fallback only if backend sends nothing
               _depositTiers = [
-                {'range': '\$1 – \$20',   'spins': 1},
-                {'range': '\$21 – \$50',  'spins': 2},
+                {'range': '\$1 – \$20', 'spins': 1},
+                {'range': '\$21 – \$50', 'spins': 2},
                 {'range': '\$51 – \$100', 'spins': 3},
-                {'range': '\$101 – \$200','spins': 5},
-                {'range': '\$201 – \$500','spins': 7},
-                {'range': '\$500+',       'spins': 10},
+                {'range': '\$101 – \$200', 'spins': 5},
+                {'range': '\$201 – \$500', 'spins': 7},
+                {'range': '\$500+', 'spins': 10},
               ];
             }
 
-            // spot_milestones — expected: [{target: 500, spins: 1}, ...]
-            final rawSteps = data['spot_milestones']  ??
-                             data['trading_steps']    ??
-                             data['trading_milestones'] ?? [];
+            final rawSteps =
+                data['spot_milestones'] ??
+                data['trading_steps'] ??
+                data['trading_milestones'] ??
+                [];
             if (rawSteps is List && rawSteps.isNotEmpty) {
-              _spotSteps = rawSteps.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+              _spotSteps = rawSteps
+                  .map((e) => Map<String, dynamic>.from(e as Map))
+                  .toList();
             } else {
               _spotSteps = [
-                {'target': 500,   'spins': 1},
-                {'target': 1000,  'spins': 2},
-                {'target': 2000,  'spins': 4},
-                {'target': 5000,  'spins': 10},
+                {'target': 500, 'spins': 1},
+                {'target': 1000, 'spins': 2},
+                {'target': 2000, 'spins': 4},
+                {'target': 5000, 'spins': 10},
                 {'target': 10000, 'spins': 20},
                 {'target': 20000, 'spins': 50},
                 {'target': 30000, 'spins': 75},
@@ -165,18 +179,28 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
               ];
             }
 
-            // faqs — expected: [{q: "...", a: "..."}, ...]
             final rawFaqs = data['faqs'] ?? data['faq'] ?? [];
             if (rawFaqs is List && rawFaqs.isNotEmpty) {
-              _faqs = rawFaqs.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+              _faqs = rawFaqs
+                  .map((e) => Map<String, dynamic>.from(e as Map))
+                  .toList();
             } else {
               _faqs = [
-                {'q': 'How are spin rewards credited?',           'a': 'Rewards are credited instantly to your Trapix wallet as soon as the spin completes.'},
-                {'q': 'How many spins do I get as a new user?',   'a': 'Every new Trapix user receives 4 free welcome spins. After using them, you earn 1 free spin every 24 hours.'},
-                {'q': 'What is the daily spin limit?',            'a': 'You can use a maximum of $_maxSpinsPerDay spins per 24-hour window.'},
-                {'q': 'How do deposit spins work?',               'a': 'Every time you make a deposit, you receive bonus spins based on the USD value deposited.'},
-                {'q': 'What are the prizes?',                     'a': 'Prizes include USDT, USDC, TRX, DOGE, PEPE, BONK and POL.'},
-                {'q': 'What are the odds?',                       'a': 'Better Luck Next Time: 40%. Small prizes: 24%. Token prizes: 29%. Medium: 1.5%. Jackpot: 0.5%. All outcomes are server-side.'},
+                {
+                  'q': 'How long does it take for rewards to be distributed?',
+                  'a':
+                      'Tokens and futures bonuses are distributed in real time (a few minutes).',
+                },
+                {
+                  'q': 'Where can I view the status of my rewards?',
+                  'a':
+                      'You can view the reward distribution status in your rewards history.',
+                },
+                {
+                  'q': 'Who should I contact if I encounter any issues?',
+                  'a':
+                      'Please contact our customer support if you have any questions or issues.',
+                },
               ];
             }
           });
@@ -184,7 +208,7 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
         }
       }
     } catch (e) {
-      // debugPrint('Spin status error: $e');
+      // silent
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -206,11 +230,18 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
   Future<void> _spin() async {
     if (_spinning || _spinsLeft <= 0 || _uid.isEmpty || _loading) return;
     if (_spinsUsedToday >= _maxSpinsPerDay) {
-      setState(() => _message = '🚫 Daily limit reached! Max $_maxSpinsPerDay spins per 24 hours.');
+      setState(
+        () => _message =
+            '🚫 Daily limit reached! Max $_maxSpinsPerDay spins per 24 hours.',
+      );
       return;
     }
 
-    setState(() { _spinning = true; _showResult = false; _message = null; });
+    setState(() {
+      _spinning = true;
+      _showResult = false;
+      _message = null;
+    });
 
     try {
       final res = await http.post(
@@ -220,42 +251,53 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
       );
       final data = jsonDecode(res.body) as Map<String, dynamic>;
 
-      // debugPrint('══════════════ SPIN RESULT ══════════════');
-      // debugPrint(const JsonEncoder.withIndent('  ').convert(data));
-      // debugPrint('═════════════════════════════════════════');
-
       if (data['success'] == true) {
         final reward = data['reward'] as Map<String, dynamic>;
-        final int winIndex = (reward['slot_index'] ?? reward['win_index'] ?? 0) as int;
+        final int winIndex =
+            (reward['slot_index'] ?? reward['win_index'] ?? 0) as int;
 
         final double segmentAngle = (2 * pi / 12) * winIndex;
         final double fullSpins = 8 * 2 * pi;
-        final double needed = (segmentAngle - (_currentAngle % (2 * pi)) + 2 * pi) % (2 * pi);
+        final double needed =
+            (segmentAngle - (_currentAngle % (2 * pi)) + 2 * pi) % (2 * pi);
         _currentAngle = _currentAngle + fullSpins + needed;
 
-        // Wait for wheel to spin visually (continuous rotation shows spinning)
         await Future.delayed(const Duration(seconds: 5));
 
         if (mounted) {
           setState(() {
-            _lastReward     = reward;
-            _showResult     = true;
-            _spinsLeft      = (data['spins_remaining'] ?? _spinsLeft - 1) as int;
-            _spinsUsedToday = (data['spins_used_today'] ?? _spinsUsedToday + 1) as int;
-            if (data['cooldown_ms'] != null)       _cooldownMs = data['cooldown_ms'] as int;
-            if (data['cumulative_volume'] != null)  _cumVolume  = (data['cumulative_volume'] as num).toDouble();
+            _lastReward = reward;
+            _showResult = true;
+            _spinsLeft = (data['spins_remaining'] ?? _spinsLeft - 1) as int;
+            _spinsUsedToday =
+                (data['spins_used_today'] ?? _spinsUsedToday + 1) as int;
+            if (data['cooldown_ms'] != null) {
+              _cooldownMs = data['cooldown_ms'] as int;
+            }
+            if (data['cumulative_volume'] != null) {
+              _cumVolume = (data['cumulative_volume'] as num).toDouble();
+            }
             final tier = reward['tier'] as String? ?? 'small';
-            _message   = _winMessages[tier] ?? _winMessages['small'];
-            _spinning  = false;
+            _message = _winMessages[tier] ?? _winMessages['small'];
+            _spinning = false;
           });
           _startCooldownTimer();
         }
       } else {
-        if (mounted) setState(() { _spinning = false; _message = '❌ ${data['message'] ?? 'Something went wrong'}'; });
+        if (mounted) {
+          setState(() {
+            _spinning = false;
+            _message = ' ${data['message'] ?? 'Something went wrong'}';
+          });
+        }
       }
     } catch (e) {
-      // debugPrint('Spin error: $e');
-      if (mounted) setState(() { _spinning = false; _message = '❌ Something went wrong. Please try again.'; });
+      if (mounted) {
+        setState(() {
+          _spinning = false;
+          _message = ' Something went wrong. Please try again.';
+        });
+      }
     }
   }
 
@@ -268,173 +310,264 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
   }
 
   String get _buttonLabel {
-    if (_uid.isEmpty)                          return 'LOGIN TO SPIN';
-    if (_loading)                              return 'LOADING...';
-    if (_spinning)                             return 'SPINNING...';
-    if (_spinsUsedToday >= _maxSpinsPerDay)    return 'DAILY LIMIT REACHED';
-    if (_spinsLeft > 0)                        return 'SPIN & WIN  ·  $_spinsLeft LEFT';
-    return 'NO SPINS LEFT';
+    if (_uid.isEmpty) return 'Login to Spin';
+    if (_loading) return 'Loading...';
+    if (_spinning) return 'Spinning...';
+    if (_spinsUsedToday >= _maxSpinsPerDay) return 'Daily Limit Reached';
+    if (_spinsLeft > 0) return 'Spin & Win';
+    return 'No Spins Left';
   }
 
   bool get _canSpin =>
-      !_spinning && _spinsLeft > 0 && _uid.isNotEmpty &&
-      !_loading && _spinsUsedToday < _maxSpinsPerDay;
+      !_spinning &&
+      _spinsLeft > 0 &&
+      _uid.isNotEmpty &&
+      !_loading &&
+      _spinsUsedToday < _maxSpinsPerDay;
 
   // ── Build ───────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
-      appBar: AppBar(
-        backgroundColor: _bg,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-          onPressed: Get.back,
-        ),
-        title: const Text('Spin & Win', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: _grey),
-            onPressed: _loading ? null : _fetchStatus,
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFF111111),
+
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _lime))
           : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
               child: Column(
                 children: [
-                  _buildWheelSection(),
-                  _buildStatsRow(),
-                  const SizedBox(height: 20),
-                  if (_showResult && _lastReward != null) _buildResultCard(),
-                  if (_message != null && !_showResult) _buildMessage(),
-                  _buildSpotMilestones(),
-                  const SizedBox(height: 24),
-                  _buildDepositTiers(),
-                  const SizedBox(height: 24),
-                  if (_faqs.isNotEmpty) _buildFaq(),
-                  const SizedBox(height: 24),
-                  _buildDisclaimer(),
+                  SizedBox(height: 40),
+                  Container(
+                    padding: EdgeInsets.only(left: 20),
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      onPressed: Get.back,
+                    ),
+                  ),
+                  RichText(
+                    text: const TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Spin ',
+                          style: TextStyle(
+                            color: Color(0xFFCCFF00), // Green
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'DMSans',
+                            height: 40 / 30,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '& ',
+                          style: TextStyle(
+                            color: Colors.white, // White
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'DMSans',
+                            height: 40 / 30,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Win',
+                          style: TextStyle(
+                            color: Color(0xFFCCFF00), // Green
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'DMSans',
+                            height: 40 / 30,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSpinsChip(),
+                      _buildWheelSection(),
+                      if (_showResult && _lastReward != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                          child: _buildResultCard(),
+                        ),
+                      if (_message != null && !_showResult)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                          child: _buildMessage(),
+                        ),
+                      const SizedBox(height: 40),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: _buildSpotMilestones(),
+                      ),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _buildDepositTiers(),
+                      ),
+                      const SizedBox(height: 16),
+                      if (_faqs.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _buildFaq(),
+                        ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
                 ],
               ),
             ),
     );
   }
 
-  // ── Wheel section ────────────────────────────────────────────────────────────
+  // ── Spins chip ───────────────────────────────────────────────────────────────
+  Widget _buildSpinsChip() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Center(
+        child: Container(
+          decoration: BoxDecoration(color: Colors.transparent),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                "assets/icons/spinner.png",
+                height: 25,
+                width: 25,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '$_spinsLeft Spins Available',
+                style: const TextStyle(
+                  color: Color(0xFFCCFF00),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'DMSans',
+                  height: 20 / 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Wheel + button ───────────────────────────────────────────────────────────
   Widget _buildWheelSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 20),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          const Icon(Icons.arrow_drop_down, color: _lime, size: 40),
-          const SizedBox(height: 4),
-          SizedBox(
-            width: 280,
-            height: 280,
+          // Wheel card
+          Container(
+            width: double.infinity,
+            height: 310,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Container(
-                  width: 280,
-                  height: 280,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: _lime.withValues(alpha: 0.2), blurRadius: 40, spreadRadius: 8)],
-                  ),
-                ),
-                const _SpinWheel(),
+                // Glow behind wheel
+
+                // Wheel
+                const SizedBox(width: 265, height: 265, child: _SpinWheel()),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
+          // Spin button — full width gradient
           GestureDetector(
             onTap: _canSpin ? _spin : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 40),
+            child: Container(
+              width: double.infinity,
+              height: 50,
               decoration: BoxDecoration(
-                gradient: _canSpin ? const LinearGradient(colors: [Color(0xFFCCFF00), Color(0xFF99CC00)]) : null,
-                color: _canSpin ? null : _card2,
-                borderRadius: BorderRadius.circular(50),
-                boxShadow: _canSpin
-                    ? [BoxShadow(color: _lime.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))]
+                gradient: _canSpin
+                    ? const LinearGradient(
+                        colors: [
+                          Color(0xFF00E6FF),
+                          Color(0xFFCCFF00),
+                          Color(0xFF77D215),
+                        ],
+                        stops: [0.0, 0.5, 1.0],
+                      )
                     : null,
+                color: _canSpin ? null : _card2,
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Text(
-                _buttonLabel,
-                style: TextStyle(
-                  color: _canSpin ? Colors.black : _grey,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_canSpin) ...[
+                    Image.asset(
+                      "assets/icons/spinner.png",
+                      height: 25,
+                      width: 25,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  Text(
+                    _buttonLabel,
+                    style: TextStyle(
+                      color: _canSpin ? Colors.black : _grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                      height: 20 / 16,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
           if (_cooldownMs > 0 && _spinsLeft <= 0) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.access_time, color: _grey, size: 14),
                 const SizedBox(width: 4),
-                Text('Next spin in: $_cooldownLabel', style: const TextStyle(color: _grey, fontSize: 12)),
+                Text(
+                  'Next spin in: $_cooldownLabel',
+                  style: const TextStyle(color: _grey, fontSize: 12),
+                ),
               ],
             ),
           ],
+          const SizedBox(height: 4),
         ],
       ),
     );
   }
-
-  // ── Stats row ────────────────────────────────────────────────────────────────
-  Widget _buildStatsRow() {
-    return Row(
-      children: [
-        _statCard('$_spinsLeft', 'Spins Left', Icons.refresh),
-        const SizedBox(width: 10),
-        _statCard('$_spinsUsedToday / $_maxSpinsPerDay', "Today's Usage", Icons.today),
-        const SizedBox(width: 10),
-        _statCard('\$${_cumVolume.toStringAsFixed(0)}', 'Trade Volume', Icons.show_chart),
-      ],
-    );
-  }
-
-  Widget _statCard(String val, String label, IconData icon) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-      decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(12), border: Border.all(color: _border)),
-      child: Column(
-        children: [
-          Icon(icon, color: _lime, size: 18),
-          const SizedBox(height: 6),
-          Text(val, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: _grey, fontSize: 10), textAlign: TextAlign.center),
-        ],
-      ),
-    ),
-  );
 
   // ── Result card ──────────────────────────────────────────────────────────────
   Widget _buildResultCard() {
-    final tier     = _lastReward['tier'] as String? ?? 'small';
-    final amount   = _lastReward['amount']?.toString() ?? '';
+    final tier = _lastReward['tier'] as String? ?? 'small';
+    final amount = _lastReward['amount']?.toString() ?? '';
     final coinType = _lastReward['coin_type']?.toString() ?? '';
-    final isLose   = tier == 'lose';
+    final isLose = tier == 'lose';
     final tierColors = {
-      'lose': Colors.grey, 'small': const Color(0xFF26A17B),
-      'token': const Color(0xFFF5A623), 'medium': const Color(0xFF00BCD4), 'jackpot': _lime,
+      'lose': Colors.grey,
+      'small': const Color(0xFF26A17B),
+      'token': const Color(0xFFF5A623),
+      'medium': const Color(0xFF00BCD4),
+      'jackpot': _lime,
     };
     final color = tierColors[tier] ?? _lime;
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _card,
@@ -445,15 +578,31 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
         children: [
           Text(isLose ? '😢' : '🎉', style: const TextStyle(fontSize: 36)),
           const SizedBox(height: 8),
-          Text(isLose ? 'Better Luck Next Time!' : 'You Won!',
-              style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(
+            isLose ? 'Better Luck Next Time!' : 'You Won!',
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           if (!isLose && amount.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Text('$amount $coinType',
-                style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
+            Text(
+              '$amount $coinType',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
           const SizedBox(height: 8),
-          Text(_message ?? '', style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 13), textAlign: TextAlign.center),
+          Text(
+            _message ?? '',
+            style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -463,249 +612,543 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
     width: double.infinity,
     margin: const EdgeInsets.only(bottom: 16),
     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-    decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(12), border: Border.all(color: _border)),
-    child: Text(_message!, style: const TextStyle(color: _grey, fontSize: 13), textAlign: TextAlign.center),
+    decoration: BoxDecoration(
+      color: _card,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _border),
+    ),
+    child: Text(
+      _message!,
+      style: const TextStyle(color: _grey, fontSize: 13),
+      textAlign: TextAlign.center,
+    ),
   );
 
-  // ── Spot milestones (dynamic from backend) ───────────────────────────────────
+  // ── Spot milestones ──────────────────────────────────────────────────────────
   Widget _buildSpotMilestones() {
     if (_spotSteps.isEmpty) return const SizedBox.shrink();
-    return Container(
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _lime.withValues(alpha: 0.15)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Spot Trading Rewards', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                      SizedBox(height: 2),
-                      Text('Trade more → unlock bonus spins', style: TextStyle(color: _grey, fontSize: 11)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFCCFF00), Color(0xFF99CC00)]),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: const Text('Trade Now →', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w700)),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: RichText(
-              text: TextSpan(children: [
-                TextSpan(
-                  text: '\$${_cumVolume.toStringAsFixed(0)}',
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
-                ),
-                const TextSpan(
-                  text: '  your trading volume',
-                  style: TextStyle(color: _grey, fontSize: 11),
-                ),
-              ]),
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              children: _spotSteps.asMap().entries.map((entry) {
-                final i      = entry.key;
-                final step   = entry.value;
-                final target = (step['target'] as num).toInt();
-                final spins  = (step['spins'] as num).toInt();
-                final reached = _cumVolume >= target;
-                return Row(
-                  children: [
-                    Column(
-                      children: [
-                        Text(
-                          '+$spins spin${spins > 1 ? 's' : ''}',
-                          style: TextStyle(color: reached ? _lime : _grey, fontSize: 10, fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: reached ? 22 : 16,
-                          height: reached ? 22 : 16,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: reached ? _lime : _card2,
-                            border: Border.all(color: reached ? _lime : _border, width: 2),
-                          ),
-                          child: reached ? const Icon(Icons.check, size: 10, color: Colors.black) : null,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          target >= 1000 ? '${target ~/ 1000}K' : '$target',
-                          style: TextStyle(color: reached ? _lime : _grey, fontSize: 10, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                    if (i < _spotSteps.length - 1)
-                      Container(width: 28, height: 2, margin: const EdgeInsets.only(bottom: 4), color: reached ? _lime : _border),
-                  ],
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // ── Deposit tiers (dynamic from backend) ─────────────────────────────────────
-  Widget _buildDepositTiers() {
-    if (_depositTiers.isEmpty) return const SizedBox.shrink();
-    return Container(
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _lime.withValues(alpha: 0.12)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Deposit Spin Rewards', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                      SizedBox(height: 2),
-                      Text('Deposit any coin → get instant bonus spins', style: TextStyle(color: _grey, fontSize: 11)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFCCFF00), Color(0xFF99CC00)]),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: const Text('Deposit →', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w700)),
-                ),
-              ],
+    final completedCount = _spotSteps
+        .where((s) => _cumVolume >= (s['target'] as num).toDouble())
+        .length;
+
+    final totalCount = _spotSteps.length;
+
+    const milestoneColors = [
+      Color(0xFF2196F3),
+      Color(0xFF9C27B0),
+      Color(0xFF00BCD4),
+      Color(0xFFFF5722),
+      Color(0xFF4CAF50),
+      Color(0xFFFF9800),
+      Color(0xFFE91E63),
+      Color(0xFF3F51B5),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        /// TOP HEADER
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Spot Trading Rewards',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'DMSans',
+                height: 1,
+              ),
             ),
-          ),
-          const Divider(color: _border, height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: const [
-                Expanded(child: Text('DEPOSIT (USD)', style: TextStyle(color: _grey, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1))),
-                Text('BONUS SPINS', style: TextStyle(color: _grey, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1)),
-              ],
-            ),
-          ),
-          ..._depositTiers.asMap().entries.map((entry) {
-            final i     = entry.key;
-            final tier  = entry.value;
-            final isTop = i == _depositTiers.length - 1;
-            final range = tier['range']?.toString() ?? tier['amount_range']?.toString() ?? '';
-            final spins = (tier['spins'] as num?)?.toInt() ?? (tier['bonus_spins'] as num?)?.toInt() ?? 0;
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+
+            Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
               decoration: BoxDecoration(
-                color: isTop ? _lime.withValues(alpha: 0.06) : Colors.transparent,
-                border: const Border(top: BorderSide(color: _border)),
+                color: const Color(0xFFD7FF00),
+                borderRadius: BorderRadius.circular(54),
               ),
               child: Row(
                 children: [
-                  Text(range, style: TextStyle(color: isTop ? Colors.white : const Color(0xFFAAAAAA), fontSize: 14, fontWeight: FontWeight.w600)),
-                  if (isTop) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: _lime, borderRadius: BorderRadius.circular(4)),
-                      child: const Text('BEST', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w800)),
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                      color: Colors.black,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  const Text(
+                    'Trade Now',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 20),
+
+        /// MAIN CARD
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.transparent),
+          ),
+
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// TOP CONTENT
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Your Volume',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 16,
+                              fontFamily: 'DMSans',
+                              height: 1,
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          Text(
+                            '\$${_cumVolume.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 30,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'DMSans',
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '$completedCount/$totalCount Milestones',
+                          style: const TextStyle(
+                            color: Color(0xFFCCFF00),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'DMSans',
+                            height: 1,
+                          ),
+                        ),
+
+                        const SizedBox(height: 5),
+
+                        Text(
+                          'Completed',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 12,
+                            fontFamily: 'DMSans',
+                            height: 1,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                  const Spacer(),
-                  Text('$spins spin${spins > 1 ? 's' : ''}',
-                      style: TextStyle(color: isTop ? _lime : Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                ),
+              ),
+              SizedBox(height: 20),
+
+              /// SWIPE TEXT
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  '← Swipe to explore all $totalCount milestones →',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontFamily: 'DMSans',
+                    height: 1,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              /// MILESTONE TRACK
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: _spotSteps.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final step = entry.value;
+
+                    final target = (step['target'] as num).toInt();
+                    final spins = (step['spins'] as num).toInt();
+
+                    final reached = _cumVolume >= target;
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Column(
+                          children: [
+                            /// REWARD ROW
+                            Row(
+                              children: [
+                                Image.asset(
+                                  'assets/icons/spinner.png',
+                                  width: 26,
+                                  height: 26,
+                                ),
+
+                                const SizedBox(width: 6),
+
+                                Text(
+                                  '\$$spins',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'DMSans',
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            /// CIRCLE + LINE
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                /// PROGRESS CIRCLE
+                                Container(
+                                  width: 54,
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: reached
+                                        ? const Color(0xFFCCFF00)
+                                        : Colors.black,
+                                    border: Border.all(
+                                      color: reached
+                                          ? const Color(0xFFCCFF00)
+                                          : Colors.black,
+                                      width: 3,
+                                    ),
+                                  ),
+                                  child: reached
+                                      ? const Center(
+                                          child: Icon(
+                                            Icons.check,
+                                            size: 24,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+
+                                /// CONNECTING LINE
+                                if (i < _spotSteps.length - 1)
+                                  Container(
+                                    width: 70,
+                                    height: 6,
+                                    color: reached
+                                        ? const Color(0xFFCCFF00)
+                                        : Colors.black,
+                                  ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            /// TARGET
+                            Text(
+                              target >= 1000 ? '${target ~/ 1000}K' : '$target',
+                              style: TextStyle(
+                                color: reached
+                                    ? Colors.white
+                                    : const Color(0xFFB5B5B5),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'DMSans',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Deposit tiers ────────────────────────────────────────────────────────────
+  Widget _buildDepositTiers() {
+    if (_depositTiers.isEmpty) return const SizedBox.shrink();
+
+    final tierIconColors = [
+      const Color(0xFF2196F3),
+      const Color(0xFF42A5F5),
+      const Color(0xFF1565C0),
+      const Color(0xFFFF5722),
+      const Color(0xFF4CAF50),
+      const Color(0xFFFFD700),
+    ];
+    // rows 0,1 → 1 icon; row 2 → 3 icons; rest → 1 icon
+    final iconCounts = [1, 1, 3, 1, 1, 1];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+            child: Row(
+              children: [
+                const Text(
+                  'Deposit Spin Rewards',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'DMSans',
+                  ),
+                ),
+                const Spacer(),
+                _actionPill('Deposit Now', const Color(0xFFFF8C00)),
+              ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Text(
+              'Deposit any coin → get instant bonus spins',
+              style: TextStyle(
+                color: _grey,
+                fontSize: 11,
+                fontFamily: 'DMSans',
+              ),
+            ),
+          ),
+          // Table header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: _border),
+                bottom: BorderSide(color: _border),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'DEPOSIT AMOUNT (USD)',
+                    style: TextStyle(
+                      color: _grey,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Text(
+                  'BONUS SPIN',
+                  style: TextStyle(
+                    color: _grey,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Rows
+          ..._depositTiers.asMap().entries.map((entry) {
+            final i = entry.key;
+            final tier = entry.value;
+            final range =
+                tier['range']?.toString() ??
+                tier['amount_range']?.toString() ??
+                '';
+            final spins =
+                (tier['spins'] as num?)?.toInt() ??
+                (tier['bonus_spins'] as num?)?.toInt() ??
+                0;
+            final iconColor = i < tierIconColors.length
+                ? tierIconColors[i]
+                : tierIconColors.last;
+            final count = i < iconCounts.length ? iconCounts[i] : 1;
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _border, width: 0.5)),
+              ),
+              child: Row(
+                children: [
+                  // Coin icons
+                  Row(
+                    children: List.generate(
+                      count,
+                      (j) => Padding(
+                        padding: const EdgeInsets.only(right: 3),
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: iconColor.withValues(alpha: 0.2),
+                            border: Border.all(color: iconColor, width: 1.5),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '◆',
+                              style: TextStyle(color: iconColor, fontSize: 8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      range,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '$spins Spin${spins > 1 ? 's' : ''}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
                 ],
               ),
             );
           }),
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('⚡ ', style: TextStyle(fontSize: 13)),
-                Expanded(
-                  child: Text(
-                    'Spins are granted instantly after deposit confirmation. Each deposit qualifies once per transaction.',
-                    style: TextStyle(color: _grey, fontSize: 11, height: 1.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
   }
 
-  // ── FAQ (dynamic from backend or fallback) ───────────────────────────────────
+  // ── FAQ ──────────────────────────────────────────────────────────────────────
   Widget _buildFaq() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Frequently Asked Questions',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+        const Text(
+          'FAQ',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'DMSans',
+          ),
+        ),
         const SizedBox(height: 12),
         ..._faqs.asMap().entries.map((entry) {
-          final i     = entry.key;
-          final faq   = entry.value;
+          final i = entry.key;
+          final faq = entry.value;
           final isOpen = _expandedFaq == i;
           final q = faq['q']?.toString() ?? faq['question']?.toString() ?? '';
           final a = faq['a']?.toString() ?? faq['answer']?.toString() ?? '';
+
           return GestureDetector(
             onTap: () => setState(() => _expandedFaq = isOpen ? null : i),
             child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 2),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: _card,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: isOpen ? _lime.withValues(alpha: 0.3) : _border),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text(q, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
-                        Icon(isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: _lime, size: 20),
-                      ],
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${i + 1}: ',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          q,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'DMSans',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  if (isOpen)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                      child: Text(a, style: const TextStyle(color: _grey, fontSize: 12, height: 1.6)),
+                  if (isOpen) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      a,
+                      style: const TextStyle(
+                        color: _grey,
+                        fontSize: 12,
+                        fontFamily: 'DMSans',
+                        height: 1.5,
+                      ),
                     ),
+                  ],
                 ],
               ),
             ),
@@ -715,28 +1158,31 @@ class _SpinWinScreenState extends State<SpinWinScreen> {
     );
   }
 
-  // ── Disclaimer ───────────────────────────────────────────────────────────────
-  Widget _buildDisclaimer() {
+  // ── Shared pill widget ───────────────────────────────────────────────────────
+  Widget _actionPill(String label, Color dotColor) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(12), border: Border.all(color: _border)),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _card2,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _border),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('⚠️ ', style: TextStyle(fontSize: 16)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('IMPORTANT DISCLAIMER',
-                    style: TextStyle(color: _grey, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1)),
-                const SizedBox(height: 6),
-                Text(
-                  'The Trapix Spin & Win program is a promotional reward feature offered at Trapix\'s sole discretion. '
-                  'Maximum $_maxSpinsPerDay spins per 24-hour window applies. Rewards are non-transferable.',
-                  style: const TextStyle(color: _grey, fontSize: 11, height: 1.6),
-                ),
-              ],
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: dotColor),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'DMSans',
             ),
           ),
         ],
