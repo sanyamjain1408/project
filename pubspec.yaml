@@ -14,6 +14,8 @@ dependencies:
     sdk: flutter
   video_player: ^2.8.1  
 
+  confetti: ^0.7.0  
+
   
   
   flutter_localizations:

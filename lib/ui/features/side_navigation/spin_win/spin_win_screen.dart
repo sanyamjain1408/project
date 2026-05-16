@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -14,7 +15,6 @@ const _card2 = Color(0xFF1A1A1A);
 const _border = Color(0xFF2A2A2A);
 const _grey = Color(0xFF888888);
 
-// ─────────────────────────── helpers ──────────────────────────────────────────
 String get _uid {
   try {
     return gUserRx.value.id > 0 ? gUserRx.value.id.toString() : '';
@@ -23,48 +23,21 @@ String get _uid {
   }
 }
 
-// ─────────────────────────── wheel segment config (mirrors TSX segmentConfig) ─
-//
-// spin_win.png layout — segments go CLOCKWISE, arrow is fixed at the TOP.
-// At rotation = 0 the dividing line between index-0 and index-1 is at 12 o'clock,
-// so every segment centre is offset 15° from its boundary.
-//
-// Each entry = clockwise degrees the wheel must rotate to place that segment
-// exactly under the arrow.  Equivalent to TSX's getSegmentRotation(index).
-//
-//  idx │ prize              │ centre in image │ stop angle
-//  ────┼────────────────────┼─────────────────┼───────────
-//   0  │ Better Luck Next   │  345°           │   15°
-//   1  │ 0.1 USDT           │   15°           │  345°
-//   2  │ 5 POL              │   45°           │  315°
-//   3  │ 0.5 PEPE           │   75°           │  285°
-//   4  │ 0.5 USDT           │  105°           │  255°
-//   5  │ 10 DOGE            │  135°           │  225°
-//   6  │ 5 TRX              │  165°           │  195°
-//   7  │ 2 USDT             │  195°           │  165°
-//   8  │ 10K BONK           │  225°           │  135°
-//   9  │ 0.2 USDC           │  255°           │  105°
-//  10  │ Better Luck Next   │  285°           │   75°
-//  11  │ 5 USDT (jackpot)   │  315°           │   45°
-//
-// To fine-tune one segment: change its stop angle by ±1–5°.
-// To shift the whole wheel: add the same value to every entry.
 const List<double> _kSegmentStopAngles = [
-  5.0, // 0  – Better Luck Next Time
-  335.0, // 1  – 0.1 USDT
-  305.0, // 2  – 5 POL
-  275.0, // 3  – 0.5 PEPE
-  245.0, // 4  – 0.5 USDT
-  215.0, // 5  – 10 DOGE
-  185.0, // 6  – 5 TRX
-  155.0, // 7  – 2 USDT
-  125.0, // 8  – 10K BONK
-  95.0, // 9  – 0.2 USDC
-  65.0, // 10 – Better Luck Next Time
-  35.0, // 11 – 5 USDT (jackpot)
+  5.0,
+  335.0,
+  305.0,
+  275.0,
+  245.0,
+  215.0,
+  185.0,
+  155.0,
+  125.0,
+  95.0,
+  65.0,
+  35.0,
 ];
 
-// Returns the clockwise stop-angle (0–360°) for a given backend slot_index.
 double _segmentTargetDeg(int n) =>
     (n >= 0 && n < _kSegmentStopAngles.length) ? _kSegmentStopAngles[n] : 0.0;
 
@@ -76,7 +49,6 @@ const _winMessages = {
   'jackpot': '🚀 JACKPOT! Huge reward credited',
 };
 
-// ─────────────────────────── fixed arrow above wheel ──────────────────────────
 class _ArrowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -91,7 +63,6 @@ class _ArrowPainter extends CustomPainter {
     final sx = size.width / 32;
     final sy = size.height / 44;
 
-    // Downward-pointing triangle (polygon points="4,0 28,0 16,32")
     final path = Path()
       ..moveTo(4 * sx, 0)
       ..lineTo(28 * sx, 0)
@@ -100,7 +71,6 @@ class _ArrowPainter extends CustomPainter {
     canvas.drawPath(path, fillPaint);
     canvas.drawPath(path, strokePaint);
 
-    // Circle at tip (cx=16 cy=38 r=5)
     canvas.drawCircle(Offset(16 * sx, 38 * sy), 5 * sy, fillPaint);
   }
 
@@ -108,7 +78,6 @@ class _ArrowPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ─────────────────────────── main screen ──────────────────────────────────────
 class SpinWinScreen extends StatefulWidget {
   const SpinWinScreen({super.key});
 
@@ -118,12 +87,12 @@ class SpinWinScreen extends StatefulWidget {
 
 class _SpinWinScreenState extends State<SpinWinScreen>
     with SingleTickerProviderStateMixin {
-  // ── Wheel animation ─────────────────────────────────────────────────────────
   late AnimationController _wheelCtrl;
   Animation<double> _wheelAnim = const AlwaysStoppedAnimation(0.0);
   double _totalTurns = 0.0;
 
-  // ── State from backend ──────────────────────────────────────────────────────
+  late ConfettiController _confettiCtrl;
+
   bool _loading = true;
   bool _spinning = false;
   int _spinsLeft = 0;
@@ -138,7 +107,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
   dynamic _lastReward;
   String? _message;
   bool _showResult = false;
-  int? _expandedFaq;
+  bool _showResultOverlay = false;
   Timer? _cooldownTimer;
 
   @override
@@ -148,6 +117,9 @@ class _SpinWinScreenState extends State<SpinWinScreen>
       vsync: this,
       duration: const Duration(milliseconds: 5000),
     );
+    _confettiCtrl = ConfettiController(
+      duration: const Duration(seconds: 4),
+    );
     _fetchStatus();
   }
 
@@ -155,10 +127,10 @@ class _SpinWinScreenState extends State<SpinWinScreen>
   void dispose() {
     _cooldownTimer?.cancel();
     _wheelCtrl.dispose();
+    _confettiCtrl.dispose();
     super.dispose();
   }
 
-  // ── Fetch spin status ───────────────────────────────────────────────────────
   Future<void> _fetchStatus() async {
     if (_uid.isEmpty) {
       if (mounted) setState(() => _loading = false);
@@ -266,7 +238,6 @@ class _SpinWinScreenState extends State<SpinWinScreen>
     });
   }
 
-  // ── Spin ────────────────────────────────────────────────────────────────────
   Future<void> _spin() async {
     if (_spinning || _spinsLeft <= 0 || _uid.isEmpty || _loading) return;
     if (_spinsUsedToday >= _maxSpinsPerDay) {
@@ -280,6 +251,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
     setState(() {
       _spinning = true;
       _showResult = false;
+      _showResultOverlay = false;
       _message = null;
     });
 
@@ -296,14 +268,12 @@ class _SpinWinScreenState extends State<SpinWinScreen>
         final int winIndex =
             (reward['slot_index'] ?? reward['win_index'] ?? 0) as int;
 
-        // Clockwise segment layout: bring segment winIndex to the arrow (top).
         final double segmentAngle = _segmentTargetDeg(winIndex) / 360.0;
         final double currentNorm = _totalTurns % 1.0;
         double needed = (segmentAngle - currentNorm + 1.0) % 1.0;
-        if (needed < 0.01) needed += 1.0; // ensure visible motion
-        final double targetTurns = _totalTurns + 8.0 + needed; // 8 full spins
+        if (needed < 0.01) needed += 1.0;
+        final double targetTurns = _totalTurns + 8.0 + needed;
 
-        // Animate the wheel — cubic-bezier matching the TSX
         setState(() {
           _wheelAnim = Tween<double>(begin: _totalTurns, end: targetTurns)
               .animate(
@@ -318,9 +288,13 @@ class _SpinWinScreenState extends State<SpinWinScreen>
         await _wheelCtrl.forward(from: 0.0);
 
         if (mounted) {
+          final tier = reward['tier'] as String? ?? 'small';
+          final isLose = tier == 'lose';
+
           setState(() {
             _lastReward = reward;
             _showResult = true;
+            _showResultOverlay = true;
             _spinsLeft = (data['spins_remaining'] ?? _spinsLeft - 1) as int;
             _spinsUsedToday =
                 (data['spins_used_today'] ?? _spinsUsedToday + 1) as int;
@@ -330,10 +304,14 @@ class _SpinWinScreenState extends State<SpinWinScreen>
             if (data['cumulative_volume'] != null) {
               _cumVolume = (data['cumulative_volume'] as num).toDouble();
             }
-            final tier = reward['tier'] as String? ?? 'small';
             _message = _winMessages[tier] ?? _winMessages['small'];
             _spinning = false;
           });
+
+          if (!isLose) {
+            _confettiCtrl.play();
+          }
+
           _startCooldownTimer();
         }
       } else {
@@ -378,103 +356,418 @@ class _SpinWinScreenState extends State<SpinWinScreen>
       !_loading &&
       _spinsUsedToday < _maxSpinsPerDay;
 
-  // ── Build ───────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
-
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _lime))
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  SizedBox(height: 40),
-                  Container(
-                    padding: EdgeInsets.only(left: 20),
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                      onPressed: Get.back,
-                    ),
-                  ),
-                  RichText(
-                    text: const TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Spin ',
-                          style: TextStyle(
-                            color: Color(0xFFCCFF00),
-                            fontSize: 30,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'DMSans',
-                            height: 40 / 30,
-                          ),
-                        ),
-                        TextSpan(
-                          text: '& ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 30,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'DMSans',
-                            height: 40 / 30,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'Win',
-                          style: TextStyle(
-                            color: Color(0xFFCCFF00),
-                            fontSize: 30,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'DMSans',
-                            height: 40 / 30,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
+        children: [
+          // ── Main Content ──
+          _loading
+              ? const Center(child: CircularProgressIndicator(color: _lime))
+              : SingleChildScrollView(
+                  child: Column(
                     children: [
-                      _buildSpinsChip(),
-                      _buildWheelSection(),
-                      if (_showResult && _lastReward != null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                          child: _buildResultCard(),
-                        ),
-                      if (_message != null && !_showResult)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                          child: _buildMessage(),
-                        ),
                       const SizedBox(height: 40),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: _buildSpotMilestones(),
+                      Container(
+                        padding: const EdgeInsets.only(left: 20),
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                          onPressed: Get.back,
+                        ),
                       ),
-                      const SizedBox(height: 40),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: _buildDepositTiers(),
-                      ),
-                      const SizedBox(height: 40),
-                      if (_faqs.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: _buildFaq(),
+                      RichText(
+                        text: const TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Spin ',
+                              style: TextStyle(
+                                color: Color(0xFFCCFF00),
+                                fontSize: 30,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'DMSans',
+                                height: 40 / 30,
+                              ),
+                            ),
+                            TextSpan(
+                              text: '& ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 30,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'DMSans',
+                                height: 40 / 30,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Win',
+                              style: TextStyle(
+                                color: Color(0xFFCCFF00),
+                                fontSize: 30,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'DMSans',
+                                height: 40 / 30,
+                              ),
+                            ),
+                          ],
                         ),
-                      const SizedBox(height: 35),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSpinsChip(),
+                          _buildWheelSection(),
+                          if (_message != null && !_showResult)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                              child: _buildMessage(),
+                            ),
+                          const SizedBox(height: 40),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: _buildSpotMilestones(),
+                          ),
+                          const SizedBox(height: 40),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: _buildDepositTiers(),
+                          ),
+                          const SizedBox(height: 40),
+                          if (_faqs.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              child: _buildFaq(),
+                            ),
+                          const SizedBox(height: 35),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
+
+          // ── Result Overlay ──
+          if (_showResultOverlay && _lastReward != null)
+            _buildResultOverlay(),
+        ],
+      ),
+    );
+  }
+
+  // Wheel segment definitions — index matches slot_index from the API
+  static const _kSegments = [
+    {'lose': true},                             // 0
+    {'coin': 'USDT', 'raw': 0.1},              // 1
+    {'coin': 'POL',  'raw': 5.0},              // 2
+    {'coin': 'PEPE', 'raw': 5000.0},           // 3  → 5K PEPE
+    {'coin': 'USDT', 'raw': 0.1},              // 4
+    {'coin': 'DOGE', 'raw': 10.0},             // 5
+    {'coin': 'TRX',  'raw': 5.0},              // 6
+    {'coin': 'USDT', 'raw': 2.0},              // 7
+    {'coin': 'BONK', 'raw': 10000.0},          // 8  → 10K BONK
+    {'coin': 'USDT', 'raw': 2.0},              // 9
+    {'lose': true},                             // 10
+    {'coin': 'USDT', 'raw': 5.0},              // 11
+  ];
+
+  // ── Result Overlay ───────────────────────────────────────────────────────────
+  Widget _buildResultOverlay() {
+    final int slotIndex =
+        (_lastReward['slot_index'] ?? _lastReward['win_index'] ?? -1) as int;
+    final seg = (slotIndex >= 0 && slotIndex < _kSegments.length)
+        ? _kSegments[slotIndex]
+        : null;
+
+    final bool isLose =
+        seg?['lose'] == true ||
+        (_lastReward['tier'] as String? ?? '') == 'lose';
+    final String coinType =
+        (seg?['coin'] as String?) ??
+        (_lastReward['coin_type']?.toString() ?? '');
+    final String amount = seg != null && seg['raw'] != null
+        ? _formatAmount((seg['raw'] as double).toString())
+        : _formatAmount(_lastReward['amount']?.toString() ?? '');
+
+    return GestureDetector(
+      onTap: () {},
+      child: Container(
+        color: Colors.black.withOpacity(0.88),
+        width: double.infinity,
+        height: double.infinity,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // ── Confetti (only on win) ──
+            if (!isLose)
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiCtrl,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  numberOfParticles: 35,
+                  gravity: 0.25,
+                  emissionFrequency: 0.04,
+                  maxBlastForce: 25,
+                  minBlastForce: 10,
+                  colors: const [
+                    Color(0xFFCCFF00),
+                    Color(0xFF00E6FF),
+                    Colors.orange,
+                    Colors.pink,
+                    Colors.purple,
+                    Colors.red,
+                    Colors.blue,
+                    Colors.yellow,
+                  ],
+                  strokeWidth: 1.5,
+                  strokeColor: Colors.white,
+                ),
+              ),
+
+            // ── Modal Card ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isLose
+                        ? Colors.white.withOpacity(0.08)
+                        : const Color(0xFFCCFF00).withOpacity(0.25),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isLose
+                          ? Colors.black.withOpacity(0.6)
+                          : const Color(0xFFCCFF00).withOpacity(0.12),
+                      blurRadius: 50,
+                      spreadRadius: 8,
+                    ),
+                  ],
+                ),
+                child: isLose
+                    ? _buildLoseContent()
+                    : _buildWinContent(amount, coinType),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // POL is Polygon's renamed symbol — CDN still has it under "matic"
+  static const _kCoinCdnBase =
+      'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color';
+  static const _kCdnSymbolOverride = {'pol': 'matic'};
+
+  String _formatAmount(String raw) {
+    final val = double.tryParse(raw);
+    if (val == null) return raw;
+    if (val >= 1000) {
+      final k = val / 1000;
+      return k == k.truncateToDouble()
+          ? '${k.toInt()}K'
+          : '${k.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')}K';
+    }
+    if (val == val.truncateToDouble()) return val.toInt().toString();
+    return val
+        .toStringAsFixed(4)
+        .replaceAll(RegExp(r'\.?0+$'), '');
+  }
+
+  Widget _buildCoinIcon(String coinType, {double size = 38}) {
+    final lower = coinType.toLowerCase();
+    final cdnSymbol = _kCdnSymbolOverride[lower] ?? lower;
+    final networkUrl = '$_kCoinCdnBase/$cdnSymbol.png';
+
+    Widget letterFallback() => Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        coinType.isNotEmpty ? coinType[0].toUpperCase() : '?',
+        style: const TextStyle(
+          color: _lime,
+          fontWeight: FontWeight.w700,
+          fontSize: 15,
+          fontFamily: 'DMSans',
+        ),
+      ),
+    );
+
+    return Image.asset(
+      'assets/images/$lower.png',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorBuilder: (ctx1, e1, st1) => Image.network(
+        networkUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (ctx2, e2, st2) => letterFallback(),
+      ),
+    );
+  }
+
+  // ── Win Content ──────────────────────────────────────────────────────────────
+  // amount is already formatted by the caller
+  Widget _buildWinContent(String amount, String coinType) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildCoinIcon(coinType, size: 38),
+            const SizedBox(width: 10),
+            Text(
+              '$amount $coinType',
+              style: const TextStyle(
+                color: Color(0xFFCCFF00),
+                fontSize: 34,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'DMSans',
+                height: 1.2,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Image.asset(
+          'assets/images/won.png',
+          height: 72,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(height: 22),
+        const Text(
+          'Claim your prize',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'DMSans',
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Claim your prize and dive into the world of Trapix.\nCome back every 24 hours to spin and unlock more rewards.',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 13,
+            fontFamily: 'DMSans',
+            fontWeight: FontWeight.w400,
+            height: 1.55,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 28),
+        GestureDetector(
+          onTap: () {
+            _confettiCtrl.stop();
+            setState(() => _showResultOverlay = false);
+          },
+          child: Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF00E6FF),
+                  Color(0xFFCCFF00),
+                  Color(0xFF77D215),
+                ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: const Text(
+              'Claim Price',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'DMSans',
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Lose Content ─────────────────────────────────────────────────────────────
+  Widget _buildLoseContent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('😢', style: TextStyle(fontSize: 54)),
+        const SizedBox(height: 16),
+        const Text(
+          'Better Luck\nNext Time!',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'DMSans',
+            height: 1.3,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Come back every 24 hours to spin and unlock more rewards.',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 13,
+            fontFamily: 'DMSans',
+            fontWeight: FontWeight.w400,
+            height: 1.55,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 28),
+        GestureDetector(
+          onTap: () => setState(() => _showResultOverlay = false),
+          child: Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2A2A2A),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.12)),
+            ),
+            alignment: Alignment.center,
+            child: const Text(
+              'Back',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'DMSans',
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -483,30 +776,27 @@ class _SpinWinScreenState extends State<SpinWinScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Center(
-        child: Container(
-          decoration: BoxDecoration(color: Colors.transparent),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                "assets/icons/spinner.png",
-                height: 25,
-                width: 25,
-                fit: BoxFit.contain,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              "assets/icons/spinner.png",
+              height: 25,
+              width: 25,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              '$_spinsLeft Spins Available',
+              style: const TextStyle(
+                color: Color(0xFFCCFF00),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'DMSans',
+                height: 20 / 16,
               ),
-              const SizedBox(width: 10),
-              Text(
-                '$_spinsLeft Spins Available',
-                style: const TextStyle(
-                  color: Color(0xFFCCFF00),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'DMSans',
-                  height: 20 / 16,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -518,7 +808,37 @@ class _SpinWinScreenState extends State<SpinWinScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          // Wheel card with fixed arrow overlay
+          // ── Cooldown Timer (wheel ke upar, sirf tab dikhega jab spins nahi) ──
+          if (_cooldownMs > 0 && _spinsLeft <= 0) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF2A2A2A)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.access_time, color: _lime, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Next spin in: $_cooldownLabel',
+                    style: const TextStyle(
+                      color: _lime,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // ── Wheel ──
           Container(
             width: double.infinity,
             height: 342,
@@ -529,7 +849,6 @@ class _SpinWinScreenState extends State<SpinWinScreen>
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Wheel — only animates when button is pressed
                 SizedBox(
                   width: 342,
                   height: 350,
@@ -547,8 +866,6 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                     },
                   ),
                 ),
-
-                // Fixed arrow at top center — does NOT rotate with the wheel
                 Positioned(
                   top: 0,
                   left: 0,
@@ -558,9 +875,8 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                       decoration: BoxDecoration(
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0xFFCCFF00).withOpacity(0.5),
+                            color: const Color(0xFFCCFF00).withOpacity(0.5),
                             blurRadius: 12,
-                            offset: const Offset(0, 0),
                           ),
                         ],
                       ),
@@ -574,13 +890,15 @@ class _SpinWinScreenState extends State<SpinWinScreen>
               ],
             ),
           ),
+
           const SizedBox(height: 14),
-          // Spin button — full width gradient
+
+          // ── Spin Button ──
           GestureDetector(
             onTap: _canSpin ? _spin : null,
             child: Container(
               width: double.infinity,
-              height: 50,
+              padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 gradient: _canSpin
                     ? const LinearGradient(
@@ -595,108 +913,72 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                 color: _canSpin ? null : _card2,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (_canSpin) ...[
-                    Image.asset(
-                      "assets/icons/spinner.png",
-                      height: 25,
-                      width: 25,
-                      fit: BoxFit.contain,
+              child: _spinsUsedToday >= _maxSpinsPerDay && _cooldownMs > 0
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _buttonLabel,
+                          style: const TextStyle(
+                            color: _grey,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'DMSans',
+                            height: 20 / 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.lock_clock_outlined,
+                              color: _lime,
+                              size: 13,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Lock opens in: $_cooldownLabel',
+                              style: const TextStyle(
+                                color: _lime,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'DMSans',
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_canSpin) ...[
+                          Image.asset(
+                            "assets/icons/spinner.png",
+                            height: 25,
+                            width: 25,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        Text(
+                          _buttonLabel,
+                          style: TextStyle(
+                            color: _canSpin ? Colors.black : _grey,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'DMSans',
+                            height: 20 / 16,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 10),
-                  ],
-                  Text(
-                    _buttonLabel,
-                    style: TextStyle(
-                      color: _canSpin ? Colors.black : _grey,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'DMSans',
-                      height: 20 / 16,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
-          if (_cooldownMs > 0 && _spinsLeft <= 0) ...[
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.access_time, color: _grey, size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  'Next spin in: $_cooldownLabel',
-                  style: const TextStyle(color: _grey, fontSize: 12),
-                ),
-              ],
-            ),
-          ],
+
           const SizedBox(height: 4),
-        ],
-      ),
-    );
-  }
-
-  // ── Result card ──────────────────────────────────────────────────────────────
-  Widget _buildResultCard() {
-    final tier = _lastReward['tier'] as String? ?? 'small';
-    final amount = _lastReward['amount']?.toString() ?? '';
-    final coinType = _lastReward['coin_type']?.toString() ?? '';
-    final isLose = tier == 'lose';
-    final tierColors = {
-      'lose': Colors.grey,
-      'small': const Color(0xFF26A17B),
-      'token': const Color(0xFFF5A623),
-      'medium': const Color(0xFF00BCD4),
-      'jackpot': _lime,
-    };
-    final color = tierColors[tier] ?? _lime;
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 16, top: 10),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.transparent),
-      ),
-      child: Column(
-        children: [
-          Text(isLose ? '😢' : '🎉', style: const TextStyle(fontSize: 36)),
-          const SizedBox(height: 8),
-          Text(
-            isLose ? 'Better Luck Next Time!' : 'You Won!',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              fontFamily: "DMSans",
-              height: 26/30,
-            ),
-          ),
-          if (!isLose && amount.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              '$amount $coinType',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                height: 30/26,
-              ),
-            ),
-          ],
-          const SizedBox(height: 5),
-          Text(
-            _message ?? '',
-            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: "DMSans", fontWeight: FontWeight.w400),
-            textAlign: TextAlign.center,
-          ),
         ],
       ),
     );
@@ -725,13 +1007,11 @@ class _SpinWinScreenState extends State<SpinWinScreen>
     final completedCount = _spotSteps
         .where((s) => _cumVolume >= (s['target'] as num).toDouble())
         .length;
-
     final totalCount = _spotSteps.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// TOP HEADER
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -745,7 +1025,6 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                 height: 1,
               ),
             ),
-
             Container(
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
@@ -763,9 +1042,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                       shape: BoxShape.circle,
                     ),
                   ),
-
                   const SizedBox(width: 10),
-
                   const Text(
                     'Trade Now',
                     style: TextStyle(
@@ -780,21 +1057,16 @@ class _SpinWinScreenState extends State<SpinWinScreen>
             ),
           ],
         ),
-
         const SizedBox(height: 20),
-
-        /// MAIN CARD
         Container(
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.transparent),
           ),
-
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// TOP CONTENT
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
                 child: Row(
@@ -813,9 +1085,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                               height: 1,
                             ),
                           ),
-
                           const SizedBox(height: 10),
-
                           Text(
                             '\$${_cumVolume.toStringAsFixed(0)}',
                             style: const TextStyle(
@@ -829,11 +1099,10 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                         ],
                       ),
                     ),
-
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        SizedBox(height: 30),
+                        const SizedBox(height: 30),
                         Text(
                           '$completedCount/$totalCount Milestones',
                           style: const TextStyle(
@@ -844,9 +1113,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                             height: 1,
                           ),
                         ),
-
                         const SizedBox(height: 5),
-
                         Text(
                           'Completed',
                           style: TextStyle(
@@ -861,38 +1128,29 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                   ],
                 ),
               ),
-              SizedBox(height: 20),
-
-              /// SWIPE TEXT
+              const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
                   '← Swipe to explore all $totalCount milestones →',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: Colors.white.withOpacity(0.5),
                     fontSize: 12,
                     fontFamily: 'DMSans',
                     height: 1,
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              /// MILESTONE TRACK
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.fromLTRB(10, 0, 10, 20),
                 child: Row(
                   children: List.generate(_spotSteps.length, (i) {
                     final step = _spotSteps[i];
-
                     final target = (step['target'] as num).toInt();
                     final spins = (step['spins'] as num).toInt();
-
                     final reached = _cumVolume >= target;
-
-                    /// NEXT STEP CHECK
                     final nextReached = i < _spotSteps.length - 1
                         ? _cumVolume >=
                               ((_spotSteps[i + 1]['target'] as num).toInt())
@@ -902,10 +1160,8 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        /// ONE COMPLETE ITEM
                         Column(
                           children: [
-                            /// TOP REWARD ROW
                             SizedBox(
                               width: 60,
                               child: FittedBox(
@@ -919,9 +1175,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                                       width: 25,
                                       height: 25,
                                     ),
-
                                     const SizedBox(width: 5),
-
                                     Text(
                                       '\$$spins',
                                       style: const TextStyle(
@@ -935,18 +1189,13 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 20),
-
-                            /// CIRCLE
                             Container(
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: reached
-                                    ? const Color(0xFF111111)
-                                    : const Color(0xFF111111),
+                                color: const Color(0xFF111111),
                                 border: Border.all(
                                   color: reached
                                       ? const Color(0xFFCCFF00)
@@ -964,10 +1213,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                                     )
                                   : null,
                             ),
-
                             const SizedBox(height: 20),
-
-                            /// TARGET TEXT
                             SizedBox(
                               width: 60,
                               child: Text(
@@ -988,23 +1234,17 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                             ),
                           ],
                         ),
-
-                        /// CONNECTING LINE
-                        /// CONNECTING LINE
                         if (i < _spotSteps.length - 1)
-                          Transform.translate(
-                            offset: const Offset(0, 0),
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 65),
-                              child: Container(
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: nextReached
-                                      ? const Color(0xFFCCFF00)
-                                      : const Color(0xFF1A1A1A),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 65),
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: nextReached
+                                    ? const Color(0xFFCCFF00)
+                                    : const Color(0xFF1A1A1A),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                             ),
                           ),
@@ -1036,7 +1276,6 @@ class _SpinWinScreenState extends State<SpinWinScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── HEADER (container ke BAHAR) ──────────────────────────
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1070,12 +1309,9 @@ class _SpinWinScreenState extends State<SpinWinScreen>
             _actionPill('Deposit Now', const Color(0xFF111111)),
           ],
         ),
-
         const SizedBox(height: 20),
-
-        // ── TABLE CONTAINER ──────────────────────────────────────
         Container(
-          padding: EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(20),
@@ -1084,7 +1320,6 @@ class _SpinWinScreenState extends State<SpinWinScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Table header
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
@@ -1092,7 +1327,10 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                 ),
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
+                    bottom: BorderSide(
+                      color: Colors.white.withOpacity(0.1),
+                      width: 1,
+                    ),
                   ),
                 ),
                 child: const Row(
@@ -1104,7 +1342,6 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 0,
                           height: 1,
                         ),
                       ),
@@ -1115,15 +1352,12 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                         color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: 0,
                         height: 1,
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Rows
               ..._depositTiers.asMap().entries.map((entry) {
                 final i = entry.key;
                 final tier = entry.value;
@@ -1135,7 +1369,6 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                     (tier['spins'] as num?)?.toInt() ??
                     (tier['bonus_spins'] as num?)?.toInt() ??
                     0;
-
                 final icons = i < tierIcons.length ? tierIcons[i] : ['💎'];
 
                 return Container(
@@ -1143,10 +1376,8 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                     horizontal: 10,
                     vertical: 10,
                   ),
-                 
                   child: Row(
                     children: [
-                      // Emoji icons
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: icons
@@ -1175,16 +1406,16 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(right:10 ),
+                        padding: const EdgeInsets.only(right: 10),
                         child: Text(
                           '$spins Spin${spins > 1 ? 's' : ''}',
                           style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'DMSans',
-                              height: 1,
-                            ),
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'DMSans',
+                            height: 1,
+                          ),
                         ),
                       ),
                     ],
@@ -1210,7 +1441,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
             fontSize: 16,
             fontWeight: FontWeight.w700,
             fontFamily: 'DMSans',
-            height: 20/16,
+            height: 20 / 16,
           ),
         ),
         const SizedBox(height: 20),
@@ -1218,8 +1449,10 @@ class _SpinWinScreenState extends State<SpinWinScreen>
           children: _faqs.asMap().entries.map((entry) {
             final i = entry.key;
             final faq = entry.value;
-            final q = faq['q']?.toString() ?? faq['question']?.toString() ?? '';
-            final a = faq['a']?.toString() ?? faq['answer']?.toString() ?? '';
+            final q =
+                faq['q']?.toString() ?? faq['question']?.toString() ?? '';
+            final a =
+                faq['a']?.toString() ?? faq['answer']?.toString() ?? '';
 
             return Container(
               width: double.infinity,
@@ -1244,7 +1477,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'DMSans',
-                          height: 20/16,
+                          height: 20 / 16,
                         ),
                       ),
                       Expanded(
@@ -1255,7 +1488,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
                             fontFamily: 'DMSans',
-                            height: 20/16,
+                            height: 20 / 16,
                           ),
                         ),
                       ),
@@ -1269,11 +1502,11 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                       Text(
                         '${i + 1}: ',
                         style: const TextStyle(
-                          color: Colors.transparent, // invisible spacer
+                          color: Colors.transparent,
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'DMSans',
-                          height: 20/16,
+                          height: 20 / 16,
                         ),
                       ),
                       Expanded(
@@ -1284,7 +1517,7 @@ class _SpinWinScreenState extends State<SpinWinScreen>
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             fontFamily: 'DMSans',
-                            height: 16/12,
+                            height: 16 / 12,
                           ),
                         ),
                       ),
@@ -1298,13 +1531,14 @@ class _SpinWinScreenState extends State<SpinWinScreen>
       ],
     );
   }
+
   // ── Shared pill widget ───────────────────────────────────────────────────────
   Widget _actionPill(String label, Color dotColor) {
     return Container(
       height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
       decoration: BoxDecoration(
-        color: Color(0xFFCCFF00),
+        color: const Color(0xFFCCFF00),
         borderRadius: BorderRadius.circular(40),
         border: Border.all(color: Colors.transparent),
       ),
@@ -1314,7 +1548,10 @@ class _SpinWinScreenState extends State<SpinWinScreen>
           Container(
             width: 10,
             height: 10,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: dotColor),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: dotColor,
+            ),
           ),
           const SizedBox(width: 5),
           Text(
