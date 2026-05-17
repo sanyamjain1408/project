@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 
 const _kBase = 'https://api.trapix.com';
 const _lime = Color(0xFFCCFF00);
-const _bg = Color(0xFF0D0D0D);
-const _card = Color(0xFF181818);
+const _bg = Color(0xFF111111);
+const _card = Color(0xFF1A1A1A);
 const _border = Color(0xFF222222);
 const _grey = Color(0xFF888888);
 const _lightGrey = Color(0xFFAAAAAA);
@@ -49,7 +49,21 @@ class _ListingScreenState extends State<ListingScreen> {
       final res = await http.get(Uri.parse('$_kBase/api/v1/listing-form'));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
-        if (mounted) setState(() => _sections = data['sections'] ?? []);
+        final sections = data['sections'] ?? [];
+        // Pre-select first option for all select/radio fields
+        for (final section in sections) {
+          for (final q in (section['questions'] as List? ?? [])) {
+            final ft = q['field_type'] as String? ?? '';
+            if (ft == 'select' || ft == 'radio') {
+              final qId = q['id'] as int;
+              final opts = (q['options'] as List?)?.cast<String>() ?? [];
+              if (opts.isNotEmpty && !_answers.containsKey(qId)) {
+                _answers[qId] = opts.first;
+              }
+            }
+          }
+        }
+        if (mounted) setState(() => _sections = sections);
       }
     } catch (_) {}
     if (mounted) setState(() => _loading = false);
@@ -131,7 +145,7 @@ class _ListingScreenState extends State<ListingScreen> {
     if (_submitted != null) return _SuccessScreen(data: _submitted!);
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: const Color(0xFF111111),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _lime))
           : _sections.isEmpty
@@ -149,22 +163,46 @@ class _ListingScreenState extends State<ListingScreen> {
                     ],
                   ),
                 )
-              : CustomScrollView(
+              : SingleChildScrollView(
                   controller: _scrollController,
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildHeroHeader(context)),
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          if (_globalError != null) _buildGlobalError(),
-                          ..._sections.asMap().entries
-                              .map((e) => _buildSection(e.key, e.value)),
-                          _buildSubmitSection(),
-                        ]),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Stack(
+                        children: [
+                          _buildHeroHeader(context),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              height: 24,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF1A1A1A),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(20),
+                                  topRight: Radius.circular(20),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      Container(
+                        color: const Color(0xFF1A1A1A),
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_globalError != null) _buildGlobalError(),
+                            ..._sections.asMap().entries
+                                .map((e) => _buildSection(e.key, e.value)),
+                            _buildSubmitSection(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
     );
   }
@@ -172,19 +210,19 @@ class _ListingScreenState extends State<ListingScreen> {
   Widget _buildHeroHeader(BuildContext context) {
     final topPad = MediaQuery.of(context).padding.top;
     return SizedBox(
-      height: 260 + topPad,
+      height: 240 + topPad,
       child: Stack(
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/listing.png', fit: BoxFit.cover),
-          Container(color: Colors.black.withValues(alpha: 0.52)),
+          Container(color: Colors.transparent),
           Padding(
             padding: EdgeInsets.only(top: topPad),
             child: Column(
               children: [
                 // top bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
@@ -196,14 +234,13 @@ class _ListingScreenState extends State<ListingScreen> {
                               color: Colors.white, size: 20),
                         ),
                       ),
-                      Image.asset('assets/images/tlogo.png', height: 28),
+                      Image.asset('assets/images/tlogo.png', height: 38),
                     ],
                   ),
                 ),
-                const Spacer(),
                 // title block
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                   child: Column(
                     children: [
                       const Text(
@@ -211,28 +248,33 @@ class _ListingScreenState extends State<ListingScreen> {
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                          fontFamily: "DMSans",
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10),
+                       Text(
+                        'Launch, List, and Scale Your Crypto Project\nWith Us.',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 14,
+                          height: 1.5,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Launch, List, and Scale Your Crypto Project\nWith Us.',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          height: 1.55,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
                         'www.trapix.com',
                         style: TextStyle(
-                          color: _lime,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 16,
+                          height: 1,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "DMSans",
                         ),
                       ),
                     ],
@@ -338,14 +380,16 @@ class _ListingScreenState extends State<ListingScreen> {
           style: const TextStyle(
             color: _lime,
             fontSize: 16,
-            fontWeight: FontWeight.w700,
+            height: 20/16,
+            fontWeight: FontWeight.w400,
+            fontFamily: "DMSans",
           ),
         ),
         if (section['description'] != null &&
             (section['description'] as String).isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(section['description'],
-              style: const TextStyle(color: _grey, fontSize: 12)),
+              style:  TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: "DMSans")),
         ],
         const SizedBox(height: 14),
         ...rows,
@@ -364,8 +408,12 @@ class _ListingScreenState extends State<ListingScreen> {
       children: [
         RichText(
           text: TextSpan(
-            style: const TextStyle(
-                color: _lightGrey, fontSize: 12, fontWeight: FontWeight.w500),
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                fontFamily: "DMSans",
+                height: 16 / 12),
             children: [
               TextSpan(text: q['label'] ?? ''),
               if (isRequired)
@@ -402,13 +450,13 @@ class _ListingScreenState extends State<ListingScreen> {
     final borderColor =
         hasError ? _red.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.08);
     final fillColor =
-        hasError ? _red.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.04);
+        hasError ? _red.withValues(alpha: 0.05) : const Color(0xFF111111);
 
     final inputDecoration = InputDecoration(
       filled: true,
       fillColor: fillColor,
       hintText: placeholder.isNotEmpty ? placeholder : null,
-      hintStyle: const TextStyle(color: _grey, fontSize: 13),
+      hintStyle: const TextStyle(color: _grey, fontSize: 12, fontFamily: "DMSans"),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: borderColor)),
@@ -418,7 +466,7 @@ class _ListingScreenState extends State<ListingScreen> {
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: _lime, width: 1.5)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     );
 
     if (fieldType == 'date') {
@@ -467,7 +515,9 @@ class _ListingScreenState extends State<ListingScreen> {
                 val.isEmpty ? 'DD-MM-YYYY' : val,
                 style: TextStyle(
                   color: val.isEmpty ? _grey : Colors.white,
-                  fontSize: 14,
+                  fontSize: 12,
+                  fontFamily: "DMSans",
+                  height: 20 / 12,
                 ),
               ),
             ],
@@ -482,62 +532,18 @@ class _ListingScreenState extends State<ListingScreen> {
         onChanged: (v) => _handleChange(qId, v),
         minLines: 4,
         maxLines: null,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: "DMSans", height: 20 / 12),
         decoration: inputDecoration,
       );
     }
 
     if (fieldType == 'radio') {
-      return Column(
-        children: options.map((opt) {
-          final selected = val == opt;
-          return GestureDetector(
-            onTap: () => _handleChange(qId, opt),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(
-                    color: selected
-                        ? _lime.withValues(alpha: 0.5)
-                        : Colors.white.withValues(alpha: 0.06)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color: selected ? _lime : Colors.white.withValues(alpha: 0.2),
-                          width: 2),
-                      color: selected ? _lime : Colors.transparent,
-                    ),
-                    child: selected
-                        ? const Center(
-                            child: SizedBox(
-                              width: 7,
-                              height: 7,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                    color: Colors.black, shape: BoxShape.circle),
-                              ),
-                            ),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(opt,
-                      style: TextStyle(
-                          color: selected ? Colors.white : _lightGrey, fontSize: 14)),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
+      return _ListingDropdown(
+        options: options,
+        value: val.isEmpty ? null : val,
+        hint: 'Select',
+        hasError: hasError,
+        onChanged: (v) => _handleChange(qId, v),
       );
     }
 
@@ -578,7 +584,9 @@ class _ListingScreenState extends State<ListingScreen> {
                   const SizedBox(width: 10),
                   Text(opt,
                       style: TextStyle(
-                          color: isChecked ? Colors.white : _lightGrey, fontSize: 14)),
+                          color: isChecked ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontFamily: "DMSans")),
                 ],
               ),
             ),
@@ -588,40 +596,12 @@ class _ListingScreenState extends State<ListingScreen> {
     }
 
     if (fieldType == 'select') {
-      return Container(
-        decoration: BoxDecoration(
-          color: fillColor,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: val.isEmpty ? null : val,
-            hint: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14),
-              child: Text('Select', style: TextStyle(color: _grey, fontSize: 13)),
-            ),
-            dropdownColor: _card,
-            isExpanded: true,
-            icon: const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Icon(Icons.keyboard_arrow_down, color: _grey),
-            ),
-            items: options
-                .map((opt) => DropdownMenuItem(
-                      value: opt,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Text(opt,
-                            style: const TextStyle(color: Colors.white, fontSize: 14)),
-                      ),
-                    ))
-                .toList(),
-            onChanged: (v) {
-              if (v != null) _handleChange(qId, v);
-            },
-          ),
-        ),
+      return _ListingDropdown(
+        options: options,
+        value: val.isEmpty ? null : val,
+        hint: 'Select',
+        hasError: hasError,
+        onChanged: (v) => _handleChange(qId, v),
       );
     }
 
@@ -638,7 +618,7 @@ class _ListingScreenState extends State<ListingScreen> {
       initialValue: val,
       onChanged: (v) => _handleChange(qId, v),
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
+      style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: "DMSans", height: 20 / 12),
       decoration: inputDecoration,
     );
   }
@@ -647,11 +627,11 @@ class _ListingScreenState extends State<ListingScreen> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: _card,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _border),
+            color: const Color(0xFF111111),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color:Colors.transparent),
           ),
           child: Row(
             children: [
@@ -666,17 +646,17 @@ class _ListingScreenState extends State<ListingScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _submitting ? null : _submit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _lime,
+              backgroundColor: const Color(0xFFCCFF00),
               foregroundColor: Colors.black,
               disabledBackgroundColor: _lime.withValues(alpha: 0.5),
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,
             ),
             child: _submitting
@@ -687,11 +667,191 @@ class _ListingScreenState extends State<ListingScreen> {
                   )
                 : const Text(
                     'Submit',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, fontFamily: "DMSans",),
                   ),
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────── overlay dropdown ─────────────────────────────────
+class _ListingDropdown extends StatefulWidget {
+  final List<String> options;
+  final String? value;
+  final String hint;
+  final bool hasError;
+  final void Function(String) onChanged;
+
+  const _ListingDropdown({
+    required this.options,
+    required this.value,
+    required this.hint,
+    required this.hasError,
+    required this.onChanged,
+  });
+
+  @override
+  State<_ListingDropdown> createState() => _ListingDropdownState();
+}
+
+class _ListingDropdownState extends State<_ListingDropdown> {
+  OverlayEntry? _overlay;
+  bool _isOpen = false;
+  final LayerLink _layerLink = LayerLink();
+
+  void _toggle() {
+    if (_isOpen) {
+      _close();
+    } else {
+      _open();
+    }
+  }
+
+  void _open() {
+    final box = context.findRenderObject() as RenderBox;
+    final size = box.size;
+
+    _overlay = OverlayEntry(
+      builder: (_) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _close,
+              child: const SizedBox.expand(),
+            ),
+          ),
+          Positioned(
+            width: size.width,
+            child: CompositedTransformFollower(
+              link: _layerLink,
+              offset: Offset(0, size.height + 4),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF111111),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: widget.options.map((opt) {
+                      final isSelected = opt == widget.value;
+                      return GestureDetector(
+                        onTap: () {
+                          _close();
+                          widget.onChanged(opt);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 13),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            opt,
+                            style: TextStyle(
+                              color: isSelected ? _lime : Colors.white,
+                              fontSize: 12,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Overlay.of(context).insert(_overlay!);
+    setState(() => _isOpen = true);
+  }
+
+  void _close() {
+    _overlay?.remove();
+    _overlay = null;
+    if (mounted) setState(() => _isOpen = false);
+  }
+
+  @override
+  void dispose() {
+    _overlay?.remove();
+    _overlay = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasVal = widget.value != null && widget.value!.isNotEmpty;
+    final borderColor = widget.hasError
+        ? _red.withValues(alpha: 0.5)
+        : _isOpen
+            ? _lime
+            : Colors.white.withValues(alpha: 0.08);
+    final fillColor = widget.hasError
+        ? _red.withValues(alpha: 0.05)
+        : const Color(0xFF111111);
+
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: _toggle,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          decoration: BoxDecoration(
+            color: fillColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: borderColor,
+              width: _isOpen ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  hasVal ? widget.value! : widget.hint,
+                  style: TextStyle(
+                    color: hasVal ? Colors.white : _grey,
+                    fontSize: 12,
+                    fontFamily: 'DMSans',
+                    height: 20 / 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              AnimatedRotation(
+                turns: _isOpen ? 0.5 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: _lime,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
