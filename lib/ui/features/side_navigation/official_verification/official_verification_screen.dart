@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:ui';
+import 'dart:math' show pi;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -104,6 +104,52 @@ String? _svgForPlatform(String platform) {
   return null;
 }
 
+// ─────────────────────────── Corner rotate painter ─────────────────────────
+
+class _CornerRotatePainter extends CustomPainter {
+  final double angle;
+  const _CornerRotatePainter(this.angle);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    final corners = [
+      Offset(0, 0),   // top-left  → purple
+      Offset(w, 0),   // top-right → blue
+      Offset(w, h),   // bot-right → pink
+      Offset(0, h),   // bot-left  → green
+    ];
+    const colors = [
+      Color(0xFF8500B9),
+      Color(0xFF2986FF),
+      Color(0xFFFF8484),
+      Color(0xFF4ED78E),
+    ];
+
+    canvas.save();
+    canvas.translate(w / 2, h / 2);
+    canvas.rotate(angle);
+    canvas.translate(-w / 2, -h / 2);
+
+    for (int i = 0; i < 4; i++) {
+      canvas.drawCircle(
+        corners[i],
+        160,
+        Paint()
+          ..color = colors[i].withValues(alpha: 0.65)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 95),
+      );
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_CornerRotatePainter old) => old.angle != angle;
+}
+
 // ─────────────────────────── Screen ────────────────────────────────────────
 
 class OfficialVerificationScreen extends StatefulWidget {
@@ -115,15 +161,33 @@ class OfficialVerificationScreen extends StatefulWidget {
 }
 
 class _OfficialVerificationScreenState
-    extends State<OfficialVerificationScreen> {
+    extends State<OfficialVerificationScreen>
+    with SingleTickerProviderStateMixin {
   _PlatformDef _selectedPlatform = _platforms[0];
   final _textCtrl = TextEditingController();
   final _focusNode = FocusNode();
   bool _loading = false;
   Map<String, dynamic>? _result;
 
+  late AnimationController _blobController;
+  late Animation<double> _blobAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _blobController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    );
+    _blobAnim = Tween<double>(begin: 0.0, end: 2 * pi).animate(
+      CurvedAnimation(parent: _blobController, curve: Curves.linear),
+    );
+    _blobController.repeat();
+  }
+
   @override
   void dispose() {
+    _blobController.dispose();
     _textCtrl.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -253,25 +317,14 @@ class _OfficialVerificationScreenState
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
-          // ── decorative blurred color blobs ──
-          _blob(174, 214,  Color(0xFF8500B9).withOpacity(0.8), top: -10, left: 0),
-          _blob(
-            150, 160,  Color(0xFFFADAFF).withOpacity(0.5),
-            top: 33, left: 242, isRect: true,
-          ),
-          _blob(250, 240, const  Color(0xFF2986FF).withOpacity(0.5), top: 282, left: 222),
-          _blob(
-            150, 140, Color(0xFF006C33),
-            top: 196, left: 249, isRect: true,
-          ),
-          _blob(
-            100, 140, Color(0xFF4ED78E).withOpacity(0.5),
-            top: 133, left: 71, isRect: true,
-          ),
-          _blob(159, 288,  Color(0xFFFF8484).withOpacity(0.8), top: 210, left: -3),
-          _blob(
-            150, 240,  Color(0xFF00E7E7).withOpacity(0.5),
-            top: 235, left: 58, isRect: true,
+          // ── 4 colored corner blobs rotating clockwise (corner to corner) ──
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _blobAnim,
+              builder: (context, child) => CustomPaint(
+                painter: _CornerRotatePainter(_blobAnim.value),
+              ),
+            ),
           ),
 
           // ── content: badge, title, description, pills, input ──
@@ -323,42 +376,6 @@ class _OfficialVerificationScreenState
           ),
           
         ],
-      ),
-    );
-  }
-
-  // ── blurred decorative blob ──
-
-  Widget _blob(
-    double w,
-    double h,
-    Color color, {
-    required double top,
-    required double left,
-    bool isRect = false,
-  }) {
-    return Positioned(
-      top: top,
-      left: left,
-      child: Opacity(
-        opacity: 0.70,
-        child: ImageFiltered(
-          imageFilter: ImageFilter.blur(
-            sigmaX: 38,
-            sigmaY: 38,
-            tileMode: TileMode.decal,
-          ),
-          child: Container(
-            width: w,
-            height: h,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: isRect
-                  ? BorderRadius.circular(8)
-                  : BorderRadius.circular(h / 2),
-            ),
-          ),
-        ),
       ),
     );
   }
