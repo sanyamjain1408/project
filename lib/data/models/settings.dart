@@ -62,6 +62,12 @@ class CommonSettings {
     this.socialLoginGoogleEnable,
     this.socialLoginFacebookEnable,
     this.socialLoginAppleEnable,
+    this.botOrderBookSpeed,
+    this.botTradeSpeedMin,
+    this.botTradeSpeedMax,
+    this.botPriceSpeed,
+    this.botPriceChangePercent,
+    this.enableBotTrade,
   });
 
   String? baseCurrency;
@@ -119,6 +125,12 @@ class CommonSettings {
   int? socialLoginGoogleEnable;
   int? socialLoginFacebookEnable;
   int? socialLoginAppleEnable;
+  int? botOrderBookSpeed;
+  int? botTradeSpeedMin;
+  int? botTradeSpeedMax;
+  int? botPriceSpeed;
+  double? botPriceChangePercent;
+  int? enableBotTrade;
 
   factory CommonSettings.fromJson(Map<String, dynamic> json) => CommonSettings(
     baseCurrency: json["base_currency"],
@@ -179,6 +191,12 @@ class CommonSettings {
     socialLoginGoogleEnable: makeInt(json["social_login_google_enable"]),
     socialLoginFacebookEnable: makeInt(json["social_login_facebook_enable"]),
     socialLoginAppleEnable: makeInt(json["social_login_apple_enable"]),
+    botOrderBookSpeed: makeInt(json["bot_order_book_speed"]),
+    botTradeSpeedMin: makeInt(json["bot_trade_speed_min"]),
+    botTradeSpeedMax: makeInt(json["bot_trade_speed_max"]),
+    botPriceSpeed: makeInt(json["bot_price_speed"]),
+    botPriceChangePercent: makeDouble(json["bot_price_change_percent"]),
+    enableBotTrade: makeInt(json["enable_bot_trade"]),
   );
 }
 

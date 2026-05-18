@@ -390,12 +390,12 @@ class OrderBookIcon extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          color: gBuyColor.withValues(alpha: opacity),
+                          color: gBuyColor.withOpacity(opacity),
                           height: 7,
                           width: 7,
                         ),
                         Container(
-                          color: gSellColor.withValues(alpha: opacity),
+                          color: gSellColor.withOpacity(opacity),
                           height: 7,
                           width: 7,
                         ),
@@ -403,8 +403,8 @@ class OrderBookIcon extends StatelessWidget {
                     )
                   : Container(
                       color: fromKey == FromKey.buy
-                          ? gBuyColor.withValues(alpha: opacity)
-                          : gSellColor.withValues(alpha: opacity),
+                          ? gBuyColor.withOpacity(opacity)
+                          : gSellColor.withOpacity(opacity),
                       height: 15,
                       width: 7,
                     ),
@@ -412,7 +412,7 @@ class OrderBookIcon extends StatelessWidget {
                 imagePath: AssetConstants.icBoxFilterAll,
                 width: 7,
                 height: 15,
-                color: Colors.grey.withValues(alpha: opacity),
+                color: Colors.grey.withOpacity(opacity),
               ),
             ],
           ),
@@ -753,7 +753,7 @@ class _OrderBookDetailRowState extends State<_OrderBookDetailRow>
                 child: LinearProgressIndicator(
                   value: _animation.value,
                   minHeight: 20,
-                  color: widget.color.withValues(alpha: 0.15),
+                  color: widget.color.withOpacity(0.15),
                   backgroundColor: Colors.transparent,
                 ),
               );

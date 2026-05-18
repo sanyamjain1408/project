@@ -13,6 +13,7 @@ class DashboardData {
     this.broadcastPort,
     this.appKey,
     this.cluster,
+    this.enableBotTrade,
   });
 
   String? title;
@@ -23,6 +24,7 @@ class DashboardData {
   String? broadcastPort;
   String? appKey;
   String? cluster;
+  int? enableBotTrade;
 
   factory DashboardData.fromJson(Map<String, dynamic> json) => DashboardData(
         title: json["title"],
@@ -33,6 +35,7 @@ class DashboardData {
         orderData: json["order_data"] is Map<String, dynamic> ? OrderData.fromJson(json["order_data"]) : null,
         feesSettings: json["fees_settings"] is Map<String, dynamic> ? Fees.fromJson(json["fees_settings"]) : null,
         lastPriceData: json["last_price_data"] == null ? null : List<PriceData>.from(json["last_price_data"].map((x) => PriceData.fromJson(x))),
+        enableBotTrade: json["enable_bot_trade"],
       );
 }
 
@@ -106,6 +109,8 @@ class OrderData {
     this.onOrder,
     this.sellPrice,
     this.buyPrice,
+    this.botMinAmount,
+    this.botMaxAmount,
     this.baseCoin,
     this.tradeCoin,
     this.exchangePair,
@@ -119,6 +124,8 @@ class OrderData {
   OnOrder? onOrder;
   double? sellPrice;
   double? buyPrice;
+  double? botMinAmount;
+  double? botMaxAmount;
   String? baseCoin;
   String? tradeCoin;
   String? exchangePair;
@@ -132,6 +139,8 @@ class OrderData {
         onOrder: json["on_order"] == null ? null : OnOrder.fromJson(json["on_order"]),
         sellPrice: makeDouble(json["sell_price"]),
         buyPrice: makeDouble(json["buy_price"]),
+        botMinAmount: double.tryParse(json['bot_min_amount'].toString()),
+        botMaxAmount: double.tryParse(json['bot_max_amount'].toString()),
         baseCoin: json["base_coin"],
         tradeCoin: json["trade_coin"],
         exchangePair: json["exchange_pair"],

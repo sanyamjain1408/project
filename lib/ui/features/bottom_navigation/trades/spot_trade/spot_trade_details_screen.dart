@@ -151,8 +151,8 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                             tabIndex.value,
                             (index) => tabIndex.value = index,
                             selectedColor: Colors.white,
-                            unSelectedColor: Colors.white.withValues(
-                              alpha: 0.5,
+                            unSelectedColor: Colors.white.withOpacity(
+                              0.5,
                             ),
 
                             fontSize: 16,

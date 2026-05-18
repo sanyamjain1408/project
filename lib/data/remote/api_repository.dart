@@ -315,10 +315,11 @@ class APIRepository {
     return provider.postRequest(url, mapObj, authHeader(), isDynamic: true);
   }
 
-  Future<ServerResponse> placeOrderStopMarket(bool isBuy, int baseCoinId, int tradeCoinId, double amount, double limit, double stop) async {
+  Future<ServerResponse> placeOrderStopMarket(bool isBuy, int baseCoinId, int tradeCoinId, double amount, double total, double price, double stop) async {
     var mapObj = {};
     mapObj[APIKeyConstants.amount] = amount;
-    mapObj[APIKeyConstants.limit] = limit;
+    mapObj[APIKeyConstants.total] = total;
+    mapObj[APIKeyConstants.price] = price;
     mapObj[APIKeyConstants.stop] = stop;
     mapObj[APIKeyConstants.tradeCoinId] = tradeCoinId;
     mapObj[APIKeyConstants.baseCoinId] = baseCoinId;
