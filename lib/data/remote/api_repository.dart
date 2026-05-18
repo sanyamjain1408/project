@@ -1019,6 +1019,61 @@ class APIRepository {
     socketProvider.unSubscribeAllChannel();
   }
 
+  /// *** ──────────────────────────── *** ///
+  /// *** SPOT TRADE REST APIs        *** ///
+  /// *** (HTTP fallback when WS down) *** ///
+  /// *** ──────────────────────────── *** ///
+
+  Map<String, String> _spotHeader() {
+    final h = <String, String>{};
+    h['Accept'] = 'application/json';
+    h['Content-Type'] = 'application/json';
+    final token = authHeader()[APIKeyConstants.authorization];
+    if (token != null) h[APIKeyConstants.authorization] = token;
+    return h;
+  }
+
+  String _spotUrl(String path) => APIURLConstants.spotBaseUrl + path;
+
+  Future<ServerResponse> getSpotPairs() =>
+      provider.getRequest(_spotUrl(APIURLConstants.spotPairs), _spotHeader());
+
+  Future<ServerResponse> getSpotTicker(String symbol) =>
+      provider.getRequest(_spotUrl('${APIURLConstants.spotTicker}$symbol'), _spotHeader());
+
+  Future<ServerResponse> getSpotOrderBook(String symbol) =>
+      provider.getRequest(_spotUrl('${APIURLConstants.spotOrderBook}$symbol'), _spotHeader());
+
+  Future<ServerResponse> getSpotTrades(String symbol) =>
+      provider.getRequest(_spotUrl('${APIURLConstants.spotTrades}$symbol'), _spotHeader());
+
+  Future<ServerResponse> getSpotOpenOrders(String symbol) =>
+      provider.getRequest(_spotUrl(APIURLConstants.spotOpenOrders), _spotHeader(),
+          query: {'symbol': symbol});
+
+  Future<ServerResponse> getSpotOrderHistory(String symbol) =>
+      provider.getRequest(_spotUrl(APIURLConstants.spotOrderHistory), _spotHeader(),
+          query: {'symbol': symbol});
+
+  Future<ServerResponse> getSpotBalances() =>
+      provider.getRequest(_spotUrl(APIURLConstants.spotBalances), _spotHeader());
+
+  Future<ServerResponse> placeSpotOrder(String symbol, String side,
+      String orderType, double amount, {double? price}) {
+    final body = <String, dynamic>{
+      'symbol': symbol,
+      'side': side,
+      'order_type': orderType,
+      'amount': amount,
+      if (price != null) 'price': price,
+    };
+    return provider.postRequest(_spotUrl(APIURLConstants.spotPlaceOrder), body, _spotHeader());
+  }
+
+  Future<ServerResponse> cancelSpotOrder(String orderId) =>
+      provider.postRequest(
+          _spotUrl('${APIURLConstants.spotCancelOrder}$orderId'), {}, _spotHeader());
+
   /// *** ---------------- *** ///
   /// *** Others requests *** ///
   /// *** -------------- *** ///

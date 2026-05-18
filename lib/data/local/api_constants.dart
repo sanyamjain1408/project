@@ -160,6 +160,19 @@ class APIURLConstants {
   static const getNewsListType = "/api/news/get";
   static const getNewsCategory = "/api/news/category";
   static const getNewsDetails = "/api/news/news-details";
+
+  // ── Spot Trade REST API (HTTP fallback when WS is down) ──────────────────
+  // Base host: https://trapix.com  (same host as wss://trapix.com/ws/spot)
+  static const spotBaseUrl     = "https://trapix.com";
+  static const spotPairs       = "/api/spot/pairs";
+  static const spotTicker      = "/api/spot/ticker/";       // + symbol
+  static const spotOrderBook   = "/api/spot/orderbook/";    // + symbol
+  static const spotTrades      = "/api/spot/trades/";       // + symbol
+  static const spotOpenOrders  = "/api/spot/open-orders";
+  static const spotOrderHistory = "/api/spot/order-history";
+  static const spotBalances    = "/api/spot/balances";
+  static const spotPlaceOrder  = "/api/spot/order";
+  static const spotCancelOrder = "/api/spot/order/cancel/"; // + orderId
 }
 
 class APIKeyConstants {

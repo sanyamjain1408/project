@@ -151,7 +151,7 @@ class OderBookFixedView extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: List.generate(sList.length, (index) {
                     return OderBookItemMinView(
-                      key: ValueKey('sell_${sList[index].price}'),
+                      key: ValueKey('sell_${index}_${sList[index].price}'),
                       sList[index],
                       FromKey.sell,
                       selectedHeaderIndex == 1,
@@ -185,7 +185,7 @@ class OderBookFixedView extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: List.generate(bList.length, (index) {
                     return OderBookItemMinView(
-                      key: ValueKey('buy_${bList[index].price}'),
+                      key: ValueKey('buy_${index}_${bList[index].price}'),
                       bList[index],
                       FromKey.buy,
                       selectedHeaderIndex == 1,
@@ -580,10 +580,12 @@ class _OrderFillPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final fillW = size.width * fillPercent.clamp(0.0, 1.0);
-    canvas.drawRect(
-      Rect.fromLTWH(size.width - fillW, 0, fillW, size.height),
-      Paint()..color = color.withOpacity(0.18),
+    final left = size.width - fillW;
+    final rect = Rect.fromLTWH(left, 0, fillW, size.height);
+    final gradient = LinearGradient(
+      colors: [Colors.transparent, color.withValues(alpha: 0.22)],
     );
+    canvas.drawRect(rect, Paint()..shader = gradient.createShader(rect));
   }
 
   @override
@@ -642,7 +644,7 @@ class DetailsOrderBookView extends StatelessWidget {
                 final sText = isBuy ? _fmt2(order.price) : _fmt2(order.amount);
           
                 return _OrderBookDetailRow(
-                  key: ValueKey('${isBuy ? "buy" : "sell"}_${order.price}'),
+                  key: ValueKey('${isBuy ? "buy" : "sell"}_${index}_${order.price}'),
                   order: order,
                   color: color,
                   fText: fText,

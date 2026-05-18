@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
@@ -5,7 +7,9 @@ import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/currency.dart';
 import 'package:tradexpro_flutter/data/models/dashboard_data.dart';
 import 'package:tradexpro_flutter/data/models/exchange_order.dart';
+import 'package:tradexpro_flutter/data/models/spot_data.dart';
 import 'package:tradexpro_flutter/data/models/trade_info_socket.dart';
+import 'package:tradexpro_flutter/data/remote/spot_socket.dart';
 import 'package:tradexpro_flutter/helper/favorite_helper.dart';
 import 'package:tradexpro_flutter/ui/features/charts/charts_controller.dart';
 import 'package:tradexpro_flutter/utils/extensions.dart';
@@ -39,10 +43,27 @@ class SpotTradeController extends GetxController implements SocketListener {
   RxInt selectedHeaderIndex = 0.obs;
   TradeTolerance? tolerance;
 
+  // ── Spot live-data (WS + HTTP fallback) ──────────────────────────────────
+  final _spotWs = SpotWebSocket();
+  Timer? _spotHttpTimer;
+  bool _wsLive = false;
+  bool _wsInitialized = false;
+
+  /// CoinPair format is "BTC_USDT" — WS expects "BTCUSDT"
+  String get _spotSymbol =>
+      (selectedCoinPair.value.coinPair ?? '').replaceAll('_', '');
+
   @override
   void onInit() {
     super.onInit();
     _loadCoinIcons();
+  }
+
+  @override
+  void onClose() {
+    _spotWs.dispose();
+    _stopHttpPolling();
+    super.onClose();
   }
 
   void _loadCoinIcons() {
@@ -58,6 +79,154 @@ class SpotTradeController extends GetxController implements SocketListener {
       }
     });
   }
+
+  // ── Spot WebSocket ────────────────────────────────────────────────────────
+
+  void _connectSpotWs() {
+    final sym = _spotSymbol;
+    if (sym.isEmpty) return;
+    _wsLive = false;
+    if (_wsInitialized) {
+      _spotWs.changeSymbol(sym);
+    } else {
+      _wsInitialized = true;
+      _spotWs.connect(sym, _onSpotWsMsg);
+    }
+    _startHttpPolling();
+  }
+
+  void _onSpotWsMsg(Map<String, dynamic> msg) {
+    _wsLive = true;
+    if (msg['ticker'] is Map) {
+      _applyTicker(SpotTicker.fromJson(msg['ticker'] as Map<String, dynamic>));
+    }
+    if (msg['orderbook'] is Map) {
+      _applyOrderBook(SpotOrderBook.fromJson(msg['orderbook'] as Map<String, dynamic>));
+    }
+    if (msg['trades'] is List) {
+      final trades = (msg['trades'] as List)
+          .map((t) => SpotTrade.fromJson(t as Map<String, dynamic>))
+          .toList();
+      _applyTrades(trades);
+    }
+  }
+
+  void _applyTicker(SpotTicker t) {
+    final od = dashboardData.value.orderData;
+    if (od != null) {
+      od.buyPrice = t.price;
+      od.sellPrice = t.price;
+    }
+    dashboardData.value.lastPriceData = [
+      PriceData(
+        price: t.price,
+        lastPrice: t.price,
+        priceOrderType: t.priceChange24h >= 0 ? FromKey.buy : FromKey.sell,
+      ),
+    ];
+    dashboardData.refresh();
+    selfBalance.value.buyPrice = t.price;
+    selfBalance.value.sellPrice = t.price;
+    selfBalance.refresh();
+  }
+
+  void _applyOrderBook(SpotOrderBook ob) {
+    // bids: server sends descending (highest first) — pass as-is for buy list
+    // asks: server sends ascending (lowest first) — handleOrderBookList reverses for sell list
+    handleOrderBookList(FromKey.buy, _bidsToOrders(ob.bids));
+    handleOrderBookList(FromKey.sell, _asksToOrders(ob.asks));
+  }
+
+  /// bids [[price, amount],...] → ExchangeOrder list (descending by price, deduplicated)
+  List<ExchangeOrder> _bidsToOrders(List<List<double>> bids) {
+    if (bids.isEmpty) return [];
+    // Merge duplicate prices
+    final merged = <double, double>{};
+    for (final r in bids) {
+      merged[r[0]] = (merged[r[0]] ?? 0) + r[1];
+    }
+    final sorted = merged.entries.toList()..sort((a, b) => b.key.compareTo(a.key));
+    double cumVol = 0;
+    final total = sorted.fold(0.0, (s, e) => s + e.value);
+    return sorted.map((e) {
+      cumVol += e.value;
+      final pct = total > 0 ? (cumVol / total) * 100 : 0.0;
+      return ExchangeOrder(price: e.key, amount: e.value, total: e.key * e.value, percentage: pct);
+    }).toList();
+  }
+
+  /// asks [[price, amount],...] → ExchangeOrder list (ascending by price, deduplicated)
+  List<ExchangeOrder> _asksToOrders(List<List<double>> asks) {
+    if (asks.isEmpty) return [];
+    // Merge duplicate prices
+    final merged = <double, double>{};
+    for (final r in asks) {
+      merged[r[0]] = (merged[r[0]] ?? 0) + r[1];
+    }
+    final sorted = merged.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+    double cumVol = 0;
+    final total = sorted.fold(0.0, (s, e) => s + e.value);
+    return sorted.map((e) {
+      cumVol += e.value;
+      final pct = total > 0 ? (cumVol / total) * 100 : 0.0;
+      return ExchangeOrder(price: e.key, amount: e.value, total: e.key * e.value, percentage: pct);
+    }).toList();
+  }
+
+  void _applyTrades(List<SpotTrade> trades) {
+    exchangeTrades.value = trades
+        .map((t) => ExchangeTrade(
+              price: t.price,
+              amount: t.amount,
+              priceOrderType: t.isBuy ? FromKey.buy : FromKey.sell,
+              time: t.time,
+              total: t.price * t.amount,
+            ))
+        .toList();
+  }
+
+  // ── HTTP fallback polling (kicks in only when WS is silent) ──────────────
+
+  void _startHttpPolling() {
+    _stopHttpPolling();
+    _spotHttpTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!_wsLive) _doHttpFetch();
+      // Reset flag each cycle so a WS dropout triggers HTTP after ~1 s
+      _wsLive = false;
+    });
+  }
+
+  void _stopHttpPolling() {
+    _spotHttpTimer?.cancel();
+    _spotHttpTimer = null;
+  }
+
+  void _doHttpFetch() {
+    final sym = _spotSymbol;
+    if (sym.isEmpty) return;
+
+    APIRepository().getSpotTicker(sym).then((resp) {
+      if (resp.success && resp.data is Map) {
+        _applyTicker(SpotTicker.fromJson(Map<String, dynamic>.from(resp.data as Map)));
+      }
+    });
+
+    APIRepository().getSpotOrderBook(sym).then((resp) {
+      if (resp.success && resp.data is Map) {
+        _applyOrderBook(SpotOrderBook.fromJson(Map<String, dynamic>.from(resp.data as Map)));
+      }
+    });
+
+    APIRepository().getSpotTrades(sym).then((resp) {
+      if (resp.success && resp.data is List) {
+        _applyTrades((resp.data as List)
+            .map((t) => SpotTrade.fromJson(Map<String, dynamic>.from(t as Map)))
+            .toList());
+      }
+    });
+  }
+
+  // ── Existing socket (Pusher) ──────────────────────────────────────────────
 
   @override
   void onDataGet(channel, event, data) {
@@ -178,6 +347,9 @@ class SpotTradeController extends GetxController implements SocketListener {
         Future.delayed(const Duration(milliseconds: 500), () => getLimitOrderTolerance());
 
         subscribeCoinPairChannel();
+
+        // Connect spot WS for live price / orderbook / trades
+        _connectSpotWs();
       } else {
         showToast(resp.message);
       }
