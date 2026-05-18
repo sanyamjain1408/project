@@ -39,6 +39,7 @@ import '../side_navigation/staking/staking_screen.dart';
 import '../side_navigation/airdrop/airdrop_screen.dart';
 import '../side_navigation/spin_win/spin_win_screen.dart';
 import '../side_navigation/listing/listing_screen.dart';
+import '../side_navigation/official_verification/official_verification_screen.dart';
 import '../auth/sign_in/sign_in_screen.dart';
 import '../side_navigation/referrals/referral_screen.dart';
 import '../side_navigation/ib_program/ib_screen.dart';
@@ -522,7 +523,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _menuRow(
                       "assets/icons/official.png",
                       "Official Verification",
-                      () {},
+                      () => Get.to(() => const OfficialVerificationScreen()),
                     ),
                     _menuRow(
                       "assets/icons/airdrop.png",
