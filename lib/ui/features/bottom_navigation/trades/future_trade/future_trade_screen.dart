@@ -162,7 +162,7 @@ class FutureTradeScreenState extends State<FutureTradeScreen> {
     _controller.getCoinPairList("");
     SideSheet.left(
       context: context,
-      barrierColor: context.theme.secondaryHeaderColor.withOpacity(0.5),
+      barrierColor: context.theme.secondaryHeaderColor.withValues(alpha:0.5),
       sheetColor: Colors.transparent,
       width: context.width - 50,
       body: Obx(() => TradeCurrencyPairSelectionView(

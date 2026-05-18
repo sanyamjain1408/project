@@ -25,7 +25,6 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
   final _controller = Get.put(SpotTradeController());
   final isChartShow = false.obs;
   double _buySellViewHeight = 0;
-  String _buySellFromPage = FromKey.buy;
 
   void _updateBuySellHeight(double height) {
     if (_buySellViewHeight != height) {
@@ -41,19 +40,19 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
   void initState() {
     tradeDecimal = DefaultValue.decimal;
     super.initState();
-    if (TemporaryData.activityType != null) {
-      _buySellFromPage = TemporaryData.activityType == "1" ? FromKey.sell : FromKey.buy;
-    }
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (TemporaryData.selectedCurrencyPair != null) {
         _controller.selectedCoinPair.value = TemporaryData.selectedCurrencyPair!;
         TemporaryData.selectedCurrencyPair = null;
-      }
-      if (TemporaryData.activityType != null) {
-        if (_controller.onBuySaleChange != null) {
-          _controller.onBuySaleChange!(int.parse(TemporaryData.activityType!));
+
+        if (TemporaryData.activityType != null) {
+          Future.delayed(const Duration(seconds: 2), () {
+            if (_controller.onBuySaleChange != null) {
+              _controller.onBuySaleChange!(int.parse(TemporaryData.activityType!));
+            }
+            TemporaryData.activityType = null;
+          });
         }
-        TemporaryData.activityType = null;
       }
       _controller.getDashBoardData();
     });
@@ -131,7 +130,7 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
                         flex: 5,
                         child: _HeightReporter(
                           onHeight: _updateBuySellHeight,
-                          child: SpotTradeBuySellView(fromPage: _buySellFromPage),
+                          child: const SpotTradeBuySellView(fromPage: FromKey.buy),
                         ),
                       ),
                     ],
@@ -151,7 +150,7 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
     _controller.getCoinPairList("");
     SideSheet.left(
       context: context,
-      barrierColor: context.theme.secondaryHeaderColor.withOpacity(0.5),
+      barrierColor: context.theme.secondaryHeaderColor.withValues(alpha: 0.5),
       sheetColor: Colors.transparent,
       width: context.width - 50,
       body: Obx(() => TradeCurrencyPairSelectionView(

@@ -15,13 +15,12 @@ import 'package:tradexpro_flutter/data/models/socket_response.dart';
 class SocketProvider extends GetxController {
   IOWebSocketChannel? webSocket;
   late Timer _timer;
-  List<String> channelList = [];
+  List channelList = [""];
   List<SocketListener> listenerList = [];
   bool _disconnected = true;
 
   @override
   void onInit() {
-    connectSocket();
     _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
       if (webSocket == null) {
         connectSocket();
@@ -32,6 +31,10 @@ class SocketProvider extends GetxController {
           webSocket?.sink.add('{"event":"pusher:ping","data":{}}');
         }
       }
+    });
+
+    webSocket?.stream.handleError((error) {
+      printFunction("webSocket error", error);
     });
     super.onInit();
   }
@@ -53,9 +56,7 @@ class SocketProvider extends GetxController {
 
     if (channelList.isNotEmpty) {
       for (String channel in channelList) {
-        if (channel.isNotEmpty) {
-          webSocket?.sink.add('{"event":"pusher:subscribe","data":{"channel":"$channel"}}');
-        }
+        webSocket?.sink.add('{"event":"pusher:subscribe","data":{"channel":"$channel"}}');
       }
     }
   }

@@ -89,7 +89,7 @@ class _TradesScreenState extends State<TradesScreen>
                 dividerColor: Colors.transparent,
                 overlayColor: WidgetStateProperty.all(Color(0xFF111111)),
                 labelColor: Colors.white,
-                unselectedLabelColor: Colors.white.withOpacity(0.5),
+                unselectedLabelColor: Colors.white.withValues(alpha: 0.5),
                 labelPadding: const EdgeInsets.symmetric(horizontal: 10),
                 labelStyle: const TextStyle(
                   fontSize: 16,

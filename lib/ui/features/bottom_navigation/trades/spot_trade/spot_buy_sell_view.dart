@@ -47,8 +47,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
   RxInt selectedBuySubTabIndex = 0.obs;
   RxInt selectedSellSubTabIndex = 0.obs;
   bool isLoggedIn = false;
-  bool _priceFieldEdited = false;
-  bool _limitFieldEdited = false;
 
   @override
   void initState() {
@@ -63,8 +61,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       initialIndex: _controller.selectedBuySellTab.value,
     );
     super.initState();
-    ever(_controller.dashboardData, (_) => _updatePriceFromSocket());
-    _updatePriceFromSocket();
     setSelectedPrice.addListener(() {
       if (setSelectedPrice.value != null && setSelectedPrice.value! > 0) {
         int subIndex = _controller.selectedBuySellTab.value == 0
@@ -72,10 +68,8 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
             : selectedSellSubTabIndex.value;
         if (subIndex == 0 || subIndex == 1) {
           priceEditController.text = setSelectedPrice.value.toString();
-          _priceFieldEdited = true;
         } else if (subIndex == 2) {
           limitEditController.text = setSelectedPrice.value.toString();
-          _limitFieldEdited = true;
         }
       }
     });
@@ -108,50 +102,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
   void onBuySellChange(int index) {
     _controller.selectedBuySellTab.value = index;
     _clearInputViews();
-    _priceFieldEdited = false;
-    _limitFieldEdited = false;
-    _updatePriceFromSocket();
-  }
-
-  double _getSocketPrice() {
-    final dData = _controller.dashboardData.value;
-    final isBuy = _controller.selectedBuySellTab.value == 0;
-    final subIndex = isBuy ? selectedBuySubTabIndex.value : selectedSellSubTabIndex.value;
-    final lastPrice = dData.lastPriceData?.first.price ?? 0;
-    final fallback = isBuy ? dData.orderData?.sellPrice : dData.orderData?.buyPrice;
-
-    if (subIndex == 1) {
-      return fallback ?? lastPrice;
-    }
-    return lastPrice > 0 ? lastPrice : fallback ?? 0;
-  }
-
-  void _updatePriceFromSocket() {
-    final price = _getSocketPrice();
-    if (price <= 0) return;
-    if (!_priceFieldEdited) {
-      priceEditController.text = price.toStringAsFixed(2);
-      if (amountEditController.text.trim().isNotEmpty) {
-        _onInputAmount(amountEditController.text.trim());
-      }
-    }
-  }
-
-  void _onPriceTextChanged(String value) {
-    _priceFieldEdited = value.trim().isNotEmpty;
-    if (!_priceFieldEdited) {
-      _updatePriceFromSocket();
-    }
-    if (amountEditController.text.trim().isNotEmpty) {
-      _onInputAmount(amountEditController.text.trim());
-    }
-  }
-
-  void _onLimitTextChanged(String value) {
-    _limitFieldEdited = value.trim().isNotEmpty;
-    if (!_limitFieldEdited) {
-      _updatePriceFromSocket();
-    }
   }
 
   Widget _buySellTabView(int tabIndex) {
@@ -187,9 +137,19 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                     : selectedSellSubTabIndex.value = index;
 
                 _clearInputViews();
-                _priceFieldEdited = false;
-                _limitFieldEdited = false;
-                _updatePriceFromSocket();
+
+                final prices = _controller.dashboardData.value.lastPriceData;
+                final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
+
+                if (index == 0 || index == 1) {
+                  if (price != null && price > 0) {
+                    priceEditController.text = price.toStringAsFixed(2);
+                  }
+                } else if (index == 2) {
+                  if (price != null && price > 0) {
+                    limitEditController.text = price.toStringAsFixed(2);
+                  }
+                }
               },
             ),
             vSpacer5(),
@@ -197,7 +157,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
             // ── Limit / Stop Price ─────────────────────────────────────
             TradeTextFieldCalculate(
               controller: priceEditController,
-              onTextChange: _onPriceTextChanged,
               sTitle: subIndex == 2 ? "Stop".tr : "Limit Price",
               sSubtitle: baseCType,
             ),
@@ -207,7 +166,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
             if (subIndex == 2)
               TradeTextFieldCalculate(
                 controller: limitEditController,
-                onTextChange: _onLimitTextChanged,
                 sTitle: "Limit".tr,
                 sSubtitle: baseCType,
               ),
@@ -408,8 +366,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
     priceEditController.text = "";
     takeProfitController.text = "";
     takeLossController.text = "";
-    _priceFieldEdited = false;
-    _limitFieldEdited = false;
   }
 
   void _checkInputData() {
@@ -490,7 +446,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         dData?.baseCoinId ?? 0,
         dData?.tradeCoinId ?? 0,
         amount,
-        makeDouble(totalEditController.text.trim()),
         limit,
         stop,
         () => _clearInputViews(),
