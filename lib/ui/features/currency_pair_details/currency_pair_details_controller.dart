@@ -13,11 +13,8 @@ import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 
 
-import '../charts/charts_controller.dart';
-
 class CurrencyPairDetailsController extends GetxController implements SocketListener {
   Rx<OrderData> orderData = OrderData().obs;
-  final _chartController = Get.put(ChartsController());
   Rx<CoinPair> selectedPair = CoinPair().obs;
   RxList<PriceData> lastPriceData = <PriceData>[].obs;
   RxList<ExchangeOrder> buyExchangeOrder = <ExchangeOrder>[].obs;
@@ -44,7 +41,6 @@ class CurrencyPairDetailsController extends GetxController implements SocketList
         }
         tradeDecimal = dashboardData.orderData?.total?.tradeWallet?.pairDecimal ?? DefaultValue.decimal;
         FavoriteHelper.checkFavorite(selectedPair.value, '', (pair) => selectedPair.value = pair);
-        _chartController.setCoinPair(selectedPair.value);
         getExchangeOrderList(FromKey.sell);
         getExchangeOrderList(FromKey.buy);
         Future.delayed(const Duration(milliseconds: 500), () => getExchangeTradeList());
@@ -74,7 +70,6 @@ class CurrencyPairDetailsController extends GetxController implements SocketList
           if (pair != null) selectedPair.value = pair;
         }
         FavoriteHelper.checkFavorite(selectedPair.value, FromKey.future, (pair) => selectedPair.value = pair);
-        _chartController.setCoinPair(selectedPair.value);
         getExchangeOrderList(FromKey.sell);
         getExchangeOrderList(FromKey.buy);
 
@@ -108,10 +103,8 @@ class CurrencyPairDetailsController extends GetxController implements SocketList
       if (type == FromKey.sell) {
         list = list.reversed.toList();
         sellExchangeOrder.value = list;
-        _chartController.sellOrders.value = list;
       } else {
         buyExchangeOrder.value = list;
-        _chartController.buyOrders.value = list;
       }
     }
   }
@@ -160,7 +153,6 @@ class CurrencyPairDetailsController extends GetxController implements SocketList
         }
         if (data.lastPriceData != null) lastPriceData.value = data.lastPriceData!;
         if (data.orderData != null) orderData.value = data.orderData!;
-        _chartController.updateChart(data);
       }
     }
   }

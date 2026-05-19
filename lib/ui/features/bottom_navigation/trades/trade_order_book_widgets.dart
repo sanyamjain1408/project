@@ -277,6 +277,7 @@ class _MidPriceBlockState extends State<MidPriceBlock> {
 
   late Color _priceColor;
   double? _lastPrice;
+  bool _isUp = true;
 
   @override
   void initState() {
@@ -291,7 +292,8 @@ class _MidPriceBlockState extends State<MidPriceBlock> {
     final newPrice = widget.lastPData?.price;
     if (newPrice != null && _lastPrice != null && newPrice != _lastPrice) {
       setState(() {
-        _priceColor = newPrice > _lastPrice! ? _green : _red;
+        _isUp = newPrice > _lastPrice!;
+        _priceColor = _isUp ? _green : _red;
       });
     }
     _lastPrice = newPrice ?? _lastPrice;
@@ -303,6 +305,7 @@ class _MidPriceBlockState extends State<MidPriceBlock> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Flexible(
               child: AnimatedDefaultTextStyle(
@@ -318,6 +321,15 @@ class _MidPriceBlockState extends State<MidPriceBlock> {
                   _fmt2(widget.lastPData?.price, fixed: 2),
                   maxLines: 1,
                 ),
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: Icon(
+                _isUp ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                key: ValueKey(_isUp),
+                color: _priceColor,
+                size: 16,
               ),
             ),
           ],
@@ -878,7 +890,7 @@ class _CustomDropdownState extends State<CustomDropdown> {
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -971,7 +983,7 @@ class _CustomDropdownState extends State<CustomDropdown> {
               ),
               Icon(
                 Icons.arrow_drop_down,
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 size: 18,
               ),
             ],

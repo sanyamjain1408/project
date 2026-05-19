@@ -48,6 +48,8 @@ class SpotTradeController extends GetxController implements SocketListener {
   Timer? _spotHttpTimer;
   bool _wsLive = false;
   bool _wsInitialized = false;
+  /// true = last tick was up or flat, false = down
+  final RxBool tickerGoingUp = true.obs;
 
   /// CoinPair format is "BTC_USDT" — WS expects "BTCUSDT"
   String get _spotSymbol =>
@@ -112,6 +114,10 @@ class SpotTradeController extends GetxController implements SocketListener {
   }
 
   void _applyTicker(SpotTicker t) {
+    final prevPrice = selfBalance.value.buyPrice;
+    if (prevPrice != null && prevPrice > 0) {
+      tickerGoingUp.value = t.price >= prevPrice;
+    }
     final od = dashboardData.value.orderData;
     if (od != null) {
       od.buyPrice = t.price;

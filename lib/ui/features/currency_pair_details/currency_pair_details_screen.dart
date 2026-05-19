@@ -4,7 +4,6 @@ import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/helper/favorite_helper.dart';
-import 'package:tradexpro_flutter/ui/features/charts/charts_screen.dart';
 import 'package:tradexpro_flutter/utils/appbar_util.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
@@ -16,6 +15,7 @@ import 'package:tradexpro_flutter/utils/text_util.dart';
 
 import '../bottom_navigation/trades/trade_order_book_widgets.dart';
 import '../bottom_navigation/trades/trade_widgets.dart';
+
 import 'currency_pair_details_controller.dart';
 
 class CurrencyPairDetailsScreen extends StatefulWidget {
@@ -85,7 +85,7 @@ class _CurrencyPairDetailsScreenState extends State<CurrencyPairDetailsScreen> {
                   Obx(() => _controller.isLoading.value ? showLoadingSmall() : vSpacer0()),
                   Obx(() => CurrencyPairDetailsView(order: _controller.orderData.value, prices: _controller.lastPriceData.toList())),
                   dividerHorizontal(),
-                  const ChartsScreen(fromModal: false),
+                  Obx(() => TvChartFullView(coinPair: _controller.selectedPair.value)),
                   vSpacer10(),
                   Obx(() => tabBarText(
                       ["Order Book".tr, "Trades".tr], tabIndex.value, selectedColor: context.theme.focusColor, (index) => tabIndex.value = index)),

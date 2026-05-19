@@ -100,7 +100,7 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                 (index) => chartIndex.value = index,
 
                 selectedColor: Colors.white,
-                unSelectedColor: Colors.white.withOpacity(0.5),
+                unSelectedColor: Colors.white.withValues(alpha: 0.5),
 
                 fontSize: 16,
 
@@ -122,6 +122,7 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                       () => _SpotPriceView(
                         order: _controller.dashboardData.value.orderData,
                         prices: _controller.dashboardData.value.lastPriceData,
+                        isUp: _controller.tickerGoingUp.value,
                       ),
                     ),
                     // Horizontal scrolling announcement ticker
@@ -296,15 +297,15 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
 
 // ── Price section widget ────────────────────────────────────────────────────
 class _SpotPriceView extends StatelessWidget {
-  const _SpotPriceView({required this.order, required this.prices});
+  const _SpotPriceView({required this.order, required this.prices, required this.isUp});
 
   final OrderData? order;
   final List<PriceData>? prices;
+  final bool isUp;
 
   @override
   Widget build(BuildContext context) {
     final lastP = (prices?.isNotEmpty ?? false) ? prices!.first : PriceData();
-    final isUp = (lastP.price ?? 0) >= (lastP.lastPrice ?? 0);
     final total = order?.total;
     final change = total?.tradeWallet?.priceChange;
     final (sing, changeColor) = getNumberData(change);
@@ -321,16 +322,36 @@ class _SpotPriceView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  currencyFormat(lastP.price, fixed: tradeDecimal),
-                  style: TextStyle(
-                    color: Color(0xFFD05858),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: "DMSans",
-                    height: 32 / 24,
-                  ),
-                  maxLines: 1,
+                // Price + direction arrow
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 250),
+                        style: TextStyle(
+                          color: priceColor,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: "DMSans",
+                          height: 32 / 24,
+                        ),
+                        child: Text(
+                          currencyFormat(lastP.price, fixed: tradeDecimal),
+                          maxLines: 1,
+                        ),
+                      ),
+                    ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      child: Icon(
+                        isUp ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                        key: ValueKey(isUp),
+                        color: priceColor,
+                        size: 28,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text.rich(
@@ -340,7 +361,7 @@ class _SpotPriceView extends StatelessWidget {
                         text:
                             "≈\$${currencyFormat(lastP.lastPrice, fixed: 2)}  ",
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           fontSize: 12,
                           fontFamily: "DMSans",
                           fontWeight: FontWeight.w400,
@@ -351,7 +372,7 @@ class _SpotPriceView extends StatelessWidget {
                       TextSpan(
                         text: "$sing${coinFormat(change, fixed: 2)}%",
                         style: TextStyle(
-                          color: Color(0xFFD05858),
+                          color: priceColor,
                           fontSize: 12,
                           fontFamily: "DMSans",
                           fontWeight: FontWeight.w400,
@@ -418,7 +439,7 @@ class _SpotPriceView extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 fontFamily: "DMSans",
