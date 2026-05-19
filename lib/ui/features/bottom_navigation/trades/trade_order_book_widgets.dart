@@ -162,7 +162,7 @@ class OderBookFixedView extends StatelessWidget {
                 ),
               ),
 
-            if (selectedOrderSort != FromKey.buy) vSpacer5(),
+            if (selectedOrderSort != FromKey.buy) const SizedBox(height: 2),
 
             // ── Mid price — sell mode ya all mode ke baad sell list ke niche ──────
             if (selectedOrderSort != FromKey.buy)
@@ -175,7 +175,7 @@ class OderBookFixedView extends StatelessWidget {
                           : const Color(0xFFD05858)),
               ),
 
-            if (selectedOrderSort != FromKey.buy) vSpacer5(),
+            if (selectedOrderSort != FromKey.buy) const SizedBox(height: 2),
 
             // ── BUY LIST ──────────────────────────────────────────────────────────
             if (selectedOrderSort != FromKey.sell)
@@ -197,13 +197,13 @@ class OderBookFixedView extends StatelessWidget {
               ),
 
             // ── Mid price — buy-only mode mein buy list ke niche ─────────────────
-            if (selectedOrderSort == FromKey.buy) vSpacer5(),
+            if (selectedOrderSort == FromKey.buy) const SizedBox(height: 2),
             if (selectedOrderSort == FromKey.buy)
               MidPriceBlock(
                 lastPData: lastPData,
                 priceColor: const Color(0xFF4ED78E),
               ),
-            if (selectedOrderSort == FromKey.buy) vSpacer5(),
+            if (selectedOrderSort == FromKey.buy) const SizedBox(height: 2),
 
             if (bounded) const Spacer() else vSpacer5(),
 
@@ -255,9 +255,9 @@ class OderBookFixedView extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MID PRICE BLOCK
+// MID PRICE BLOCK — green when price rises, red when price falls
 // ─────────────────────────────────────────────────────────────────────────────
-class MidPriceBlock extends StatelessWidget {
+class MidPriceBlock extends StatefulWidget {
   const MidPriceBlock({
     super.key,
     required this.lastPData,
@@ -265,7 +265,37 @@ class MidPriceBlock extends StatelessWidget {
   });
 
   final PriceData? lastPData;
-  final Color priceColor;
+  final Color priceColor; // used as initial color before first price change
+
+  @override
+  State<MidPriceBlock> createState() => _MidPriceBlockState();
+}
+
+class _MidPriceBlockState extends State<MidPriceBlock> {
+  static const _green = Color(0xFF4ED78E);
+  static const _red   = Color(0xFFD05858);
+
+  late Color _priceColor;
+  double? _lastPrice;
+
+  @override
+  void initState() {
+    super.initState();
+    _priceColor = widget.priceColor;
+    _lastPrice  = widget.lastPData?.price;
+  }
+
+  @override
+  void didUpdateWidget(covariant MidPriceBlock old) {
+    super.didUpdateWidget(old);
+    final newPrice = widget.lastPData?.price;
+    if (newPrice != null && _lastPrice != null && newPrice != _lastPrice) {
+      setState(() {
+        _priceColor = newPrice > _lastPrice! ? _green : _red;
+      });
+    }
+    _lastPrice = newPrice ?? _lastPrice;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -275,25 +305,28 @@ class MidPriceBlock extends StatelessWidget {
         Row(
           children: [
             Flexible(
-              child: Text(
-                _fmt2(lastPData?.price, fixed: 2),
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 250),
                 style: TextStyle(
-                  color: priceColor,
+                  color: _priceColor,
                   fontSize: 15,
                   fontFamily: "DMSans",
                   fontWeight: FontWeight.w600,
                   height: 1.33,
                 ),
-                maxLines: 1,
+                child: Text(
+                  _fmt2(widget.lastPData?.price, fixed: 2),
+                  maxLines: 1,
+                ),
               ),
             ),
           ],
         ),
-        vSpacer5(),
+        const SizedBox(height: 2),
         Text(
-          "= \$${_fmt2(lastPData?.lastPrice, fixed: 2)}",
+          "= \$${_fmt2(widget.lastPData?.lastPrice, fixed: 2)}",
           style: TextStyle(
-            color: Colors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
             fontSize: 10,
             fontFamily: "DMSans",
             fontWeight: FontWeight.w400,
@@ -580,12 +613,15 @@ class _OrderFillPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final fillW = size.width * fillPercent.clamp(0.0, 1.0);
-    final left = size.width - fillW;
-    final rect = Rect.fromLTWH(left, 0, fillW, size.height);
+    // Shader spans the FULL row width so the gradient ratio matches the website:
+    // low-fill rows show only the opaque right portion (solid edge bar),
+    // high-fill rows show a wide fade from transparent → color (shadow spreading inward).
+    final fullRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final fillRect = Rect.fromLTWH(size.width - fillW, 0, fillW, size.height);
     final gradient = LinearGradient(
-      colors: [Colors.transparent, color.withValues(alpha: 0.22)],
+      colors: [Colors.transparent, color.withValues(alpha: 0.35)],
     );
-    canvas.drawRect(rect, Paint()..shader = gradient.createShader(rect));
+    canvas.drawRect(fillRect, Paint()..shader = gradient.createShader(fullRect));
   }
 
   @override
