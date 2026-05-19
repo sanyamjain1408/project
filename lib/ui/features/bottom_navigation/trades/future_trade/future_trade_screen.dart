@@ -14,6 +14,7 @@ import 'package:tradexpro_flutter/utils/text_util.dart';
 
 import '../trade_order_book_widgets.dart';
 import '../trade_widgets.dart';
+import '../trade_chart_native.dart';
 import 'future_history_views.dart';
 import 'future_trade_controller.dart';
 import 'future_trade_details_screen.dart';
@@ -77,10 +78,11 @@ class FutureTradeScreenState extends State<FutureTradeScreen> {
             Expanded(
               child: Column(
                 children: [
-                  // Chart outside padded Container — full width, no side margins
-                  Obx(() => isChartShow.value
-                      ? TradeChartView(isShow: true, coinPair: _controller.selectedCoinPair.value, onTap: () => isChartShow.value = false)
-                      : vSpacer0()),
+                  // Chart shown inline — native k_chart_plus
+                  Obx(() => NativeInlineChart(
+                    coinPair: _controller.selectedCoinPair.value,
+                    show: isChartShow.value,
+                  )),
                   Expanded(
                     child: Container(
                       decoration: boxDecorationTopRoundBorder(radius: Dimens.radiusCornerMid),

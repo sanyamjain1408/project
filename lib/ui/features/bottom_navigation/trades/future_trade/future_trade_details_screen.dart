@@ -13,6 +13,7 @@ import 'package:tradexpro_flutter/utils/text_util.dart';
 
 import '../trade_order_book_widgets.dart';
 import '../trade_widgets.dart';
+import '../trade_chart_native.dart';
 import 'future_trade_controller.dart';
 
 class FutureTradeDetailsScreen extends StatefulWidget {
@@ -64,8 +65,11 @@ class _FutureTradeDetailsScreenState extends State<FutureTradeDetailsScreen> {
                     child: Obx(() => CurrencyPairDetailsView(
                         order: _controller.futureDashboardData.value.orderData, prices: _controller.futureDashboardData.value.lastPriceData)),
                   ),
-                  // Chart — full width, no horizontal margin, no divider border
-                  Obx(() => TvChartFullView(coinPair: _controller.selectedCoinPair.value)),
+                  // Chart — full width with interval bar (native)
+                  SizedBox(
+                    height: Get.width * 1.2,
+                    child: Obx(() => NativeFullChart(coinPair: _controller.selectedCoinPair.value)),
+                  ),
                   // Obx(() => tabBarText(
                   //     ["Candlestick".tr, "Depth".tr],
                   //     chartIndex.value,

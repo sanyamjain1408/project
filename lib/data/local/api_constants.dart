@@ -163,7 +163,7 @@ class APIURLConstants {
 
   // ── Spot Trade REST API (HTTP fallback when WS is down) ──────────────────
   // Base host: https://trapix.com  (same host as wss://trapix.com/ws/spot)
-  static const spotBaseUrl     = "https://trapix.com";
+  static const spotBaseUrl     = "https://api.trapix.com/api";
   static const spotPairs       = "/api/spot/pairs";
   static const spotTicker      = "/api/spot/ticker/";       // + symbol
   static const spotOrderBook   = "/api/spot/orderbook/";    // + symbol

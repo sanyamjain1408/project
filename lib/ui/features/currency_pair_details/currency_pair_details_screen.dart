@@ -15,6 +15,7 @@ import 'package:tradexpro_flutter/utils/text_util.dart';
 
 import '../bottom_navigation/trades/trade_order_book_widgets.dart';
 import '../bottom_navigation/trades/trade_widgets.dart';
+import '../bottom_navigation/trades/trade_chart_native.dart';
 
 import 'currency_pair_details_controller.dart';
 
@@ -85,7 +86,10 @@ class _CurrencyPairDetailsScreenState extends State<CurrencyPairDetailsScreen> {
                   Obx(() => _controller.isLoading.value ? showLoadingSmall() : vSpacer0()),
                   Obx(() => CurrencyPairDetailsView(order: _controller.orderData.value, prices: _controller.lastPriceData.toList())),
                   dividerHorizontal(),
-                  Obx(() => TvChartFullView(coinPair: _controller.selectedPair.value)),
+                  SizedBox(
+                    height: Get.width * 1.2,
+                    child: Obx(() => NativeFullChart(coinPair: _controller.selectedPair.value)),
+                  ),
                   vSpacer10(),
                   Obx(() => tabBarText(
                       ["Order Book".tr, "Trades".tr], tabIndex.value, selectedColor: context.theme.focusColor, (index) => tabIndex.value = index)),
