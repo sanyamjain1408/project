@@ -19,10 +19,6 @@ import '../models/response.dart';
 import '../models/user.dart';
 import '../models/currency.dart';
 import 'api_provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../models/response.dart';
-import 'package:flutter/foundation.dart';
 
 class APIRepository {
   final provider = Get.find<APIProvider>();
@@ -1028,70 +1024,56 @@ class APIRepository {
   /// *** (HTTP fallback when WS down) *** ///
   /// *** ──────────────────────────── *** ///
 
-String _spotUrl(String path) => APIURLConstants.spotBaseUrl + path;
-
-Future<ServerResponse> getSpotPairs() =>
-    provider.getRequest(_spotUrl(APIURLConstants.spotPairs), authHeader());
-
-Future<ServerResponse> getSpotTicker(String symbol) =>
-    provider.getRequest(_spotUrl('${APIURLConstants.spotTicker}$symbol'), authHeader());
-
-Future<ServerResponse> getSpotOrderBook(String symbol) =>
-    provider.getRequest(_spotUrl('${APIURLConstants.spotOrderBook}$symbol'), authHeader());
-
-Future<ServerResponse> getSpotTrades(String symbol) =>
-    provider.getRequest(_spotUrl('${APIURLConstants.spotTrades}$symbol'), authHeader());
-
-Future<ServerResponse> getSpotKlines(String symbol, String interval, {int limit = 200}) async {
-  try {
-    final uri = Uri.parse(
-      'https://api.trapix.com/api/v1/spot/klines/$symbol?interval=$interval&limit=$limit'
-    );
-   //// debugPrint('🔥 Direct HTTP KLINES: $uri');
-    final response = await http.get(uri, headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    }).timeout(const Duration(seconds: 15));
-    
-   // debugPrint('🔥 KLINES STATUS: ${response.statusCode}');
-    
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
-      return ServerResponse(success: true, data: decoded, message: '');
-    } else {
-      return ServerResponse(success: false, data: null, message: 'HTTP ${response.statusCode}');
-    }
-  } catch (e) {
-   // debugPrint('🔥 KLINES DIRECT ERROR: $e');
-    return ServerResponse(success: false, data: null, message: e.toString());
+  Map<String, String> _spotHeader() {
+    final h = <String, String>{};
+    h['Accept'] = 'application/json';
+    h['Content-Type'] = 'application/json';
+    final token = authHeader()[APIKeyConstants.authorization];
+    if (token != null) h[APIKeyConstants.authorization] = token;
+    return h;
   }
-}
-Future<ServerResponse> getSpotOpenOrders(String symbol) =>
-    provider.getRequest(_spotUrl(APIURLConstants.spotOpenOrders), authHeader(),
-        query: {'symbol': symbol});
 
-Future<ServerResponse> getSpotOrderHistory(String symbol) =>
-    provider.getRequest(_spotUrl(APIURLConstants.spotOrderHistory), authHeader(),
-        query: {'symbol': symbol});
+  String _spotUrl(String path) => APIURLConstants.spotBaseUrl + path;
 
-Future<ServerResponse> getSpotBalances() =>
-    provider.getRequest(_spotUrl(APIURLConstants.spotBalances), authHeader());
+  Future<ServerResponse> getSpotPairs() =>
+      provider.getRequest(_spotUrl(APIURLConstants.spotPairs), _spotHeader());
 
-Future<ServerResponse> placeSpotOrder(String symbol, String side,
-    String orderType, double amount, {double? price}) {
-  final body = <String, dynamic>{
-    'symbol': symbol,
-    'side': side,
-    'order_type': orderType,
-    'amount': amount,
-    if (price != null) 'price': price,
-  };
-  return provider.postRequest(_spotUrl(APIURLConstants.spotPlaceOrder), body, authHeader());
-}
+  Future<ServerResponse> getSpotTicker(String symbol) =>
+      provider.getRequest(_spotUrl('${APIURLConstants.spotTicker}$symbol'), _spotHeader());
 
-Future<ServerResponse> cancelSpotOrder(String orderId) =>
-    provider.postRequest(
-        _spotUrl('${APIURLConstants.spotCancelOrder}$orderId'), {}, authHeader());
+  Future<ServerResponse> getSpotOrderBook(String symbol) =>
+      provider.getRequest(_spotUrl('${APIURLConstants.spotOrderBook}$symbol'), _spotHeader());
+
+  Future<ServerResponse> getSpotTrades(String symbol) =>
+      provider.getRequest(_spotUrl('${APIURLConstants.spotTrades}$symbol'), _spotHeader());
+
+  Future<ServerResponse> getSpotOpenOrders(String symbol) =>
+      provider.getRequest(_spotUrl(APIURLConstants.spotOpenOrders), _spotHeader(),
+          query: {'symbol': symbol});
+
+  Future<ServerResponse> getSpotOrderHistory(String symbol) =>
+      provider.getRequest(_spotUrl(APIURLConstants.spotOrderHistory), _spotHeader(),
+          query: {'symbol': symbol});
+
+  Future<ServerResponse> getSpotBalances() =>
+      provider.getRequest(_spotUrl(APIURLConstants.spotBalances), _spotHeader());
+
+  Future<ServerResponse> placeSpotOrder(String symbol, String side,
+      String orderType, double amount, {double? price}) {
+    final body = <String, dynamic>{
+      'symbol': symbol,
+      'side': side,
+      'order_type': orderType,
+      'amount': amount,
+      if (price != null) 'price': price,
+    };
+    return provider.postRequest(_spotUrl(APIURLConstants.spotPlaceOrder), body, _spotHeader());
+  }
+
+  Future<ServerResponse> cancelSpotOrder(String orderId) =>
+      provider.postRequest(
+          _spotUrl('${APIURLConstants.spotCancelOrder}$orderId'), {}, _spotHeader());
+
   /// *** ---------------- *** ///
   /// *** Others requests *** ///
   /// *** -------------- *** ///

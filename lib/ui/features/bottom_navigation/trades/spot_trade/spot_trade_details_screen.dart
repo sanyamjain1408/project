@@ -20,7 +20,6 @@ import '../../wallet/wallet_crypto_withdraw/wallet_crypto_withdraw_screen.dart';
 
 import '../trade_order_book_widgets.dart';
 import '../trade_widgets.dart';
-import '../trade_chart_native.dart';
 import 'spot_trade_controller.dart';
 
 class SpotTradeDetailsScreen extends StatefulWidget {
@@ -134,13 +133,10 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                             .where((t) => t.isNotEmpty)
                             .toList(),
                       ),
-                    // Chart — full width with interval bar (native)
-                    SizedBox(
-                      height: Get.width * 1.2,
-                      child: Obx(
-                        () => NativeFullChart(
-                          coinPair: _controller.selectedCoinPair.value,
-                        ),
+                    // Chart — full width
+                    Obx(
+                      () => TvChartFullView(
+                        coinPair: _controller.selectedCoinPair.value,
                       ),
                     ),
                     // Order Book / Trade History / Asset Overview tabs

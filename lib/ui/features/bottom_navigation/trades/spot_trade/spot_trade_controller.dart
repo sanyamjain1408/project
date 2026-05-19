@@ -215,13 +215,13 @@ class SpotTradeController extends GetxController implements SocketListener {
       if (resp.success && resp.data is Map) {
         _applyTicker(SpotTicker.fromJson(Map<String, dynamic>.from(resp.data as Map)));
       }
-    }).catchError((_) {});
+    });
 
     APIRepository().getSpotOrderBook(sym).then((resp) {
       if (resp.success && resp.data is Map) {
         _applyOrderBook(SpotOrderBook.fromJson(Map<String, dynamic>.from(resp.data as Map)));
       }
-    }).catchError((_) {});
+    });
 
     APIRepository().getSpotTrades(sym).then((resp) {
       if (resp.success && resp.data is List) {
@@ -229,7 +229,7 @@ class SpotTradeController extends GetxController implements SocketListener {
             .map((t) => SpotTrade.fromJson(Map<String, dynamic>.from(t as Map)))
             .toList());
       }
-    }).catchError((_) {});
+    });
   }
 
   // ── Existing socket (Pusher) ──────────────────────────────────────────────

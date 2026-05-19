@@ -9,7 +9,6 @@ import 'package:tradexpro_flutter/utils/side_sheet_component.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import '../trade_order_book_widgets.dart';
 import '../trade_widgets.dart';
-import '../trade_chart_native.dart';
 import 'spot_buy_sell_view.dart';
 import 'spot_trade_controller.dart';
 import 'spot_trade_details_screen.dart';
@@ -26,7 +25,6 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
   final _controller = Get.put(SpotTradeController());
   final isChartShow = false.obs;
   double _buySellViewHeight = 0;
-  bool _chartDragging = false;
 
   void _updateBuySellHeight(double height) {
     if (_buySellViewHeight != height) {
@@ -90,19 +88,16 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
             child: Container(
               
               child: ListView(
-                physics: _chartDragging
-                    ? const NeverScrollableScrollPhysics()
-                    : const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 children: [
                   Obx(() => _controller.isLoading.value ? showLoadingSmall() : vSpacer0()),
-                  // Chart shown inline when bar-chart icon is tapped — native k_chart_plus
-                  Obx(() => NativeInlineChart(
-                    coinPair: _controller.selectedCoinPair.value,
-                    show: isChartShow.value,
-                    onDragChange: (dragging) =>
-                        setState(() => _chartDragging = dragging),
-                  )),
+                  // Chart shown inline when bar-chart icon is tapped
+                  Obx(() => isChartShow.value
+                      ? TradeChartView(
+                          isShow: true,
+                          coinPair: _controller.selectedCoinPair.value,
+                          onTap: () => isChartShow.value = false)
+                      : vSpacer0()),
                   vSpacer5(),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,

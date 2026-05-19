@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -9,6 +11,7 @@ import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/ui_helper/app_widgets.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
@@ -36,8 +39,8 @@ class TradePairTopView extends StatelessWidget {
   final CoinPair coinPair;
   final Total? total;
   final VoidCallback? onTap;
-  final VoidCallback? onTapIcon;
-  final VoidCallback? onTapDetails;
+  final VoidCallback? onTapIcon; // middle icon — toggles chart
+  final VoidCallback? onTapDetails; // last icon — opens details screen
 
   @override
   Widget build(BuildContext context) {
@@ -54,13 +57,13 @@ class TradePairTopView extends StatelessWidget {
                 child: Image.asset(
                   "assets/icons/menu.png",
                   width: 16,
-                  height: 16,
+                  height: 16, // optional tint
                 ),
               ),
               hSpacer2(),
               Text(
                 coinPair.getCoinPairName(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontFamily: "DMSans",
                   fontWeight: FontWeight.w600,
@@ -72,9 +75,10 @@ class TradePairTopView extends StatelessWidget {
           ),
         ),
         hSpacer5(),
+        // ── Plain inline text — no badge, no background ──────────────────────
         Text(
           "$sing${coinFormat(total?.tradeWallet?.priceChange, fixed: 2)}%",
-          style: const TextStyle(
+          style: TextStyle(
             color: Color(0xFFD05858),
             fontSize: 12,
             fontFamily: "DMSans",
@@ -82,18 +86,27 @@ class TradePairTopView extends StatelessWidget {
           ),
         ),
         const Spacer(),
+        // ── Star / Grid / Chart icons matching Image 2 ──────────────────────
         InkWell(
-          onTap: () {},
+          onTap: () {}, // favourite toggle — wire up FavoriteHelper if needed
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Image.asset("assets/icons/star.png", width: 20, height: 20),
+            child: Image.asset(
+              "assets/icons/star.png",
+              width: 20,
+              height: 20, // optional tint
+            ),
           ),
         ),
         InkWell(
-          onTap: onTapIcon,
+          onTap: onTapIcon, // toggles inline chart
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Image.asset("assets/icons/bar.png", width: 20, height: 20),
+            child: Image.asset(
+              "assets/icons/bar.png",
+              width: 20,
+              height: 20, // optional tint
+            ),
           ),
         ),
         InkWell(
@@ -103,7 +116,7 @@ class TradePairTopView extends StatelessWidget {
             child: Image.asset(
               "assets/icons/candel.png",
               width: 20,
-              height: 20,
+              height: 20, // optional tint
             ),
           ),
         ),
@@ -113,9 +126,173 @@ class TradePairTopView extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// Baaki sab classes — same as before
-// ══════════════════════════════════════════════════════════════════════════════
+class TradeChartView extends StatefulWidget {
+  const TradeChartView({super.key, required this.isShow, required this.onTap, this.coinPair});
+
+  final bool isShow;
+  final VoidCallback onTap;
+  final CoinPair? coinPair;
+
+  @override
+  State<TradeChartView> createState() => _TradeChartViewState();
+}
+
+class _TradeChartViewState extends State<TradeChartView> {
+  late final WebViewController _webViewController;
+
+  @override
+  void initState() {
+    super.initState();
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadHtmlString(_buildChartHtml(widget.coinPair));
+  }
+
+  @override
+  void didUpdateWidget(TradeChartView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.coinPair?.coinPairId != widget.coinPair?.coinPairId) {
+      _webViewController.loadHtmlString(_buildChartHtml(widget.coinPair));
+    }
+  }
+
+  String _buildChartHtml(CoinPair? coinPair) {
+    final child = coinPair?.childCoinName?.toUpperCase() ?? '';
+    final parent = coinPair?.parentCoinName?.toUpperCase() ?? '';
+    final symbol = child.isNotEmpty && parent.isNotEmpty ? 'BINANCE:$child$parent' : 'BINANCE:BTCUSDT';
+    return '''<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e11; }
+    .tradingview-widget-container { width: 100% !important; height: 100% !important; }
+    .tradingview-widget-container__widget { width: 100% !important; height: calc(100% - 32px) !important; }
+  </style>
+</head>
+<body>
+<div class="tradingview-widget-container" style="height:100%;width:100%">
+  <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+  <div class="tradingview-widget-copyright"></div>
+  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+  {
+    "autosize": true,
+    "symbol": "$symbol",
+    "interval": "15",
+    "timezone": "Etc/UTC",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "enable_publishing": false,
+    "hide_top_toolbar": false,
+    "hide_legend": false,
+    "save_image": false,
+    "calendar": false
+  }
+  </script>
+</div>
+</body>
+</html>''';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+       
+        SizedBox(
+          height: Get.width * 0.75,
+          child: WebViewWidget(controller: _webViewController),
+        ),
+      ],
+    );
+  }
+}
+
+class TvChartFullView extends StatefulWidget {
+  const TvChartFullView({super.key, this.coinPair});
+
+  final CoinPair? coinPair;
+
+  @override
+  State<TvChartFullView> createState() => _TvChartFullViewState();
+}
+
+class _TvChartFullViewState extends State<TvChartFullView> {
+  late final WebViewController _webViewController;
+
+  @override
+  void initState() {
+    super.initState();
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadHtmlString(_buildChartHtml(widget.coinPair));
+  }
+
+  @override
+  void didUpdateWidget(TvChartFullView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.coinPair?.coinPairId != widget.coinPair?.coinPairId) {
+      _webViewController.loadHtmlString(_buildChartHtml(widget.coinPair));
+    }
+  }
+
+  String _buildChartHtml(CoinPair? coinPair) {
+    final child = coinPair?.childCoinName?.toUpperCase() ?? '';
+    final parent = coinPair?.parentCoinName?.toUpperCase() ?? '';
+    final symbol = child.isNotEmpty && parent.isNotEmpty ? 'BINANCE:$child$parent' : 'BINANCE:BTCUSDT';
+    return '''<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e11; }
+    .tradingview-widget-container { width: 100% !important; height: 100% !important; }
+    .tradingview-widget-container__widget { width: 100% !important; height: calc(100% - 32px) !important; }
+  </style>
+</head>
+<body>
+<div class="tradingview-widget-container" style="height:100%;width:100%">
+  <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+  <div class="tradingview-widget-copyright"></div>
+  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+  {
+    "autosize": true,
+    "symbol": "$symbol",
+    "interval": "15",
+    "timezone": "Etc/UTC",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "enable_publishing": false,
+    "hide_top_toolbar": false,
+    "hide_legend": false,
+    "save_image": false,
+    "calendar": false
+  }
+  </script>
+</div>
+</body>
+</html>''';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: Get.width * 1.1,
+      child: WebViewWidget(
+        controller: _webViewController,
+        gestureRecognizers: {
+          Factory<ScaleGestureRecognizer>(() => ScaleGestureRecognizer()),
+          Factory<HorizontalDragGestureRecognizer>(() => HorizontalDragGestureRecognizer()),
+        },
+      ),
+    );
+  }
+}
 
 class BuySellToggleButton extends StatelessWidget {
   const BuySellToggleButton({
@@ -155,7 +332,7 @@ class BuySellToggleButton extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         options[0],
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
@@ -180,7 +357,7 @@ class BuySellToggleButton extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         options[1],
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
@@ -239,6 +416,7 @@ class TradeTextFieldCalculate extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // ── LEFT: label + value ──
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 5, 8, 5),
@@ -266,19 +444,22 @@ class TradeTextFieldCalculate extends StatelessWidget {
                             ? "$sTitle"
                             : sTitle)
                       : null,
+                  // ── bada size jab empty + unfocused ──
                   labelStyle: TextStyle(
                     color: Colors.white.withOpacity(0.5),
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                     fontFamily: 'DMSans',
                   ),
+                  // ── chota size jab focused ya value hai ──
                   floatingLabelStyle: TextStyle(
                     color: Colors.white.withOpacity(0.5),
                     fontSize: 10,
                     fontWeight: FontWeight.w400,
                     fontFamily: 'DMSans',
                   ),
-                  floatingLabelBehavior: FloatingLabelBehavior.auto,
+                  floatingLabelBehavior:
+                      FloatingLabelBehavior.auto, // ← key change
                 ),
                 onChanged: (value) {
                   if (onTextChange != null) onTextChange!(value);
@@ -286,7 +467,10 @@ class TradeTextFieldCalculate extends StatelessWidget {
               ),
             ),
           ),
+
+          // ── RIGHT: − | + buttons ──
           if (showButtons) ...[
+            // Minus button
             GestureDetector(
               onTap: () => _plusMinusButtonAction(false),
               child: Container(
@@ -304,7 +488,11 @@ class TradeTextFieldCalculate extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Vertical divider
             Container(width: 1, height: 24, color: _divider),
+
+            // Plus button
             GestureDetector(
               onTap: () => _plusMinusButtonAction(true),
               child: Container(
@@ -322,6 +510,7 @@ class TradeTextFieldCalculate extends StatelessWidget {
                 ),
               ),
             ),
+
             const SizedBox(width: 4),
           ],
         ],
@@ -368,9 +557,8 @@ class TradeTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (controller != null && text != null && text!.isNotEmpty) {
+    if (controller != null && text != null && text!.isNotEmpty)
       controller!.text = text!;
-    }
 
     return SizedBox(
       height: 40,
@@ -560,7 +748,7 @@ class _CoinIcon extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => fallback,
+          errorBuilder: (_, __, _) => fallback,
         ),
       ),
     );
@@ -588,6 +776,7 @@ class CoinPairItemView extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // ── Icon + Name + Volume column ──────────────────────────────────
             Expanded(
               flex: 2,
               child: Row(
@@ -643,6 +832,7 @@ class CoinPairItemView extends StatelessWidget {
                 ],
               ),
             ),
+            // ── Last price ───────────────────────────────────────────────────
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(right: 16),
@@ -663,6 +853,7 @@ class CoinPairItemView extends StatelessWidget {
                 ),
               ),
             ),
+            // ── Change % ─────────────────────────────────────────────────────
             Expanded(
               child: Text(
                 "${coinFormat(coinPair.priceChange, fixed: 2)}%",
@@ -819,42 +1010,40 @@ class TradeListView extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  "${"Price".tr}(${total?.baseWallet?.coinType ?? ""})",
-                  style: const TextStyle(
+                  "${"Price".tr}(${total?.baseWallet?.coinType ?? ""})" ,
+                  style: TextStyle(
                     fontSize: 15,
                     fontFamily: "DMSans",
                     fontWeight: FontWeight.w400,
-                    height: 16 / 15,
+                    height: 16/15,
                   ),
                 ),
               ),
               Expanded(
                 child: Text(
                   "${"Amount".tr}(${total?.tradeWallet?.coinType ?? ""})",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontFamily: "DMSans",
                     fontWeight: FontWeight.w400,
-                    height: 16 / 15,
+                    height: 16/15,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
               Expanded(
-                child: Text(
-                  "Time".tr,
-                  style: const TextStyle(
+                child: Text("Time".tr,
+                style: TextStyle(
                     fontSize: 15,
                     fontFamily: "DMSans",
                     fontWeight: FontWeight.w400,
-                    height: 16 / 15,
+                    height: 16/15,
                   ),
-                  textAlign: TextAlign.end,
-                ),
+                   textAlign: TextAlign.end),
               ),
             ],
           ),
-          const SizedBox(height: 5),
+          SizedBox(height: 5,),
           exchangeTrades.isEmpty
               ? showEmptyView()
               : Column(
@@ -1035,7 +1224,7 @@ class TradeBalanceView extends StatelessWidget {
                 textAlign: TextAlign.end,
                 maxLines: 1,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 14, // ← balance ka size
                   fontWeight: FontWeight.w600,
                   fontFamily: 'DMSans',
                   color: Colors.white,
@@ -1047,7 +1236,7 @@ class TradeBalanceView extends StatelessWidget {
                 textAlign: TextAlign.end,
                 maxLines: 1,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 11, // ← coinType ka size
                   fontWeight: FontWeight.w400,
                   fontFamily: 'DMSans',
                   color: Colors.white.withOpacity(0.5),
@@ -1056,10 +1245,10 @@ class TradeBalanceView extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 5),
+        SizedBox(width: 5),
         InkWell(
           onTap: onTap,
-          child: const Icon(
+          child: Icon(
             Icons.add_circle_outline,
             color: Color(0xFF00B052),
             size: 20,
