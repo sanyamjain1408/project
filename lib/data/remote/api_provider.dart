@@ -56,14 +56,15 @@ class APIProvider extends GetConnect {
     printFunction("handleResponse hasError", response.status.hasError);
     if (response.statusCode == 401) {
       logOutActions();
-      return Future.error(response.statusText as String);
+      return ServerResponse(success: false, message: response.statusText ?? "Unauthorized");
     }
 
     if (response.status.hasError) {
       if (response.status.connectionError) {
-        return Future.error("Please verify your internet connection and try again".tr);
+        return ServerResponse(success: false, message: "Please verify your internet connection and try again".tr);
       }
-      return Future.error(response.statusText as String);
+      final text = response.statusText ?? "Something went wrong";
+      return ServerResponse(success: false, message: text);
     } else {
       printFunction("handleResponse body", response.body);
       Maintenance? maintenance = DataProcessHelper.checkMaintenanceMood(response.body);
