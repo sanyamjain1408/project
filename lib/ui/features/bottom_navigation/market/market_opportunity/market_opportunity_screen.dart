@@ -1656,7 +1656,7 @@ class _HeatmapTreeLayout extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 10,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'DMSans',
                             ),
@@ -1667,9 +1667,10 @@ class _HeatmapTreeLayout extends StatelessWidget {
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0x80FFFFFF),
-                              fontSize: 7,
+                            style:  TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w400,
                               fontFamily: 'DMSans',
                             ),
                           ),
@@ -1681,7 +1682,7 @@ class _HeatmapTreeLayout extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 9,
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'DMSans',
                             ),
