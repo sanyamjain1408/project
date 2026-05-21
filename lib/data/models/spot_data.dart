@@ -15,12 +15,15 @@ class SpotPair {
   final double? makerFee;
   final double? takerFee;
   final double? minOrderAmount;
+  final int? baseCoinId;
+  final int? quoteCoinId;
 
   SpotPair({
     this.id, this.symbol, this.baseCurrency, this.quoteCurrency,
     this.currentPrice, this.priceChange24h, this.high24h, this.low24h,
     this.volume24h, this.pricePrecision = 2, this.amountPrecision = 6,
     this.makerFee, this.takerFee, this.minOrderAmount,
+    this.baseCoinId, this.quoteCoinId,
   });
 
   factory SpotPair.fromJson(Map<String, dynamic> j) => SpotPair(
@@ -38,6 +41,8 @@ class SpotPair {
     makerFee: makeDouble(j['maker_fee']),
     takerFee: makeDouble(j['taker_fee']),
     minOrderAmount: makeDouble(j['min_order_amount']),
+    baseCoinId: makeInt(j['base_coin_id'] ?? j['base_currency_id']),
+    quoteCoinId: makeInt(j['quote_coin_id'] ?? j['quote_currency_id']),
   );
 
   String get coinPairName => '${baseCurrency ?? ""}/${quoteCurrency ?? ""}';
@@ -57,7 +62,7 @@ class SpotTicker {
 
   factory SpotTicker.fromJson(Map<String, dynamic> j) => SpotTicker(
     price: makeDouble(j['price'] ?? j['last_price'] ?? j['current_price']),
-    priceChange24h: makeDouble(j['price_change_24h'] ?? j['change']),
+    priceChange24h: makeDouble(j['price_change_24h'] ?? j['change_24h'] ?? j['change']),
     high24h: makeDouble(j['high_24h'] ?? j['high']),
     low24h: makeDouble(j['low_24h'] ?? j['low']),
     volume24h: makeDouble(j['volume_24h'] ?? j['volume']),
@@ -96,7 +101,7 @@ class SpotTrade {
     price: makeDouble(j['price']),
     amount: makeDouble(j['amount']),
     side: j['side'] ?? j['type'] ?? 'buy',
-    time: j['time'],
+    time: j['time_str'] ?? j['time'],
   );
 
   bool get isBuy => side.toLowerCase() == 'buy';

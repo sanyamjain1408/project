@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/data/models/dashboard_data.dart';
 import 'package:tradexpro_flutter/data/models/settings.dart';
+import 'package:tradexpro_flutter/data/models/spot_data.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/ui_helper/app_widgets.dart';
 import 'package:tradexpro_flutter/helper/favorite_helper.dart';
@@ -20,6 +22,7 @@ import '../../wallet/wallet_crypto_withdraw/wallet_crypto_withdraw_screen.dart';
 
 import '../trade_order_book_widgets.dart';
 import '../trade_widgets.dart';
+import '../trapix_chart_widget.dart';
 import 'spot_trade_controller.dart';
 
 class SpotTradeDetailsScreen extends StatefulWidget {
@@ -123,6 +126,8 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                         order: _controller.dashboardData.value.orderData,
                         prices: _controller.dashboardData.value.lastPriceData,
                         isUp: _controller.tickerGoingUp.value,
+                        ticker: _controller.spotTicker.value,
+                        pair: _controller.selectedCoinPair.value,
                       ),
                     ),
                     // Horizontal scrolling announcement ticker
@@ -133,12 +138,28 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                             .where((t) => t.isNotEmpty)
                             .toList(),
                       ),
-                    // Chart — full width
-                    Obx(
-                      () => TvChartFullView(
-                        coinPair: _controller.selectedCoinPair.value,
-                      ),
-                    ),
+                    // Chart — TradingView chart via WebView
+                    Obx(() {
+                      final pair = _controller.selectedCoinPair.value;
+                      final child = pair.childCoinName?.toUpperCase() ?? '';
+                      final parent = pair.parentCoinName?.toUpperCase() ?? '';
+                      // API symbol format: parentCoin + childCoin (e.g. BTCUSDT)
+                      // coinPair field is "USDT_BTC" format (child_parent), so swap parts
+                      String sym;
+                      if (parent.isNotEmpty && child.isNotEmpty) {
+                        sym = '$parent$child';
+                      } else {
+                        final cp = pair.coinPair ?? '';
+                        final parts = cp.split('_');
+                        sym = parts.length == 2
+                            ? '${parts[1]}${parts[0]}'.toUpperCase()
+                            : cp.replaceAll('_', '').toUpperCase();
+                      }
+                      return TrapixChartWidget(
+                        symbol: sym.isNotEmpty ? sym : 'BNBUSDT',
+                        height: MediaQuery.of(context).size.width * 1.05,
+                      );
+                    }),
                     // Order Book / Trade History / Asset Overview tabs
                     Column(
                       children: [
@@ -297,18 +318,25 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
 
 // ── Price section widget ────────────────────────────────────────────────────
 class _SpotPriceView extends StatelessWidget {
-  const _SpotPriceView({required this.order, required this.prices, required this.isUp});
+  const _SpotPriceView({
+    required this.order,
+    required this.prices,
+    required this.isUp,
+    required this.ticker,
+    required this.pair,
+  });
 
   final OrderData? order;
   final List<PriceData>? prices;
   final bool isUp;
+  final SpotTicker ticker;
+  final CoinPair pair;
 
   @override
   Widget build(BuildContext context) {
     final lastP = (prices?.isNotEmpty ?? false) ? prices!.first : PriceData();
-    final total = order?.total;
-    final change = total?.tradeWallet?.priceChange;
-    final (sing, changeColor) = getNumberData(change);
+    final change = ticker.priceChange24h;
+    final (sing, _) = getNumberData(change);
     final priceColor = isUp ? gBuyColor : gSellColor;
 
     return Padding(
@@ -404,22 +432,22 @@ class _SpotPriceView extends StatelessWidget {
                 _statRow(
                   context,
                   "24h High".tr,
-                  currencyFormat(total?.tradeWallet?.high, fixed: tradeDecimal),
+                  currencyFormat(ticker.high24h, fixed: tradeDecimal),
                 ),
                 _statRow(
                   context,
                   "24h Low".tr,
-                  currencyFormat(total?.tradeWallet?.low, fixed: tradeDecimal),
+                  currencyFormat(ticker.low24h, fixed: tradeDecimal),
                 ),
                 _statRow(
                   context,
-                  "24h Vol (${total?.tradeWallet?.coinType ?? ''})",
-                  coinFormat(total?.tradeWallet?.volume, fixed: 2),
+                  "24h Vol (${pair.parentCoinName ?? ''})",
+                  coinFormat(ticker.volume24h, fixed: 2),
                 ),
                 _statRow(
                   context,
-                  "24h Vol (${total?.baseWallet?.coinType ?? ''})",
-                  coinFormat(total?.baseWallet?.volume, fixed: 2),
+                  "24h Vol (${pair.childCoinName ?? ''})",
+                  coinFormat(ticker.volume24h, fixed: 2),
                 ),
               ],
             ),

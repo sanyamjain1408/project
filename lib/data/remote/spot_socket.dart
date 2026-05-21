@@ -5,7 +5,7 @@ import 'package:tradexpro_flutter/utils/common_utils.dart';
 
 typedef SpotWsCallback = void Function(Map<String, dynamic> msg);
 
-/// Connects to wss://trapix.com/ws/spot
+/// Connects to wss://api.trapix.com/ws/spot
 /// Send:    {"type":"subscribe","symbol":"BTCUSDT"}
 /// Receive: {"type":"update","symbol":"BTCUSDT","ticker":{...},"orderbook":{...},"trades":[...]}
 class SpotWebSocket {

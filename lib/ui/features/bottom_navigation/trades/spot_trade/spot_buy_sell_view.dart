@@ -129,7 +129,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
 
             // ── Order type dropdown ────────────────────────────────────
             CustomDropdown(
-              items: ["Limit", "Market", "Stop-limit"],
+              items: ["Limit", "Market"],
               selectedIndex: subIndex,
               onChange: (index) {
                 tabIndex == 0

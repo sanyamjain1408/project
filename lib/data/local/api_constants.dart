@@ -162,17 +162,19 @@ class APIURLConstants {
   static const getNewsDetails = "/api/news/news-details";
 
   // ── Spot Trade REST API (HTTP fallback when WS is down) ──────────────────
-  // Base host: https://trapix.com  (same host as wss://trapix.com/ws/spot)
-  static const spotBaseUrl     = "https://trapix.com";
-  static const spotPairs       = "/api/spot/pairs";
-  static const spotTicker      = "/api/spot/ticker/";       // + symbol
-  static const spotOrderBook   = "/api/spot/orderbook/";    // + symbol
-  static const spotTrades      = "/api/spot/trades/";       // + symbol
-  static const spotOpenOrders  = "/api/spot/open-orders";
-  static const spotOrderHistory = "/api/spot/order-history";
-  static const spotBalances    = "/api/spot/balances";
-  static const spotPlaceOrder  = "/api/spot/order";
-  static const spotCancelOrder = "/api/spot/order/cancel/"; // + orderId
+  // Base host: https://api.trapix.com/api
+  static const spotBaseUrl     = "https://api.trapix.com/api";
+  static const spotPairs       = "/v1/spot/pairs";
+  static const spotTicker      = "/v1/spot/ticker/";       // + symbol
+  static const spotOrderBook   = "/v1/spot/orderbook/";    // + symbol
+  static const spotTrades      = "/v1/spot/trades/";       // + symbol
+  static const spotOrders      = "/v1/spot/orders"; // ?symbol=&status=open|filled|cancelled
+  static const spotOpenOrders  = "/v1/spot/orders/open";    // GET ?symbol=
+  static const spotOrderHistory = "/v1/spot/orders/history"; // GET ?symbol=
+  static const spotBalances    = "/v1/spot/balances";
+  static const spotPlaceOrder  = "/v1/spot/order";
+  static const spotCancelOrder = "/v1/spot/order/"; // DELETE + orderId (website uses DELETE)
+  static const spotKlines      = "/v1/spot/klines/";        // + symbol?interval=&limit=
 }
 
 class APIKeyConstants {

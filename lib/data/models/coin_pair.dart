@@ -67,7 +67,7 @@ class CoinPair {
     );
   }
 
-  String getCoinPairName() => "${childCoinName ?? ""}/${parentCoinName ?? ""}";
+  String getCoinPairName() => "${parentCoinName ?? ""}/${childCoinName ?? ""}";
 
   String getCoinPairKey() => parentCoinName.isValid ? "${childCoinName ?? ""}_${parentCoinName ?? ""}" : '';
 

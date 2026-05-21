@@ -532,6 +532,8 @@ class _SpotTradeHistoryFullScreenState
   void initState() {
     super.initState();
     _tab = TabController(length: 4, vsync: this);
+    // Load all pairs orders when modal opens (website: fetchOpenOrders() without symbol)
+    widget.controller.loadAllMyOrders();
   }
 
   @override
@@ -629,11 +631,11 @@ class _OpenOrderFullViewState extends State<_OpenOrderFullView> {
   Widget build(BuildContext context) {
     return Obx(() {
       _allList =
-          (widget.controller.allMyHistories.value.orders ?? []).cast<Trade>();
+          (widget.controller.allPairsHistories.value.orders ?? []).cast<Trade>();
 
       if (_allList.isEmpty) {
         return handleEmptyViewWithLoading(
-            widget.controller.isHistoryLoading.value);
+            widget.controller.isAllPairsLoading.value);
       }
 
       final displayList = _isFilterActive ? _filteredList : _allList;
@@ -712,8 +714,8 @@ class _OrderHistoryViewState extends State<_OrderHistoryView> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final buys = widget.controller.allMyHistories.value.buyOrders ?? [];
-      final sells = widget.controller.allMyHistories.value.sellOrders ?? [];
+      final buys = widget.controller.allPairsHistories.value.buyOrders ?? [];
+      final sells = widget.controller.allPairsHistories.value.sellOrders ?? [];
 
       _allList = [...buys, ...sells].cast<Trade>();
       _allList.sort((a, b) {
@@ -723,7 +725,7 @@ class _OrderHistoryViewState extends State<_OrderHistoryView> {
 
       if (_allList.isEmpty) {
         return handleEmptyViewWithLoading(
-            widget.controller.isHistoryLoading.value);
+            widget.controller.isAllPairsLoading.value);
       }
 
       final displayList = _isFilterActive ? _filteredList : _allList;
@@ -804,12 +806,12 @@ class _TradeHistoryViewState extends State<_TradeHistoryView> {
   Widget build(BuildContext context) {
     return Obx(() {
       _allList =
-          (widget.controller.allMyHistories.value.transactions ?? [])
+          (widget.controller.allPairsHistories.value.transactions ?? [])
               .cast<Trade>();
 
       if (_allList.isEmpty) {
         return handleEmptyViewWithLoading(
-            widget.controller.isHistoryLoading.value);
+            widget.controller.isAllPairsLoading.value);
       }
 
       final displayList = _isFilterActive ? _filteredList : _allList;

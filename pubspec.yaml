@@ -104,6 +104,7 @@ flutter:
     - assets/videos/
     - assets/fonts/
     - assets/svg/
+    - assets/lightweight-charts.js
     - .env
   fonts:
     - family: CustomIcons

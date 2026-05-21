@@ -23,6 +23,7 @@ import 'api_provider.dart';
 class APIRepository {
   final provider = Get.find<APIProvider>();
   final socketProvider = Get.find<SocketProvider>();
+  final _spot = SpotAPIProvider();
 
   Map<String, String> authHeader() {
     String? token = GetStorage().read(PreferenceKey.accessToken);
@@ -1025,38 +1026,60 @@ class APIRepository {
   /// *** ──────────────────────────── *** ///
 
   Map<String, String> _spotHeader() {
+    // Reuse full auth headers (token, api-secret, lang, user-agent)
+    final base = authHeader();
     final h = <String, String>{};
     h['Accept'] = 'application/json';
     h['Content-Type'] = 'application/json';
-    final token = authHeader()[APIKeyConstants.authorization];
-    if (token != null) h[APIKeyConstants.authorization] = token;
+    // Copy all auth headers from base
+    base.forEach((k, v) {
+      if (k != APIKeyConstants.accept) h[k] = v; // avoid duplicate Accept
+    });
     return h;
   }
 
   String _spotUrl(String path) => APIURLConstants.spotBaseUrl + path;
 
   Future<ServerResponse> getSpotPairs() =>
-      provider.getRequest(_spotUrl(APIURLConstants.spotPairs), _spotHeader());
+      _spot.getRequest(_spotUrl(APIURLConstants.spotPairs), _spotHeader());
 
   Future<ServerResponse> getSpotTicker(String symbol) =>
-      provider.getRequest(_spotUrl('${APIURLConstants.spotTicker}$symbol'), _spotHeader());
+      _spot.getRequest(_spotUrl('${APIURLConstants.spotTicker}$symbol'), _spotHeader());
 
   Future<ServerResponse> getSpotOrderBook(String symbol) =>
-      provider.getRequest(_spotUrl('${APIURLConstants.spotOrderBook}$symbol'), _spotHeader());
+      _spot.getRequest(_spotUrl('${APIURLConstants.spotOrderBook}$symbol'), _spotHeader());
 
   Future<ServerResponse> getSpotTrades(String symbol) =>
-      provider.getRequest(_spotUrl('${APIURLConstants.spotTrades}$symbol'), _spotHeader());
+      _spot.getRequest(_spotUrl('${APIURLConstants.spotTrades}$symbol'), _spotHeader());
 
-  Future<ServerResponse> getSpotOpenOrders(String symbol) =>
-      provider.getRequest(_spotUrl(APIURLConstants.spotOpenOrders), _spotHeader(),
-          query: {'symbol': symbol});
+  /// [symbol] null or empty = all pairs (for My Trade history modal)
+  Future<ServerResponse> getSpotOpenOrders([String? symbol]) =>
+      _spot.getRequest(_spotUrl(APIURLConstants.spotOpenOrders), _spotHeader(),
+          query: (symbol != null && symbol.isNotEmpty) ? {'symbol': symbol} : null);
 
-  Future<ServerResponse> getSpotOrderHistory(String symbol) =>
-      provider.getRequest(_spotUrl(APIURLConstants.spotOrderHistory), _spotHeader(),
-          query: {'symbol': symbol});
+  /// [symbol] null or empty = all pairs (for My Trade history modal)
+  Future<ServerResponse> getSpotOrderHistory([String? symbol]) =>
+      _spot.getRequest(_spotUrl(APIURLConstants.spotOrderHistory), _spotHeader(),
+          query: (symbol != null && symbol.isNotEmpty) ? {'symbol': symbol} : null);
+
+  /// Legacy order history — uses working /api/get-my-all-orders-app endpoint.
+  /// [baseCoinId] = childCoinId (USDT), [tradeCoinId] = parentCoinId (BTC)
+  Future<ServerResponse> getSpotMyOrders(int baseCoinId, int tradeCoinId, String orderType) {
+    final mapObj = <String, String>{
+      APIKeyConstants.dashboardType: "dashboard",
+      APIKeyConstants.baseCoinId: baseCoinId.toString(),
+      APIKeyConstants.tradeCoinId: tradeCoinId.toString(),
+      APIKeyConstants.orderType: orderType,
+    };
+    return provider.getRequest(APIURLConstants.getMyAllOrdersApp, authHeader(), query: mapObj, isDynamic: true);
+  }
 
   Future<ServerResponse> getSpotBalances() =>
-      provider.getRequest(_spotUrl(APIURLConstants.spotBalances), _spotHeader());
+      _spot.getRequest(_spotUrl(APIURLConstants.spotBalances), _spotHeader());
+
+  Future<ServerResponse> getSpotKlines(String symbol, String interval) =>
+      _spot.getRequest(_spotUrl('${APIURLConstants.spotKlines}$symbol'), _spotHeader(),
+          query: {'interval': interval, 'limit': '200'});
 
   Future<ServerResponse> placeSpotOrder(String symbol, String side,
       String orderType, double amount, {double? price}) {
@@ -1065,14 +1088,20 @@ class APIRepository {
       'side': side,
       'order_type': orderType,
       'amount': amount,
+      'quantity': amount, // some API versions use quantity
       if (price != null) 'price': price,
     };
-    return provider.postRequest(_spotUrl(APIURLConstants.spotPlaceOrder), body, _spotHeader());
+    return _spot.postRequest(_spotUrl(APIURLConstants.spotPlaceOrder), body, _spotHeader());
   }
 
   Future<ServerResponse> cancelSpotOrder(String orderId) =>
-      provider.postRequest(
-          _spotUrl('${APIURLConstants.spotCancelOrder}$orderId'), {}, _spotHeader());
+      _spot.deleteRequest(_spotUrl('${APIURLConstants.spotCancelOrder}$orderId'), _spotHeader());
+
+  Future<ServerResponse> placeSpotOrderRaw(Map<String, dynamic> body) =>
+      _spot.postRequest(_spotUrl(APIURLConstants.spotPlaceOrder), body, _spotHeader());
+
+  Future<ServerResponse> probeUrl(String fullUrl) =>
+      _spot.getRequest(fullUrl, _spotHeader());
 
   /// *** ---------------- *** ///
   /// *** Others requests *** ///

@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+
+
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
@@ -79,3 +83,93 @@ class APIProvider extends GetConnect {
   }
 }
 
+/// Dedicated HTTP client for Spot API calls.
+/// Uses dart:io HttpClient directly to avoid GetConnect baseUrl prepending issues.
+class SpotAPIProvider {
+  static const _timeout = Duration(seconds: 30);
+
+  Future<ServerResponse> getRequest(String url, Map<String, String> headers, {Map<String, dynamic>? query}) async {
+    try {
+      var uri = Uri.parse(url);
+      if (query != null && query.isNotEmpty) {
+        final q = query.map((k, v) => MapEntry(k, v.toString()));
+        uri = uri.replace(queryParameters: {...uri.queryParameters, ...q});
+      }
+      printFunction("SpotAPI GET", uri.toString());
+      final request = await HttpClient().getUrl(uri);
+      headers.forEach((k, v) => request.headers.set(k, v));
+      final response = await request.close().timeout(_timeout);
+      return _handleResponse(response);
+    } catch (e) {
+      printFunction("SpotAPI GET error", e);
+      return ServerResponse(success: false, message: e.toString());
+    }
+  }
+
+  Future<ServerResponse> postRequest(String url, Map<String, dynamic> body, Map<String, String> headers) async {
+    try {
+      final uri = Uri.parse(url);
+      printFunction("SpotAPI POST", uri.toString());
+      printFunction("SpotAPI POST body", body);
+      final request = await HttpClient().postUrl(uri);
+      request.headers.contentType = ContentType.json;
+      headers.forEach((k, v) => request.headers.set(k, v));
+      request.write(json.encode(body));
+      final response = await request.close().timeout(_timeout);
+      return _handleResponse(response);
+    } catch (e) {
+      printFunction("SpotAPI POST error", e);
+      return ServerResponse(success: false, message: e.toString());
+    }
+  }
+
+  Future<ServerResponse> deleteRequest(String url, Map<String, String> headers) async {
+    try {
+      final uri = Uri.parse(url);
+      printFunction("SpotAPI DELETE", uri.toString());
+      final request = await HttpClient().deleteUrl(uri);
+      headers.forEach((k, v) => request.headers.set(k, v));
+      final response = await request.close().timeout(_timeout);
+      return _handleResponse(response);
+    } catch (e) {
+      printFunction("SpotAPI DELETE error", e);
+      return ServerResponse(success: false, message: e.toString());
+    }
+  }
+
+  Future<ServerResponse> _handleResponse(HttpClientResponse response) async {
+    final body = await response.transform(utf8.decoder).join();
+    printFunction("SpotAPI response status", response.statusCode);
+    printFunction("SpotAPI response body", body);
+    if (response.statusCode == 401) {
+      logOutActions();
+      return ServerResponse(success: false, message: "Unauthorized");
+    }
+
+    dynamic decoded;
+    try {
+      decoded = json.decode(body);
+    } catch (_) {
+      decoded = null;
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      // Extract error message from body if available
+      String errMsg = "HTTP ${response.statusCode}";
+      if (decoded is Map) {
+        errMsg = decoded['message']?.toString()
+            ?? decoded['error']?.toString()
+            ?? errMsg;
+        if (decoded['errors'] is Map) {
+          final errs = decoded['errors'] as Map;
+          errMsg = errs.values.first?.toString() ?? errMsg;
+        }
+      }
+      return ServerResponse(success: false, message: errMsg, data: decoded);
+    }
+    if (decoded == null) {
+      return ServerResponse(success: false, message: "Invalid response");
+    }
+    return ServerResponse(success: true, message: "", data: decoded);
+  }
+}

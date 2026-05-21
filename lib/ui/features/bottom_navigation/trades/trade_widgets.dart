@@ -1,7 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -9,9 +7,9 @@ import 'package:tradexpro_flutter/data/models/dashboard_data.dart';
 import 'package:tradexpro_flutter/data/models/exchange_order.dart';
 import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/trapix_chart_widget.dart';
 import 'package:tradexpro_flutter/ui/ui_helper/app_widgets.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
@@ -75,11 +73,11 @@ class TradePairTopView extends StatelessWidget {
           ),
         ),
         hSpacer5(),
-        // ── Plain inline text — no badge, no background ──────────────────────
+        // ── Plain inline text — green if up, red if down ────────────────────
         Text(
           "$sing${coinFormat(total?.tradeWallet?.priceChange, fixed: 2)}%",
           style: TextStyle(
-            color: Color(0xFFD05858),
+            color: color,
             fontSize: 12,
             fontFamily: "DMSans",
             height: 1.33,
@@ -126,171 +124,51 @@ class TradePairTopView extends StatelessWidget {
   }
 }
 
-class TradeChartView extends StatefulWidget {
-  const TradeChartView({super.key, required this.isShow, required this.onTap, this.coinPair});
+String _symbolFromPair(CoinPair? p) {
+  // parentCoinName = base coin (e.g. BTC), childCoinName = quote coin (e.g. USDT)
+  // API expects parentCoin + childCoin (e.g. BTCUSDT)
+  final parent = p?.parentCoinName?.toUpperCase() ?? '';
+  final child = p?.childCoinName?.toUpperCase() ?? '';
+  if (parent.isNotEmpty && child.isNotEmpty) return '$parent$child';
+  // fallback: coinPair field is "USDT_BTC" (childCoinName_parentCoinName) — swap to get BTCUSDT
+  final cp = p?.coinPair ?? '';
+  if (cp.isNotEmpty) {
+    final parts = cp.split('_');
+    if (parts.length == 2) return '${parts[1]}${parts[0]}'.toUpperCase();
+    return cp.replaceAll('_', '').toUpperCase();
+  }
+  return 'BTCUSDT';
+}
 
+// ── Inline chart (shown on spot trade screen when bar icon tapped) ────────────
+class TradeChartView extends StatelessWidget {
+  const TradeChartView({
+    super.key,
+    required this.isShow,
+    required this.onTap,
+    this.coinPair,
+  });
   final bool isShow;
   final VoidCallback onTap;
   final CoinPair? coinPair;
 
   @override
-  State<TradeChartView> createState() => _TradeChartViewState();
-}
-
-class _TradeChartViewState extends State<TradeChartView> {
-  late final WebViewController _webViewController;
-
-  @override
-  void initState() {
-    super.initState();
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadHtmlString(_buildChartHtml(widget.coinPair));
-  }
-
-  @override
-  void didUpdateWidget(TradeChartView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.coinPair?.coinPairId != widget.coinPair?.coinPairId) {
-      _webViewController.loadHtmlString(_buildChartHtml(widget.coinPair));
-    }
-  }
-
-  String _buildChartHtml(CoinPair? coinPair) {
-    final child = coinPair?.childCoinName?.toUpperCase() ?? '';
-    final parent = coinPair?.parentCoinName?.toUpperCase() ?? '';
-    final symbol = child.isNotEmpty && parent.isNotEmpty ? 'BINANCE:$child$parent' : 'BINANCE:BTCUSDT';
-    return '''<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <style>
-    * { margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e11; }
-    .tradingview-widget-container { width: 100% !important; height: 100% !important; }
-    .tradingview-widget-container__widget { width: 100% !important; height: calc(100% - 32px) !important; }
-  </style>
-</head>
-<body>
-<div class="tradingview-widget-container" style="height:100%;width:100%">
-  <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-  <div class="tradingview-widget-copyright"></div>
-  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-  {
-    "autosize": true,
-    "symbol": "$symbol",
-    "interval": "15",
-    "timezone": "Etc/UTC",
-    "theme": "dark",
-    "style": "1",
-    "locale": "en",
-    "enable_publishing": false,
-    "hide_top_toolbar": false,
-    "hide_legend": false,
-    "save_image": false,
-    "calendar": false
-  }
-  </script>
-</div>
-</body>
-</html>''';
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-       
-        SizedBox(
-          height: Get.width * 0.75,
-          child: WebViewWidget(controller: _webViewController),
-        ),
-      ],
-    );
+    if (!isShow) return const SizedBox.shrink();
+    final sym = _symbolFromPair(coinPair);
+    return TrapixChartWidget(symbol: sym, height: Get.width * 0.85);
   }
 }
 
-class TvChartFullView extends StatefulWidget {
+// ── Full chart (shown in details screen) ─────────────────────────────────────
+class TvChartFullView extends StatelessWidget {
   const TvChartFullView({super.key, this.coinPair});
-
   final CoinPair? coinPair;
 
   @override
-  State<TvChartFullView> createState() => _TvChartFullViewState();
-}
-
-class _TvChartFullViewState extends State<TvChartFullView> {
-  late final WebViewController _webViewController;
-
-  @override
-  void initState() {
-    super.initState();
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadHtmlString(_buildChartHtml(widget.coinPair));
-  }
-
-  @override
-  void didUpdateWidget(TvChartFullView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.coinPair?.coinPairId != widget.coinPair?.coinPairId) {
-      _webViewController.loadHtmlString(_buildChartHtml(widget.coinPair));
-    }
-  }
-
-  String _buildChartHtml(CoinPair? coinPair) {
-    final child = coinPair?.childCoinName?.toUpperCase() ?? '';
-    final parent = coinPair?.parentCoinName?.toUpperCase() ?? '';
-    final symbol = child.isNotEmpty && parent.isNotEmpty ? 'BINANCE:$child$parent' : 'BINANCE:BTCUSDT';
-    return '''<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <style>
-    * { margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e11; }
-    .tradingview-widget-container { width: 100% !important; height: 100% !important; }
-    .tradingview-widget-container__widget { width: 100% !important; height: calc(100% - 32px) !important; }
-  </style>
-</head>
-<body>
-<div class="tradingview-widget-container" style="height:100%;width:100%">
-  <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-  <div class="tradingview-widget-copyright"></div>
-  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-  {
-    "autosize": true,
-    "symbol": "$symbol",
-    "interval": "15",
-    "timezone": "Etc/UTC",
-    "theme": "dark",
-    "style": "1",
-    "locale": "en",
-    "enable_publishing": false,
-    "hide_top_toolbar": false,
-    "hide_legend": false,
-    "save_image": false,
-    "calendar": false
-  }
-  </script>
-</div>
-</body>
-</html>''';
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: Get.width * 1.1,
-      child: WebViewWidget(
-        controller: _webViewController,
-        gestureRecognizers: {
-          Factory<ScaleGestureRecognizer>(() => ScaleGestureRecognizer()),
-          Factory<HorizontalDragGestureRecognizer>(() => HorizontalDragGestureRecognizer()),
-        },
-      ),
-    );
+    final sym = _symbolFromPair(coinPair);
+    return TrapixChartWidget(symbol: sym, height: Get.width * 1.1);
   }
 }
 
@@ -792,22 +670,22 @@ class CoinPairItemView extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           text: TextSpan(
-                            text: child,
+                            text: parent, // BNB
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 15,
-                              fontWeight: FontWeight.w400,
+                              fontWeight: FontWeight.w700, // bold
                               fontFamily: "DMSans",
                               height: 20 / 15,
                             ),
                             children: [
-                              if (parent.isNotEmpty)
+                              if (child.isNotEmpty)
                                 TextSpan(
-                                  text: '/$parent',
+                                  text: '/$child', // /USDT
                                   style: const TextStyle(
                                     color: Colors.white54,
                                     fontSize: 15,
-                                    fontWeight: FontWeight.w300,
+                                    fontWeight: FontWeight.w300, // light
                                     fontFamily: "DMSans",
                                     height: 20 / 15,
                                   ),
@@ -1010,12 +888,12 @@ class TradeListView extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  "${"Price".tr}(${total?.baseWallet?.coinType ?? ""})" ,
+                  "${"Price".tr}(${total?.baseWallet?.coinType ?? ""})",
                   style: TextStyle(
                     fontSize: 15,
                     fontFamily: "DMSans",
                     fontWeight: FontWeight.w400,
-                    height: 16/15,
+                    height: 16 / 15,
                   ),
                 ),
               ),
@@ -1026,24 +904,26 @@ class TradeListView extends StatelessWidget {
                     fontSize: 15,
                     fontFamily: "DMSans",
                     fontWeight: FontWeight.w400,
-                    height: 16/15,
+                    height: 16 / 15,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
               Expanded(
-                child: Text("Time".tr,
-                style: TextStyle(
+                child: Text(
+                  "Time".tr,
+                  style: TextStyle(
                     fontSize: 15,
                     fontFamily: "DMSans",
                     fontWeight: FontWeight.w400,
-                    height: 16/15,
+                    height: 16 / 15,
                   ),
-                   textAlign: TextAlign.end),
+                  textAlign: TextAlign.end,
+                ),
               ),
             ],
           ),
-          SizedBox(height: 5,),
+          SizedBox(height: 5),
           exchangeTrades.isEmpty
               ? showEmptyView()
               : Column(
@@ -1064,33 +944,47 @@ class TradeItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = (exchangeTrade.price ?? 0) > (exchangeTrade.lastPrice ?? 0)
-        ? gBuyColor
-        : ((exchangeTrade.price ?? 0) < (exchangeTrade.lastPrice ?? 0)
-              ? gSellColor
-              : context.theme.primaryColor);
+    // Use priceOrderType (buy/sell from WS) as primary color source — matches website
+    final isBuy =
+        (exchangeTrade.priceOrderType ?? '').toLowerCase() == FromKey.buy;
+    final color = isBuy ? gBuyColor : gSellColor;
     return InkWell(
       onTap: () => setSelectedPrice.value = exchangeTrade.price,
       child: Row(
         children: [
           Expanded(
-            child: TextRobotoAutoNormal(
+            child: Text(
               currencyFormat(exchangeTrade.price, fixed: tradeDecimal),
-              color: color,
+              style: TextStyle(
+                color: color,
+                fontSize: Dimens.fontSizeSmall,
+                fontFamily: 'DMSans',
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
           Expanded(
-            child: TextRobotoAutoNormal(
+            child: Text(
               coinFormat(exchangeTrade.amount, fixed: tradeDecimal),
               textAlign: TextAlign.center,
-              color: context.theme.primaryColor,
+              style: TextStyle(
+                color: context.theme.primaryColor,
+                fontSize: Dimens.fontSizeSmall,
+                fontFamily: 'DMSans',
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
           Expanded(
-            child: TextRobotoAutoNormal(
+            child: Text(
               exchangeTrade.time ?? "",
               textAlign: TextAlign.end,
-              color: context.theme.primaryColor,
+              style: TextStyle(
+                color: context.theme.primaryColor,
+                fontSize: Dimens.fontSizeSmall,
+                fontFamily: 'DMSans',
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
         ],

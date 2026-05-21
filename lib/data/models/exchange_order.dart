@@ -139,25 +139,30 @@ class Trade {
   String? time;
 
   factory Trade.fromJson(Map<String, dynamic> json) => Trade(
-        type: json["type"] ?? json["order_type"] ?? json["coin_trade_type"],
-        id: json["id"],
+        // "side" = buy/sell (spot API). "type" = buy/sell (legacy). "order_type" = limit/market (NOT the side).
+        type: json["side"] ?? json["type"] ?? json["coin_trade_type"],
+        id: json["id"] ?? json["order_id"],
         transactionId: json["transaction_id"],
-        status: json["status"],
-        createdAt: json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
-        deletedAt: json["deleted_at"] == null ? null : DateTime.parse(json["deleted_at"]),
-        actualAmount: makeDouble(json["actual_amount"]),
+        status: json["status"] is int ? json["status"] : (json["status"] == "open" ? 0 : 1),
+        createdAt: json["created_at"] == null ? null : _parseDate(json["created_at"].toString()),
+        deletedAt: json["deleted_at"] == null ? null : _parseDate(json["deleted_at"].toString()),
+        actualAmount: makeDouble(json["actual_amount"] ?? json["filled_quantity"] ?? json["filled"]),
         processed: makeDouble(json["processed"]),
         price: makeDouble(json["price"]),
         actualTotal: makeDouble(json["actual_total"]),
-        amount: makeDouble(json["amount"]),
+        amount: makeDouble(json["amount"] ?? json["quantity"]),
         total: makeDouble(json["total"]),
-        fees: makeDouble(json["fees"]),
-        baseCoin: json["base_coin"],
-        tradeCoin: json["trade_coin"],
+        fees: makeDouble(json["fees"] ?? json["fee"]),
+        baseCoin: json["base_coin"] ?? json["quote_currency"],
+        tradeCoin: json["trade_coin"] ?? json["base_currency"],
         lastPrice: makeDouble(json["last_price"]),
-        priceOrderType: json["price_order_type"],
-        time: json["time"],
+        priceOrderType: json["price_order_type"] ?? json["order_type"] ?? json["side"],
+        time: json["time"] ?? json["created_at"]?.toString(),
       );
+
+  static DateTime? _parseDate(String s) {
+    try { return DateTime.parse(s); } catch (_) { return null; }
+  }
 }
 
 class StopLimitOrder {
