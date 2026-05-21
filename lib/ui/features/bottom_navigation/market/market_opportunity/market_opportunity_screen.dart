@@ -1285,34 +1285,34 @@ class _CoinRow extends StatelessWidget {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                 Expanded(
-                   child: Row(
-                     mainAxisSize: MainAxisSize.min,
-                     children: [
-                       Flexible(
-                         child: Text(
-                           coin.coinType ?? '',
-                           overflow: TextOverflow.ellipsis,
-                           style: const TextStyle(
-                             color: _kText,
-                             fontSize: 12,
-                             fontWeight: FontWeight.w700,
-                             fontFamily: 'DMSans',
-                           ),
-                         ),
-                       ),
-                       const Text(
-                         ' USDT',
-                         style: TextStyle(
-                           color: Color(0x80FFFFFF),
-                           fontSize: 12,
-                           fontWeight: FontWeight.w400,
-                           fontFamily: 'DMSans',
-                         ),
-                       ),
-                     ],
-                   ),
-                 ),
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            coin.coinType ?? '',
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: _kText,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
+                        ),
+                        const Text(
+                          ' USDT',
+                          style: TextStyle(
+                            color: Color(0x80FFFFFF),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'DMSans',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1578,7 +1578,7 @@ class _HeatmapTreeLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sorted = List<MarketCoin>.from(coins)
-      ..sort((a, b) => (b.change ?? 0).compareTo(a.change ?? 0));
+      ..sort((a, b) => (b.volume ?? 0).compareTo(a.volume ?? 0));
 
     if (sorted.isEmpty) return const SizedBox.shrink();
 
@@ -1650,7 +1650,7 @@ class _HeatmapTreeLayout extends StatelessWidget {
                         if (showAll) ...[
                           const SizedBox(height: 3),
                           Text(
-                            coin.coinType ?? '',
+                            '${coin.coinType ?? ''}/USDT',
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
