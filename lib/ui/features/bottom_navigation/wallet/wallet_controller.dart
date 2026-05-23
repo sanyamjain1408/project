@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/dashboard_data.dart';
@@ -25,6 +27,8 @@ class WalletController extends GetxController
   bool hasMoreData = false;
   RxList<Wallet> walletList = <Wallet>[].obs;
   Rx<TotalBalance> totalBalance = TotalBalance().obs;
+  RxDouble spotWalletTotal = 0.0.obs;
+  RxDouble earnWalletTotal = 0.0.obs;
   int walletListFromType = 0;
   Timer? searchTimer;
 
@@ -47,29 +51,21 @@ class WalletController extends GetxController
     tabController?.animateTo(index);
   }
 
-  Future<void> getWalletOverviewData(
-    Function(WalletOverview) onData, {
-    String? coinType,
-  }) async {
+  Future<WalletOverview?> getWalletOverviewData({String? coinType}) async {
     if (gUserRx.value.id == 0) {
       refreshController.finishRefresh();
-      return;
+      return null;
     }
-    APIRepository()
-        .getWalletBalanceDetails(coinType ?? "")
-        .then(
-          (resp) {
-           
-            refreshController.finishRefresh();
-            resp.success
-                ? onData(WalletOverview.fromJson(resp.data))
-                : showToast(resp.message);
-          },
-          onError: (err) {
-            refreshController.finishRefresh();
-            showToast(err.toString());
-          },
-        );
+    try {
+      final resp = await APIRepository().getWalletBalanceDetails(coinType ?? "");
+      refreshController.finishRefresh();
+      if (resp.success) return WalletOverview.fromJson(resp.data);
+      showToast(resp.message);
+    } catch (err) {
+      refreshController.finishRefresh();
+      showToast(err.toString());
+    }
+    return null;
   }
 
   void clearListView() {
@@ -126,12 +122,96 @@ class WalletController extends GetxController
         );
   }
 
-  void getWalletTotalValue() async {
-    APIRepository().getWalletTotalValue().then((resp) {
-      if (resp.success) {
-        totalBalance.value = TotalBalance.fromJson(resp.data);
+  Future<void> fetchGrandTotal() async {
+    if (gUserRx.value.id == 0) return;
+    final userId = gUserRx.value.id;
+
+    final spotFuture = APIRepository().getWalletTotalValue();
+    final overviewFuture = APIRepository().getWalletBalanceDetails("");
+    final earnFuture = _fetchEarnTotal(userId);
+
+    final spotResp = await spotFuture;
+    final overviewResp = await overviewFuture;
+    final earnTotal = await earnFuture;
+
+    double spotVal = 0;
+    double futureVal = 0;
+    double p2pVal = 0;
+    String? currency;
+
+    if (spotResp.success) {
+      final bal = TotalBalance.fromJson(spotResp.data);
+      spotVal = bal.total ?? 0;
+      currency = bal.currency;
+    }
+    if (overviewResp.success) {
+      final ov = WalletOverview.fromJson(overviewResp.data);
+      futureVal = ov.futureWallet ?? 0;
+      p2pVal = ov.p2PWallet ?? 0;
+    }
+
+    spotWalletTotal.value = spotVal;
+    earnWalletTotal.value = earnTotal;
+
+    final grandTotal = spotVal + futureVal + earnTotal + p2pVal;
+    final cur = totalBalance.value;
+    totalBalance.value = TotalBalance(
+      currency: currency ?? cur.currency,
+      total: grandTotal,
+      todayPnl: cur.todayPnl,
+      todayPnlPercent: cur.todayPnlPercent,
+    );
+
+    // fetch PnL with grand total
+    try {
+      final uri = Uri.parse(
+        '${APIURLConstants.baseUrl}/api/pnl-summary?user_id=$userId&live_total=$grandTotal',
+      );
+      final resp = await http.get(uri);
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body);
+        final todayPnl = double.tryParse(json['today_pnl']?.toString() ?? '0') ?? 0;
+        final todayPct = double.tryParse(json['today_pct']?.toString() ?? '0') ?? 0;
+        final c = totalBalance.value;
+        totalBalance.value = TotalBalance(
+          currency: c.currency,
+          total: c.total,
+          todayPnl: todayPnl,
+          todayPnlPercent: todayPct,
+        );
       }
-    }, onError: (err) {});
+    } catch (_) {}
+  }
+
+  Future<double> _fetchEarnTotal(int userId) async {
+    try {
+      final uri = Uri.parse(
+        '${APIURLConstants.baseUrl}/api/tf/earn/positions?user_id=$userId',
+      );
+      final resp = await http.get(uri);
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body);
+        final data = json['data'] as List? ?? [];
+        double total = 0;
+        for (final p in data) {
+          total += double.tryParse(p['amount']?.toString() ?? '0') ?? 0;
+        }
+        return total;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  Future<TotalBalance?> getWalletTotalValue() async {
+    try {
+      final resp = await APIRepository().getWalletTotalValue();
+      if (resp.success) {
+        final bal = TotalBalance.fromJson(resp.data);
+        totalBalance.value = bal;
+        return bal;
+      }
+    } catch (_) {}
+    return null;
   }
 
   void getDashBoardData() async {

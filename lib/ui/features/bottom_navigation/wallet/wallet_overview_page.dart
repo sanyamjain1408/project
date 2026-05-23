@@ -13,7 +13,6 @@ import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.d
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
-import 'package:tradexpro_flutter/utils/extensions.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
@@ -21,7 +20,6 @@ import '../../side_navigation/activity/activity_screen.dart';
 import 'wallet_controller.dart';
 import 'wallet_widgets.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
-import 'package:tradexpro_flutter/data/models/list_response.dart';
 
 const Color _primary = Color(0xFF111111);
 const Color _green = Color(0xFFCCFF00);
@@ -45,14 +43,19 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
   final RxString selectedCoin = "".obs;
   final RxList<History> depositList = <History>[].obs;
   final RxList<History> withdrawList = <History>[].obs;
-
   Future<void> _getOverviewData() async {
     _controller.refreshController.callRefresh();
-    _controller.getWalletTotalValue();
-    _controller.getWalletOverviewData(coinType: selectedCoin.value, (overview) {
+
+    final grandFuture = _controller.fetchGrandTotal();
+    final overviewFuture = _controller.getWalletOverviewData(coinType: selectedCoin.value);
+
+    await grandFuture;
+    final overview = await overviewFuture;
+
+    if (overview != null) {
       wOverview.value = overview;
-      selectedCoin.value = wOverview.value.selectedCoin ?? "";
-    });
+      selectedCoin.value = overview.selectedCoin ?? "";
+    }
 
     // ── DEPOSIT HISTORY FETCH ──
     APIRepository().getActivityList(1, HistoryType.deposit, isFiat: false).then(
@@ -512,9 +515,9 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                         child: Obx(
                           () => TotalBalanceView(
                             gIsBalanceHide.value,
-                            data.total,
+                            _controller.totalBalance.value.total,
                             title: 'Overview'.tr,
-                            totalUsd: data.totalUsd,
+                            totalUsd: _controller.totalBalance.value.total,
                             todayPnl: data.todayPnl,
                             todayPnlPercent: data.todayPnlPercent,
                             coins: data.coins,
@@ -556,8 +559,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
         name: "Spot",
         svgIcon: 'assets/images/spot.svg',
         pngIcon: 'assets/images/spot.png',
-        amount: data.spotWallet ?? 0,
-        amtUsd: data.spotWalletUsd ?? 0,
+        amount: _controller.spotWalletTotal.value,
+        amtUsd: _controller.spotWalletTotal.value,
         coin: coin,
         onTap: () => Get.to(
           () => const WalletDetailScreen(initialType: WalletViewType.spot),
@@ -578,8 +581,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
         name: "Earn",
         svgIcon: 'assets/icons/earn.svg',
         pngIcon: 'assets/icons/earn.png',
-        amount: 0,
-        amtUsd: 0,
+        amount: _controller.earnWalletTotal.value,
+        amtUsd: _controller.earnWalletTotal.value,
         coin: coin,
         onTap: () => Get.to(
           () => const WalletDetailScreen(initialType: WalletViewType.earn),

@@ -66,7 +66,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     _walletController = Get.isRegistered<WalletController>()
         ? Get.find<WalletController>()
         : Get.put(WalletController());
-    _walletController.getWalletTotalValue();
+    _walletController.fetchGrandTotal();
     if (_earnController.products.isEmpty) _earnController.fetchProducts();
   }
 
