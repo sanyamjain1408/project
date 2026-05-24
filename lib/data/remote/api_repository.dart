@@ -750,6 +750,26 @@ class APIRepository {
     return provider.getRequest(APIURLConstants.getMarketOverviewTopCoinList, authHeader(), query: mapObj);
   }
 
+ Future<ServerResponse> getSpotMarketPairs() async {
+  try {
+    final client = GetConnect();
+    client.timeout = const Duration(seconds: 30);
+    final response = await client.get(
+      'https://api.trapix.com/api/v1/spot/pairs',
+      headers: {'Accept': 'application/json'},
+    );
+    // print("=== TRAPIX STATUS: ${response.statusCode} ===");
+    // print("=== TRAPIX BODY: ${response.body} ===");
+    if (response.statusCode == 200 && response.body != null) {
+      return ServerResponse(success: true, message: "", data: response.body);
+    }
+    return ServerResponse(success: false, message: "API Error: ${response.statusCode}");
+  } catch (e) {
+    //print("=== TRAPIX EXCEPTION: $e ===");
+    return ServerResponse(success: false, message: e.toString());
+  }
+}
+
   Future<ServerResponse> getNetworksList() async {
     return provider.getRequest(APIURLConstants.getNetworksList, authHeader());
   }
