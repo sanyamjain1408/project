@@ -6,7 +6,6 @@ import 'package:tradexpro_flutter/data/models/dashboard_data.dart';
 import 'package:tradexpro_flutter/data/models/settings.dart';
 import 'package:tradexpro_flutter/data/models/spot_data.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
-import 'package:tradexpro_flutter/ui/ui_helper/app_widgets.dart';
 import 'package:tradexpro_flutter/helper/favorite_helper.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
 import 'package:tradexpro_flutter/utils/appbar_util.dart';
@@ -16,9 +15,7 @@ import 'package:tradexpro_flutter/utils/decorations.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
-import 'package:tradexpro_flutter/utils/text_util.dart';
 import '../../wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
-import '../../wallet/wallet_crypto_withdraw/wallet_crypto_withdraw_screen.dart';
 
 import '../trade_order_book_widgets.dart';
 import '../trade_widgets.dart';
@@ -193,22 +190,17 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                             case 0:
                               return DetailsOrderBookView(
                                 buyExchangeOrder: _controller.buyExchangeOrder,
-                                sellExchangeOrder:
-                                    _controller.sellExchangeOrder,
-                                total: _controller
-                                    .dashboardData
-                                    .value
-                                    .orderData
-                                    ?.total,
+                                sellExchangeOrder: _controller.sellExchangeOrder,
+                                total: _controller.dashboardData.value.orderData?.total,
+                                tradeCoinOverride: _controller.selectedCoinPair.value.parentCoinName,
+                                baseCoinOverride: _controller.selectedCoinPair.value.childCoinName,
                               );
                             case 1:
                               return TradeListView(
                                 exchangeTrades: _controller.exchangeTrades,
-                                total: _controller
-                                    .dashboardData
-                                    .value
-                                    .orderData
-                                    ?.total,
+                                total: _controller.dashboardData.value.orderData?.total,
+                                tradeCoinOverride: _controller.selectedCoinPair.value.parentCoinName,
+                                baseCoinOverride: _controller.selectedCoinPair.value.childCoinName,
                               );
                             case 2:
                               return AssetOverviewView();
@@ -336,8 +328,8 @@ class _SpotPriceView extends StatelessWidget {
   Widget build(BuildContext context) {
     final lastP = (prices?.isNotEmpty ?? false) ? prices!.first : PriceData();
     final change = ticker.priceChange24h;
-    final (sing, _) = getNumberData(change);
-    final priceColor = isUp ? gBuyColor : gSellColor;
+    final (sing, changeColor) = getNumberData(change);
+    final isChangeUp = change >= 0; // drives price color + arrow direction
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 15, 20, 10),
@@ -358,7 +350,7 @@ class _SpotPriceView extends StatelessWidget {
                       child: AnimatedDefaultTextStyle(
                         duration: const Duration(milliseconds: 250),
                         style: TextStyle(
-                          color: priceColor,
+                          color: changeColor,
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
                           fontFamily: "DMSans",
@@ -370,14 +362,10 @@ class _SpotPriceView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      child: Icon(
-                        isUp ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                        key: ValueKey(isUp),
-                        color: priceColor,
-                        size: 28,
-                      ),
+                    Icon(
+                      isChangeUp ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                      color: changeColor,
+                      size: 28,
                     ),
                   ],
                 ),
@@ -400,7 +388,7 @@ class _SpotPriceView extends StatelessWidget {
                       TextSpan(
                         text: "$sing${coinFormat(change, fixed: 2)}%",
                         style: TextStyle(
-                          color: priceColor,
+                          color: changeColor,
                           fontSize: 12,
                           fontFamily: "DMSans",
                           fontWeight: FontWeight.w400,
@@ -442,12 +430,12 @@ class _SpotPriceView extends StatelessWidget {
                 _statRow(
                   context,
                   "24h Vol (${pair.parentCoinName ?? ''})",
-                  coinFormat(ticker.volume24h, fixed: 2),
+                  coinFormat(ticker.price > 0 ? ticker.volume24h / ticker.price : 0, fixed: 2),
                 ),
                 _statRow(
                   context,
                   "24h Vol (${pair.childCoinName ?? ''})",
-                  coinFormat(ticker.volume24h, fixed: 2),
+                  _fmtVolM(ticker.volume24h),
                 ),
               ],
             ),
@@ -455,6 +443,11 @@ class _SpotPriceView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _fmtVolM(double vol) {
+    final inM = vol / 1e6;
+    return '${inM.toStringAsFixed(2)}M';
   }
 
   Widget _statRow(BuildContext context, String label, String value) {
@@ -588,88 +581,112 @@ class AssetOverviewView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = context.theme.primaryColorLight;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       width: context.width,
-      decoration: boxDecorationRoundCorner(),
       child: Obx(() {
-        final total = _controller.selfBalance.value.total;
-        final baseCType = total?.baseWallet?.coinType ?? "";
+        final total      = _controller.selfBalance.value.total;
+        final baseCType  = total?.baseWallet?.coinType  ?? "";
         final tradeCType = total?.tradeWallet?.coinType ?? "";
+
+        // Trading Account: live available balances from spot balances API
+        final availBase  = _controller.spotAvailableBase.value;
+        final availTrade = _controller.spotAvailableTrade.value;
+
+        // Funding Account: total wallet balances from order_data
+        final fundBase  = total?.baseWallet?.balance  ?? 0.0;
+        final fundTrade = total?.tradeWallet?.balance ?? 0.0;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextRobotoAutoBold("Trading Account".tr),
+            _sectionTitle("Trading Account".tr),
             vSpacer5(),
-            twoTextSpaceFixed(
-              baseCType,
-              coinFormat(
-                _controller.selfBalance.value.baseWallet,
-                fixed: tradeDecimal,
-              ),
-              color: color,
-            ),
-            twoTextSpaceFixed(
-              tradeCType,
-              coinFormat(
-                _controller.selfBalance.value.tradeWallet,
-                fixed: tradeDecimal,
-              ),
-              color: color,
-            ),
+            _balanceLine(baseCType,  coinFormat(availBase,  fixed: tradeDecimal)),
+            _balanceLine(tradeCType, coinFormat(availTrade, fixed: tradeDecimal)),
             vSpacer10(),
-            TextRobotoAutoBold("Funding Account".tr),
+            _sectionTitle("Funding Account".tr),
             vSpacer5(),
-            twoTextSpaceFixed(
-              baseCType,
-              coinFormat(total?.baseWallet?.balance, fixed: tradeDecimal),
-              color: color,
-            ),
-            twoTextSpaceFixed(
-              tradeCType,
-              coinFormat(total?.tradeWallet?.balance, fixed: tradeDecimal),
-              color: color,
-            ),
+            _balanceLine(baseCType,  coinFormat(fundBase,  fixed: tradeDecimal)),
+            _balanceLine(tradeCType, coinFormat(fundTrade, fixed: tradeDecimal)),
             vSpacer15(),
             Row(
               children: [
                 Expanded(
-                  child: buttonText(
-                    "Deposit".tr,
-                    visualDensity: VisualDensity.compact,
-                    onPress: () {
-                      if (total?.tradeWallet != null) {
-                        Get.to(
-                          () => WalletCryptoDepositScreen(
-                            wallet: total!.tradeWallet!.createWallet(),
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                  child: _greenBtn("Deposit".tr, onTap: () {
+                    if (total?.tradeWallet != null) {
+                      Get.to(() => WalletCryptoDepositScreen(
+                        wallet: total!.tradeWallet!.createWallet(),
+                      ));
+                    }
+                  }),
                 ),
                 hSpacer15(),
                 Expanded(
-                  child: buttonText(
-                    "Transfer".tr,
-                    visualDensity: VisualDensity.compact,
-                    onPress: () {
-                      if (total?.tradeWallet != null) {
-                        Get.to(
-                          () => WalletCryptoWithdrawScreen(
-                            wallet: total!.tradeWallet!.createWallet(),
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                  child: _darkBtn("Transfer".tr, onTap: () {}),
                 ),
               ],
             ),
           ],
         );
       }),
+    );
+  }
+
+  Widget _sectionTitle(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        fontFamily: "DMSans",
+      ),
+    );
+  }
+
+  Widget _balanceLine(String coin, String amount) {
+    if (coin.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(coin, style: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13, fontFamily: "DMSans")),
+          Text(amount, style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: "DMSans")),
+        ],
+      ),
+    );
+  }
+
+  Widget _greenBtn(String label, {required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 5),
+        height: 44,
+        decoration: BoxDecoration(
+          color: const Color(0xFF2ECC71),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.center,
+        child: Text(label, style: const TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.w700, fontFamily: "DMSans")),
+      ),
+    );
+  }
+
+  Widget _darkBtn(String label, {required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700, fontFamily: "DMSans")),
+      ),
     );
   }
 }

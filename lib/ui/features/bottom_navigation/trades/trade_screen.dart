@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
-import 'package:tradexpro_flutter/addons/p2p_trade/ui/p2p_trade_screen.dart';
+// import 'package:tradexpro_flutter/addons/p2p_trade/ui/p2p_trade_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_overview_page.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
-import 'package:tradexpro_flutter/utils/dimens.dart';
-import 'package:tradexpro_flutter/utils/text_util.dart';
-import 'package:tradexpro_flutter/utils/spacers.dart';
 
+import 'future_trade/new_future_screen.dart';
 import 'spot_trade/spot_trade_screen.dart';
 
 class TradesScreen extends StatefulWidget {
@@ -23,7 +21,7 @@ class _TradesScreenState extends State<TradesScreen>
   // TradeController removed — it had length=2 which conflicted with our 5 tabs
   late final TabController _tabController;
 
-  static const List<String> _tabs = ['Swap', 'Spot', 'Future', 'Earn', 'P2P'];
+  static const List<String> _tabs = ['Swap', 'Spot', 'Future', 'Earn', /*'P2P'*/];
   int _selectedTab = 1; // default: Spot
   int _previousTab = 1;
 
@@ -121,32 +119,14 @@ class _TradesScreenState extends State<TradesScreen>
       case 1:
         return const SpotTradeScreen();
       case 2:
-        return _placeholderView('Future');
+        return const Expanded(child: NewFutureScreen(showTopTabs: false));
       case 3:
         return Expanded(child: const EarnScreen());
-      case 4:
-        return const P2PTradeScreen();
+      // case 4:
+      //   return const P2PTradeScreen();
       default:
         return const SpotTradeScreen();
     }
   }
 
-  Widget _placeholderView(String label) {
-    return Expanded(
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.construction_rounded, size: 48,
-                color: Theme.of(context).primaryColorLight),
-            vSpacer10(),
-            TextRobotoAutoBold(
-              '$label ${'coming_soon'.tr}',
-              fontSize: Dimens.fontSizeLarge,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

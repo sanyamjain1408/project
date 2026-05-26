@@ -33,6 +33,11 @@ class SpotTradeController extends GetxController implements SocketListener {
   /// All pairs orders — shown in My Trade history modal (no symbol filter)
   Rx<SpotAllMyHistories> allPairsHistories = SpotAllMyHistories().obs;
   RxBool isAllPairsLoading = false.obs;
+  /// Spot available balances (Trading Account) — from /v1/spot/balances
+  RxDouble spotAvailableBase = 0.0.obs;   // e.g. USDT available
+  RxDouble spotAvailableTrade = 0.0.obs;  // e.g. BTC available
+  RxDouble spotLockedBase = 0.0.obs;
+  RxDouble spotLockedTrade = 0.0.obs;
   TextEditingController searchEditController = TextEditingController();
   RxString selectedOrderSort = FromKey.all.obs;
   RxBool isHistoryLoading = false.obs;
@@ -324,8 +329,11 @@ class SpotTradeController extends GetxController implements SocketListener {
       // Convert SpotPair → CoinPair for UI compatibility
       coinPairs.value = pairs.map(_spotPairToCoinPair).toList();
       dashboardData.value.coinPairs = coinPairs.toList();
-      // Select first pair by default
-      selectedCoinPair.value = coinPairs[0];
+      // Select BTC/USDT by default, fallback to first pair
+      selectedCoinPair.value = coinPairs.firstWhere(
+        (p) => (p.parentCoinName ?? '').toUpperCase() == 'BTC' && (p.childCoinName ?? '').toUpperCase() == 'USDT',
+        orElse: () => coinPairs[0],
+      );
       getDashBoardData();
     }, onError: (err) {
       isLoading.value = false;
@@ -475,12 +483,16 @@ class SpotTradeController extends GetxController implements SocketListener {
       selfBalance.value.total!.baseWallet ??= TradeWallet();
       selfBalance.value.total!.baseWallet!.balance  = quoteBalance.available;
       selfBalance.value.total!.baseWallet!.coinType = quoteC;
+      spotAvailableBase.value = quoteBalance.available;
+      spotLockedBase.value    = quoteBalance.locked;
     }
     // tradeWallet = BTC (what you're buying/selling)
     if (baseBalance != null) {
       selfBalance.value.total!.tradeWallet ??= TradeWallet();
       selfBalance.value.total!.tradeWallet!.balance  = baseBalance.available;
       selfBalance.value.total!.tradeWallet!.coinType = baseC;
+      spotAvailableTrade.value = baseBalance.available;
+      spotLockedTrade.value    = baseBalance.locked;
     }
     selfBalance.refresh();
   }

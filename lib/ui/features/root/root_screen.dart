@@ -22,7 +22,7 @@ import 'package:tradexpro_flutter/utils/image_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:tradexpro_flutter/utils/text_util.dart';
 import '../bottom_navigation/market/market_screen.dart';
-import '../bottom_navigation/trades/future_trade/future_trade_screen.dart';
+import '../bottom_navigation/trades/future_trade/new_future_screen.dart';
 import '../bottom_navigation/trades/trade_screen.dart';
 import '../bottom_navigation/wallet/wallet_screen.dart';
 import '../side_navigation/activity/activity_screen.dart';
@@ -176,7 +176,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
       case AppBottomNavKey.trade:
         return const TradesScreen();
       case AppBottomNavKey.future:
-        return const FutureTradeScreen();
+        return const NewFutureScreen();
       case AppBottomNavKey.wallet:
         return const WalletScreen();
       default:
@@ -623,14 +623,14 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                         "ICO",
                         () => Get.to(() => const ICOScreen()),
                       ),
-                    if (settings?.p2pModule == 1)
-                      _menuRow("assets/icons/help.png", "P2P", () {
-                        TemporaryData.changingPageId = 1;
-                        Get.back();
-                        getRootController().changeBottomNavIndex(
-                          AppBottomNavKey.trade,
-                        );
-                      }),
+                    // if (settings?.p2pModule == 1)
+                    //   _menuRow("assets/icons/help.png", "P2P", () {
+                    //     TemporaryData.changingPageId = 1;
+                    //     Get.back();
+                    //     getRootController().changeBottomNavIndex(
+                    //       AppBottomNavKey.trade,
+                    //     );
+                    //   }),
                     if (settings?.blogNewsModule == 1)
                       _menuRow(
                         "assets/icons/help.png",

@@ -636,12 +636,12 @@ class TotalBalanceView extends StatelessWidget {
 
                   const SizedBox(height: 5),
 
-                  if (!isHide && balance.todayPnl != null)
+                  if (!isHide)
                     RichText(
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: "Today's PnL: ",
+                            text: "Today ",
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.5),
                               fontSize: 12,
@@ -654,11 +654,11 @@ class TotalBalanceView extends StatelessWidget {
                             text: formatPnl(balance.todayPnl, balance.todayPnlPercent),
                             style: TextStyle(
                               color: (balance.todayPnl ?? 0) >= 0
-                                  ? const Color(0xFF4ED78E)
+                                  ? const Color(0xFFCCFF00)
                                   : Colors.redAccent,
                               fontSize: 12,
                               fontFamily: 'DMSans',
-                              fontWeight: FontWeight.w400,
+                              fontWeight: FontWeight.w500,
                               height: 16 / 12,
                             ),
                           ),

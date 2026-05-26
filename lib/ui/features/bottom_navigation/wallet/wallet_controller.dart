@@ -154,33 +154,34 @@ class WalletController extends GetxController
     earnWalletTotal.value = earnTotal;
 
     final grandTotal = spotVal + futureVal + earnTotal + p2pVal;
+    final pnlResult = await _fetchTodayPnl(userId, grandTotal);
+
     final cur = totalBalance.value;
     totalBalance.value = TotalBalance(
       currency: currency ?? cur.currency,
       total: grandTotal,
-      todayPnl: cur.todayPnl,
-      todayPnlPercent: cur.todayPnlPercent,
+      todayPnl: pnlResult[0],
+      todayPnlPercent: pnlResult[1],
     );
+  }
 
-    // fetch PnL with grand total
+  Future<List<double>> _fetchTodayPnl(int userId, double liveTotal) async {
     try {
       final uri = Uri.parse(
-        '${APIURLConstants.baseUrl}/api/pnl-summary?user_id=$userId&live_total=$grandTotal',
+        '${APIURLConstants.baseUrl}/api/pnl/summary?user_id=$userId&live_total=$liveTotal',
       );
       final resp = await http.get(uri);
       if (resp.statusCode == 200) {
         final json = jsonDecode(resp.body);
-        final todayPnl = double.tryParse(json['today_pnl']?.toString() ?? '0') ?? 0;
-        final todayPct = double.tryParse(json['today_pct']?.toString() ?? '0') ?? 0;
-        final c = totalBalance.value;
-        totalBalance.value = TotalBalance(
-          currency: c.currency,
-          total: c.total,
-          todayPnl: todayPnl,
-          todayPnlPercent: todayPct,
-        );
+        if (json['success'] == true) {
+          final data = json['data'];
+          final pnl = double.tryParse(data['today_pnl']?.toString() ?? '0') ?? 0;
+          final pct = double.tryParse(data['today_pct']?.toString() ?? '0') ?? 0;
+          return [pnl, pct];
+        }
       }
     } catch (_) {}
+    return [0, 0];
   }
 
   Future<double> _fetchEarnTotal(int userId) async {

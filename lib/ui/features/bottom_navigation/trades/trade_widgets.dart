@@ -32,6 +32,7 @@ class TradePairTopView extends StatelessWidget {
     this.total,
     this.onTapIcon,
     this.onTapDetails,
+    this.priceChangeOverride,
   });
 
   final CoinPair coinPair;
@@ -39,10 +40,12 @@ class TradePairTopView extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onTapIcon; // middle icon — toggles chart
   final VoidCallback? onTapDetails; // last icon — opens details screen
+  final double? priceChangeOverride; // used by spot to pass ticker.priceChange24h
 
   @override
   Widget build(BuildContext context) {
-    final (sing, color) = getNumberData(total?.tradeWallet?.priceChange);
+    final rawChange = priceChangeOverride ?? total?.tradeWallet?.priceChange;
+    final (sing, color) = getNumberData(rawChange);
     return Row(
       children: [
         hSpacer5(),
@@ -75,7 +78,7 @@ class TradePairTopView extends StatelessWidget {
         hSpacer5(),
         // ── Plain inline text — green if up, red if down ────────────────────
         Text(
-          "$sing${coinFormat(total?.tradeWallet?.priceChange, fixed: 2)}%",
+          "$sing${coinFormat(rawChange, fixed: 2)}%",
           style: TextStyle(
             color: color,
             fontSize: 12,
@@ -588,45 +591,91 @@ class CurrencyPairDetailsView extends StatelessWidget {
   }
 }
 
-class _CoinIcon extends StatelessWidget {
-  const _CoinIcon({required this.icon, required this.name});
+// Coin color map — same as website's COIN_COLORS
+const _kCoinColors = <String, Color>{
+  'BTC': Color(0xFFF7931A), 'ETH': Color(0xFF627EEA), 'BNB': Color(0xFFF3BA2F),
+  'XRP': Color(0xFF346AA9), 'SOL': Color(0xFF9945FF), 'DOGE': Color(0xFFC2A633),
+  'ADA': Color(0xFF0033AD), 'DOT': Color(0xFFE6007A), 'AVAX': Color(0xFFE84142),
+  'MATIC': Color(0xFF8247E5), 'LINK': Color(0xFF2A5ADA), 'LTC': Color(0xFF838383),
+  'TRX': Color(0xFFEF0027), 'SHIB': Color(0xFFFFA409), 'UNI': Color(0xFFFF007A),
+  'ATOM': Color(0xFF2E3148), 'BCH': Color(0xFF8DC351), 'FIL': Color(0xFF0090FF),
+  'APT': Color(0xFF00C2CB), 'ARB': Color(0xFF28A0F0), 'OP': Color(0xFFFF0420),
+  'SUI': Color(0xFF4DA2FF), 'NEAR': Color(0xFF00C08B), 'FTM': Color(0xFF1969FF),
+};
+
+class _CoinIcon extends StatefulWidget {
+  const _CoinIcon({required this.icon, required this.symbol});
   final String? icon;
-  final String name;
+  final String symbol; // base coin symbol, e.g. "BTC"
+
+  @override
+  State<_CoinIcon> createState() => _CoinIconState();
+}
+
+class _CoinIconState extends State<_CoinIcon> {
+  static const size = 22.0;
+  bool _imgError = false;
+
+  @override
+  void didUpdateWidget(_CoinIcon old) {
+    super.didUpdateWidget(old);
+    if (old.icon != widget.icon || old.symbol != widget.symbol) {
+      _imgError = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    const size = 20.0;
+    final sym = widget.symbol.toUpperCase();
+    final coinColor = _kCoinColors[sym] ?? const Color(0xFF444444);
+    final label = sym.length >= 2 ? sym.substring(0, 2) : (sym.isNotEmpty ? sym : '?');
+
     final fallback = Container(
       width: size,
       height: size,
-      decoration: const BoxDecoration(
-        color: Color(0xFF1A1A1A),
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            coinColor.withValues(alpha: 0.27),
+            coinColor.withValues(alpha: 0.53),
+          ],
+        ),
+        border: Border.all(color: coinColor.withValues(alpha: 0.4), width: 1),
       ),
       alignment: Alignment.center,
       child: Text(
-        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        label,
         style: const TextStyle(
-          color: Color(0xFFCCFF00),
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          fontSize: 8,
+          fontWeight: FontWeight.w800,
           fontFamily: "DMSans",
+          letterSpacing: 0.3,
         ),
       ),
     );
 
-    if (icon == null || icon!.isEmpty) return fallback;
+    final url = widget.icon;
+    if (_imgError || url == null || url.isEmpty) return fallback;
 
     return SizedBox(
       width: size,
       height: size,
       child: ClipOval(
         child: Image.network(
-          icon!,
+          url,
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, _) => fallback,
+          errorBuilder: (ctx, e, st) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _imgError = true);
+            });
+            return fallback;
+          },
         ),
       ),
     );
@@ -659,7 +708,7 @@ class CoinPairItemView extends StatelessWidget {
               flex: 2,
               child: Row(
                 children: [
-                  _CoinIcon(icon: coinPair.icon, name: child),
+                  _CoinIcon(icon: coinPair.parentIcon, symbol: parent),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -712,22 +761,19 @@ class CoinPairItemView extends StatelessWidget {
             ),
             // ── Last price ───────────────────────────────────────────────────
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Text(
-                  coinPair.lastPrice != null
-                      ? "${double.parse(coinPair.lastPrice.toString()).toStringAsFixed(4)}..."
-                      : "0.0000...",
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: "DMSans",
-                    height: 20 / 15,
-                  ),
+              child: Text(
+                coinPair.lastPrice != null
+                    ? (coinPair.lastPrice!).toStringAsFixed(4)
+                    : "0.0000",
+                textAlign: TextAlign.end,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: "DMSans",
+                  height: 20 / 15,
                 ),
               ),
             ),
@@ -815,15 +861,14 @@ class TradeCurrencyPairSelectionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingLarge),
-        margin: const EdgeInsets.symmetric(vertical: Dimens.paddingLarge),
-        decoration: boxDecorationRightRound(
-          color: context.theme.dialogTheme.backgroundColor,
-          radius: Dimens.radiusCornerLarge,
-        ),
-        child: Column(
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingLarge),
+      decoration: BoxDecoration(
+        color: context.theme.dialogTheme.backgroundColor ?? const Color(0xFF111111),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             vSpacer20(),
@@ -865,20 +910,29 @@ class TradeCurrencyPairSelectionView extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
 class TradeListView extends StatelessWidget {
-  const TradeListView({super.key, this.total, required this.exchangeTrades});
+  const TradeListView({
+    super.key,
+    this.total,
+    required this.exchangeTrades,
+    this.tradeCoinOverride,
+    this.baseCoinOverride,
+  });
 
   final Total? total;
   final List<ExchangeTrade> exchangeTrades;
+  final String? tradeCoinOverride;
+  final String? baseCoinOverride;
 
   @override
   Widget build(BuildContext context) {
     final listLength = min(exchangeTrades.length, 100);
+    final baseCoin  = baseCoinOverride  ?? total?.baseWallet?.coinType  ?? "";
+    final tradeCoin = tradeCoinOverride ?? total?.tradeWallet?.coinType ?? "";
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -888,23 +942,25 @@ class TradeListView extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  "${"Price".tr}(${total?.baseWallet?.coinType ?? ""})",
-                  style: TextStyle(
-                    fontSize: 15,
+                  "${"Price".tr}($baseCoin)",
+                  style:  TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.5),
                     fontFamily: "DMSans",
                     fontWeight: FontWeight.w400,
-                    height: 16 / 15,
+                    height: 16/12
                   ),
                 ),
               ),
               Expanded(
                 child: Text(
-                  "${"Amount".tr}(${total?.tradeWallet?.coinType ?? ""})",
-                  style: TextStyle(
-                    fontSize: 15,
+                  "${"Amount".tr}($tradeCoin)",
+                  style:  TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.5),
                     fontFamily: "DMSans",
                     fontWeight: FontWeight.w400,
-                    height: 16 / 15,
+                    height: 16/12
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -912,18 +968,19 @@ class TradeListView extends StatelessWidget {
               Expanded(
                 child: Text(
                   "Time".tr,
-                  style: TextStyle(
-                    fontSize: 15,
+                  style:  TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.5),
                     fontFamily: "DMSans",
                     fontWeight: FontWeight.w400,
-                    height: 16 / 15,
+                    height: 16/12
                   ),
                   textAlign: TextAlign.end,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           exchangeTrades.isEmpty
               ? showEmptyView()
               : Column(
@@ -954,23 +1011,23 @@ class TradeItemView extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              currencyFormat(exchangeTrade.price, fixed: tradeDecimal),
+              (exchangeTrade.price ?? 0).toStringAsFixed(2),
               style: TextStyle(
                 color: color,
-                fontSize: Dimens.fontSizeSmall,
-                fontFamily: 'DMSans',
-                fontWeight: FontWeight.w400,
+                fontSize: 11,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
           Expanded(
             child: Text(
-              coinFormat(exchangeTrade.amount, fixed: tradeDecimal),
+              (exchangeTrade.amount ?? 0).toStringAsFixed(6),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: context.theme.primaryColor,
-                fontSize: Dimens.fontSizeSmall,
-                fontFamily: 'DMSans',
+                fontSize: 11,
+                fontFamily: 'monospace',
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -981,8 +1038,8 @@ class TradeItemView extends StatelessWidget {
               textAlign: TextAlign.end,
               style: TextStyle(
                 color: context.theme.primaryColor,
-                fontSize: Dimens.fontSizeSmall,
-                fontFamily: 'DMSans',
+                fontSize: 11,
+                fontFamily: 'monospace',
                 fontWeight: FontWeight.w400,
               ),
             ),

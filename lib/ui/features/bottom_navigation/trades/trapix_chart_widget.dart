@@ -12,11 +12,13 @@ import 'package:webview_flutter/webview_flutter.dart';
 class TrapixChartWidget extends StatefulWidget {
   final String symbol;
   final double height;
+  final bool isFuture;
 
   const TrapixChartWidget({
     super.key,
     required this.symbol,
     this.height = 420,
+    this.isFuture = false,
   });
 
   @override
@@ -124,8 +126,8 @@ html,body{width:100%;height:100%;background:#0b0b0b;color:#d1d4dc;overflow:hidde
     <button class="iv-btn" data-iv="1d"  onclick="changeInterval(this)">1d</button>
     <button class="iv-btn" data-iv="1w"  onclick="changeInterval(this)">1w</button>
     <div class="iv-divider"></div>
-    <button class="ind-btn active" data-ind="VOL" onclick="toggleInd(this)">VOL</button>
-    <button class="ind-btn" data-ind="MA"   onclick="toggleInd(this)">MA</button>
+    <button class="ind-btn" data-ind="VOL" onclick="toggleInd(this)">VOL</button>
+    <button class="ind-btn active" data-ind="MA"   onclick="toggleInd(this)">MA</button>
     <button class="ind-btn" data-ind="EMA"  onclick="toggleInd(this)">EMA</button>
     <button class="ind-btn" data-ind="BOLL" onclick="toggleInd(this)">BOLL</button>
   </div>
@@ -149,7 +151,7 @@ html,body{width:100%;height:100%;background:#0b0b0b;color:#d1d4dc;overflow:hidde
 <script>
 var chart,candleSeries,volumeSeries,ma7,ma25,ema9,bollUp,bollMid,bollLow;
 var allCandles=[];
-var activeInds={VOL:true,MA:false,EMA:false,BOLL:false};
+var activeInds={VOL:false,MA:true,EMA:false,BOLL:false};
 
 function initChart(){
   var el=document.getElementById('chart');
@@ -322,7 +324,8 @@ window.onload=function(){ initChart(); };
   }
 
   Future<List<dynamic>> _fetchKlines({int limit = 200}) async {
-    final url = 'https://api.trapix.com/api/v1/spot/klines/${widget.symbol}'
+    final market = widget.isFuture ? 'future' : 'spot';
+    final url = 'https://api.trapix.com/api/v1/$market/klines/${widget.symbol}'
         '?interval=$_currentInterval&limit=$limit';
     debugPrint('Fetching klines: $url');
     try {

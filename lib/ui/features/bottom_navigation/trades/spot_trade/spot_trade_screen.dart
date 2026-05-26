@@ -77,6 +77,7 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
             return TradePairTopView(
               coinPair: _controller.selectedCoinPair.value,
               total: dd.orderData?.total,
+              priceChangeOverride: _controller.spotTicker.value.priceChange24h,
               onTap: () => _chooseCoinPairModal(),
               onTapIcon: () => isChartShow.value = !isChartShow.value,
               onTapDetails: () => Get.to(() => const SpotTradeDetailsScreen()),
@@ -120,6 +121,8 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
                                   _controller.selectedHeaderIndex.value,
                               onHeaderChange: (index) =>
                                   _controller.selectedHeaderIndex.value = index,
+                              baseCoin: _controller.selectedCoinPair.value.childCoinName,
+                              tradeCoin: _controller.selectedCoinPair.value.parentCoinName,
                             );
                           }),
                         ),

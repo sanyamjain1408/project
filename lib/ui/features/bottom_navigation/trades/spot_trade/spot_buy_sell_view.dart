@@ -47,6 +47,9 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
   RxInt selectedBuySubTabIndex = 0.obs;
   RxInt selectedSellSubTabIndex = 0.obs;
   bool isLoggedIn = false;
+  Worker? _priceWorker;
+  final FocusNode _priceFocus = FocusNode();
+  bool _priceUserEdited = false;
 
   @override
   void initState() {
@@ -61,6 +64,24 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       initialIndex: _controller.selectedBuySellTab.value,
     );
     super.initState();
+    _priceFocus.addListener(() {
+      if (!_priceFocus.hasFocus) _priceUserEdited = false;
+    });
+    _priceWorker = ever(_controller.dashboardData, (data) {
+      if (_priceUserEdited || _priceFocus.hasFocus) return;
+      final prices = data.lastPriceData;
+      final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
+      if (price == null || price <= 0) return;
+      final formatted = price.toStringAsFixed(2);
+      final subIndex = _controller.selectedBuySellTab.value == 0
+          ? selectedBuySubTabIndex.value
+          : selectedSellSubTabIndex.value;
+      if (subIndex == 0 || subIndex == 1) {
+        priceEditController.text = formatted;
+      } else if (subIndex == 2) {
+        limitEditController.text = formatted;
+      }
+    });
     setSelectedPrice.addListener(() {
       if (setSelectedPrice.value != null && setSelectedPrice.value! > 0) {
         int subIndex = _controller.selectedBuySellTab.value == 0
@@ -77,6 +98,8 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
 
   @override
   void dispose() {
+    _priceWorker?.dispose();
+    _priceFocus.dispose();
     takeProfitController.dispose();
     takeLossController.dispose();
     super.dispose();

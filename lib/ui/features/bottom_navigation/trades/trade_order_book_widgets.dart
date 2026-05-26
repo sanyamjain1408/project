@@ -21,17 +21,24 @@ import 'trade_widgets.dart';
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 const int _kMaxOrderBookRows = 18; // greendot/reddot mode
-const int _kAllModeRows = 9; // dot (all) mode
+const int _kAllModeRows = 8; // dot (all) mode
 const int _kOrderDecimal = 5;
 const double _kMinFillPercent = 0.05;
 
-// Always shows at least 2 decimal places (e.g. "1.5" → "1.50", "100" → "100.00")
+// Price: exactly 2 decimal. Amount: exactly 5 decimal.
+// If integer part > 7 digits (overflow), show integer only.
 String _fmt2(num? n, {int fixed = _kOrderDecimal}) {
-  final s = coinFormat(n, fixed: fixed);
-  if (!s.contains('.')) return '$s.00';
-  final decLen = s.length - s.indexOf('.') - 1;
-  if (decLen < 2) return s + ('0' * (2 - decLen));
-  return s;
+  final val = (n ?? 0).toDouble();
+  final intPart = val.toStringAsFixed(0);
+  if (intPart.length > 7) return intPart;
+  return val.toStringAsFixed(fixed);
+}
+
+String _fmtPrice(num? n) {
+  final val = (n ?? 0).toDouble();
+  final intPart = val.toStringAsFixed(0);
+  if (intPart.length > 7) return intPart;
+  return val.toStringAsFixed(2);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,6 +55,8 @@ class OderBookFixedView extends StatelessWidget {
     required this.onShortChange,
     required this.selectedHeaderIndex,
     required this.onHeaderChange,
+    this.baseCoin,
+    this.tradeCoin,
   });
 
   final String selectedOrderSort;
@@ -58,6 +67,8 @@ class OderBookFixedView extends StatelessWidget {
   final Function(String) onShortChange;
   final int selectedHeaderIndex;
   final Function(int) onHeaderChange;
+  final String? baseCoin;
+  final String? tradeCoin;
 
   @override
   Widget build(BuildContext context) {
@@ -93,14 +104,12 @@ class OderBookFixedView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: bounded ? MainAxisSize.max : MainAxisSize.min,
           children: [
-            vSpacer5(),
-
             // ── Header ────────────────────────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "${"Price".tr}\n(${total?.baseWallet?.coinType ?? ""})",
+                  "${"Price".tr}\n(${baseCoin ?? total?.baseWallet?.coinType ?? ""})",
                   style: TextStyle(
                     fontSize: 10,
                     fontFamily: "DMSans",
@@ -124,7 +133,7 @@ class OderBookFixedView extends StatelessWidget {
                       ),
                       children: [
                         TextSpan(
-                          text: "\n(${total?.tradeWallet?.coinType ?? ""})",
+                          text: "\n(${tradeCoin ?? total?.tradeWallet?.coinType ?? ""})",
                           style: TextStyle(
                             fontSize: 10,
                             fontFamily: "DMSans",
@@ -147,39 +156,24 @@ class OderBookFixedView extends StatelessWidget {
             if (selectedOrderSort != FromKey.buy)
               SizedBox(
                 height: sectionH,
-                child: Stack(
-                  children: [
-                    // Staircase depth shadow behind all sell rows
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _StaircaseDepthPainter(
-                          orders: sList,
-                          color: const Color(0xFFD05858),
-                          rowHeight: rowH,
-                          totalRows: maxRows,
-                          alignBottom: true,
-                        ),
-                      ),
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: List.generate(sList.length, (index) {
-                        return OderBookItemMinView(
-                          key: ValueKey('sell_${index}_${sList[index].price}'),
-                          sList[index],
-                          FromKey.sell,
-                          selectedHeaderIndex == 1,
-                          priceColor: const Color(0xFFD05858),
-                          rowIndex: index,
-                        );
-                      }),
-                    ),
-                  ],
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: List.generate(sList.length, (index) {
+                    return OderBookItemMinView(
+                      key: ValueKey('sell_${index}_${sList[index].price}'),
+                      sList[index],
+                      FromKey.sell,
+                      selectedHeaderIndex == 1,
+                      priceColor: const Color(0xFFD05858),
+                      rowIndex: index,
+                    );
+                  }),
                 ),
               ),
 
             if (selectedOrderSort != FromKey.buy) const SizedBox(height: 2),
 
+            vSpacer5(),
             // ── Mid price — sell mode ya all mode ke baad sell list ke niche ──────
             if (selectedOrderSort != FromKey.buy)
               MidPriceBlock(
@@ -191,42 +185,29 @@ class OderBookFixedView extends StatelessWidget {
                           : const Color(0xFFD05858)),
               ),
 
+              vSpacer5(),
+
             if (selectedOrderSort != FromKey.buy) const SizedBox(height: 2),
 
             // ── BUY LIST ──────────────────────────────────────────────────────────
             if (selectedOrderSort != FromKey.sell)
               SizedBox(
                 height: sectionH,
-                child: Stack(
-                  children: [
-                    // Staircase depth shadow behind all buy rows
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _StaircaseDepthPainter(
-                          orders: bList,
-                          color: const Color(0xFF22C55E),
-                          rowHeight: rowH,
-                          totalRows: maxRows,
-                          alignBottom: false,
-                        ),
-                      ),
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: List.generate(bList.length, (index) {
-                        return OderBookItemMinView(
-                          key: ValueKey('buy_${index}_${bList[index].price}'),
-                          bList[index],
-                          FromKey.buy,
-                          selectedHeaderIndex == 1,
-                          priceColor: const Color(0xFF4ED78E),
-                          rowIndex: index,
-                        );
-                      }),
-                    ),
-                  ],
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: List.generate(bList.length, (index) {
+                    return OderBookItemMinView(
+                      key: ValueKey('buy_${index}_${bList[index].price}'),
+                      bList[index],
+                      FromKey.buy,
+                      selectedHeaderIndex == 1,
+                      priceColor: const Color(0xFF4ED78E),
+                      rowIndex: index,
+                    );
+                  }),
                 ),
               ),
+              vSpacer20(),
 
             // ── Mid price — buy-only mode mein buy list ke niche ─────────────────
             if (selectedOrderSort == FromKey.buy) const SizedBox(height: 2),
@@ -237,7 +218,56 @@ class OderBookFixedView extends StatelessWidget {
               ),
             if (selectedOrderSort == FromKey.buy) const SizedBox(height: 2),
 
-            if (bounded) const Spacer() else vSpacer5(),
+            
+            // ── B/S ratio bar ─────────────────────────────────────────────────────
+            Builder(builder: (context) {
+              final totalBid = bList.fold(0.0, (s, e) => s + ((e.amount ?? 0).toDouble()));
+              final totalAsk = sList.fold(0.0, (s, e) => s + ((e.amount ?? 0).toDouble()));
+              final total = totalBid + totalAsk;
+              final bidPct = total > 0 ? (totalBid / total * 100).round() : 50;
+              final askPct = 100 - bidPct;
+              return Container(
+                height: 24,
+                margin: EdgeInsets.symmetric(vertical: 7),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  gradient: LinearGradient(
+                    stops: [bidPct / 100, bidPct / 100],
+                    colors: [const Color(0x1F0ECB81), const Color(0x1FF6465D)],
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      Container(
+                        width: 13, height: 13,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: const Color(0xFF0ECB81), width: 1.5),
+                        ),
+                        child: const Center(child: Text('B', style: TextStyle(color: Color(0xFF0ECB81), fontSize: 8, fontWeight: FontWeight.w800))),
+                      ),
+                      const SizedBox(width: 3),
+                      Text('$bidPct%', style: const TextStyle(color: Color(0xFF0ECB81), fontSize: 10, fontWeight: FontWeight.w700)),
+                    ]),
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text('$askPct%', style: const TextStyle(color: Color(0xFFD05858), fontSize: 10, fontWeight: FontWeight.w700)),
+                      const SizedBox(width: 3),
+                      Container(
+                        width: 13, height: 13,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: const Color(0xFFD05858), width: 1.5),
+                        ),
+                        child: const Center(child: Text('S', style: TextStyle(color: Color(0xFFD05858), fontSize: 8, fontWeight: FontWeight.w800))),
+                      ),
+                    ]),
+                  ],
+                ),
+              );
+            }),
 
             // ── Bottom controls ───────────────────────────────────────────────────
             Row(
@@ -353,7 +383,7 @@ class _MidPriceBlockState extends State<MidPriceBlock> {
                 style: TextStyle(
                   color: _priceColor,
                   fontSize: 15,
-                  fontFamily: "DMSans",
+                  fontFamily: 'monospace',
                   fontWeight: FontWeight.w700,
                   height: 1.33,
                 ),
@@ -507,7 +537,7 @@ class OrderBookIcon extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // ORDER BOOK ITEM MIN VIEW
 // ─────────────────────────────────────────────────────────────────────────────
-class OderBookItemMinView extends StatefulWidget {
+class OderBookItemMinView extends StatelessWidget {
   const OderBookItemMinView(
     this.order,
     this.type,
@@ -524,270 +554,75 @@ class OderBookItemMinView extends StatefulWidget {
   final int rowIndex;
 
   @override
-  State<OderBookItemMinView> createState() => _OderBookItemMinViewState();
-}
-
-class _OderBookItemMinViewState extends State<OderBookItemMinView>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  double _currentPercent = _kMinFillPercent;
-
-  double _safePercent(double raw) => raw.clamp(_kMinFillPercent, 1.0);
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-
-    _currentPercent = _safePercent(
-      getPercentageValue(1, widget.order.percentage),
-    );
-
-    _animation = Tween<double>(
-      begin: _currentPercent,
-      end: _currentPercent,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-
-    _controller.value = 1.0;
-
-    _controller.addListener(() {
-      _currentPercent = _animation.value;
-    });
-  }
-
-  @override
-  void didUpdateWidget(covariant OderBookItemMinView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    final newPercent = _safePercent(
-      getPercentageValue(1, widget.order.percentage),
-    );
-
-    if ((newPercent - _currentPercent).abs() > 0.001) {
-      final fromPercent = _currentPercent;
-      _currentPercent = newPercent;
-
-      _animation = Tween<double>(begin: fromPercent, end: newPercent).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-      );
-
-      _controller
-        ..value = 0.0
-        ..forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final bgColor = widget.type == FromKey.buy
-        ? const Color(0xFF22C55E)
-        : const Color(0xFFEF4444);
+    final isBuy = type == FromKey.buy;
+    final bgColor = isBuy
+        ? const Color(0xFF22C55E).withValues(alpha: 0.1)
+        : const Color(0xFFEF4444).withValues(alpha: 0.1);
 
-    final value = widget.isTotal
-        ? numberFormatCompact(widget.order.total, decimals: _kOrderDecimal)
-        : _fmt2(widget.order.amount);
+    final pct = getPercentageValue(1, order.percentage).clamp(0.0, 1.0);
 
-    return Stack(
-      children: [
-        AnimatedBuilder(
-          animation: _animation,
-          builder: (context, _) {
-            return CustomPaint(
-              painter: _OrderFillPainter(
-                color: bgColor,
-                fillPercent: _animation.value,
+    final value = isTotal
+        ? numberFormatCompact(order.total, decimals: _kOrderDecimal)
+        : _fmt2(order.amount);
+
+    return SizedBox(
+      height: 18,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final barWidth = constraints.maxWidth * pct;
+          return Stack(
+            children: [
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: barWidth,
+                child: Container(color: bgColor),
               ),
-              child: const SizedBox(height: 18, width: double.infinity),
-            );
-          },
-        ),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => setSelectedPrice.value = widget.order.price,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    (widget.order.price ?? 0).toDouble().toStringAsFixed(2),
-                    style: TextStyle(
-                      color: widget.priceColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      height: 1.33,
-                      fontFamily: "DMSans",
-                    ),
-                    textAlign: TextAlign.start,
-                    maxLines: 1,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => setSelectedPrice.value = order.price,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _fmtPrice(order.price),
+                          style: TextStyle(
+                            color: priceColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'monospace',
+                          ),
+                          textAlign: TextAlign.start,
+                          maxLines: 1,
+                        ),
+                      ),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: TextRobotoAutoBold(
-                    value,
-                    color: Theme.of(context).primaryColor,
-                    fontSize: Dimens.fontSizeSmall,
-                    textAlign: TextAlign.end,
-                    maxLines: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _StaircaseDepthPainter — draws a staircase polygon across ALL rows.
-// Percentages are normalized so the largest row = 100% width,
-// ensuring every row is visible regardless of raw cumulative values.
-// alignBottom=true  → sell list (rows stacked at bottom, widest at bottom)
-// alignBottom=false → buy list  (rows stacked at top,    widest at bottom)
-// ─────────────────────────────────────────────────────────────────────────────
-class _StaircaseDepthPainter extends CustomPainter {
-  _StaircaseDepthPainter({
-    required this.orders,
-    required this.color,
-    required this.rowHeight,
-    required this.totalRows,
-    required this.alignBottom,
-    this.mirrorX = false,
-    this.sharedMaxPct,
-  });
-
-  final List<ExchangeOrder> orders;
-  final Color color;
-  final double rowHeight;
-  final int totalRows;
-  final bool alignBottom;
-  // mirrorX=true: staircase grows from LEFT edge rightward (for sell side in details view)
-  final bool mirrorX;
-  // When set, normalize against this value instead of local max (for synced buy/sell scale)
-  final double? sharedMaxPct;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (orders.isEmpty) return;
-
-    // Normalize: use shared max if provided, else local max
-    final double maxPct = sharedMaxPct ?? orders
-        .map((o) => (o.percentage ?? 0).toDouble())
-        .fold(0.0, (a, b) => a > b ? a : b);
-    if (maxPct <= 0) return;
-
-    // Offset so rows align to bottom (sell) or top (buy)
-    final topOffset = alignBottom
-        ? (totalRows - orders.length) * rowHeight
-        : 0.0;
-
-    final path = Path();
-    bool started = false;
-
-    for (int i = 0; i < orders.length; i++) {
-      final rawPct = (orders[i].percentage ?? 0).toDouble();
-      final pct = ((rawPct / maxPct)).clamp(0.05, 1.0);
-      final barW = size.width * pct;
-      final yTop    = topOffset + i * rowHeight;
-      final yBottom = yTop + rowHeight;
-
-      if (mirrorX) {
-        // Sell side in details view: grows from left edge rightward
-        final xRight = barW;
-        if (!started) {
-          path.moveTo(0, yTop);
-          path.lineTo(xRight, yTop);
-          started = true;
-        } else {
-          path.lineTo(xRight, yTop);
-        }
-        path.lineTo(xRight, yBottom);
-      } else {
-        // Normal: grows from right edge leftward
-        final xLeft = size.width - barW;
-        if (!started) {
-          path.moveTo(size.width, yTop);
-          path.lineTo(xLeft, yTop);
-          started = true;
-        } else {
-          path.lineTo(xLeft, yTop);
-        }
-        path.lineTo(xLeft, yBottom);
-      }
-    }
-
-    if (mirrorX) {
-      path.lineTo(0, topOffset + orders.length * rowHeight);
-    } else {
-      path.lineTo(size.width, topOffset + orders.length * rowHeight);
-    }
-    path.close();
-
-    final gradient = mirrorX
-        ? LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [color.withValues(alpha: 0.35), Colors.transparent],
-          )
-        : LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Colors.transparent, color.withValues(alpha: 0.35)],
+              ),
+            ],
           );
-    canvas.drawPath(
-      path,
-      Paint()..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+        },
+      ),
     );
   }
-
-  @override
-  bool shouldRepaint(_StaircaseDepthPainter old) =>
-      old.orders != orders || old.color != color || old.totalRows != totalRows || old.mirrorX != mirrorX;
 }
 
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _OrderFillPainter — per-row depth shadow
-// Fill grows from RIGHT edge leftward.
-// Gradient: transparent (left edge) → color (right edge) so shadow is visible.
-// ─────────────────────────────────────────────────────────────────────────────
-class _OrderFillPainter extends CustomPainter {
-  _OrderFillPainter({required this.color, required this.fillPercent});
-
-  final Color color;
-  final double fillPercent;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final fillW = (size.width * fillPercent).clamp(0.0, size.width);
-    // Bar anchored to right edge, widens leftward
-    final left = size.width - fillW;
-    final fillRect = Rect.fromLTWH(left, 0, fillW, size.height);
-    final gradient = LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-      colors: [Colors.transparent, color.withValues(alpha: 0.28)],
-    );
-    canvas.drawRect(fillRect, Paint()..shader = gradient.createShader(fillRect));
-  }
-
-  @override
-  bool shouldRepaint(covariant _OrderFillPainter old) =>
-      old.fillPercent != fillPercent || old.color != color;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DETAILS ORDER BOOK VIEW
@@ -801,16 +636,20 @@ class DetailsOrderBookView extends StatelessWidget {
     this.total,
     required this.buyExchangeOrder,
     required this.sellExchangeOrder,
+    this.tradeCoinOverride,
+    this.baseCoinOverride,
   });
 
   final Total? total;
   final List<ExchangeOrder> buyExchangeOrder;
   final List<ExchangeOrder> sellExchangeOrder;
+  final String? tradeCoinOverride;
+  final String? baseCoinOverride;
 
   @override
   Widget build(BuildContext context) {
-    final tradeCoin = total?.tradeWallet?.coinType ?? '';
-    final baseCoin  = total?.baseWallet?.coinType  ?? '';
+    final tradeCoin = tradeCoinOverride?.isNotEmpty == true ? tradeCoinOverride! : (total?.tradeWallet?.coinType ?? '');
+    final baseCoin  = baseCoinOverride?.isNotEmpty  == true ? baseCoinOverride!  : (total?.baseWallet?.coinType  ?? '');
     final maxRows   = min(12, max(buyExchangeOrder.length, sellExchangeOrder.length));
     const rowH = 22.0;
 
@@ -824,6 +663,7 @@ class DetailsOrderBookView extends StatelessWidget {
             children: [
               _hdr('Amount($tradeCoin)', flex: 3, align: TextAlign.left),
               _hdr('Price($baseCoin)',   flex: 3, align: TextAlign.right),
+              SizedBox(width: 10,),
               _hdr('Price($baseCoin)',   flex: 3, align: TextAlign.left),
               _hdr('Amount($tradeCoin)', flex: 3, align: TextAlign.right),
             ],
@@ -834,98 +674,111 @@ class DetailsOrderBookView extends StatelessWidget {
             height: maxRows * rowH,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final halfW = constraints.maxWidth / 2;
-                final buyOrders = buyExchangeOrder.take(maxRows).toList();
-                // Sell list is stored reversed (highest ask first), reverse back so
-                // row 0 = smallest cumulative % (narrowest, top), row N = widest (bottom)
-                final sellOrders = sellExchangeOrder.take(maxRows).toList().reversed.toList();
-                // Combined max so both sides use identical scale → same width per row
-                double calcMaxPct(List<ExchangeOrder> l) => l
+                final totalW = constraints.maxWidth;
+                final halfW  = totalW / 2;
+                final buyOrders  = buyExchangeOrder.take(maxRows).toList();
+                final sellOrders = sellExchangeOrder.take(maxRows).toList();
+
+                // Shared max so both sides use identical scale
+                double maxPctOf(List<ExchangeOrder> l) => l
                     .map((o) => (o.percentage ?? 0).toDouble())
                     .fold(0.0, (a, b) => a > b ? a : b);
-                final sharedMax = max(calcMaxPct(buyOrders), calcMaxPct(sellOrders));
+                final sharedMax = max(maxPctOf(buyOrders), maxPctOf(sellOrders));
+                final double maxPct = sharedMax > 0 ? sharedMax : 1.0;
+
+                // Build normalised fractions (0..1) for each row
+                final buyFracs  = List.generate(maxRows, (i) =>
+                    i < buyOrders.length  ? ((buyOrders[i].percentage  ?? 0).toDouble() / maxPct).clamp(0.0, 1.0) : 0.0);
+                // sell: mirror of buy — same widths, ascending order (small top, large bottom)
+                final sellFracs = (buyFracs.toList()..sort((a, b) => a.compareTo(b)));
 
                 return Stack(
-              children: [
-                // Buy depth — left half
-                Positioned(
-                  top: 0, bottom: 0, left: 0, width: halfW,
-                  child: CustomPaint(
-                    painter: _StaircaseDepthPainter(
-                      orders: buyOrders,
-                      color: const Color(0xFF22C55E),
-                      rowHeight: rowH,
-                      totalRows: maxRows,
-                      alignBottom: false,
-                      sharedMaxPct: sharedMax,
-                    ),
-                  ),
-                ),
-                // Sell depth — right half
-                Positioned(
-                  top: 0, bottom: 0, left: halfW, width: halfW,
-                  child: CustomPaint(
-                    painter: _StaircaseDepthPainter(
-                      orders: sellOrders,
-                      color: const Color(0xFFD05858),
-                      rowHeight: rowH,
-                      totalRows: maxRows,
-                      alignBottom: false,
-                      mirrorX: true,
-                      sharedMaxPct: sharedMax,
-                    ),
-                  ),
-                ),
-                // Text rows
-                Column(
-                  children: List.generate(maxRows, (i) {
-                    final buy  = i < buyExchangeOrder.length  ? buyExchangeOrder[i]  : null;
-                    final sell = i < sellExchangeOrder.length ? sellExchangeOrder[i] : null;
-                    return SizedBox(
-                      height: rowH,
-                      child: Row(
-                        children: [
-                          // Buy amount
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              buy != null ? _fmt2(buy.amount) : '',
-                              style: const TextStyle(fontSize: 11, color: Color(0xFFDDDDDD), fontFamily: 'Monospace'),
-                            ),
-                          ),
-                          // Buy price
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              buy != null ? _fmt2(buy.price) : '',
-                              textAlign: TextAlign.right,
-                              style: TextStyle(fontSize: 11, color: gBuyColor, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          // Sell price
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              sell != null ? _fmt2(sell.price) : '',
-                              textAlign: TextAlign.left,
-                              style: TextStyle(fontSize: 11, color: gSellColor, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          // Sell amount
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              sell != null ? _fmt2(sell.amount) : '',
-                              textAlign: TextAlign.right,
-                              style: const TextStyle(fontSize: 11, color: Color(0xFFDDDDDD), fontFamily: 'Monospace'),
-                            ),
-                          ),
-                        ],
+                  children: [
+                    // ── Continuous green background (buy side, right half of left column) ──
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _DepthBarPainter(
+                          fracs: buyFracs,
+                          rowH: rowH,
+                          halfW: halfW,
+                          color: const Color(0x2622C55E),
+                          growFromRight: false,
+                          gap: 10,
+                        ),
                       ),
-                    );
-                  }),
-                ),
-              ],
+                    ),
+                    // ── Continuous red background (sell side, left half of right column) ──
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _DepthBarPainter(
+                          fracs: sellFracs,
+                          rowH: rowH,
+                          halfW: halfW,
+                          color: const Color(0x26D05858),
+                          growFromRight: true,
+                          gap: 10,
+                        ),
+                      ),
+                    ),
+                    // ── Text rows on top ──
+                    Column(
+                      children: List.generate(maxRows, (i) {
+                        final buy  = i < buyExchangeOrder.length  ? buyExchangeOrder[i]  : null;
+                        final sell = i < sellExchangeOrder.length ? sellExchangeOrder[i] : null;
+                        return SizedBox(
+                          height: rowH,
+                          child: Row(
+                            children: [
+                              // Buy side
+                              Expanded(
+                                child: Row(children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      buy != null ? _fmt2(buy.amount) : '',
+                                      style: const TextStyle(fontSize: 11, color: Color(0xFFDDDDDD), fontFamily: 'monospace'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      buy != null ? _fmtPrice(buy.price) : '',
+                                      textAlign: TextAlign.right,
+                                      style: TextStyle(fontSize: 11, color: gBuyColor, fontWeight: FontWeight.w600, fontFamily: 'monospace'),
+                                    ),
+                                  ),
+                                ]),
+                              ),
+                              // Gap between buy and sell columns
+                              const SizedBox(width: 10),
+                              // Sell side
+                              Expanded(
+                                child: Row(children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      sell != null ? _fmtPrice(sell.price) : '',
+                                      textAlign: TextAlign.left,
+                                      style: TextStyle(fontSize: 11, color: gSellColor, fontWeight: FontWeight.w600, fontFamily: 'monospace'),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      sell != null ? _fmt2(sell.amount) : '',
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(fontSize: 11, color: Color(0xFFDDDDDD), fontFamily: 'monospace'),
+                                    ),
+                                  ),
+                                ]),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
                 );
               },
             ),
@@ -948,6 +801,57 @@ class DetailsOrderBookView extends StatelessWidget {
   }
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _DepthBarPainter — draws continuous stepped depth bars with no row gaps
+// ─────────────────────────────────────────────────────────────────────────────
+class _DepthBarPainter extends CustomPainter {
+  const _DepthBarPainter({
+    required this.fracs,
+    required this.rowH,
+    required this.halfW,
+    required this.color,
+    required this.growFromRight,
+    this.gap = 10,
+  });
+  final List<double> fracs;
+  final double rowH;
+  final double halfW;
+  final Color color;
+  final bool growFromRight;
+  final double gap;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final half = gap / 2;
+    if (growFromRight) {
+      // sell side: starts at halfW + half, grows rightward
+      for (int i = 0; i < fracs.length; i++) {
+        final frac = fracs[i];
+        if (frac <= 0) continue;
+        final barW = (halfW - half) * frac;
+        final top = i * rowH;
+        final bottom = top + rowH;
+        canvas.drawRect(Rect.fromLTRB(halfW + half, top, halfW + half + barW, bottom), paint);
+      }
+    } else {
+      // buy side: ends at halfW - half, grows leftward
+      for (int i = 0; i < fracs.length; i++) {
+        final frac = fracs[i];
+        if (frac <= 0) continue;
+        final barW = (halfW - half) * frac;
+        final top = i * rowH;
+        final bottom = top + rowH;
+        canvas.drawRect(Rect.fromLTRB(halfW - half - barW, top, halfW - half, bottom), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DepthBarPainter old) =>
+      old.fracs != fracs || old.color != color || old.gap != gap;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _OrderBookDetailRow — StatefulWidget with AnimationController

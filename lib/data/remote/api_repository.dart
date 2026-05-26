@@ -615,6 +615,17 @@ class APIRepository {
     return provider.getRequest(APIURLConstants.getWalletTotalValue, authHeader());
   }
 
+  Future<ServerResponse> getSellOrdersHistory(int page, {String? search}) async {
+    var mapObj = <String, String>{};
+    mapObj[APIKeyConstants.page] = "$page";
+    mapObj[APIKeyConstants.perPage] = "100";
+    mapObj[APIKeyConstants.limit] = "100";
+    mapObj[APIKeyConstants.columnName] = APIKeyConstants.createdAt;
+    mapObj[APIKeyConstants.orderBy] = APIKeyConstants.vOrderDESC;
+    if (search != null && search.isNotEmpty) mapObj[APIKeyConstants.search] = search;
+    return provider.getRequest(APIURLConstants.getAllSellOrdersHistoryApp, authHeader(), query: mapObj);
+  }
+
   Future<ServerResponse> getWalletDeposit(String coinType) async {
     return provider.getRequest(APIURLConstants.getWalletDeposit + coinType, authHeader());
   }

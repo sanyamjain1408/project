@@ -54,7 +54,7 @@ class CoinPair {
       lastPrice: makeDouble(json["last_price"]),
       priceChange: makeDouble(json["price_change"]),
       childCoinName: json["child_coin_name"],
-      icon: json["icon"] ?? json["coin_icon"] ?? json["child_coin_icon"],
+      icon: json["icon"] ?? json["coin_icon"] ?? json["child_coin_icon"] ?? json["trade_coin_icon"] ?? json["bot_icon"],
       parentIcon: json["parent_icon"] ?? json["parent_coin_icon"] ?? json["base_coin_icon"] ?? json["base_icon"],
       parentCoinName: json["parent_coin_name"],
       userId: makeInt(json["user_id"]),
