@@ -278,15 +278,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   }
 
   Widget _buildAnnouncement() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      color: Colors.transparent,
-      child: const Row(children: [
-        Icon(Icons.volume_up_outlined, color: Color(0xFF007958), size: 15),
-        SizedBox(width: 5),
-        Expanded(child: Text('Trapix.com lists TDO/USDT Trading Pair!', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: Color(0xFF007958), fontFamily: futureDmSans), overflow: TextOverflow.ellipsis)),
-      ]),
-    );
+    return const _FutureMarqueeTicker();
   }
 
   Widget _buildMain() {
@@ -405,28 +397,40 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   }
 
   Widget _buildChartViewMode() {
-    final pair = _ctrl.currentPair.value;
-    final symbol = (pair?.symbol ?? 'BTCUSDT').replaceAll('/', '');
     final chartTabIdx = _chartSubTab == 'Chart' ? 0 : _chartSubTab == 'Coin Info' ? 1 : 2;
     final bookTabIdx = _unifiedTab == 'Order Book' ? 0 : _unifiedTab == 'Trade History' ? 1 : 2;
 
     return Column(children: [
-      SizedBox(height: 40,),
-      Row(children: [
-        buttonOnlyIcon(onPress: () => setState(() => _viewMode = 'trade'), iconData: Icons.arrow_back_outlined, size: Dimens.iconSizeMin),
-        Text('$symbol Perp', style: const TextStyle(fontFamily: futureDmSans, color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
-        const Spacer(),
-        InkWell(onTap: () => setState(() => _isFavourite = !_isFavourite), child: Padding(padding: const EdgeInsets.all(10), child: Image.asset('assets/icons/star.png', width: 20, height: 20))),
-        buttonOnlyIcon(onPress: () {}, iconData: Icons.ios_share_sharp, size: 20),
-        hSpacer5(),
-      ]),
+      Obx(() {
+        final pair = _ctrl.currentPair.value;
+        final symbol = (pair?.symbol ?? 'BTCUSDT').replaceAll('/', '');
+        final change = pair?.priceChange24h ?? 0;
+        final changeColor = _ctrl.priceGoingUp.value ? gBuyColor : gSellColor;
+        return SafeArea(
+          bottom: false,
+          child: Row(children: [
+            buttonOnlyIcon(onPress: () => setState(() => _viewMode = 'trade'), iconData: Icons.arrow_back_outlined, size: Dimens.iconSizeMin),
+            Text(symbol, style: const TextStyle(fontFamily: futureDmSans, color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20)),
+            const SizedBox(width: 6),
+            Text('Perp', style: TextStyle(fontFamily: futureDmSans, color: Colors.white.withValues(alpha: 0.5), fontSize: 14, fontWeight: FontWeight.w400)),
+            const SizedBox(width: 8),
+            Text('${change >= 0 ? '+' : ''}${change.toStringAsFixed(2)}%', style: TextStyle(fontFamily: futureDmSans, color: changeColor, fontSize: 14, fontWeight: FontWeight.w400)),
+            const Spacer(),
+            InkWell(onTap: () => setState(() => _isFavourite = !_isFavourite), child: Padding(padding: const EdgeInsets.all(10), child: Image.asset('assets/icons/star.png', width: 20, height: 20))),
+            buttonOnlyIcon(onPress: () {}, iconData: Icons.ios_share_sharp, size: 20),
+            hSpacer5(),
+          ]),
+        );
+      }),
       tabBarText(
         ['Chart'.tr, 'Coin Info'.tr, 'Contract Info'.tr], chartTabIdx,
         (i) => setState(() => _chartSubTab = i == 0 ? 'Chart' : i == 1 ? 'Coin Info' : 'Contract Info'),
         selectedColor: Colors.white, unSelectedColor: Colors.white.withValues(alpha: 0.5),
         fontSize: 16, selectedFontWeight: FontWeight.w700, unSelectedFontWeight: FontWeight.w400, fontFamily: futureDmSans,
       ),
-      Expanded(child: Builder(builder: (_) {
+      Expanded(child: Obx(() {
+        final pair = _ctrl.currentPair.value;
+        final symbol = (pair?.symbol ?? 'BTCUSDT').replaceAll('/', '');
         if (_chartSubTab != 'Chart') return const SizedBox.expand();
         return ListView(padding: EdgeInsets.zero, children: [
           _buildFuturePriceView(pair: pair),
@@ -499,7 +503,8 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   Widget _buildFuturePriceView({FuturePair? pair}) {
     final pp = pair?.pricePrecision ?? 2;
     final change = pair?.priceChange24h ?? 0;
-    final priceColor = change >= 0 ? futureGreen : futureRed;
+    final isUp = _ctrl.priceGoingUp.value;
+    final priceColor = isUp ? gBuyColor : gSellColor;
     final markPrice = pair?.currentPrice ?? 0;
     final base = pair?.baseCurrency ?? 'BTC';
     final quote = pair?.quoteCurrency ?? 'USDT';
@@ -509,31 +514,60 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 15, 20, 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(flex: 6, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            Flexible(child: Text(markPrice.toStringAsFixed(pp), style: TextStyle(color: priceColor, fontSize: 24, fontWeight: FontWeight.w600, fontFamily: futureDmSans), maxLines: 1)),
-            Icon(change >= 0 ? Icons.arrow_drop_up : Icons.arrow_drop_down, color: priceColor, size: 20),
+        Expanded(
+          flex: 6,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              Flexible(
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 250),
+                  style: TextStyle(color: priceColor, fontSize: 24, fontWeight: FontWeight.w600, fontFamily: futureDmSans, height: 32 / 24),
+                  child: Text(markPrice.toStringAsFixed(pp), maxLines: 1),
+                ),
+              ),
+              Icon(isUp ? Icons.arrow_drop_up : Icons.arrow_drop_down, color: priceColor, size: 28),
+            ]),
+            const SizedBox(height: 2),
+            Text.rich(TextSpan(children: [
+              TextSpan(
+                text: '≈\$${markPrice.toStringAsFixed(pp > 2 ? 2 : pp)}  ',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: futureDmSans, fontWeight: FontWeight.w400),
+              ),
+              TextSpan(
+                text: '${change >= 0 ? '+' : ''}${change.toStringAsFixed(2)}%',
+                style: TextStyle(color: priceColor, fontSize: 12, fontFamily: futureDmSans, fontWeight: FontWeight.w400),
+              ),
+            ])),
+            const SizedBox(height: 2),
+            Text('Mark Price ${markPrice.toStringAsFixed(pp)}',
+                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
           ]),
-          const SizedBox(height: 4),
-          Text('\$${markPrice.toStringAsFixed(pp > 2 ? 2 : pp)}', style: const TextStyle(fontSize: 12, color: futureMuted, fontFamily: futureDmSans)),
-          const SizedBox(height: 2),
-          Text('${change >= 0 ? '+' : ''}${change.toStringAsFixed(2)}%', style: TextStyle(fontSize: 12, color: priceColor, fontFamily: futureDmSans)),
-          const SizedBox(height: 6),
-          Text('Mark ${markPrice.toStringAsFixed(pp)}', style: const TextStyle(fontSize: 11, color: futureMuted, fontFamily: futureDmSans)),
-        ])),
-        Expanded(flex: 5, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          _DetailStat(label: '24h High', value: (pair?.high24h ?? 0).toStringAsFixed(pp)),
-          const SizedBox(height: 6),
-          _DetailStat(label: '24h Low', value: (pair?.low24h ?? 0).toStringAsFixed(pp)),
-          const SizedBox(height: 6),
-          _DetailStat(label: 'Index', value: markPrice.toStringAsFixed(pp)),
-          const SizedBox(height: 6),
-          _DetailStat(label: 'Funding/CD', value: '$fundingPct / $_countdown', valueColor: futureGreen),
-          const SizedBox(height: 6),
-          _DetailStat(label: '24h Vol($base)', value: formatFutureVolume(vol24h / (markPrice > 0 ? markPrice : 1))),
-          const SizedBox(height: 6),
-          _DetailStat(label: '24h Vol($quote)', value: formatFutureVolume(vol24h)),
-        ])),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 7,
+          child: Column(children: [
+            _futureStatRow('24h High', (pair?.high24h ?? 0).toStringAsFixed(pp)),
+            _futureStatRow('24h Low', (pair?.low24h ?? 0).toStringAsFixed(pp)),
+            _futureStatRow('24h Vol ($base)', formatFutureVolume(vol24h / (markPrice > 0 ? markPrice : 1))),
+            _futureStatRow('24h Vol ($quote)', '\$${formatFutureVolume(vol24h)}'),
+            _futureStatRow('Index Price', markPrice.toStringAsFixed(pp)),
+            _futureStatRow('Funding', fundingPct, valueColor: futureGreen),
+            _futureStatRow('Countdown', _countdown, valueColor: futureGreen),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  Widget _futureStatRow(String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Expanded(child: Text(label,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: futureDmSans, height: 16 / 12))),
+        Text(value,
+            style: TextStyle(color: valueColor ?? Colors.white, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: futureDmSans, height: 16 / 12)),
       ]),
     );
   }
@@ -563,18 +597,64 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   }
 }
 
-class _DetailStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  const _DetailStat({required this.label, required this.value, this.valueColor});
+class _FutureMarqueeTicker extends StatefulWidget {
+  const _FutureMarqueeTicker();
+
+  @override
+  State<_FutureMarqueeTicker> createState() => _FutureMarqueeTickerState();
+}
+
+class _FutureMarqueeTickerState extends State<_FutureMarqueeTicker> {
+  final _sc = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startScroll());
+  }
+
+  Future<void> _startScroll() async {
+    await Future.delayed(const Duration(seconds: 1));
+    while (mounted && _sc.hasClients) {
+      final max = _sc.position.maxScrollExtent;
+      if (max <= 0) {
+        await Future.delayed(const Duration(seconds: 1));
+        continue;
+      }
+      await _sc.animateTo(max, duration: Duration(milliseconds: (max * 60).toInt()), curve: Curves.linear);
+      if (!mounted) break;
+      _sc.jumpTo(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _sc.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-      Text(label, style: const TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
-      const SizedBox(height: 2),
-      Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: valueColor ?? futureTextWhite, fontFamily: futureDmSans)),
-    ]);
+    const marqueeText = '   Trapix.com lists TDO/USDT Trading Pair!   ';
+    return Container(
+      height: 25,
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      child: Row(children: [
+        const Icon(Icons.volume_up_outlined, color: Color(0xFF007958), size: 20),
+        const SizedBox(width: 6),
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _sc,
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            child: Text(
+              marqueeText * 5,
+              style: const TextStyle(color: Color(0xFF007958), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: futureDmSans, height: 16 / 12),
+            ),
+          ),
+        ),
+      ]),
+    );
   }
 }
+

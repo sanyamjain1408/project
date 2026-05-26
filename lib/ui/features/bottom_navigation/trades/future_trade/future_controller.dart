@@ -14,6 +14,7 @@ class NewFutureController extends GetxController {
   final isLoggedIn = false.obs;
   final orderLoading = false.obs;
   final seed = 0.obs;
+  final priceGoingUp = true.obs;
   Timer? _seedTimer;
   Timer? _priceTimer;
 
@@ -74,6 +75,8 @@ class NewFutureController extends GetxController {
           final data = jsonDecode(res.body);
           if (data['success'] == true && data['data'] != null) {
             final updated = FuturePair.fromJson(data['data']);
+            final prevPrice = currentPair.value?.currentPrice ?? updated.currentPrice;
+            priceGoingUp.value = updated.currentPrice >= prevPrice;
             currentPair.value = updated;
             final idx = pairs.indexWhere((p) => p.symbol == symbol);
             if (idx >= 0) pairs[idx] = updated;
