@@ -20,7 +20,7 @@ import 'trade_widgets.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
-const int _kMaxOrderBookRows = 18; // greendot/reddot mode
+const int _kMaxOrderBookRows = 15; // greendot/reddot mode
 const int _kAllModeRows = 8; // dot (all) mode
 const int _kOrderDecimal = 5;
 const double _kMinFillPercent = 0.05;
