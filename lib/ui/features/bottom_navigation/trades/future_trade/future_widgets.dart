@@ -70,15 +70,8 @@ class FutureOrderBook extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Price', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
-            Text('Total', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('($quote)', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
-            Text('($base)', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
+            Text('Price\n($quote)', style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
+            Text('Amount\n($base)', textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
           ],
         ),
         const SizedBox(height: 2),
@@ -225,14 +218,14 @@ class _BookRow extends StatelessWidget {
             Expanded(
               child: Text(
                 _formatPrice(priceVal),
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: color, fontFamily: 'monospace'),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: color, fontFamily: "DMSans"),
                 textAlign: TextAlign.left,
                 maxLines: 1,
               ),
             ),
             Text(
               _formatAmount(amountVal),
-              style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w400, fontFamily: 'monospace'),
+              style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w400, fontFamily: "DMSans"),
               textAlign: TextAlign.right,
               maxLines: 1,
             ),

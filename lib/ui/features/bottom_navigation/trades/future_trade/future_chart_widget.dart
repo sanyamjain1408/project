@@ -1,6 +1,53 @@
 import 'package:flutter/material.dart';
 import 'future_models.dart';
 
+// ── Order book row bar painter (no gaps between rows) ────────────────────────
+class _OrderRowBarPainter extends CustomPainter {
+  final List<double> bidFracs;
+  final List<double> askFracs;
+  final double rowH;
+  final double colW;
+  final double gap;
+  final Color bidColor;
+  final Color askColor;
+
+  const _OrderRowBarPainter({
+    required this.bidFracs,
+    required this.askFracs,
+    required this.rowH,
+    required this.colW,
+    required this.gap,
+    required this.bidColor,
+    required this.askColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bidPaint = Paint()..color = bidColor;
+    final askPaint = Paint()..color = askColor;
+    // bid bars: grow from right edge of left column leftward
+    for (int i = 0; i < bidFracs.length; i++) {
+      final frac = bidFracs[i];
+      if (frac <= 0) continue;
+      final barW = colW * frac;
+      final top = i * rowH;
+      canvas.drawRect(Rect.fromLTWH(colW - barW, top, barW, rowH), bidPaint);
+    }
+    // ask bars: grow from left edge of right column rightward (after gap)
+    for (int i = 0; i < askFracs.length; i++) {
+      final frac = askFracs[i];
+      if (frac <= 0) continue;
+      final barW = colW * frac;
+      final top = i * rowH;
+      canvas.drawRect(Rect.fromLTWH(colW + gap, top, barW, rowH), askPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_OrderRowBarPainter old) =>
+      old.bidFracs != bidFracs || old.askFracs != askFracs;
+}
+
 // ── Depth chart data point ────────────────────────────────────────────────────
 class DepthPoint {
   final double price;
@@ -121,6 +168,8 @@ class FutureFullOrderBook extends StatelessWidget {
   final double markPrice;
   final int pp;
   final double halfWidth;
+  final String base;
+  final String quote;
   final void Function(String price) onPriceTap;
 
   const FutureFullOrderBook({
@@ -130,6 +179,8 @@ class FutureFullOrderBook extends StatelessWidget {
     required this.markPrice,
     required this.pp,
     required this.halfWidth,
+    this.base = 'BTC',
+    this.quote = 'USDT',
     required this.onPriceTap,
   });
 
@@ -197,85 +248,103 @@ class FutureFullOrderBook extends StatelessWidget {
               ],
             ),
           ),
-          // Column headers
-          const Padding(
-            padding: EdgeInsets.only(bottom: 6),
-            child: Row(
-              children: [
-                Expanded(child: Text('Amount', style: TextStyle(fontSize: 11, color: futureMuted, fontFamily: futureDmSans))),
-                Text('Price', style: TextStyle(fontSize: 11, color: futureMuted, fontFamily: futureDmSans)),
-                Expanded(child: Text('Amount', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, color: futureMuted, fontFamily: futureDmSans))),
-              ],
-            ),
-          ),
+          // Column headers — matches DetailsOrderBookView exactly
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  children: bidRows.map((row) {
-                    final pct = ((row['pct'] as double) / maxBidCum * 100).clamp(0.0, 100.0);
-                    final price = row['price'] as String;
-                    final amount = row['amount'] as String;
-                    return GestureDetector(
-                      onTap: () => onPriceTap(price),
-                      child: SizedBox(
-                        height: 24,
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              right: 0, top: 2, bottom: 2,
-                              width: halfWidth * pct / 100,
-                              child: Container(color: const Color(0x140ECB81)),
-                            ),
-                            Row(
-                              children: [
-                                Text(amount, style: const TextStyle(fontSize: 11, color: futureMuted, fontFamily: futureDmSans)),
-                                const Spacer(),
-                                Text(price, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: futureGreen, fontFamily: futureDmSans)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  children: askRows.map((row) {
-                    final pct = ((row['pct'] as double) / maxAskCum * 100).clamp(0.0, 100.0);
-                    final price = row['price'] as String;
-                    final amount = row['amount'] as String;
-                    return GestureDetector(
-                      onTap: () => onPriceTap(price),
-                      child: SizedBox(
-                        height: 24,
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              left: 0, top: 2, bottom: 2,
-                              width: halfWidth * pct / 100,
-                              child: Container(color: const Color(0x14F6465D)),
-                            ),
-                            Row(
-                              children: [
-                                Text(price, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: futureRed, fontFamily: futureDmSans)),
-                                const Spacer(),
-                                Text(amount, style: const TextStyle(fontSize: 11, color: futureMuted, fontFamily: futureDmSans)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
+              Expanded(flex: 3, child: Text('Amount($base)', style: const TextStyle(fontSize: 10, color: Color(0xFF848E9C)), overflow: TextOverflow.ellipsis)),
+              Expanded(flex: 3, child: Text('Price($quote)', textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: Color(0xFF848E9C)), overflow: TextOverflow.ellipsis)),
+              const SizedBox(width: 10),
+              Expanded(flex: 3, child: Text('Price($quote)', style: const TextStyle(fontSize: 10, color: Color(0xFF848E9C)), overflow: TextOverflow.ellipsis)),
+              Expanded(flex: 3, child: Text('Amount($base)', textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: Color(0xFF848E9C)), overflow: TextOverflow.ellipsis)),
             ],
           ),
+          const SizedBox(height: 4),
+          // Paired rows — single CustomPaint for seamless color bars, text on top
+          LayoutBuilder(builder: (context, constraints) {
+            const rowH = 18.0;
+            final maxRows = bidRows.length > askRows.length ? bidRows.length : askRows.length;
+            if (maxRows == 0) return const SizedBox.shrink();
+            final totalH = maxRows * rowH;
+            final totalW = constraints.maxWidth;
+            const gap = 10.0;
+            final colW = (totalW - gap) / 2;
+
+            final bidFracs = List.generate(maxRows, (i) =>
+                i < bidRows.length ? ((bidRows[i]['pct'] as double) / 100).clamp(0.0, 1.0) : 0.0);
+            final askFracs = List.generate(maxRows, (i) =>
+                i < askRows.length ? ((askRows[i]['pct'] as double) / 100).clamp(0.0, 1.0) : 0.0);
+
+            return SizedBox(
+              height: totalH,
+              child: Stack(
+                children: [
+                  // Single painter draws all bars with no gaps
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _OrderRowBarPainter(
+                        bidFracs: bidFracs,
+                        askFracs: askFracs,
+                        rowH: rowH,
+                        colW: colW,
+                        gap: gap,
+                        bidColor: const Color(0x2622C55E),
+                        askColor: const Color(0x26D05858),
+                      ),
+                    ),
+                  ),
+                  // Text rows on top
+                  Column(
+                    children: List.generate(maxRows, (i) {
+                      final bid = i < bidRows.length ? bidRows[i] : null;
+                      final ask = i < askRows.length ? askRows[i] : null;
+                      return SizedBox(
+                        height: rowH,
+                        child: Row(
+                          children: [
+                            // Buy side: Amount | Price
+                            SizedBox(
+                              width: colW,
+                              child: Row(children: [
+                                Expanded(flex: 3, child: Text(
+                                  bid != null ? (bid['amount'] as String) : '',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFFDDDDDD), fontFamily: 'monospace'),
+                                  maxLines: 1,
+                                )),
+                                Expanded(flex: 3, child: Text(
+                                  bid != null ? (bid['price'] as String) : '',
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(fontSize: 11, color: futureGreen, fontWeight: FontWeight.w600, fontFamily: 'monospace'),
+                                  maxLines: 1,
+                                )),
+                              ]),
+                            ),
+                            const SizedBox(width: gap),
+                            // Sell side: Price | Amount
+                            SizedBox(
+                              width: colW,
+                              child: Row(children: [
+                                Expanded(flex: 3, child: Text(
+                                  ask != null ? (ask['price'] as String) : '',
+                                  style: const TextStyle(fontSize: 11, color: futureRed, fontWeight: FontWeight.w600, fontFamily: 'monospace'),
+                                  maxLines: 1,
+                                )),
+                                Expanded(flex: 3, child: Text(
+                                  ask != null ? (ask['amount'] as String) : '',
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFFDDDDDD), fontFamily: 'monospace'),
+                                  maxLines: 1,
+                                )),
+                              ]),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

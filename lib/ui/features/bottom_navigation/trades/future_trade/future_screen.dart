@@ -524,6 +524,8 @@ class _FutureChartScreenState extends State<FutureChartScreen> {
 
     return FutureFullOrderBook(
       bidRows: bidRows, askRows: askRows, markPrice: markPrice, pp: pp, halfWidth: halfWidth,
+      base: pair?.baseCurrency ?? 'BTC',
+      quote: pair?.quoteCurrency ?? 'USDT',
       onPriceTap: (price) => Get.back(),
     );
   }
@@ -564,6 +566,7 @@ class _FutureChartScreenState extends State<FutureChartScreen> {
         ),
         Expanded(child: Obx(() {
           final pair = _ctrl.currentPair.value;
+          _ctrl.seed.value; // observe seed for fast order book updates
           final symbol = (pair?.symbol ?? 'BTCUSDT').replaceAll('/', '');
           if (_chartSubTab != 'Chart') return const SizedBox.expand();
           // countdown
