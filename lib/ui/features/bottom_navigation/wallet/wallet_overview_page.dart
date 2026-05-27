@@ -20,6 +20,7 @@ import '../../side_navigation/activity/activity_screen.dart';
 import 'wallet_controller.dart';
 import 'wallet_widgets.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/future_trade/future_controller.dart';
 
 const Color _primary = Color(0xFF111111);
 const Color _green = Color(0xFFCCFF00);
@@ -117,7 +118,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
             children: [
               _buildTopHero(data),
               const SizedBox(height: 20),
-              _buildStackedCards(data, settings),
+              Obx(() => _buildStackedCards(data, settings)),
               const SizedBox(height: 20),
               Obx(
                 () => _buildReportWithLists(
@@ -570,8 +571,22 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
         name: "Future",
         svgIcon: 'assets/images/future.svg',
         pngIcon: 'assets/images/future.png',
-        amount: data.futureWallet ?? 0,
-        amtUsd: data.futureWalletUsd ?? 0,
+        amount: () {
+          try {
+            final fc = Get.find<NewFutureController>();
+            return fc.balance.value > 0 ? fc.balance.value : (data.futureWallet ?? 0);
+          } catch (_) {
+            return data.futureWallet ?? 0;
+          }
+        }(),
+        amtUsd: () {
+          try {
+            final fc = Get.find<NewFutureController>();
+            return fc.balance.value > 0 ? fc.balance.value : (data.futureWalletUsd ?? 0);
+          } catch (_) {
+            return data.futureWalletUsd ?? 0;
+          }
+        }(),
         coin: coin,
         onTap: () => Get.to(
           () => const WalletDetailScreen(initialType: WalletViewType.future),
