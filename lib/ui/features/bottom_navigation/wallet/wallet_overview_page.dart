@@ -593,17 +593,17 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
           () => const WalletDetailScreen(initialType: WalletViewType.earn),
         ),
       ),
-      _RowData(
-        name: "P2P",
-        svgIcon: 'assets/images/funds.svg',
-        pngIcon: 'assets/images/funds.png',
-        amount: data.p2PWallet ?? 0,
-        amtUsd: data.p2PWalletUsd ?? 0,
-        coin: coin,
-        onTap: () => Get.to(
-          () => const WalletDetailScreen(initialType: WalletViewType.p2p),
-        ),
-      ),
+      // _RowData(
+      //   name: "P2P",
+      //   svgIcon: 'assets/images/funds.svg',
+      //   pngIcon: 'assets/images/funds.png',
+      //   amount: data.p2PWallet ?? 0,
+      //   amtUsd: data.p2PWalletUsd ?? 0,
+      //   coin: coin,
+      //   onTap: () => Get.to(
+      //     () => const WalletDetailScreen(initialType: WalletViewType.p2p),
+      //   ),
+      // ),
     ];
 
     final double totalH = _svgH + (rows.length - 1) * _peekAmount;
@@ -631,14 +631,14 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
               top: 2 * _peekAmount,
               left: 0,
               right: 0,
-              child: _SvgCard(data: rows[2], isLast: false, cardIndex: 2),
+              child: _SvgCard(data: rows[2], isLast: true, cardIndex: 2),
             ),
-            Positioned(
-              top: 3 * _peekAmount,
-              left: 0,
-              right: 0,
-              child: _SvgCard(data: rows[3], isLast: true, cardIndex: 3),
-            ),
+            // Positioned(
+            //   top: 3 * _peekAmount,
+            //   left: 0,
+            //   right: 0,
+            //   child: _SvgCard(data: rows[3], isLast: true, cardIndex: 3),
+            // ),
           ],
         ),
       ),
@@ -1106,7 +1106,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
     {"label": "Spot", "type": WalletViewType.spot},
     {"label": "Future", "type": WalletViewType.future},
     {"label": "Earn", "type": WalletViewType.earn},
-    {"label": "P2P", "type": WalletViewType.p2p},
+    // {"label": "P2P", "type": WalletViewType.p2p},
     {"label": "Buy Crypto", "type": null},
     {"label": "Check Deposit", "type": WalletViewType.checkDeposit},
   ];
