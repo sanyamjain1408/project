@@ -761,12 +761,12 @@ class _FuturePositionsSectionState extends State<FuturePositionsSection> {
     final tabs = ['Position', 'Open Orders', 'Assets'];
     return Container(
       margin: const EdgeInsets.only(top: 10),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: futureBorder, width: 8))),
+      decoration: const BoxDecoration(),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: futureBorder))),
+            decoration: const BoxDecoration(),
             child: Row(
               children: [
                 ...tabs.map((t) {
@@ -857,78 +857,176 @@ class _PositionCard extends StatelessWidget {
     final pnlColor = pnl >= 0 ? futureGreen : futureRed;
     final sideColor = isLong ? futureGreen : futureRed;
     final sideLabel = isLong ? 'Buy' : 'Sell';
+    final marginRatio = pos.margin > 0 ? (pos.margin / (pos.quantity * pos.entryPrice) * 100) : 0.0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: futureCard, borderRadius: BorderRadius.circular(10), border: Border.all(color: futureBorder)),
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.transparent),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Row 1: Symbol + badge + side button ──
-          Row(children: [
-            Text(pos.symbol, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans)),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(color: futureCard2, borderRadius: BorderRadius.circular(4)),
-              child: Text('Cross ${pos.leverage}x', style: const TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
-            ),
-            const Spacer(),
-            // Share icon
-            GestureDetector(
-              onTap: () {},
-              child: Icon(Icons.ios_share, color: sideColor, size: 16),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-              decoration: BoxDecoration(color: isLong ? futureGreenLight : futureRedLight, borderRadius: BorderRadius.circular(5)),
-              child: Text(sideLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: sideColor, fontFamily: futureDmSans)),
-            ),
-          ]),
-          const SizedBox(height: 10),
-          // ── Row 2: PNL + ROI ──
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('PNL (USDT)', style: TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
+          // ── Row 1: Symbol + Perp + Cross badge | share + Buy/Sell ──
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                pos.symbol,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Perp',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: Colors.white.withValues(alpha: 0.4), fontFamily: futureDmSans),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: Colors.white.withOpacity(0.5)),),
+                child: Text(
+                  'Cross ${pos.leverage}x',
+                  style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontFamily: futureDmSans),
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {},
+                child: Icon(Icons.ios_share_rounded, color: sideColor, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(color: sideColor.withOpacity(0.2) , borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: Colors.transparent),),
+                child:  Text(
+                sideLabel,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: sideColor, fontFamily: futureDmSans),
+              ),
+              ),
+             
+            ],
+          ),
+          const SizedBox(height: 12),
+          // ── Row 2: PNL label | ROI label ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('PNL (USDT)', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5), fontFamily: futureDmSans)),
+              Text('ROI', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5), fontFamily: futureDmSans)),
+            ],
+          ),
+          const SizedBox(height: 2),
+          // ── Row 3: PNL value | ROI value ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               Text(
                 '${pnl >= 0 ? '+' : ''}${pnl.toStringAsFixed(2)}',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: pnlColor, fontFamily: futureDmSans),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: pnlColor, fontFamily: futureDmSans),
               ),
-            ]),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              const Text('ROI', style: TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
               Text(
                 '${roi >= 0 ? '+' : ''}${roi.toStringAsFixed(2)}%',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: pnlColor, fontFamily: futureDmSans),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: pnlColor, fontFamily: futureDmSans),
               ),
-            ]),
-          ]),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // ── Row 4: Size | Margin | Margin Ratio ──
+          Row(
+            children: [
+              _InfoCell(label: 'Size (USDT)', value: (pos.quantity * pos.entryPrice).toStringAsFixed(4)),
+              _InfoCell(label: 'Margin (USDT)', value: pos.margin.toStringAsFixed(2), align: TextAlign.center),
+              _InfoCell(label: 'Margin Ratio', value: '${marginRatio.toStringAsFixed(2)}%', valueColor: futureGreen, align: TextAlign.end),
+            ],
+          ),
           const SizedBox(height: 10),
-          // ── Row 3: Size | Margin | Margin Ratio ──
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            FutureInfoCell(label: 'Size (USDT)', value: (pos.quantity * pos.entryPrice).toStringAsFixed(4)),
-            FutureInfoCell(label: 'Margin (USDT)', value: pos.margin.toStringAsFixed(2), textAlign: TextAlign.center),
-            FutureInfoCell(label: 'Margin Ratio', value: '1.0%', valueColor: futureGreen, textAlign: TextAlign.end),
-          ]),
-          const SizedBox(height: 8),
-          // ── Row 4: Entry | Mark | Liq ──
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            FutureInfoCell(label: 'Entry Price (USTD)', value: pos.entryPrice.toStringAsFixed(pp)),
-            FutureInfoCell(label: 'Mark Price (USDT)', value: markPrice.toStringAsFixed(pp), textAlign: TextAlign.center),
-            FutureInfoCell(label: 'Liq. Price (USDT)', value: pos.liquidationPrice.toStringAsFixed(pp), valueColor: futureRed, textAlign: TextAlign.end),
-          ]),
-          const SizedBox(height: 10),
-          // ── Row 5: Action buttons ──
-          Row(children: [
-            Expanded(child: FutureActionBtn(label: 'Leverage', onTap: onLeverageTap)),
-            const SizedBox(width: 8),
-            Expanded(child: FutureActionBtn(label: 'TP/SL', onTap: () => onTpSlTap(pos))),
-            const SizedBox(width: 8),
-            Expanded(child: FutureActionBtn(label: 'Close', onTap: () => ctrl.closePosition(pos.id))),
-          ]),
+          // ── Row 5: Entry | Mark | Liq ──
+          Row(
+            children: [
+              _InfoCell(label: 'Entry Price (USDT)', value: pos.entryPrice.toStringAsFixed(pp)),
+              _InfoCell(label: 'Mark Price (USDT)', value: markPrice.toStringAsFixed(pp), align: TextAlign.center),
+              _InfoCell(label: 'Liq. Price (USDT)', value: pos.liquidationPrice.toStringAsFixed(pp), valueColor: futureRed, align: TextAlign.end),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // ── Row 6: Leverage | TP/SL | Close ──
+          Row(
+            children: [
+              Expanded(child: _CardBtn(label: 'Leverage', onTap: onLeverageTap)),
+              const SizedBox(width: 20),
+              Expanded(child: _CardBtn(label: 'TP/SL', onTap: () => onTpSlTap(pos))),
+              const SizedBox(width: 20),
+              Expanded(child: _CardBtn(label: 'Close', onTap: () => ctrl.closePosition(pos.id))),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _InfoCell extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final TextAlign align;
+
+  const _InfoCell({required this.label, required this.value, this.valueColor, this.align = TextAlign.start});
+
+  @override
+  Widget build(BuildContext context) {
+    final cross = align == TextAlign.end
+        ? CrossAxisAlignment.end
+        : align == TextAlign.center
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start;
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: cross,
+        children: [
+          Text(
+            label,
+            textAlign: align,
+            style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.45), fontFamily: futureDmSans, fontWeight: FontWeight.w400),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            textAlign: align,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: valueColor ?? futureTextWhite, fontFamily: futureDmSans),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CardBtn extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _CardBtn({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 32,
+        decoration: BoxDecoration(
+          color: Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(color: Colors.transparent),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.85), fontFamily: futureDmSans),
+        ),
       ),
     );
   }
