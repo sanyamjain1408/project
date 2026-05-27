@@ -165,15 +165,11 @@ class MarketTrendItemView extends StatelessWidget {
                         ),
                         maxLines: 1,
                       ),
-                      // Niche: Price (e.g., $23k)
                       Text(
-                            "\$23.15k", // Yahan Price add hoga
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 11, // Chhota font size
-                            ),
-                            maxLines: 1,
-                          ),
+                        numberFormatCompact(coin.volume, symbol: "\$"),
+                        style: const TextStyle(color: Colors.grey, fontSize: 11),
+                        maxLines: 1,
+                      ),
                     ],
                   ),
                 ),
