@@ -77,82 +77,112 @@ class DepthChartPainter extends CustomPainter {
 
     final w = size.width;
     final h = size.height;
-    final priceRange = (highPrice - lowPrice).abs();
-    if (priceRange == 0) return;
+    const gap = 10.0;
+    final halfW = (w - gap) / 2;
 
-    double px(double price) => ((price - lowPrice) / priceRange * w).clamp(0.0, w);
+    // Bids: highest bid price → right edge (halfW = center), lowest → left (0)
+    double bidPx(double price) {
+      if (bidPoints.isEmpty) return halfW;
+      final lo = bidPoints.last.price;   // lowest bid = left
+      final hi = bidPoints.first.price;  // highest bid = right (center)
+      final range = (hi - lo).abs();
+      if (range == 0) return halfW;
+      return (halfW * (price - lo) / range).clamp(0.0, halfW);
+    }
+
+    // Asks: lowest ask price → left edge (halfW+gap = center), highest → right (w)
+    double askPx(double price) {
+      if (askPoints.isEmpty) return halfW + gap;
+      final lo = askPoints.first.price;  // lowest ask = left (center)
+      final hi = askPoints.last.price;   // highest ask = right
+      final range = (hi - lo).abs();
+      if (range == 0) return halfW + gap;
+      return (halfW + gap + halfW * (price - lo) / range).clamp(halfW + gap, w);
+    }
+
+    // Y: 0% = bottom, 100% = top
     double py(double pct) => h - pct * h;
 
+    // ── Bids (left half) — staircase from center outward ──────────────────
     if (bidPoints.isNotEmpty) {
+      // bidPoints[0] = highest price (center), last = lowest price (left edge)
       final bPath = Path();
-      bPath.moveTo(px(bidPoints.first.price), h);
-      bPath.lineTo(px(bidPoints.first.price), py(bidPoints.first.cumPct));
+      bPath.moveTo(halfW, h);
+      bPath.lineTo(halfW, py(bidPoints.first.cumPct));
       for (int i = 1; i < bidPoints.length; i++) {
         final prev = bidPoints[i - 1];
-        final cur = bidPoints[i];
-        bPath.lineTo(px(cur.price), py(prev.cumPct));
-        bPath.lineTo(px(cur.price), py(cur.cumPct));
+        final cur  = bidPoints[i];
+        bPath.lineTo(bidPx(cur.price), py(prev.cumPct));
+        bPath.lineTo(bidPx(cur.price), py(cur.cumPct));
       }
-      bPath.lineTo(px(bidPoints.last.price), h);
+      bPath.lineTo(bidPx(bidPoints.last.price), h);
       bPath.close();
 
+      canvas.save();
+      canvas.clipRect(Rect.fromLTWH(0, 0, halfW, h));
       canvas.drawPath(
         bPath,
         Paint()
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [const Color(0x4D0ECB81), const Color(0x000ECB81)],
-          ).createShader(Rect.fromLTWH(0, 0, w, h)),
+            colors: [const Color(0x400ECB81), const Color(0x000ECB81)],
+          ).createShader(Rect.fromLTWH(0, 0, halfW, h)),
       );
       canvas.drawPath(
         bPath,
         Paint()
-          ..color = const Color(0xFF0ECB81)
+          ..color = const Color(0x800ECB81)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
           ..strokeJoin = StrokeJoin.round,
       );
+      canvas.restore();
     }
 
+    // ── Asks (right half) — staircase from center outward ─────────────────
     if (askPoints.isNotEmpty) {
+      // askPoints[0] = lowest price (center), last = highest price (right edge)
       final aPath = Path();
-      aPath.moveTo(px(askPoints.first.price), h);
-      aPath.lineTo(px(askPoints.first.price), py(askPoints.first.cumPct));
+      aPath.moveTo(halfW + gap, h);
+      aPath.lineTo(halfW + gap, py(askPoints.first.cumPct));
       for (int i = 1; i < askPoints.length; i++) {
         final prev = askPoints[i - 1];
-        final cur = askPoints[i];
-        aPath.lineTo(px(cur.price), py(prev.cumPct));
-        aPath.lineTo(px(cur.price), py(cur.cumPct));
+        final cur  = askPoints[i];
+        aPath.lineTo(askPx(cur.price), py(prev.cumPct));
+        aPath.lineTo(askPx(cur.price), py(cur.cumPct));
       }
-      aPath.lineTo(px(askPoints.last.price), h);
+      aPath.lineTo(askPx(askPoints.last.price), h);
       aPath.close();
 
+      canvas.save();
+      canvas.clipRect(Rect.fromLTWH(halfW + gap, 0, halfW, h));
       canvas.drawPath(
         aPath,
         Paint()
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [const Color(0x4DF6465D), const Color(0x00F6465D)],
-          ).createShader(Rect.fromLTWH(0, 0, w, h)),
+            colors: [const Color(0x40F6465D), const Color(0x00F6465D)],
+          ).createShader(Rect.fromLTWH(halfW + gap, 0, halfW, h)),
       );
       canvas.drawPath(
         aPath,
         Paint()
-          ..color = const Color(0xFFF6465D)
+          ..color = const Color(0x80F6465D)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
           ..strokeJoin = StrokeJoin.round,
       );
+      canvas.restore();
     }
 
+    // Horizontal grid lines
     final gridPaint = Paint()
       ..color = const Color(0x1AFFFFFF)
       ..strokeWidth = 0.5;
     for (int i = 1; i <= 3; i++) {
-      final y = h * i / 4;
-      canvas.drawLine(Offset(0, y), Offset(w, y), gridPaint);
+      canvas.drawLine(Offset(0, h * i / 4), Offset(w, h * i / 4), gridPaint);
     }
   }
 
@@ -184,6 +214,9 @@ class FutureFullOrderBook extends StatelessWidget {
     required this.onPriceTap,
   });
 
+  static const _labelStyle = TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans);
+  static const _labelWhite = TextStyle(fontSize: 10, color: futureTextWhite, fontFamily: futureDmSans);
+
   @override
   Widget build(BuildContext context) {
     final maxBidCum = bidRows.isNotEmpty ? (bidRows.last['cum'] as double) : 1.0;
@@ -199,8 +232,13 @@ class FutureFullOrderBook extends StatelessWidget {
       cumPct: (r['cum'] as double) / maxAskCum,
     )).toList();
 
-    final lowPrice = bidPoints.isNotEmpty ? bidPoints.last.price : markPrice * 0.95;
+    final lowPrice  = bidPoints.isNotEmpty ? bidPoints.last.price  : markPrice * 0.95;
     final highPrice = askPoints.isNotEmpty ? askPoints.last.price : markPrice * 1.05;
+
+    // Right Y-axis: 4 evenly-spaced ask price labels (top→bottom = high→low)
+    String fmtPrice(double v) => v.toStringAsFixed(pp);
+    final askLo = askPoints.isNotEmpty ? askPoints.first.price : markPrice;
+    final askHi = askPoints.isNotEmpty ? askPoints.last.price  : markPrice * 1.05;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -221,30 +259,49 @@ class FutureFullOrderBook extends StatelessWidget {
               ],
             ),
           ),
-          // Depth chart
+          // Depth chart + right Y-axis labels overlay
           SizedBox(
             height: 110,
-            child: CustomPaint(
-              painter: DepthChartPainter(
-                bidPoints: bidPoints,
-                askPoints: askPoints,
-                markPrice: markPrice,
-                lowPrice: lowPrice,
-                highPrice: highPrice,
-              ),
-              size: Size.infinite,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: DepthChartPainter(
+                      bidPoints: bidPoints,
+                      askPoints: askPoints,
+                      markPrice: markPrice,
+                      lowPrice: lowPrice,
+                      highPrice: highPrice,
+                    ),
+                  ),
+                ),
+                // Right Y-axis: ask price range (top = highest ask, bottom = lowest ask)
+                Positioned(
+                  right: 2, top: 0, bottom: 0,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(fmtPrice(askHi), style: _labelStyle),
+                      Text(fmtPrice(askLo + (askHi - askLo) * 0.66), style: _labelStyle),
+                      Text(fmtPrice(askLo + (askHi - askLo) * 0.33), style: _labelStyle),
+                      Text(fmtPrice(askLo), style: _labelStyle),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          // X-axis labels
+          // X-axis labels: low | mark | high
           Padding(
             padding: const EdgeInsets.only(top: 2, bottom: 8),
             child: Row(
               children: [
-                Text(lowPrice.toStringAsFixed(pp), style: const TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
+                Text(lowPrice.toStringAsFixed(pp), style: _labelStyle),
                 const Spacer(),
-                Text(markPrice.toStringAsFixed(pp), style: const TextStyle(fontSize: 10, color: futureTextWhite, fontFamily: futureDmSans)),
+                Text(markPrice.toStringAsFixed(pp), style: _labelWhite),
                 const Spacer(),
-                Text(highPrice.toStringAsFixed(pp), style: const TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
+                Text(highPrice.toStringAsFixed(pp), style: _labelStyle),
               ],
             ),
           ),

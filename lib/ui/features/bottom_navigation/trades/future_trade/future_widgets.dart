@@ -17,6 +17,7 @@ class FutureOrderBook extends StatelessWidget {
   final bool isUp;
   final String bookFilter;
   final String countdown;
+  final double fundingRate;
   final double columnWidth;
   final void Function(String price) onPriceTap;
   final Widget precisionDropdown;
@@ -34,6 +35,7 @@ class FutureOrderBook extends StatelessWidget {
     required this.isUp,
     required this.bookFilter,
     required this.countdown,
+    required this.fundingRate,
     required this.columnWidth,
     required this.onPriceTap,
     required this.precisionDropdown,
@@ -49,29 +51,28 @@ class FutureOrderBook extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Container(
-        //   margin: const EdgeInsets.only(bottom: 10),
-        //   child: Column(
-        //     crossAxisAlignment: CrossAxisAlignment.start,
-        //     children: [
-        //       Text('Funding/ Next Funding', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
-        //       const SizedBox(height: 2),
-        //       Row(
-        //         children: [
-        //           Text('${change >= 0 ? '+' : ''}${change.toStringAsFixed(2)}%', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400, color: changeColor, fontFamily: futureDmSans)),
-        //           const SizedBox(width: 4),
-        //           Text('/ $countdown', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
-        //         ],
-        //       ),
-        //     ],
-        //   ),
-        // ),
+        Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Funding/ Next Funding', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Text('${(fundingRate * 100).toStringAsFixed(4)}%', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400, color: Color(0xFF0ECB81), fontFamily: futureDmSans)),
+                  const SizedBox(width: 4),
+                  Text('/ $countdown', style: TextStyle(fontSize: 10, color: Color(0xFF0ECB81), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
+                ],
+              ),
+            ],
+          ),
+        ),
         vSpacer5(),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Price\n($quote)', style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
-            Text('Amount\n($base)', textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
+            Text('Price ($quote)', style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
+            Text('Amount ($base)', textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
           ],
         ),
         const SizedBox(height: 2),
@@ -218,14 +219,14 @@ class _BookRow extends StatelessWidget {
             Expanded(
               child: Text(
                 _formatPrice(priceVal),
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: color, fontFamily: "DMSans"),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: color, fontFamily: 'monospace'),
                 textAlign: TextAlign.left,
                 maxLines: 1,
               ),
             ),
             Text(
               _formatAmount(amountVal),
-              style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w400, fontFamily: "DMSans"),
+              style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w400, fontFamily: 'monospace'),
               textAlign: TextAlign.right,
               maxLines: 1,
             ),
