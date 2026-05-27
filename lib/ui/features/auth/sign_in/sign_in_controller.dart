@@ -9,7 +9,7 @@ import 'package:tradexpro_flutter/ui/features/root/root_screen.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
-import 'package:tradexpro_flutter/ui/features/auth/email_verify/email_verify_page.dart';
+// import 'package:tradexpro_flutter/ui/features/auth/email_verify/email_verify_page.dart'; // OTP DISABLED
 
 class SignInController extends GetxController {
   TextEditingController emailEditController = TextEditingController();
@@ -56,16 +56,18 @@ class SignInController extends GetxController {
             handleLoginSuccess(resp.data);
           }
         } else {
-          final verify = resp.data[APIKeyConstants.emailVerified] as int?;
-          if (verify != null && verify == 0 && context.mounted) {
-            alertForAction(context, title: "Need verification".tr, subTitle: "verify unverified account".tr, buttonTitle: "Verify".tr,
-                onOkAction: () {
-              Get.back();
-              Get.off(() => EmailVerifyPage(registrationId: emailEditController.text.trim()));
-            });
-          } else {
-            showToast(message);
-          }
+          // OTP DISABLED - Re-enable when OTP facility is ready
+          // final verify = resp.data[APIKeyConstants.emailVerified] as int?;
+          // if (verify != null && verify == 0 && context.mounted) {
+          //   alertForAction(context, title: "Need verification".tr, subTitle: "verify unverified account".tr, buttonTitle: "Verify".tr,
+          //       onOkAction: () {
+          //     Get.back();
+          //     Get.off(() => EmailVerifyPage(registrationId: emailEditController.text.trim()));
+          //   });
+          // } else {
+          //   showToast(message);
+          // }
+          showToast(message);
         }
       }
     }, onError: (err) {

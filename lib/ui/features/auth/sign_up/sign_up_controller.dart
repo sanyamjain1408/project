@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
-import 'package:tradexpro_flutter/ui/features/auth/email_verify/email_verify_page.dart';
+import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 
 class SignUpController extends GetxController {
@@ -73,8 +73,8 @@ class SignUpController extends GetxController {
         .then((resp) {
       hideLoadingDialog();
       if (resp.success) {
-        showToast("Verification code sent to your email", isError: false);
-        Get.off(() => EmailVerifyPage(registrationId: emailEditController.text.trim()));
+        showToast("Registration successful".tr, isError: false);
+        Get.off(() => const SignInPage());
       } else {
         showToast(resp.message, isError: true);
       }
