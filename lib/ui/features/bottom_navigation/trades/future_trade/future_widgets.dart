@@ -727,7 +727,7 @@ class FutureBalanceInfo extends StatelessWidget {
 }
 
 // ── Positions / Orders / Assets Section ──────────────────────────────────────
-class FuturePositionsSection extends StatelessWidget {
+class FuturePositionsSection extends StatefulWidget {
   final FuturePair? pair;
   final int pp;
   final String bottomTab;
@@ -748,6 +748,15 @@ class FuturePositionsSection extends StatelessWidget {
   });
 
   @override
+  State<FuturePositionsSection> createState() => _FuturePositionsSectionState();
+}
+
+class _FuturePositionsSectionState extends State<FuturePositionsSection> {
+  void _openHistory() {
+    Get.to(() => _FutureHistoryFullScreen(ctrl: widget.ctrl, pair: widget.pair, pp: widget.pp));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tabs = ['Position', 'Open Orders', 'Assets'];
     return Container(
@@ -756,33 +765,47 @@ class FuturePositionsSection extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: futureBorder))),
             child: Row(
-              children: tabs.map((t) {
-                final active = bottomTab == t;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 20),
-                  child: GestureDetector(
-                    onTap: () => onTabChanged(t),
-                    child: Column(
-                      children: [
-                        Text(t, style: TextStyle(fontSize: 15, fontWeight: active ? FontWeight.w700 : FontWeight.w500, color: active ? futureTextWhite : futureMuted, fontFamily: futureDmSans)),
-                        if (active) Container(margin: const EdgeInsets.only(top: 4), height: 2, width: 20, color: futureYellow),
-                      ],
+              children: [
+                ...tabs.map((t) {
+                  final active = widget.bottomTab == t;
+                  return GestureDetector(
+                    onTap: () => widget.onTabChanged(t),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 24),
+                      child: Text(
+                        t,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                          color: active ? futureTextWhite : futureMuted,
+                          fontFamily: futureDmSans,
+                        ),
+                      ),
                     ),
+                  );
+                }),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _openHistory,
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Image.asset("assets/icons/history.png", fit: BoxFit.contain),
                   ),
-                );
-              }).toList(),
+                ),
+              ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(12),
-            child: bottomTab == 'Position'
-                ? _PositionsTab(pair: pair, pp: pp, ctrl: ctrl, onTpSlTap: onTpSlTap, onLeverageTap: onLeverageTap)
-                : bottomTab == 'Open Orders'
-                ? _OpenOrdersTab(pair: pair, pp: pp, ctrl: ctrl)
-                : _AssetsTab(ctrl: ctrl),
+            child: widget.bottomTab == 'Position'
+                ? _PositionsTab(pair: widget.pair, pp: widget.pp, ctrl: widget.ctrl, onTpSlTap: widget.onTpSlTap, onLeverageTap: widget.onLeverageTap)
+                : widget.bottomTab == 'Open Orders'
+                ? _OpenOrdersTab(pair: widget.pair, pp: widget.pp, ctrl: widget.ctrl)
+                : _AssetsTab(ctrl: widget.ctrl),
           ),
         ],
       ),
@@ -832,57 +855,72 @@ class _PositionCard extends StatelessWidget {
     final pnl = rawPnl - pos.fee;
     final roi = pos.margin > 0 ? (pnl / pos.margin) * 100 : 0.0;
     final pnlColor = pnl >= 0 ? futureGreen : futureRed;
+    final sideColor = isLong ? futureGreen : futureRed;
+    final sideLabel = isLong ? 'Buy' : 'Sell';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: futureCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: futureBorder)),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: futureCard, borderRadius: BorderRadius.circular(10), border: Border.all(color: futureBorder)),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(pos.symbol, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans)),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(color: futureCard2, borderRadius: BorderRadius.circular(3)),
-                child: Text('Cross ${pos.leverage}x', style: const TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
+          // ── Row 1: Symbol + badge + side button ──
+          Row(children: [
+            Text(pos.symbol, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans)),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(color: futureCard2, borderRadius: BorderRadius.circular(4)),
+              child: Text('Cross ${pos.leverage}x', style: const TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
+            ),
+            const Spacer(),
+            // Share icon
+            GestureDetector(
+              onTap: () {},
+              child: Icon(Icons.ios_share, color: sideColor, size: 16),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(color: isLong ? futureGreenLight : futureRedLight, borderRadius: BorderRadius.circular(5)),
+              child: Text(sideLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: sideColor, fontFamily: futureDmSans)),
+            ),
+          ]),
+          const SizedBox(height: 10),
+          // ── Row 2: PNL + ROI ──
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('PNL (USDT)', style: TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
+              Text(
+                '${pnl >= 0 ? '+' : ''}${pnl.toStringAsFixed(2)}',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: pnlColor, fontFamily: futureDmSans),
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(color: isLong ? futureGreenLight : futureRedLight, borderRadius: BorderRadius.circular(4)),
-                child: Text(isLong ? 'Buy' : 'Sell', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: isLong ? futureGreen : futureRed, fontFamily: futureDmSans)),
+            ]),
+            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              const Text('ROI', style: TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
+              Text(
+                '${roi >= 0 ? '+' : ''}${roi.toStringAsFixed(2)}%',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: pnlColor, fontFamily: futureDmSans),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('PNL (USDT)', style: TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
-                Text('${pnl >= 0 ? '+' : ''}${pnl.toStringAsFixed(4)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: pnlColor, fontFamily: futureDmSans)),
-              ]),
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                const Text('ROI', style: TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
-                Text('${roi >= 0 ? '+' : ''}${roi.toStringAsFixed(2)}%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: pnlColor, fontFamily: futureDmSans)),
-              ]),
-            ],
-          ),
-          const SizedBox(height: 8),
+            ]),
+          ]),
+          const SizedBox(height: 10),
+          // ── Row 3: Size | Margin | Margin Ratio ──
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             FutureInfoCell(label: 'Size (USDT)', value: (pos.quantity * pos.entryPrice).toStringAsFixed(4)),
-            FutureInfoCell(label: 'Margin (USDT)', value: pos.margin.toStringAsFixed(2)),
-            FutureInfoCell(label: 'Margin Ratio', value: '1.0%', valueColor: futureGreen),
+            FutureInfoCell(label: 'Margin (USDT)', value: pos.margin.toStringAsFixed(2), textAlign: TextAlign.center),
+            FutureInfoCell(label: 'Margin Ratio', value: '1.0%', valueColor: futureGreen, textAlign: TextAlign.end),
           ]),
           const SizedBox(height: 8),
+          // ── Row 4: Entry | Mark | Liq ──
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            FutureInfoCell(label: 'Entry Price', value: pos.entryPrice.toStringAsFixed(pp)),
-            FutureInfoCell(label: 'Mark Price', value: markPrice.toStringAsFixed(pp)),
-            FutureInfoCell(label: 'Liq. Price', value: pos.liquidationPrice.toStringAsFixed(pp), valueColor: futureRed),
+            FutureInfoCell(label: 'Entry Price (USTD)', value: pos.entryPrice.toStringAsFixed(pp)),
+            FutureInfoCell(label: 'Mark Price (USDT)', value: markPrice.toStringAsFixed(pp), textAlign: TextAlign.center),
+            FutureInfoCell(label: 'Liq. Price (USDT)', value: pos.liquidationPrice.toStringAsFixed(pp), valueColor: futureRed, textAlign: TextAlign.end),
           ]),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          // ── Row 5: Action buttons ──
           Row(children: [
             Expanded(child: FutureActionBtn(label: 'Leverage', onTap: onLeverageTap)),
             const SizedBox(width: 8),
@@ -915,30 +953,48 @@ class _OpenOrdersTab extends StatelessWidget {
       }
       return Column(children: openOrders.map((o) {
         final qp = pair?.quantityPrecision ?? 4;
+        final isLong = o.side == 'long';
+        final sideColor = isLong ? futureGreen : futureRed;
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: futureCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: futureBorder)),
-          child: Column(children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text(o.symbol, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans)),
-              GestureDetector(
-                onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order cancel request sent'))),
-                child: const Icon(Icons.delete_outline, color: futureRed, size: 18),
-              ),
-            ]),
-            const SizedBox(height: 6),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text('${o.side == 'long' ? 'Buy' : 'Sell'} ${o.orderType}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: o.side == 'long' ? futureGreen : futureRed, fontFamily: futureDmSans)),
-              Text(o.createdAt, style: const TextStyle(fontSize: 10, color: futureMuted, fontFamily: futureDmSans)),
-            ]),
-            const SizedBox(height: 8),
-            Row(children: [
-              FutureInfoCell(label: 'Amount', value: o.quantity.toStringAsFixed(qp)),
-              FutureInfoCell(label: 'Fee (USDT)', value: o.fee.toStringAsFixed(4)),
-              FutureInfoCell(label: 'Price (USDT)', value: o.price.toStringAsFixed(pp)),
-              FutureInfoCell(label: 'Total (USDT)', value: o.margin.toStringAsFixed(2)),
-            ]),
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: futureBorder))),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Row 1: pair + delete
+            Padding(
+              padding: const EdgeInsets.only(top: 14, bottom: 6),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(o.symbol, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans)),
+                GestureDetector(
+                  onTap: () => ctrl.cancelOrder(o.id),
+                  child: Container(
+                    width: 20, height: 20,
+                    alignment: Alignment.center,
+                    child: Icon(Icons.delete_outline, color: futureRed, size: 18),
+                  ),
+                ),
+              ]),
+            ),
+            // Row 2: type + date
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(
+                  '${isLong ? 'Buy' : 'Sell'} ${o.orderType[0].toUpperCase()}${o.orderType.substring(1).toLowerCase()}',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: sideColor, fontFamily: futureDmSans),
+                ),
+                Text(o.createdAt, style: const TextStyle(fontSize: 11, color: futureMuted, fontFamily: futureDmSans)),
+              ]),
+            ),
+            // Row 3: Amount | Fee | Price | Total
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Row(children: [
+                FutureInfoCell(label: 'Amount', value: o.quantity.toStringAsFixed(qp)),
+                FutureInfoCell(label: 'Fee (USDT)', value: o.fee.toStringAsFixed(4), textAlign: TextAlign.center),
+                FutureInfoCell(label: 'Price (USDT)', value: o.price.toStringAsFixed(pp), textAlign: TextAlign.center),
+                FutureInfoCell(label: 'Total (USDT)', value: o.margin.toStringAsFixed(2), textAlign: TextAlign.end),
+              ]),
+            ),
           ]),
         );
       }).toList());
@@ -953,30 +1009,26 @@ class _AssetsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final positions = ctrl.positions;
+      final positions = ctrl.positions.where((p) => p.status == 'open').toList();
       final unrealizedPnl = positions.fold<double>(0, (acc, p) {
         final isLong = p.side == 'long';
         final rawPnl = isLong ? (p.entryPrice - p.entryPrice) * p.quantity : (p.entryPrice - p.entryPrice) * p.quantity;
         return acc + rawPnl - p.fee;
       });
       final bal = ctrl.balance.value;
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: futureCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: futureBorder)),
-        child: Column(children: [
-          _AssetRow(label: 'Currency Equity', value: '${bal.toStringAsFixed(4)} USDT'),
-          const SizedBox(height: 8),
-          _AssetRow(label: 'Available Margin', value: '${bal.toStringAsFixed(4)} USDT'),
-          const SizedBox(height: 8),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Unrealized PnL', style: TextStyle(fontSize: 13, color: futureMuted, fontFamily: futureDmSans)),
-            Text(
-              '${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toStringAsFixed(4)} USDT',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: unrealizedPnl >= 0 ? futureGreen : futureRed, fontFamily: futureDmSans),
-            ),
-          ]),
+      return Column(children: [
+        _AssetRow(label: 'Currency Equity', value: '${bal.toStringAsFixed(4)} USDT'),
+        const Divider(color: futureBorder, height: 20),
+        _AssetRow(label: 'Available Margin', value: '${bal.toStringAsFixed(4)} USDT'),
+        const Divider(color: futureBorder, height: 20),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          const Text('Unrealized PnL', style: TextStyle(fontSize: 14, color: futureMuted, fontFamily: futureDmSans)),
+          Text(
+            '${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toStringAsFixed(4)} USDT',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: unrealizedPnl >= 0 ? futureGreen : futureRed, fontFamily: futureDmSans),
+          ),
         ]),
-      );
+      ]);
     });
   }
 }
@@ -989,10 +1041,565 @@ class _AssetRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: const TextStyle(fontSize: 13, color: futureMuted, fontFamily: futureDmSans)),
-      Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans)),
+      Text(label, style: const TextStyle(fontSize: 14, color: futureMuted, fontFamily: futureDmSans)),
+      Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans)),
     ]);
   }
+}
+
+// ── My Trades History Full Screen ─────────────────────────────────────────────
+class _FutureHistoryFullScreen extends StatefulWidget {
+  final NewFutureController ctrl;
+  final FuturePair? pair;
+  final int pp;
+
+  const _FutureHistoryFullScreen({required this.ctrl, required this.pair, required this.pp});
+
+  @override
+  State<_FutureHistoryFullScreen> createState() => _FutureHistoryFullScreenState();
+}
+
+class _FutureHistoryFullScreenState extends State<_FutureHistoryFullScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tab;
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF111111),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF111111),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
+        title: const Text(
+          'My Trades',
+          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: futureDmSans),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: TabBar(
+            controller: _tab,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            indicatorColor: Colors.transparent,
+            indicator: const BoxDecoration(),
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white54,
+            overlayColor: WidgetStateProperty.all(Colors.transparent),
+            splashFactory: NoSplash.splashFactory,
+            labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, fontFamily: futureDmSans, height: 1.5),
+            unselectedLabelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400, fontFamily: futureDmSans, height: 1.5),
+            dividerColor: Colors.transparent,
+            dividerHeight: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            tabs: const [
+              Tab(text: 'Open Order'),
+              Tab(text: 'Order History'),
+              Tab(text: 'Trade History'),
+            ],
+          ),
+        ),
+      ),
+      body: TabBarView(
+        controller: _tab,
+        children: [
+          _FutureOrderTabView(ctrl: widget.ctrl, pair: widget.pair, pp: widget.pp, filter: 'open'),
+          _FutureOrderTabView(ctrl: widget.ctrl, pair: widget.pair, pp: widget.pp, filter: 'history'),
+          _FutureOrderTabView(ctrl: widget.ctrl, pair: widget.pair, pp: widget.pp, filter: 'all'),
+        ],
+      ),
+    );
+  }
+}
+
+class _FutureOrderTabView extends StatefulWidget {
+  final NewFutureController ctrl;
+  final FuturePair? pair;
+  final int pp;
+  final String filter; // 'open', 'history', 'all'
+
+  const _FutureOrderTabView({required this.ctrl, required this.pair, required this.pp, required this.filter});
+
+  @override
+  State<_FutureOrderTabView> createState() => _FutureOrderTabViewState();
+}
+
+class _FutureOrderTabViewState extends State<_FutureOrderTabView> {
+  List<FutureOrder> _filteredList = [];
+  bool _isFilterActive = false;
+
+  List<FutureOrder> _baseList(List<FutureOrder> all) {
+    if (widget.filter == 'open') return all.where((o) => o.status == 'pending').toList();
+    if (widget.filter == 'history') return all.where((o) => o.status != 'pending').toList();
+    return all.toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final allList = _baseList(widget.ctrl.orders.toList());
+      final displayList = _isFilterActive ? _filteredList : allList;
+
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            child: _FutureFilterBar(
+              orders: allList,
+              filter: widget.filter,
+              onFiltered: (filtered) {
+                setState(() {
+                  _filteredList = filtered;
+                  _isFilterActive = true;
+                });
+              },
+              onReset: () {
+                setState(() {
+                  _filteredList = [];
+                  _isFilterActive = false;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: displayList.isEmpty
+                ? Center(
+                    child: Text(
+                      'No records found',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14, fontFamily: futureDmSans),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: displayList.length,
+                    itemBuilder: (_, i) => _HistoryOrderCard(
+                      order: displayList[i],
+                      pp: widget.pp,
+                      qp: widget.pair?.quantityPrecision ?? 4,
+                      showDelete: widget.filter == 'open',
+                      onDelete: widget.filter == 'open' ? () => widget.ctrl.cancelOrder(displayList[i].id) : null,
+                    ),
+                  ),
+          ),
+        ],
+      );
+    });
+  }
+}
+
+// ── Future Filter Bar ─────────────────────────────────────────────────────────
+class _FutureFilterBar extends StatefulWidget {
+  final List<FutureOrder> orders;
+  final String filter; // 'open', 'history', 'all'
+  final Function(List<FutureOrder>) onFiltered;
+  final VoidCallback onReset;
+
+  const _FutureFilterBar({required this.orders, required this.filter, required this.onFiltered, required this.onReset});
+
+  @override
+  State<_FutureFilterBar> createState() => _FutureFilterBarState();
+}
+
+class _FutureFilterBarState extends State<_FutureFilterBar> {
+  String? selectedSymbol;
+  String? selectedType;
+  String? selectedStatus;
+
+  void _applyFilters() {
+    if (selectedSymbol == null && selectedType == null && selectedStatus == null) {
+      widget.onReset();
+      return;
+    }
+    List<FutureOrder> result = List.from(widget.orders);
+    if (selectedSymbol != null) {
+      result = result.where((o) => o.symbol.toUpperCase().contains(selectedSymbol!.toUpperCase())).toList();
+    }
+    if (selectedType != null) {
+      result = result.where((o) {
+        final isLong = o.side == 'long' || o.side == 'buy';
+        return selectedType == 'Buy' ? isLong : !isLong;
+      }).toList();
+    }
+    if (selectedStatus != null) {
+      result = result.where((o) {
+        final isCompleted = o.status == 'completed' || o.status == 'filled';
+        return selectedStatus == 'Success' ? isCompleted : !isCompleted;
+      }).toList();
+    }
+    widget.onFiltered(result);
+  }
+
+  void _showFilterDrawer({
+    required String title,
+    required List<String> options,
+    required String? selected,
+    required void Function(String?) onSelect,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _FutureFilterDrawer(
+        title: title,
+        options: options,
+        selected: selected,
+        onSelect: (val) {
+          Navigator.pop(context);
+          setState(() => onSelect(val));
+          WidgetsBinding.instance.addPostFrameCallback((_) => _applyFilters());
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Derive unique symbols from orders for pair filter
+    final symbols = widget.orders.map((o) {
+      final sym = o.symbol.toUpperCase();
+      if (sym.endsWith('USDT')) return 'USDT';
+      if (sym.endsWith('BTC')) return 'BTC';
+      if (sym.endsWith('USDC')) return 'USDC';
+      return sym;
+    }).toSet().toList();
+    if (symbols.isEmpty) symbols.addAll(['USDT', 'BTC']);
+
+    return Row(
+      children: [
+        _FutureFilterChipBtn(
+          label: 'Pair',
+          selected: selectedSymbol,
+          onTap: () => _showFilterDrawer(
+            title: 'Select Pair',
+            options: symbols,
+            selected: selectedSymbol,
+            onSelect: (v) => selectedSymbol = v,
+          ),
+        ),
+        const SizedBox(width: 8),
+        _FutureFilterChipBtn(
+          label: 'Order Type',
+          selected: selectedType,
+          onTap: () => _showFilterDrawer(
+            title: 'Select Order Type',
+            options: const ['Buy', 'Sell'],
+            selected: selectedType,
+            onSelect: (v) => selectedType = v,
+          ),
+        ),
+        if (widget.filter != 'open') ...[
+          const SizedBox(width: 8),
+          _FutureFilterChipBtn(
+            label: 'Status',
+            selected: selectedStatus,
+            onTap: () => _showFilterDrawer(
+              title: 'Select Status',
+              options: const ['Success', 'Pending'],
+              selected: selectedStatus,
+              onSelect: (v) => selectedStatus = v,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _FutureFilterChipBtn extends StatelessWidget {
+  const _FutureFilterChipBtn({required this.label, required this.selected, required this.onTap});
+  final String label;
+  final String? selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = selected != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              selected ?? label,
+              style: TextStyle(
+                color: isActive ? const Color(0xFFD4F000) : Colors.white.withValues(alpha: 0.7),
+                fontSize: 12,
+                fontFamily: futureDmSans,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 14,
+              color: isActive ? const Color(0xFFD4F000) : Colors.white.withValues(alpha: 0.7),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FutureFilterDrawer extends StatelessWidget {
+  const _FutureFilterDrawer({required this.title, required this.options, required this.selected, required this.onSelect});
+  final String title;
+  final List<String> options;
+  final String? selected;
+  final Function(String?) onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: futureDmSans, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 16),
+          _FutureDrawerOption(label: 'All', isSelected: selected == null, onTap: () => onSelect(null)),
+          ...options.map((opt) => _FutureDrawerOption(
+            label: opt,
+            isSelected: selected == opt,
+            onTap: () => onSelect(opt),
+          )),
+        ],
+      ),
+    );
+  }
+}
+
+class _FutureDrawerOption extends StatelessWidget {
+  const _FutureDrawerOption({required this.label, required this.isSelected, required this.onTap});
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.07), width: 0.5)),
+        ),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? const Color(0xFFD4F000) : Colors.white.withValues(alpha: 0.85),
+                fontSize: 15,
+                fontFamily: futureDmSans,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+            const Spacer(),
+            if (isSelected) const Icon(Icons.check_rounded, color: Color(0xFFD4F000), size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryOrderCard extends StatelessWidget {
+  final FutureOrder order;
+  final int pp;
+  final int qp;
+  final bool showDelete;
+  final VoidCallback? onDelete;
+
+  const _HistoryOrderCard({required this.order, required this.pp, required this.qp, required this.showDelete, this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    final isLong = order.side == 'long' || order.side == 'buy';
+    final sideColor = isLong ? futureGreen : futureRed;
+    final rawType = order.orderType;
+    final orderTypeCap = rawType.isNotEmpty
+        ? rawType[0].toUpperCase() + rawType.substring(1).toLowerCase()
+        : 'Limit';
+    final typeLabel = '${isLong ? 'Buy' : 'Sell'} $orderTypeCap';
+    final isCompleted = order.status == 'completed' || order.status == 'filled';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── ROW 1: Symbol + delete/date ──────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 10, 0, 5),
+          child: Row(
+            children: [
+              Text(
+                order.symbol,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: futureDmSans,
+                  height: 1.5,
+                ),
+              ),
+              const Spacer(),
+              if (showDelete)
+                GestureDetector(
+                  onTap: onDelete,
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Image.asset('assets/icons/delete.png', fit: BoxFit.contain),
+                  ),
+                )
+              else
+                Text(
+                  order.createdAt,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: futureDmSans,
+                    height: 1.33,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        // ── ROW 2: Type label + date (open orders only) ───────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 5),
+          child: Row(
+            children: [
+              Text(
+                typeLabel,
+                style: TextStyle(
+                  color: sideColor,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: futureDmSans,
+                  height: 1.066,
+                ),
+              ),
+              const Spacer(),
+              if (showDelete)
+                Text(
+                  order.createdAt,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: futureDmSans,
+                    height: 1.33,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        // ── Field rows ────────────────────────────────────────────────────────
+        _row('Amount', order.quantity.toStringAsFixed(qp)),
+        _row('Fee (USDT)', order.fee.toStringAsFixed(4)),
+        _row('Price (USDT)', order.price.toStringAsFixed(pp)),
+        _row('Total (USDT)', order.margin.toStringAsFixed(2)),
+        if (!showDelete) _statusRow(isCompleted),
+        const SizedBox(height: 10),
+        Divider(height: 0, thickness: 0.5, color: Colors.white.withValues(alpha: 0.1)),
+        const SizedBox(height: 2),
+      ],
+    );
+  }
+
+  Widget _row(String label, String value) => Padding(
+        padding: const EdgeInsets.only(bottom: 5),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+                fontFamily: futureDmSans,
+                fontWeight: FontWeight.w400,
+                height: 1.33,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontFamily: futureDmSans,
+                fontWeight: FontWeight.w400,
+                height: 1.066,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _statusRow(bool isCompleted) => Padding(
+        padding: const EdgeInsets.only(bottom: 5),
+        child: Row(
+          children: [
+            Text(
+              'Status',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+                fontFamily: futureDmSans,
+                fontWeight: FontWeight.w400,
+                height: 1.33,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              isCompleted ? 'Success' : order.status,
+              style: TextStyle(
+                color: isCompleted ? const Color(0xFF00B052) : const Color(0xFFD4F000),
+                fontSize: 15,
+                fontFamily: futureDmSans,
+                fontWeight: FontWeight.w400,
+                height: 1.066,
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 // ── Shared small widgets ──────────────────────────────────────────────────────
@@ -1000,15 +1607,22 @@ class FutureInfoCell extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  const FutureInfoCell({super.key, required this.label, required this.value, this.valueColor});
+  final TextAlign? textAlign;
+  const FutureInfoCell({super.key, required this.label, required this.value, this.valueColor, this.textAlign});
 
   @override
   Widget build(BuildContext context) {
+    final align = textAlign ?? TextAlign.start;
+    final crossAxis = align == TextAlign.end
+        ? CrossAxisAlignment.end
+        : align == TextAlign.center
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start;
     return Expanded(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(fontSize: 9, color: futureMuted, fontFamily: futureDmSans)),
+      child: Column(crossAxisAlignment: crossAxis, children: [
+        Text(label, textAlign: align, style: const TextStyle(fontSize: 9, color: futureMuted, fontFamily: futureDmSans)),
         const SizedBox(height: 2),
-        Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: valueColor ?? futureTextWhite, fontFamily: futureDmSans)),
+        Text(value, textAlign: align, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: valueColor ?? futureTextWhite, fontFamily: futureDmSans)),
       ]),
     );
   }

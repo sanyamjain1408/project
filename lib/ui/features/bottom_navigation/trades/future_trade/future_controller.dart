@@ -307,6 +307,21 @@ class NewFutureController extends GetxController {
     } catch (_) {}
   }
 
+  Future<void> cancelOrder(int orderId) async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      final res = await http.delete(
+        Uri.parse('$_base/order/$orderId'),
+        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true) fetchOrders();
+      }
+    } catch (_) {}
+  }
+
   Future<void> updateTpSl(int positionId, double tp, double sl) async {
     try {
       final token = getFutureToken();
