@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -25,6 +24,8 @@ class FuturePair {
   final String baseCurrency;
   final String quoteCurrency;
   final double currentPrice;
+  final double markPrice;
+  final double indexPrice;
   final double priceChange24h;
   final double high24h;
   final double low24h;
@@ -32,8 +33,11 @@ class FuturePair {
   final int pricePrecision;
   final int quantityPrecision;
   final double fundingRate;
+  final double makerFee;
   final double takerFee;
   final int leverageMin;
+  final int leverageMax;
+  final int leverageStep;
 
   FuturePair({
     required this.id,
@@ -41,6 +45,8 @@ class FuturePair {
     required this.baseCurrency,
     required this.quoteCurrency,
     required this.currentPrice,
+    required this.markPrice,
+    required this.indexPrice,
     required this.priceChange24h,
     required this.high24h,
     required this.low24h,
@@ -48,8 +54,11 @@ class FuturePair {
     required this.pricePrecision,
     required this.quantityPrecision,
     required this.fundingRate,
+    required this.makerFee,
     required this.takerFee,
     required this.leverageMin,
+    required this.leverageMax,
+    required this.leverageStep,
   });
 
   factory FuturePair.fromJson(Map<String, dynamic> j) => FuturePair(
@@ -58,6 +67,8 @@ class FuturePair {
     baseCurrency: j['base_currency'] ?? '',
     quoteCurrency: j['quote_currency'] ?? '',
     currentPrice: double.tryParse(j['current_price']?.toString() ?? '0') ?? 0,
+    markPrice: double.tryParse(j['mark_price']?.toString() ?? '0') ?? 0,
+    indexPrice: double.tryParse(j['index_price']?.toString() ?? '0') ?? 0,
     priceChange24h: double.tryParse(j['price_change_24h']?.toString() ?? '0') ?? 0,
     high24h: double.tryParse(j['high_24h']?.toString() ?? '0') ?? 0,
     low24h: double.tryParse(j['low_24h']?.toString() ?? '0') ?? 0,
@@ -65,8 +76,11 @@ class FuturePair {
     pricePrecision: j['price_precision'] ?? 2,
     quantityPrecision: j['quantity_precision'] ?? 4,
     fundingRate: double.tryParse(j['funding_rate']?.toString() ?? '0.0001') ?? 0.0001,
+    makerFee: double.tryParse(j['maker_fee']?.toString() ?? '0.02') ?? 0.02,
     takerFee: double.tryParse(j['taker_fee']?.toString() ?? '0.05') ?? 0.05,
     leverageMin: j['leverage_min'] ?? 1,
+    leverageMax: j['leverage_max'] ?? 100,
+    leverageStep: j['leverage_step'] ?? 1,
   );
 }
 
@@ -162,42 +176,6 @@ String formatFutureVolume(double vol) {
   return '\$${vol.toStringAsFixed(2)}';
 }
 
-double futureRng(int seed, int n, double lo, double hi) {
-  final x = (math.sin(seed * 127.1 + n * 311.7) * 43758.5453).abs();
-  return lo + (x - x.floor()) * (hi - lo);
-}
-
-Map<String, List<List<String>>> buildFutureOrderBook(
-  double price,
-  int pp,
-  int ap,
-  int seed,
-  int rowCount,
-) {
-  if (price == 0) return {'asks': [], 'bids': []};
-  final tick = math.pow(10, -pp).toDouble();
-  final asks = <List<String>>[];
-  final bids = <List<String>>[];
-  for (int i = 1; i <= rowCount; i++) {
-    final spread = 0.000006 * i * (1 + futureRng(seed, i * 2, -0.05, 0.05));
-    final targetUsdt = (i == 4 || i == 10)
-        ? futureRng(seed, i + 100, 5000, 30000)
-        : (i <= 5 ? futureRng(seed, i, 500, 8000) : futureRng(seed, i, 50, 2000));
-    final baseAmt = targetUsdt / price;
-    final askAmt = baseAmt * (1 + futureRng(seed, i * 3, -0.2, 0.2));
-    final bidAmt = baseAmt * (1 + futureRng(seed, i * 5, -0.2, 0.2));
-    final askPrice = ((price * (1 + spread)) / tick).ceil() * tick;
-    final bidPrice = ((price * (1 - spread)) / tick).floor() * tick;
-    asks.add([askPrice.toStringAsFixed(pp), askAmt.toStringAsFixed(ap)]);
-    bids.add([bidPrice.toStringAsFixed(pp), bidAmt.toStringAsFixed(ap)]);
-  }
-  asks.sort((a, b) => double.parse(a[0]).compareTo(double.parse(b[0])));
-  bids.sort((a, b) => double.parse(b[0]).compareTo(double.parse(a[0])));
-  return {
-    'asks': asks.take(rowCount).toList(),
-    'bids': bids.take(rowCount).toList(),
-  };
-}
 
 String getFutureToken() {
   try {

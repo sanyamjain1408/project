@@ -134,6 +134,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
       side: _buySell == 'Buy' ? 'long' : 'short',
       leverage: _leverage,
       margin: marginVal,
+      quantity: qtyD,
       orderType: _orderType,
       price: _orderType == 'market' ? 0 : (double.tryParse(_limitPx) ?? 0),
       marginMode: _marginMode,
@@ -145,7 +146,8 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
       setState(() { _qty = ''; _sliderPct = 0; _tp = ''; _sl = ''; _triggerPx = ''; });
       _showSnack('Position opened successfully');
     } else {
-      _showSnack('Order failed. Please try again.', isError: true);
+      final errMsg = _ctrl.lastError.isNotEmpty ? _ctrl.lastError : 'Order failed. Please try again.';
+      _showSnack(errMsg, isError: true);
     }
   }
 
@@ -278,31 +280,44 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
     return const _FutureMarqueeTicker();
   }
 
+  Map<String, dynamic> _processOrderBook(List<List<String>> rawBids, List<List<String>> rawAsks, int pp, int qp, int maxRows) {
+    final bidsSorted = [...rawBids]..sort((a, b) => double.parse(b[0]).compareTo(double.parse(a[0])));
+    final asksSorted = [...rawAsks]..sort((a, b) => double.parse(a[0]).compareTo(double.parse(b[0])));
+    final bidsSlice = bidsSorted.take(maxRows).toList();
+    final asksSlice = asksSorted.take(maxRows).toList();
+
+    double bidCum = 0;
+    final bids = bidsSlice.map((b) {
+      bidCum += double.tryParse(b[1]) ?? 0;
+      return {'price': double.tryParse(b[0])?.toStringAsFixed(pp) ?? b[0], 'amount': double.tryParse(b[1])?.toStringAsFixed(qp) ?? b[1], 'cum': bidCum};
+    }).toList();
+    final maxBidCum = bidCum > 0 ? bidCum : 1.0;
+    for (final b in bids) { b['pct'] = (b['cum'] as double) / maxBidCum * 100; }
+
+    double askCum = 0;
+    final asks = asksSlice.map((a) {
+      askCum += double.tryParse(a[1]) ?? 0;
+      return {'price': double.tryParse(a[0])?.toStringAsFixed(pp) ?? a[0], 'amount': double.tryParse(a[1])?.toStringAsFixed(qp) ?? a[1], 'cum': askCum};
+    }).toList();
+    final maxAskCum = askCum > 0 ? askCum : 1.0;
+    for (final a in asks) { a['pct'] = (a['cum'] as double) / maxAskCum * 100; }
+
+    return {'bids': bids, 'asks': asks};
+  }
+
   Widget _buildMain() {
     return Obx(() {
       final pair = _ctrl.currentPair.value;
       final markPrice = pair?.currentPrice ?? 0;
       final pp = pair?.pricePrecision ?? 2;
       final qp = pair?.quantityPrecision ?? 4;
-      final seed = _ctrl.seed.value;
       final bookRows = _bookFilter == 'all' ? 8 : 15;
-      final book = buildFutureOrderBook(markPrice, pp, qp, seed, bookRows);
 
-      double bidCum = 0;
-      final bids = book['bids']!.map((b) {
-        bidCum += double.parse(b[1]);
-        return {'price': b[0], 'amount': b[1], 'cum': bidCum};
-      }).toList();
-      final maxBidCum = bidCum > 0 ? bidCum : 1;
-      for (final b in bids) { b['pct'] = (b['cum'] as double) / maxBidCum * 100; }
-
-      double askCum = 0;
-      final asks = book['asks']!.map((a) {
-        askCum += double.parse(a[1]);
-        return {'price': a[0], 'amount': a[1], 'cum': askCum};
-      }).toList();
-      final maxAskCum = askCum > 0 ? askCum : 1;
-      for (final a in asks) { a['pct'] = (a['cum'] as double) / maxAskCum * 100; }
+      final rawBids = _ctrl.orderBookBids;
+      final rawAsks = _ctrl.orderBookAsks;
+      final processed = _processOrderBook(rawBids, rawAsks, pp, qp, bookRows);
+      final bids = processed['bids'] as List<Map<String, dynamic>>;
+      final asks = processed['asks'] as List<Map<String, dynamic>>;
       final asksReversed = asks.reversed.toList();
 
       final activePrice = (_orderType == 'limit' || _orderType == 'stop_limit') && double.tryParse(_limitPx) != null && double.parse(_limitPx) > 0
@@ -507,16 +522,25 @@ class _FutureChartScreenState extends State<FutureChartScreen> {
     final pp = pair?.pricePrecision ?? 2;
     final qp = pair?.quantityPrecision ?? 4;
     final markPrice = pair?.currentPrice ?? 0;
-    final seed = _ctrl.seed.value;
-    final book = buildFutureOrderBook(markPrice, pp, qp, seed, 15);
+
+    final rawBids = _ctrl.orderBookBids;
+    final rawAsks = _ctrl.orderBookAsks;
+    final bidsSorted = [...rawBids]..sort((a, b) => double.parse(b[0]).compareTo(double.parse(a[0])));
+    final asksSorted = [...rawAsks]..sort((a, b) => double.parse(a[0]).compareTo(double.parse(b[0])));
 
     double bidCum = 0;
-    final bidRows = book['bids']!.map((b) { bidCum += double.parse(b[1]); return {'price': b[0], 'amount': b[1], 'cum': bidCum}; }).toList();
+    final bidRows = bidsSorted.take(15).map((b) {
+      bidCum += double.tryParse(b[1]) ?? 0;
+      return {'price': double.tryParse(b[0])?.toStringAsFixed(pp) ?? b[0], 'amount': double.tryParse(b[1])?.toStringAsFixed(qp) ?? b[1], 'cum': bidCum};
+    }).toList();
     final maxBidCum = bidCum > 0 ? bidCum : 1.0;
     for (final b in bidRows) { b['pct'] = (b['cum'] as double) / maxBidCum * 100; }
 
     double askCum = 0;
-    final askRows = book['asks']!.map((a) { askCum += double.parse(a[1]); return {'price': a[0], 'amount': a[1], 'cum': askCum}; }).toList();
+    final askRows = asksSorted.take(15).map((a) {
+      askCum += double.tryParse(a[1]) ?? 0;
+      return {'price': double.tryParse(a[0])?.toStringAsFixed(pp) ?? a[0], 'amount': double.tryParse(a[1])?.toStringAsFixed(qp) ?? a[1], 'cum': askCum};
+    }).toList();
     final maxAskCum = askCum > 0 ? askCum : 1.0;
     for (final a in askRows) { a['pct'] = (a['cum'] as double) / maxAskCum * 100; }
 
@@ -566,7 +590,6 @@ class _FutureChartScreenState extends State<FutureChartScreen> {
         ),
         Expanded(child: Obx(() {
           final pair = _ctrl.currentPair.value;
-          _ctrl.seed.value; // observe seed for fast order book updates
           final symbol = (pair?.symbol ?? 'BTCUSDT').replaceAll('/', '');
           if (_chartSubTab != 'Chart') return const SizedBox.expand();
           // countdown
