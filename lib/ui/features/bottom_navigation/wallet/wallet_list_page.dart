@@ -17,6 +17,8 @@ import 'package:tradexpro_flutter/utils/common_widgets.dart';
 import '../../side_navigation/activity/activity_screen.dart';
 import 'wallet_controller.dart';
 import 'wallet_widgets.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/spot_trade/spot_trade_history_views.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/spot_trade/spot_trade_controller.dart';
 
 const double _svgW = 362.0;
 const double _svgH = 204.0;
@@ -116,7 +118,15 @@ class _WalletListViewState extends State<WalletListView> {
                         _SpotHeroCard(
                           isHide: gIsBalanceHide.value,
                           total: _controller.totalBalance.value,
-                          onHistoryTap: () => Get.to(() => const ActivityScreen()),
+                          onHistoryTap: () {
+                            SpotTradeController ctrl;
+                            try {
+                              ctrl = Get.find<SpotTradeController>();
+                            } catch (_) {
+                              ctrl = Get.put(SpotTradeController());
+                            }
+                            Get.to(() => SpotTradeHistoryFullScreen(controller: ctrl));
+                          },
                           onHide: (_) => _controller.walletList.refresh(),
                         ),
                           
