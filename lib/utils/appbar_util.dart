@@ -171,7 +171,7 @@ class TabBarPlain extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TabBar(
-      padding: const EdgeInsets.only(left: 16, right: 10),
+      padding: const EdgeInsets.only(left: 0, right: 40),
       controller: controller,
       isScrollable: isScrollable,
       tabAlignment: isScrollable ? TabAlignment.start : TabAlignment.center,
