@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:get_storage/get_storage.dart';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,9 @@ import 'wallet_controller.dart';
 import 'wallet_widgets.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/future_trade/future_controller.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/future_trade/future_widgets.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_screen.dart';
 
 const Color _primary = Color(0xFF111111);
 const Color _green = Color(0xFFCCFF00);
@@ -1213,9 +1217,372 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
     if (type == WalletViewType.earn) {
       return const EarnScreen();
     }
+    if (type == WalletViewType.future) {
+      return const _FutureWalletBody();
+    }
     return WalletListView(fromType: type as int);
   }
 }
+
+// ── Future Wallet Body ────────────────────────────────────────────────────────
+class _FutureWalletBody extends StatelessWidget {
+  const _FutureWalletBody();
+
+  @override
+  Widget build(BuildContext context) {
+    NewFutureController fc;
+    try {
+      fc = Get.find<NewFutureController>();
+    } catch (_) {
+      fc = Get.put(NewFutureController());
+    }
+
+    return Obx(() {
+      final isHide = gIsBalanceHide.value;
+      final balance = fc.balance.value;
+      final positions = fc.positions.where((p) => p.status == 'open').toList();
+
+      // Unrealized PnL from open positions
+      final unrealizedPnl = positions.fold<double>(0, (acc, p) {
+        final isLong = p.side == 'long';
+        final mark = fc.currentPair.value?.currentPrice ?? p.entryPrice;
+        final rawPnl = isLong
+            ? (mark - p.entryPrice) * p.quantity
+            : (p.entryPrice - mark) * p.quantity;
+        return acc + rawPnl - p.fee;
+      });
+
+      final screenW = MediaQuery.of(Get.context!).size.width;
+      const cardH = 220.0;
+      const svgW = 362.0;
+      const svgH = 204.0;
+      final pnlText = '${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toStringAsFixed(2)} (${balance > 0 ? (unrealizedPnl / balance * 100).toStringAsFixed(2) : '0.00'}%)';
+
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            // ── TOP HERO CARD — same as Spot ─────────────────────────────────
+            Container(
+              color: Colors.transparent,
+              child: SizedBox(
+                width: screenW,
+                height: cardH,
+                child: Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: [
+                    // Background blur + paint
+                    Positioned.fill(
+                      child: ClipPath(
+                        clipper: _FutureHeroClipper(cardW: screenW, cardH: cardH, svgW: svgW, svgH: svgH),
+                        child: CustomPaint(
+                          painter: _FutureHeroBgPainter(cardW: screenW, cardH: cardH, svgW: svgW, svgH: svgH),
+                        ),
+                      ),
+                    ),
+                    // Green wave image
+                    Positioned(
+                      right: 25,
+                      top: 30,
+                      width: screenW * 0.40,
+                      height: cardH * 1.3,
+                      child: Transform.rotate(
+                        angle: 1.250,
+                        alignment: Alignment.center,
+                        child: Image.asset('assets/images/wallet_green_wave.png', fit: BoxFit.cover, alignment: Alignment.bottomRight),
+                      ),
+                    ),
+                    // Border
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _FutureHeroBorderPainter(cardW: screenW, cardH: cardH, svgW: svgW, svgH: svgH),
+                      ),
+                    ),
+                    // Content
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Title row
+                                Row(
+                                  children: [
+                                    Text('Margin Balance', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
+                                    const SizedBox(width: 6),
+                                    GestureDetector(
+                                      onTap: () {
+                                        GetStorage().write(PreferenceKey.isBalanceHide, !isHide);
+                                        gIsBalanceHide.value = !isHide;
+                                      },
+                                      child: Icon(
+                                        isHide ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                        color: Colors.white.withOpacity(0.5),
+                                        size: 14,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    GestureDetector(
+                                      onTap: () => Get.to(() => FutureHistoryFullScreen(
+                                        ctrl: fc,
+                                        pair: fc.currentPair.value,
+                                        pp: fc.currentPair.value?.pricePrecision ?? 2,
+                                      )),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.35),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
+                                        ),
+                                        child: const RotatingIcon(),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                // Balance
+                                isHide
+                                    ? const Text('******', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700, fontFamily: _dmSans))
+                                    : Row(
+                                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                                        textBaseline: TextBaseline.alphabetic,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              '\$${currencyFormat(balance)}',
+                                              style: const TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.w700, fontFamily: _dmSans, height: 1.2),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text('USDT', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
+                                        ],
+                                      ),
+                                if (!isHide) const SizedBox(height: 2),
+                                if (!isHide)
+                                  Text('≈ \$${currencyFormat(balance)}', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
+                                if (!isHide) const SizedBox(height: 2),
+                                if (!isHide)
+                                  RichText(
+                                    text: TextSpan(children: [
+                                      TextSpan(text: "Today's PnL  ", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
+                                      TextSpan(
+                                        text: pnlText,
+                                        style: TextStyle(
+                                          color: unrealizedPnl >= 0 ? const Color(0xFF4ED78E) : Colors.redAccent,
+                                          fontSize: 12,
+                                          fontFamily: _dmSans,
+                                        ),
+                                      ),
+                                    ]),
+                                  ),
+                              ],
+                            ),
+                            // 3 Buttons: Trade | Swap | Transfer
+                            _FutureHeroButtons(fc: fc),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // ── TABS: Position | Crypto Assets | Fiat ─────────────────────────
+            _FutureWalletTabs(fc: fc),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+// ── Future Hero Buttons (Trade | Swap | Transfer) ────────────────────────────
+class _FutureHeroButtons extends StatelessWidget {
+  final NewFutureController fc;
+  const _FutureHeroButtons({required this.fc});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final btnW = (constraints.maxWidth - 16) / 3;
+      return Row(
+        children: [
+          _FutureBtn(label: 'Trade', iconWidget: const Icon(Icons.candlestick_chart_rounded, size: 16, color: Colors.black), isMain: true, width: btnW, onTap: () {}),
+          const SizedBox(width: 8),
+          _FutureBtn(label: 'Swap', iconWidget: Image.asset('assets/images/swap.png', width: 16, height: 16), isMain: false, width: btnW, onTap: () => Get.to(() => const SwapScreen())),
+          const SizedBox(width: 8),
+          _FutureBtn(label: 'Transfer', iconWidget: Image.asset('assets/images/transfer.png', width: 16, height: 16), isMain: false, width: btnW, onTap: () => Get.to(() => const TransferScreen())),
+        ],
+      );
+    });
+  }
+}
+
+class _FutureBtn extends StatelessWidget {
+  final String label;
+  final Widget iconWidget;
+  final bool isMain;
+  final double width;
+  final VoidCallback onTap;
+  const _FutureBtn({required this.label, required this.iconWidget, required this.isMain, required this.width, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: 40,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isMain ? _green : const Color(0xFF2A2A2A),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            iconWidget,
+            const SizedBox(width: 4),
+            Flexible(child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isMain ? Colors.black : Colors.white, fontFamily: _dmSans), overflow: TextOverflow.ellipsis)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Future Hero Painters & Clipper (same path as Spot) ───────────────────────
+Path _buildFutureHeroPath(double cardW, double cardH, double svgW, double svgH) {
+  final sx = cardW / svgW;
+  final sy = cardH / svgH;
+  return Path()
+    ..moveTo(0, 20 * sy)
+    ..cubicTo(0, 8.9543 * sy, 8.95431 * sx, 0, 20 * sx, 0)
+    ..lineTo(132.716 * sx, 0)
+    ..cubicTo(138.02 * sx, 0, 143.107 * sx, 2.10714 * sy, 146.858 * sx, 5.85786 * sy)
+    ..lineTo(155.142 * sx, 14.1421 * sy)
+    ..cubicTo(158.893 * sx, 17.8929 * sy, 163.98 * sx, 20 * sy, 169.284 * sx, 20 * sy)
+    ..lineTo(192.716 * sx, 20 * sy)
+    ..cubicTo(198.02 * sx, 20 * sy, 203.107 * sx, 17.8929 * sy, 206.858 * sx, 14.1421 * sy)
+    ..lineTo(215.142 * sx, 5.85786 * sy)
+    ..cubicTo(218.893 * sx, 2.10713 * sy, 223.98 * sx, 0, 229.284 * sx, 0)
+    ..lineTo(342 * sx, 0)
+    ..cubicTo(353.046 * sx, 0, 362 * sx, 8.95431 * sy, 362 * sx, 20 * sy)
+    ..lineTo(362 * sx, 184 * sy)
+    ..cubicTo(362 * sx, 195.046 * sy, 353.046 * sx, 204 * sy, 342 * sx, 204 * sy)
+    ..lineTo(20 * sx, 204 * sy)
+    ..cubicTo(8.9543 * sx, 204 * sy, 0, 195.046 * sy, 0, 184 * sy)
+    ..lineTo(0, 20 * sy)
+    ..close();
+}
+
+class _FutureHeroBgPainter extends CustomPainter {
+  final double cardW, cardH, svgW, svgH;
+  const _FutureHeroBgPainter({required this.cardW, required this.cardH, required this.svgW, required this.svgH});
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(_buildFutureHeroPath(cardW, cardH, svgW, svgH), Paint()..color = const Color(0xFF111111).withOpacity(0.5));
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+class _FutureHeroBorderPainter extends CustomPainter {
+  final double cardW, cardH, svgW, svgH;
+  const _FutureHeroBorderPainter({required this.cardW, required this.cardH, required this.svgW, required this.svgH});
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(
+      _buildFutureHeroPath(cardW, cardH, svgW, svgH),
+      Paint()..color = Colors.white.withOpacity(0.15)..style = PaintingStyle.stroke..strokeWidth = 1.2..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round,
+    );
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+class _FutureHeroClipper extends CustomClipper<Path> {
+  final double cardW, cardH, svgW, svgH;
+  const _FutureHeroClipper({required this.cardW, required this.cardH, required this.svgW, required this.svgH});
+  @override
+  Path getClip(Size size) => _buildFutureHeroPath(cardW, cardH, svgW, svgH);
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> old) => false;
+}
+
+class _FutureWalletTabs extends StatefulWidget {
+  final NewFutureController fc;
+  const _FutureWalletTabs({required this.fc});
+
+  @override
+  State<_FutureWalletTabs> createState() => _FutureWalletTabsState();
+}
+
+class _FutureWalletTabsState extends State<_FutureWalletTabs> {
+  String _tab = 'Position';
+
+@override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tab row
+          Row(
+            children: ['Position', 'Crypto Assets', 'Fiat'].map((t) {
+              final active = _tab == t;
+              return GestureDetector(
+                onTap: () => setState(() => _tab = t),
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: Text(
+                    t,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                      color: active ? Colors.white : Colors.white38,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          // Tab content
+          if (_tab == 'Position')
+            FuturePositionsSection(
+              pair: widget.fc.currentPair.value,
+              pp: widget.fc.currentPair.value?.pricePrecision ?? 2,
+              bottomTab: 'Position',
+              ctrl: widget.fc,
+              onTabChanged: (_) {},
+              onTpSlTap: (_) {},
+              onLeverageTap: () {},
+              hideHeader: true,
+            )
+          else
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: const Text('Coming Soon', style: TextStyle(fontSize: 16, color: Colors.white38, fontFamily: _dmSans)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 
 // ── PAINTERS ──────────────────────────────────────────────────────────────────
 class _WaveLinePainter extends CustomPainter {

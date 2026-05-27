@@ -735,6 +735,7 @@ class FuturePositionsSection extends StatefulWidget {
   final void Function(String tab) onTabChanged;
   final void Function(FuturePosition pos) onTpSlTap;
   final VoidCallback onLeverageTap;
+  final bool hideHeader;
 
   const FuturePositionsSection({
     super.key,
@@ -745,6 +746,7 @@ class FuturePositionsSection extends StatefulWidget {
     required this.onTabChanged,
     required this.onTpSlTap,
     required this.onLeverageTap,
+    this.hideHeader = false,
   });
 
   @override
@@ -753,7 +755,7 @@ class FuturePositionsSection extends StatefulWidget {
 
 class _FuturePositionsSectionState extends State<FuturePositionsSection> {
   void _openHistory() {
-    Get.to(() => _FutureHistoryFullScreen(ctrl: widget.ctrl, pair: widget.pair, pp: widget.pp));
+    Get.to(() => FutureHistoryFullScreen(ctrl: widget.ctrl, pair: widget.pair, pp: widget.pp));
   }
 
   @override
@@ -764,43 +766,44 @@ class _FuturePositionsSectionState extends State<FuturePositionsSection> {
       decoration: const BoxDecoration(),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(),
-            child: Row(
-              children: [
-                ...tabs.map((t) {
-                  final active = widget.bottomTab == t;
-                  return GestureDetector(
-                    onTap: () => widget.onTabChanged(t),
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 24),
-                      child: Text(
-                        t,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                          color: active ? futureTextWhite : futureMuted,
-                          fontFamily: futureDmSans,
+          if (!widget.hideHeader)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(),
+              child: Row(
+                children: [
+                  ...tabs.map((t) {
+                    final active = widget.bottomTab == t;
+                    return GestureDetector(
+                      onTap: () => widget.onTabChanged(t),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 24),
+                        child: Text(
+                          t,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                            color: active ? futureTextWhite : futureMuted,
+                            fontFamily: futureDmSans,
+                          ),
                         ),
                       ),
+                    );
+                  }),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: _openHistory,
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Image.asset("assets/icons/history.png", fit: BoxFit.contain),
                     ),
-                  );
-                }),
-                const Spacer(),
-                GestureDetector(
-                  onTap: _openHistory,
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: Image.asset("assets/icons/history.png", fit: BoxFit.contain),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.symmetric(horizontal: widget.hideHeader ? 0 : 12, vertical: 8),
             child: widget.bottomTab == 'Position'
                 ? _PositionsTab(pair: widget.pair, pp: widget.pp, ctrl: widget.ctrl, onTpSlTap: widget.onTpSlTap, onLeverageTap: widget.onLeverageTap)
                 : widget.bottomTab == 'Open Orders'
@@ -1146,18 +1149,18 @@ class _AssetRow extends StatelessWidget {
 }
 
 // ── My Trades History Full Screen ─────────────────────────────────────────────
-class _FutureHistoryFullScreen extends StatefulWidget {
+class FutureHistoryFullScreen extends StatefulWidget {
   final NewFutureController ctrl;
   final FuturePair? pair;
   final int pp;
 
-  const _FutureHistoryFullScreen({required this.ctrl, required this.pair, required this.pp});
+  const FutureHistoryFullScreen({super.key, required this.ctrl, required this.pair, required this.pp});
 
   @override
-  State<_FutureHistoryFullScreen> createState() => _FutureHistoryFullScreenState();
+  State<FutureHistoryFullScreen> createState() => _FutureHistoryFullScreenState();
 }
 
-class _FutureHistoryFullScreenState extends State<_FutureHistoryFullScreen>
+class _FutureHistoryFullScreenState extends State<FutureHistoryFullScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab;
 
