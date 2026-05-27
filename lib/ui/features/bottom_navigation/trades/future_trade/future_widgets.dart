@@ -14,6 +14,7 @@ class FutureOrderBook extends StatelessWidget {
   final String quote;
   final String base;
   final double change;
+  final bool isUp;
   final String bookFilter;
   final String countdown;
   final double columnWidth;
@@ -30,6 +31,7 @@ class FutureOrderBook extends StatelessWidget {
     required this.quote,
     required this.base,
     required this.change,
+    required this.isUp,
     required this.bookFilter,
     required this.countdown,
     required this.columnWidth,

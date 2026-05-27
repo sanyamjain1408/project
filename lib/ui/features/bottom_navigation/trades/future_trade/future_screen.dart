@@ -49,9 +49,6 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   String _bottomTab = 'Position';
   bool _showChart = false;
   bool _isFavourite = false;
-  String _viewMode = 'trade';
-  String _chartSubTab = 'Chart';
-  String _unifiedTab = 'Order Book';
   bool _showMarginModal = false;
   bool _showLevModal = false;
   bool _showOrderTypeDropdown = false;
@@ -272,7 +269,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
         const Spacer(),
         InkWell(onTap: () => setState(() => _isFavourite = !_isFavourite), child: Padding(padding: const EdgeInsets.all(10), child: Image.asset('assets/icons/star.png', width: 20, height: 20))),
         InkWell(onTap: () => setState(() => _showChart = !_showChart), child: Padding(padding: const EdgeInsets.all(10), child: Image.asset('assets/icons/bar.png', width: 20, height: 20))),
-        InkWell(onTap: () => setState(() => _viewMode = 'chart'), child: Padding(padding: const EdgeInsets.all(10), child: Image.asset('assets/icons/candel.png', width: 20, height: 20))),
+        InkWell(onTap: () => Get.to(() => FutureChartScreen(ctrl: _ctrl)), child: Padding(padding: const EdgeInsets.all(10), child: Image.asset('assets/icons/candel.png', width: 20, height: 20))),
       ]),
     );
   }
@@ -350,6 +347,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
                     child: FutureOrderBook(
                       asks: asksReversed, bids: bids, markPrice: markPrice, pp: pp,
                       quote: pair?.quoteCurrency ?? 'USDT', base: pair?.baseCurrency ?? 'BTC', change: pair?.priceChange24h ?? 0,
+                      isUp: (pair?.priceChange24h ?? 0) >= 0,
                       bookFilter: _bookFilter, countdown: _countdown, columnWidth: colWidth,
                       onPriceTap: (v) { _limitPxCtrl.text = v; _limitPxUserEdited = true; setState(() => _limitPx = v); },
                       precisionDropdown: _buildPrecisionDropdown(),
@@ -396,114 +394,46 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
     });
   }
 
-  Widget _buildChartViewMode() {
-    final chartTabIdx = _chartSubTab == 'Chart' ? 0 : _chartSubTab == 'Coin Info' ? 1 : 2;
-    final bookTabIdx = _unifiedTab == 'Order Book' ? 0 : _unifiedTab == 'Trade History' ? 1 : 2;
-
-    return Column(children: [
-      Obx(() {
-        final pair = _ctrl.currentPair.value;
-        final symbol = (pair?.symbol ?? 'BTCUSDT').replaceAll('/', '');
-        final change = pair?.priceChange24h ?? 0;
-        final changeColor = _ctrl.priceGoingUp.value ? gBuyColor : gSellColor;
-        return SafeArea(
-          bottom: false,
-          child: Row(children: [
-            buttonOnlyIcon(onPress: () => setState(() => _viewMode = 'trade'), iconData: Icons.arrow_back_outlined, size: Dimens.iconSizeMin),
-            Text(symbol, style: const TextStyle(fontFamily: futureDmSans, color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20)),
-            const SizedBox(width: 6),
-            Text('Perp', style: TextStyle(fontFamily: futureDmSans, color: Colors.white.withValues(alpha: 0.5), fontSize: 14, fontWeight: FontWeight.w400)),
-            const SizedBox(width: 8),
-            Text('${change >= 0 ? '+' : ''}${change.toStringAsFixed(2)}%', style: TextStyle(fontFamily: futureDmSans, color: changeColor, fontSize: 14, fontWeight: FontWeight.w400)),
-            const Spacer(),
-            InkWell(onTap: () => setState(() => _isFavourite = !_isFavourite), child: Padding(padding: const EdgeInsets.all(10), child: Image.asset('assets/icons/star.png', width: 20, height: 20))),
-            buttonOnlyIcon(onPress: () {}, iconData: Icons.ios_share_sharp, size: 20),
-            hSpacer5(),
-          ]),
-        );
-      }),
-      tabBarText(
-        ['Chart'.tr, 'Coin Info'.tr, 'Contract Info'.tr], chartTabIdx,
-        (i) => setState(() => _chartSubTab = i == 0 ? 'Chart' : i == 1 ? 'Coin Info' : 'Contract Info'),
-        selectedColor: Colors.white, unSelectedColor: Colors.white.withValues(alpha: 0.5),
-        fontSize: 16, selectedFontWeight: FontWeight.w700, unSelectedFontWeight: FontWeight.w400, fontFamily: futureDmSans,
-      ),
-      Expanded(child: Obx(() {
-        final pair = _ctrl.currentPair.value;
-        final symbol = (pair?.symbol ?? 'BTCUSDT').replaceAll('/', '');
-        if (_chartSubTab != 'Chart') return const SizedBox.expand();
-        return ListView(padding: EdgeInsets.zero, children: [
-          _buildFuturePriceView(pair: pair),
-          _buildAnnouncement(),
-          TrapixChartWidget(symbol: symbol, height: MediaQuery.of(context).size.width * 1.05, isFuture: true),
-          Column(children: [
-            tabBarText(
-              ['Order Book'.tr, 'Trade History'.tr, 'Data Analysis'.tr], bookTabIdx,
-              (i) => setState(() => _unifiedTab = i == 0 ? 'Order Book' : i == 1 ? 'Trade History' : 'Data Analysis'),
-              selectedColor: Colors.white, unSelectedColor: Colors.white.withValues(alpha: 0.5),
-              fontSize: 16, selectedFontWeight: FontWeight.w700, unSelectedFontWeight: FontWeight.w400, fontFamily: futureDmSans,
-            ),
-            vSpacer10(),
-            dividerHorizontal(height: Dimens.paddingMid),
-            vSpacer10(),
-            Builder(builder: (_) {
-              if (_unifiedTab == 'Order Book') return _buildFullOrderBook();
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
-                child: Center(child: Text(_unifiedTab == 'Trade History' ? 'No trade history data' : 'No data analysis available', style: const TextStyle(fontSize: 13, color: futureMuted, fontFamily: futureDmSans))),
-              );
-            }),
-          ]),
-        ]);
-      })),
-      Container(
-        padding: const EdgeInsets.fromLTRB(Dimens.paddingMid, Dimens.paddingMin, Dimens.paddingMid, Dimens.paddingMin),
-        decoration: boxDecorationTopRound(color: Theme.of(context).secondaryHeaderColor),
-        child: Row(children: [
-          Expanded(child: GestureDetector(
-            onTap: () => setState(() { _buySell = 'Buy'; _viewMode = 'trade'; }),
-            child: Container(height: 40, alignment: Alignment.center, decoration: BoxDecoration(color: gBuyColor, borderRadius: BorderRadius.circular(5), border: Border.all(color: gBuyColor)), child: Text('Buy'.tr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w400, fontFamily: futureDmSans, height: 24 / 16))),
-          )),
-          hSpacer10(),
-          Expanded(child: GestureDetector(
-            onTap: () => setState(() { _buySell = 'Sell'; _viewMode = 'trade'; }),
-            child: Container(height: 40, alignment: Alignment.center, decoration: BoxDecoration(color: gSellColor, borderRadius: BorderRadius.circular(5), border: Border.all(color: gSellColor)), child: Text('Sell'.tr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w400, fontFamily: futureDmSans, height: 24 / 16))),
-          )),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        top: false,
+        child: Stack(children: [
+          _buildMain(),
+          if (_showMarginModal) FutureOverlayModal(
+            onDismiss: () => setState(() { _showMarginModal = false; _showLevModal = false; }),
+            content: FutureMarginModeModal(marginMode: _marginMode, ctrl: _ctrl, onSelected: (mode) => setState(() { _marginMode = mode; _showMarginModal = false; })),
+          ),
+          if (_showLevModal) FutureOverlayModal(
+            onDismiss: () => setState(() { _showMarginModal = false; _showLevModal = false; }),
+            content: FutureLeverageModal(leverage: _leverage, onSelected: (val) => setState(() { _leverage = val; _showLevModal = false; })),
+          ),
         ]),
       ),
-    ]);
-  }
-
-  Widget _buildFullOrderBook() {
-    final pair = _ctrl.currentPair.value;
-    final pp = pair?.pricePrecision ?? 2;
-    final qp = pair?.quantityPrecision ?? 4;
-    final markPrice = pair?.currentPrice ?? 0;
-    final seed = _ctrl.seed.value;
-    final book = buildFutureOrderBook(markPrice, pp, qp, seed, 15);
-
-    double bidCum = 0;
-    final bidRows = book['bids']!.map((b) { bidCum += double.parse(b[1]); return {'price': b[0], 'amount': b[1], 'cum': bidCum}; }).toList();
-    final maxBidCum = bidCum > 0 ? bidCum : 1.0;
-    for (final b in bidRows) { b['pct'] = (b['cum'] as double) / maxBidCum * 100; }
-
-    double askCum = 0;
-    final askRows = book['asks']!.map((a) { askCum += double.parse(a[1]); return {'price': a[0], 'amount': a[1], 'cum': askCum}; }).toList();
-    final maxAskCum = askCum > 0 ? askCum : 1.0;
-    for (final a in askRows) { a['pct'] = (a['cum'] as double) / maxAskCum * 100; }
-
-    final halfWidth = (MediaQuery.of(context).size.width / 2 - 20).clamp(0.0, 300.0);
-
-    return FutureFullOrderBook(
-      bidRows: bidRows, askRows: askRows, markPrice: markPrice, pp: pp, halfWidth: halfWidth,
-      onPriceTap: (price) => setState(() { _limitPx = price; _viewMode = 'trade'; }),
     );
   }
+}
 
-  Widget _buildFuturePriceView({FuturePair? pair}) {
+// ── Full chart screen (opened via Get.to from candle icon) ───────────────────
+class FutureChartScreen extends StatefulWidget {
+  const FutureChartScreen({super.key, required this.ctrl});
+  final NewFutureController ctrl;
+
+  @override
+  State<FutureChartScreen> createState() => _FutureChartScreenState();
+}
+
+class _FutureChartScreenState extends State<FutureChartScreen> {
+  NewFutureController get _ctrl => widget.ctrl;
+  String _chartSubTab = 'Chart';
+  String _unifiedTab = 'Order Book';
+
+  Widget _buildPriceView(FuturePair? pair, String countdown) {
     final pp = pair?.pricePrecision ?? 2;
     final change = pair?.priceChange24h ?? 0;
-    final isUp = _ctrl.priceGoingUp.value;
+    final isUp = change >= 0;
     final priceColor = isUp ? gBuyColor : gSellColor;
     final markPrice = pair?.currentPrice ?? 0;
     final base = pair?.baseCurrency ?? 'BTC';
@@ -547,20 +477,20 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
         Expanded(
           flex: 7,
           child: Column(children: [
-            _futureStatRow('24h High', (pair?.high24h ?? 0).toStringAsFixed(pp)),
-            _futureStatRow('24h Low', (pair?.low24h ?? 0).toStringAsFixed(pp)),
-            _futureStatRow('24h Vol ($base)', formatFutureVolume(vol24h / (markPrice > 0 ? markPrice : 1))),
-            _futureStatRow('24h Vol ($quote)', '\$${formatFutureVolume(vol24h)}'),
-            _futureStatRow('Index Price', markPrice.toStringAsFixed(pp)),
-            _futureStatRow('Funding', fundingPct, valueColor: futureGreen),
-            _futureStatRow('Countdown', _countdown, valueColor: futureGreen),
+            _statRow('24h High', (pair?.high24h ?? 0).toStringAsFixed(pp)),
+            _statRow('24h Low', (pair?.low24h ?? 0).toStringAsFixed(pp)),
+            _statRow('24h Vol ($base)', formatFutureVolume(vol24h / (markPrice > 0 ? markPrice : 1))),
+            _statRow('24h Vol ($quote)', '\$${formatFutureVolume(vol24h)}'),
+            _statRow('Index Price', markPrice.toStringAsFixed(pp)),
+            _statRow('Funding', fundingPct, valueColor: futureGreen),
+            _statRow('Countdown', countdown, valueColor: futureGreen),
           ]),
         ),
       ]),
     );
   }
 
-  Widget _futureStatRow(String label, String value, {Color? valueColor}) {
+  Widget _statRow(String label, String value, {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -572,27 +502,120 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
     );
   }
 
+  Widget _buildFullOrderBook() {
+    final pair = _ctrl.currentPair.value;
+    final pp = pair?.pricePrecision ?? 2;
+    final qp = pair?.quantityPrecision ?? 4;
+    final markPrice = pair?.currentPrice ?? 0;
+    final seed = _ctrl.seed.value;
+    final book = buildFutureOrderBook(markPrice, pp, qp, seed, 15);
+
+    double bidCum = 0;
+    final bidRows = book['bids']!.map((b) { bidCum += double.parse(b[1]); return {'price': b[0], 'amount': b[1], 'cum': bidCum}; }).toList();
+    final maxBidCum = bidCum > 0 ? bidCum : 1.0;
+    for (final b in bidRows) { b['pct'] = (b['cum'] as double) / maxBidCum * 100; }
+
+    double askCum = 0;
+    final askRows = book['asks']!.map((a) { askCum += double.parse(a[1]); return {'price': a[0], 'amount': a[1], 'cum': askCum}; }).toList();
+    final maxAskCum = askCum > 0 ? askCum : 1.0;
+    for (final a in askRows) { a['pct'] = (a['cum'] as double) / maxAskCum * 100; }
+
+    final halfWidth = (MediaQuery.of(context).size.width / 2 - 20).clamp(0.0, 300.0);
+
+    return FutureFullOrderBook(
+      bidRows: bidRows, askRows: askRows, markPrice: markPrice, pp: pp, halfWidth: halfWidth,
+      onPriceTap: (price) => Get.back(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_viewMode == 'chart') {
-      return Scaffold(backgroundColor: Color(0xFF111111), body: SafeArea(top: false, child: _buildChartViewMode()));
-    }
+    final chartTabIdx = _chartSubTab == 'Chart' ? 0 : _chartSubTab == 'Coin Info' ? 1 : 2;
+    final bookTabIdx = _unifiedTab == 'Order Book' ? 0 : _unifiedTab == 'Trade History' ? 1 : 2;
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        top: false,
-        child: Stack(children: [
-          _buildMain(),
-          if (_showMarginModal) FutureOverlayModal(
-            onDismiss: () => setState(() { _showMarginModal = false; _showLevModal = false; }),
-            content: FutureMarginModeModal(marginMode: _marginMode, ctrl: _ctrl, onSelected: (mode) => setState(() { _marginMode = mode; _showMarginModal = false; })),
-          ),
-          if (_showLevModal) FutureOverlayModal(
-            onDismiss: () => setState(() { _showMarginModal = false; _showLevModal = false; }),
-            content: FutureLeverageModal(leverage: _leverage, onSelected: (val) => setState(() { _leverage = val; _showLevModal = false; })),
-          ),
-        ]),
-      ),
+      backgroundColor: const Color(0xFF111111),
+      body: Column(children: [
+        Obx(() {
+          final pair = _ctrl.currentPair.value;
+          final symbol = (pair?.symbol ?? 'BTCUSDT').replaceAll('/', '');
+          final change = pair?.priceChange24h ?? 0;
+          final changeColor = change >= 0 ? gBuyColor : gSellColor;
+          return SafeArea(
+            bottom: false,
+            child: Row(children: [
+              buttonOnlyIcon(onPress: () => Get.back(), iconData: Icons.arrow_back_outlined, size: Dimens.iconSizeMin),
+              Text(symbol, style: const TextStyle(fontFamily: futureDmSans, color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20)),
+              const SizedBox(width: 6),
+              Text('Perp', style: TextStyle(fontFamily: futureDmSans, color: Colors.white.withValues(alpha: 0.5), fontSize: 14, fontWeight: FontWeight.w400)),
+              const SizedBox(width: 8),
+              Text('${change >= 0 ? '+' : ''}${change.toStringAsFixed(2)}%', style: TextStyle(fontFamily: futureDmSans, color: changeColor, fontSize: 14, fontWeight: FontWeight.w400)),
+              const Spacer(),
+              buttonOnlyIcon(onPress: () {}, iconData: Icons.ios_share_sharp, size: 20),
+              hSpacer5(),
+            ]),
+          );
+        }),
+        tabBarText(
+          ['Chart'.tr, 'Coin Info'.tr, 'Contract Info'.tr], chartTabIdx,
+          (i) => setState(() => _chartSubTab = i == 0 ? 'Chart' : i == 1 ? 'Coin Info' : 'Contract Info'),
+          selectedColor: Colors.white, unSelectedColor: Colors.white.withValues(alpha: 0.5),
+          fontSize: 16, selectedFontWeight: FontWeight.w700, unSelectedFontWeight: FontWeight.w400, fontFamily: futureDmSans,
+        ),
+        Expanded(child: Obx(() {
+          final pair = _ctrl.currentPair.value;
+          final symbol = (pair?.symbol ?? 'BTCUSDT').replaceAll('/', '');
+          if (_chartSubTab != 'Chart') return const SizedBox.expand();
+          // countdown
+          final now = DateTime.now().millisecondsSinceEpoch;
+          const period = 8 * 3600 * 1000;
+          final target = ((now / period).ceil() * period).toInt();
+          final diff = (target - now).clamp(0, period);
+          final h = diff ~/ 3600000;
+          final m = (diff % 3600000) ~/ 60000;
+          final s = (diff % 60000) ~/ 1000;
+          final countdown = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+          return ListView(padding: EdgeInsets.zero, children: [
+            _buildPriceView(pair, countdown),
+            const _FutureMarqueeTicker(),
+            TrapixChartWidget(symbol: symbol, height: MediaQuery.of(context).size.width * 1.05, isFuture: true),
+            Column(children: [
+              tabBarText(
+                ['Order Book'.tr, 'Trade History'.tr, 'Data Analysis'.tr], bookTabIdx,
+                (i) => setState(() => _unifiedTab = i == 0 ? 'Order Book' : i == 1 ? 'Trade History' : 'Data Analysis'),
+                selectedColor: Colors.white, unSelectedColor: Colors.white.withValues(alpha: 0.5),
+                fontSize: 16, selectedFontWeight: FontWeight.w700, unSelectedFontWeight: FontWeight.w400, fontFamily: futureDmSans,
+              ),
+              vSpacer10(),
+              dividerHorizontal(height: Dimens.paddingMid),
+              vSpacer10(),
+              Builder(builder: (_) {
+                if (_unifiedTab == 'Order Book') return _buildFullOrderBook();
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: Text(_unifiedTab == 'Trade History' ? 'No trade history data' : 'No data analysis available',
+                      style: const TextStyle(fontSize: 13, color: futureMuted, fontFamily: futureDmSans))),
+                );
+              }),
+            ]),
+          ]);
+        })),
+        Container(
+          padding: const EdgeInsets.fromLTRB(Dimens.paddingMid, Dimens.paddingMin, Dimens.paddingMid, Dimens.paddingMin),
+          decoration: boxDecorationTopRound(color: Theme.of(context).secondaryHeaderColor),
+          child: Row(children: [
+            Expanded(child: GestureDetector(
+              onTap: () => Get.back(),
+              child: Container(height: 40, alignment: Alignment.center, decoration: BoxDecoration(color: gBuyColor, borderRadius: BorderRadius.circular(5), border: Border.all(color: gBuyColor)), child: Text('Buy'.tr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w400, fontFamily: futureDmSans, height: 24 / 16))),
+            )),
+            hSpacer10(),
+            Expanded(child: GestureDetector(
+              onTap: () => Get.back(),
+              child: Container(height: 40, alignment: Alignment.center, decoration: BoxDecoration(color: gSellColor, borderRadius: BorderRadius.circular(5), border: Border.all(color: gSellColor)), child: Text('Sell'.tr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w400, fontFamily: futureDmSans, height: 24 / 16))),
+            )),
+          ]),
+        ),
+      ]),
     );
   }
 }
