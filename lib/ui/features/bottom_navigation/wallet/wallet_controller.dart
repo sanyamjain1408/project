@@ -15,6 +15,7 @@ import 'package:tradexpro_flutter/data/models/list_response.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/future_trade/future_models.dart';
 
 class WalletController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -29,6 +30,7 @@ class WalletController extends GetxController
   Rx<TotalBalance> totalBalance = TotalBalance().obs;
   RxDouble spotWalletTotal = 0.0.obs;
   RxDouble earnWalletTotal = 0.0.obs;
+  RxDouble futureWalletBalance = 0.0.obs;
   int walletListFromType = 0;
   Timer? searchTimer;
 
@@ -129,10 +131,12 @@ class WalletController extends GetxController
     final spotFuture = APIRepository().getWalletTotalValue();
     final overviewFuture = APIRepository().getWalletBalanceDetails("");
     final earnFuture = _fetchEarnTotal(userId);
+    final futureFuture = _fetchFutureBalance();
 
     final spotResp = await spotFuture;
     final overviewResp = await overviewFuture;
     final earnTotal = await earnFuture;
+    final fetchedFutureVal = await futureFuture;
 
     double spotVal = 0;
     double futureVal = 0;
@@ -150,8 +154,12 @@ class WalletController extends GetxController
       p2pVal = ov.p2PWallet ?? 0;
     }
 
+    // Use live future balance if fetched successfully
+    if (fetchedFutureVal > 0) futureVal = fetchedFutureVal;
+
     spotWalletTotal.value = spotVal;
     earnWalletTotal.value = earnTotal;
+    futureWalletBalance.value = futureVal;
 
     final grandTotal = spotVal + futureVal + earnTotal + p2pVal;
     final pnlResult = await _fetchTodayPnl(userId, grandTotal);
@@ -198,6 +206,24 @@ class WalletController extends GetxController
           total += double.tryParse(p['amount']?.toString() ?? '0') ?? 0;
         }
         return total;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  Future<double> _fetchFutureBalance() async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return 0;
+      final resp = await http.get(
+        Uri.parse('https://api.trapix.com/api/v1/future/balance'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body);
+        if (json['success'] == true) {
+          return double.tryParse(json['data']?['balance']?.toString() ?? '0') ?? 0;
+        }
       }
     } catch (_) {}
     return 0;

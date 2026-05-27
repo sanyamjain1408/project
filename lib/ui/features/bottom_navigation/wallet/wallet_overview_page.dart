@@ -523,8 +523,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                             _controller.totalBalance.value.total,
                             title: 'Overview'.tr,
                             totalUsd: _controller.totalBalance.value.total,
-                            todayPnl: data.todayPnl,
-                            todayPnlPercent: data.todayPnlPercent,
+                            todayPnl: _controller.totalBalance.value.todayPnl,
+                            todayPnlPercent: _controller.totalBalance.value.todayPnlPercent,
                             coins: data.coins,
                             selectedCoin: selectedCoin.value,
                             onSelectCoin: (selected) {
@@ -575,22 +575,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
         name: "Future",
         svgIcon: 'assets/images/future.svg',
         pngIcon: 'assets/images/future.png',
-        amount: () {
-          try {
-            final fc = Get.find<NewFutureController>();
-            return fc.balance.value > 0 ? fc.balance.value : (data.futureWallet ?? 0);
-          } catch (_) {
-            return data.futureWallet ?? 0;
-          }
-        }(),
-        amtUsd: () {
-          try {
-            final fc = Get.find<NewFutureController>();
-            return fc.balance.value > 0 ? fc.balance.value : (data.futureWalletUsd ?? 0);
-          } catch (_) {
-            return data.futureWalletUsd ?? 0;
-          }
-        }(),
+        amount: _controller.futureWalletBalance.value,
+        amtUsd: _controller.futureWalletBalance.value,
         coin: coin,
         onTap: () => Get.to(
           () => const WalletDetailScreen(initialType: WalletViewType.future),
@@ -1237,26 +1223,21 @@ class _FutureWalletBody extends StatelessWidget {
       fc = Get.put(NewFutureController());
     }
 
+    final wc = Get.find<WalletController>();
+
     return Obx(() {
       final isHide = gIsBalanceHide.value;
       final balance = fc.balance.value;
-      final positions = fc.positions.where((p) => p.status == 'open').toList();
 
-      // Unrealized PnL from open positions
-      final unrealizedPnl = positions.fold<double>(0, (acc, p) {
-        final isLong = p.side == 'long';
-        final mark = fc.currentPair.value?.currentPrice ?? p.entryPrice;
-        final rawPnl = isLong
-            ? (mark - p.entryPrice) * p.quantity
-            : (p.entryPrice - mark) * p.quantity;
-        return acc + rawPnl - p.fee;
-      });
+      // Use same PnL as overview screen (from API)
+      final todayPnl = wc.totalBalance.value.todayPnl ?? 0.0;
+      final todayPnlPct = wc.totalBalance.value.todayPnlPercent ?? 0.0;
 
       final screenW = MediaQuery.of(Get.context!).size.width;
       const cardH = 220.0;
       const svgW = 362.0;
       const svgH = 204.0;
-      final pnlText = '${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toStringAsFixed(2)} (${balance > 0 ? (unrealizedPnl / balance * 100).toStringAsFixed(2) : '0.00'}%)';
+      final pnlText = '${todayPnl >= 0 ? '+' : ''}${todayPnl.toStringAsFixed(2)} (${todayPnlPct.toStringAsFixed(2)}%)';
 
       return SingleChildScrollView(
         child: Column(
@@ -1373,7 +1354,7 @@ class _FutureWalletBody extends StatelessWidget {
                                       TextSpan(
                                         text: pnlText,
                                         style: TextStyle(
-                                          color: unrealizedPnl >= 0 ? const Color(0xFF4ED78E) : Colors.redAccent,
+                                          color: todayPnl >= 0 ? const Color(0xFF4ED78E) : Colors.redAccent,
                                           fontSize: 12,
                                           fontFamily: _dmSans,
                                         ),

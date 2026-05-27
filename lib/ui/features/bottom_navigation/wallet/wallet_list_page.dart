@@ -49,8 +49,9 @@ class _WalletListViewState extends State<WalletListView> {
 
   void initViewData({bool? keepSearch}) {
     if (keepSearch != true) _controller.searchController.text = '';
-    if (widget.fromType == WalletViewType.spot)
-      _controller.getWalletTotalValue();
+    if (widget.fromType == WalletViewType.spot) {
+      _controller.fetchGrandTotal();
+    }
     _getWalletListData();
   }
 
