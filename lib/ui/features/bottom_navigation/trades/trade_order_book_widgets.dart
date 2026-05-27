@@ -97,14 +97,14 @@ class OderBookFixedView extends StatelessWidget {
     const double rowH = 18.0;
     final double sectionH = maxRows * rowH;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bounded = constraints.maxHeight != double.infinity;
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          mainAxisSize: bounded ? MainAxisSize.max : MainAxisSize.min,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // ── Top: header + rows + mid price ────────────────────────────────────────
+        Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Header ────────────────────────────────────────────────────────────
+            // ── Header ──────────────────────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -152,7 +152,7 @@ class OderBookFixedView extends StatelessWidget {
             ),
             vSpacer5(),
 
-            // ── SELL LIST ─────────────────────────────────────────────────────────
+            // ── SELL LIST ──────────────────────────────────────────────────────
             if (selectedOrderSort != FromKey.buy)
               SizedBox(
                 height: sectionH,
@@ -174,7 +174,6 @@ class OderBookFixedView extends StatelessWidget {
             if (selectedOrderSort != FromKey.buy) const SizedBox(height: 2),
 
             vSpacer5(),
-            // ── Mid price — sell mode ya all mode ke baad sell list ke niche ──────
             if (selectedOrderSort != FromKey.buy)
               MidPriceBlock(
                 lastPData: lastPData,
@@ -184,12 +183,11 @@ class OderBookFixedView extends StatelessWidget {
                           ? const Color(0xFF4ED78E)
                           : const Color(0xFFD05858)),
               ),
-
-              vSpacer5(),
+            vSpacer5(),
 
             if (selectedOrderSort != FromKey.buy) const SizedBox(height: 2),
 
-            // ── BUY LIST ──────────────────────────────────────────────────────────
+            // ── BUY LIST ──────────────────────────────────────────────────────
             if (selectedOrderSort != FromKey.sell)
               SizedBox(
                 height: sectionH,
@@ -207,9 +205,9 @@ class OderBookFixedView extends StatelessWidget {
                   }),
                 ),
               ),
-              vSpacer20(),
+            vSpacer20(),
 
-            // ── Mid price — buy-only mode mein buy list ke niche ─────────────────
+            // ── Mid price — buy-only mode ──────────────────────────────────────
             if (selectedOrderSort == FromKey.buy) const SizedBox(height: 2),
             if (selectedOrderSort == FromKey.buy)
               MidPriceBlock(
@@ -217,18 +215,22 @@ class OderBookFixedView extends StatelessWidget {
                 priceColor: const Color(0xFF4ED78E),
               ),
             if (selectedOrderSort == FromKey.buy) const SizedBox(height: 2),
+          ],
+        ),
 
-            
-            // ── B/S ratio bar ─────────────────────────────────────────────────────
+        // ── Bottom: B/S bar + controls — always fixed at bottom ───────────────────
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Builder(builder: (context) {
-              final totalBid = bList.fold(0.0, (s, e) => s + ((e.amount ?? 0).toDouble()));
-              final totalAsk = sList.fold(0.0, (s, e) => s + ((e.amount ?? 0).toDouble()));
+              final totalBid = buyList.fold(0.0, (s, e) => s + ((e.amount ?? 0).toDouble()));
+              final totalAsk = sellList.fold(0.0, (s, e) => s + ((e.amount ?? 0).toDouble()));
               final total = totalBid + totalAsk;
               final bidPct = total > 0 ? (totalBid / total * 100).round() : 50;
               final askPct = 100 - bidPct;
               return Container(
                 height: 24,
-                margin: EdgeInsets.symmetric(vertical: 7),
+                margin: const EdgeInsets.symmetric(vertical: 7),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
                   gradient: LinearGradient(
@@ -268,13 +270,9 @@ class OderBookFixedView extends StatelessWidget {
                 ),
               );
             }),
-
-            // ── Bottom controls ───────────────────────────────────────────────────
             Row(
               children: [
-                Expanded(
-                  child: CustomDropdown(), //  ab ye full space lega
-                ),
+                Expanded(child: CustomDropdown()),
                 const SizedBox(width: 8),
                 _DotToggleButton(
                   selectedOrderSort: selectedOrderSort,
@@ -283,8 +281,8 @@ class OderBookFixedView extends StatelessWidget {
               ],
             ),
           ],
-        );
-      },
+        ),
+      ],
     );
   }
 
