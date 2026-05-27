@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../../../../data/models/blog_news.dart';
+import '../../../../data/models/coin_pair.dart';
 import '../../../../data/models/settings.dart';
 import '../../../../data/remote/api_repository.dart';
 import '../../../../utils/common_utils.dart';
@@ -17,9 +18,7 @@ class LandingController extends GetxController implements SocketListener {
   @override
   void onDataGet(channel, event, data) {
     if (channel == SocketConstants.channelMarketCoinPairData && event == SocketConstants.eventMarketCoinPair) {
-      if (data is Map<String, dynamic>) {
-        landingList.value = LandingList.fromJson(data);
-      }
+      // Socket se data aa raha hai — ignore karo, spot API se refresh karega
     }
   }
 
@@ -33,50 +32,87 @@ class LandingController extends GetxController implements SocketListener {
     isLoading.value = true;
     APIRepository().getCommonSettings().then(
       (resp) {
-        isLoading.value = false;
         if (resp.success && resp.data != null && resp.data is Map<String, dynamic>) {
-          // debugPrint('=== [LANDING] Raw backend response keys: ${(resp.data as Map).keys.toList()}');
           DataProcessHelper.commonSettingsProcess(
             resp.data,
             onSettings: (landingSettings) {
               if (landingSettings != null) {
                 landingData.value = landingSettings;
-                landingList.value = LandingList.fromJson(resp.data);
-
-                // --- ANNOUNCEMENT LOG ---
-                // final announcements = landingSettings.announcementList;
-                // debugPrint('=== [ANNOUNCEMENT] Count: ${announcements?.length ?? 0}');
-                // if (announcements != null && announcements.isNotEmpty) {
-                //   for (int i = 0; i < announcements.length; i++) {
-                //     final a = announcements[i];
-                //     debugPrint('  [ANNOUNCEMENT $i] id=${a.id} | title=${a.title} | slug=${a.slug} | image=${a.image} | updatedAt=${a.updatedAt}');
-                //     debugPrint('  [ANNOUNCEMENT $i] description (first 200): ${(a.description ?? '').substring(0, (a.description ?? '').length > 200 ? 200 : (a.description ?? '').length)}');
-                //   }
-                // } else {
-                //   debugPrint('  [ANNOUNCEMENT] No announcements received from backend.');
-                // }
-
-                // --- BANNER LOG ---
-                // final banners = landingSettings.bannerList;
-                // debugPrint('=== [BANNER] Count: ${banners?.length ?? 0}');
-                // if (banners != null && banners.isNotEmpty) {
-                //   for (int i = 0; i < banners.length; i++) {
-                //     final b = banners[i];
-                //     debugPrint('  [BANNER $i] id=${b.id} | title=${b.title} | image=${b.image}');
-                //   }
-                // }
               }
             },
           );
         }
+        _loadSpotMarketCoins();
         handleSocketChannels(true);
       },
       onError: (err) {
-        isLoading.value = false;
-        // debugPrint('=== [LANDING] Error: $err');
         showToast(err.toString());
+        _loadSpotMarketCoins();
       },
     );
+  }
+
+  void _loadSpotMarketCoins() {
+    APIRepository().getSpotMarketPairs().then((resp) {
+      isLoading.value = false;
+      if (!resp.success) return;
+
+      List rawPairs = [];
+      if (resp.data is List) {
+        rawPairs = resp.data as List;
+      } else if (resp.data is Map) {
+        rawPairs = (resp.data['data'] as List?) ??
+            (resp.data['pairs'] as List?) ??
+            (resp.data['result'] as List?) ??
+            (resp.data['markets'] as List?) ??
+            [];
+      }
+      if (rawPairs.isEmpty) return;
+
+      final allCoins = rawPairs.map<CoinPair>((p) {
+        final coin = CoinPair();
+        coin.childCoinName  = p['base_currency']  ?? p['base']       ?? p['base_asset']  ?? '';
+        coin.parentCoinName = p['quote_currency'] ?? p['quote']      ?? p['quote_asset'] ?? '';
+        coin.lastPrice      = double.tryParse(
+            p['last_price']?.toString() ??
+            p['current_price']?.toString() ??
+            p['price']?.toString() ?? '0') ?? 0;
+        coin.priceChange    = double.tryParse(
+            p['price_change_percent']?.toString() ??
+            p['change_24h']?.toString() ??
+            p['price_change_24h']?.toString() ??
+            p['change']?.toString() ?? '0') ?? 0;
+        coin.volume         = double.tryParse(
+            p['volume_24h']?.toString() ??
+            p['volume']?.toString() ??
+            p['base_volume']?.toString() ?? '0') ?? 0;
+        coin.icon           = p['icon'] ?? p['logo'] ?? p['image'] ?? p['icon_url'] ?? '';
+        coin.coinPair       = '${coin.childCoinName}_${coin.parentCoinName}';
+        coin.coinPairName   = '${coin.childCoinName}/${coin.parentCoinName}';
+        return coin;
+      }).toList();
+
+      // Core Assets: volume ke hisaab se top 10
+      final coreAssets = List<CoinPair>.from(allCoins)
+        ..sort((a, b) => (b.volume ?? 0).compareTo(a.volume ?? 0));
+      final top10CoreAssets = coreAssets.take(8).toList();
+
+      // 24H Gainer: priceChange ke hisaab se descending sort
+      final gainers = List<CoinPair>.from(allCoins)
+        ..sort((a, b) => (b.priceChange ?? 0).compareTo(a.priceChange ?? 0));
+      final top10Gainers = gainers.take(8).toList();
+
+      // New Listing: API se jo order aaya uske hisaab se last 10 (latest added)
+      final latest = allCoins.reversed.take(8).toList();
+
+      landingList.value = LandingList(
+        assetCoinPairs: top10CoreAssets,
+        hourlyCoinPairs: top10Gainers,
+        latestCoinPairs: latest,
+      );
+    }, onError: (err) {
+      isLoading.value = false;
+    });
   }
 
   void getLatestBlogList() async {
@@ -84,21 +120,9 @@ class LandingController extends GetxController implements SocketListener {
       (resp) {
         if (resp.success && resp.data != null) {
           latestBlogList.value = List<Blog>.from(resp.data.map((x) => Blog.fromJson(x)));
-
-          // --- BLOG LOG ---
-          // debugPrint('=== [BLOG] Count: ${latestBlogList.length}');
-          // for (int i = 0; i < latestBlogList.length; i++) {
-          //   final b = latestBlogList[i];
-          //   debugPrint('  [BLOG $i] id=${b.id} | title=${b.title} | slug=${b.slug} | status=${b.status} | publish=${b.publish} | views=${b.views} | thumbnail=${b.thumbnail}');
-          //   debugPrint('  [BLOG $i] category=${b.category} | subCategory=${b.subCategory} | isFeatured=${b.isFetured} | publishAt=${b.publishAt}');
-          // }
         }
-        // else {
-        //   debugPrint('=== [BLOG] API failed or no data | success=${resp.success}');
-        // }
       },
       onError: (err) {
-        // debugPrint('=== [BLOG] Error: $err');
         showToast(err.toString());
       },
     );

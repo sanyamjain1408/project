@@ -135,11 +135,13 @@ class MarketTrendItemView extends StatelessWidget {
             child: Row(
               children: [
                 // Icon: Waisa ka waisa (Network Image)
-                showImageNetwork(
-                  imagePath: coin.icon,
-                  width: Dimens.iconSizeMin,
-                  height: Dimens.iconSizeMin,
-                  bgColor: Colors.transparent,
+                ClipOval(
+                  child: showImageNetwork(
+                    imagePath: coin.icon,
+                    width: 30,
+                    height: 30,
+                    bgColor: Colors.transparent,
+                  ),
                 ),
                 hSpacer5(),
                 

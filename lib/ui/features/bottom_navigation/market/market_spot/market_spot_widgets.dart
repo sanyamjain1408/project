@@ -214,11 +214,13 @@ class MarketCoinItemViewBottom extends StatelessWidget {
               child: Row(
                 children: [
                   // Icon (same size as LandingMarketView)
-                  showImageNetwork(
-                    imagePath: coin.coinIcon,
-                    width: 30,
-                    height: 30,
-                    bgColor: Colors.transparent,
+                  ClipOval(
+                    child: showImageNetwork(
+                      imagePath: coin.coinIcon,
+                      width: 30,
+                      height: 30,
+                      bgColor: Colors.transparent,
+                    ),
                   ),
                   hSpacer10(),
 
