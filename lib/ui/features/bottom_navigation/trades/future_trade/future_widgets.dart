@@ -46,120 +46,129 @@ class FutureOrderBook extends StatelessWidget {
   Widget build(BuildContext context) {
     final showAsks = bookFilter == 'all' || bookFilter == 'sell';
     final showBids = bookFilter == 'all' || bookFilter == 'buy';
-    final changeColor = change >= 0 ? const Color(0xFF007958) : const Color(0xFFD05850);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Funding/ Next Funding', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Text('${(fundingRate * 100).toStringAsFixed(4)}%', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400, color: Color(0xFF0ECB81), fontFamily: futureDmSans)),
-                  const SizedBox(width: 4),
-                  Text('/ $countdown', style: TextStyle(fontSize: 10, color: Color(0xFF0ECB81), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
-                ],
-              ),
-            ],
-          ),
-        ),
-        vSpacer5(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        // Top content: funding, headers, order rows, price
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Price ($quote)', style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
-            Text('Amount ($base)', textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
-          ],
-        ),
-        const SizedBox(height: 2),
-        if (showAsks) ...[
-          ...asks.map((ask) => _BookRow(price: ask['price'], amount: ask['amount'], pct: ask['pct'], pp: pp, isAsk: true, columnWidth: columnWidth, onTap: onPriceTap)),
-        ],
-        GestureDetector(
-          onTap: () => onPriceTap(markPrice.toStringAsFixed(pp)),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text('Funding/ Next Funding', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(
-                      markPrice.toStringAsFixed(pp),
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: change >= 0 ? const Color(0xFF4ED78E) : const Color(0xFFD05858), fontFamily: futureDmSans),
-                    ),
+                    Text('${(fundingRate * 100).toStringAsFixed(4)}%', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w400, color: Color(0xFF0ECB81), fontFamily: futureDmSans)),
                     const SizedBox(width: 4),
-                    Icon(change >= 0 ? Icons.arrow_upward : Icons.arrow_downward, color: change >= 0 ? const Color(0xFF4ED78E) : const Color(0xFFD05858), size: 14),
+                    Text('/ $countdown', style: const TextStyle(fontSize: 10, color: Color(0xFF0ECB81), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
                   ],
                 ),
-                Text('≈ \$${markPrice.toStringAsFixed(pp > 2 ? 2 : pp)}', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
               ],
             ),
-          ),
-        ),
-        if (showBids) ...[
-          const SizedBox(height: 2),
-          ...bids.map((bid) => _BookRow(price: bid['price'], amount: bid['amount'], pct: bid['pct'], pp: pp, isAsk: false, columnWidth: columnWidth, onTap: onPriceTap)),
-        ],
-        const SizedBox(height: 10),
-        // B/S ratio bar
-        Builder(builder: (context) {
-          final totalAsk = asks.fold(0.0, (s, e) => s + (double.tryParse(e['amount'] ?? '0') ?? 0));
-          final totalBid = bids.fold(0.0, (s, e) => s + (double.tryParse(e['amount'] ?? '0') ?? 0));
-          final total = totalAsk + totalBid;
-          final bidPct = total > 0 ? (totalBid / total * 100).round() : 50;
-          final askPct = 100 - bidPct;
-          return Container(
-            height: 24,
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              gradient: LinearGradient(
-                stops: [bidPct / 100, bidPct / 100],
-                colors: [const Color(0x1F0ECB81), const Color(0x1FF6465D)],
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Row(
+            vSpacer5(),
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    width: 13, height: 13,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(3),
-                      border: Border.all(color: const Color(0xFF0ECB81), width: 1.5),
-                    ),
-                    child: const Center(child: Text('B', style: TextStyle(color: Color(0xFF0ECB81), fontSize: 8, fontWeight: FontWeight.w800))),
-                  ),
-                  const SizedBox(width: 3),
-                  Text('$bidPct%', style: const TextStyle(color: Color(0xFF0ECB81), fontSize: 10, fontWeight: FontWeight.w700)),
-                ]),
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text('$askPct%', style: const TextStyle(color: Color(0xFFD05858), fontSize: 10, fontWeight: FontWeight.w700)),
-                  const SizedBox(width: 3),
-                  Container(
-                    width: 13, height: 13,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(3),
-                      border: Border.all(color: const Color(0xFFD05858), width: 1.5),
-                    ),
-                    child: const Center(child: Text('S', style: TextStyle(color: Color(0xFFD05858), fontSize: 8, fontWeight: FontWeight.w800))),
-                  ),
-                ]),
+                Text('Price ($quote)', style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
+                Text('Amount ($base)', textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w400, fontFamily: "DMSans", height: 1.2), maxLines: 2),
               ],
             ),
-          );
-        }),
-        Row(
+            const SizedBox(height: 2),
+            if (showAsks) ...[
+              ...asks.map((ask) => _BookRow(price: ask['price'], amount: ask['amount'], pct: ask['pct'], pp: pp, isAsk: true, columnWidth: columnWidth, onTap: onPriceTap)),
+            ],
+            GestureDetector(
+              onTap: () => onPriceTap(markPrice.toStringAsFixed(pp)),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          markPrice.toStringAsFixed(pp),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: change >= 0 ? const Color(0xFF4ED78E) : const Color(0xFFD05858), fontFamily: futureDmSans),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(change >= 0 ? Icons.arrow_upward : Icons.arrow_downward, color: change >= 0 ? const Color(0xFF4ED78E) : const Color(0xFFD05858), size: 14),
+                      ],
+                    ),
+                    Text('≈ \$${markPrice.toStringAsFixed(pp > 2 ? 2 : pp)}', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.5), fontWeight: FontWeight.w400, fontFamily: futureDmSans)),
+                  ],
+                ),
+              ),
+            ),
+            if (showBids) ...[
+              const SizedBox(height: 2),
+              ...bids.map((bid) => _BookRow(price: bid['price'], amount: bid['amount'], pct: bid['pct'], pp: pp, isAsk: false, columnWidth: columnWidth, onTap: onPriceTap)),
+            ],
+          ],
+        ),
+        // Bottom content: B/S bar + precision/dot row — fixed at bottom
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: precisionDropdown),
-            const SizedBox(width: 10),
-            dotToggle,
+            const SizedBox(height: 10),
+            Builder(builder: (context) {
+              final totalAsk = asks.fold(0.0, (s, e) => s + (double.tryParse(e['amount'] ?? '0') ?? 0));
+              final totalBid = bids.fold(0.0, (s, e) => s + (double.tryParse(e['amount'] ?? '0') ?? 0));
+              final total = totalAsk + totalBid;
+              final bidPct = total > 0 ? (totalBid / total * 100).round() : 50;
+              final askPct = 100 - bidPct;
+              return Container(
+                height: 24,
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  gradient: LinearGradient(
+                    stops: [bidPct / 100, bidPct / 100],
+                    colors: [const Color(0x1F0ECB81), const Color(0x1FF6465D)],
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      Container(
+                        width: 13, height: 13,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: const Color(0xFF0ECB81), width: 1.5),
+                        ),
+                        child: const Center(child: Text('B', style: TextStyle(color: Color(0xFF0ECB81), fontSize: 8, fontWeight: FontWeight.w800))),
+                      ),
+                      const SizedBox(width: 3),
+                      Text('$bidPct%', style: const TextStyle(color: Color(0xFF0ECB81), fontSize: 10, fontWeight: FontWeight.w700)),
+                    ]),
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text('$askPct%', style: const TextStyle(color: Color(0xFFD05858), fontSize: 10, fontWeight: FontWeight.w700)),
+                      const SizedBox(width: 3),
+                      Container(
+                        width: 13, height: 13,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: const Color(0xFFD05858), width: 1.5),
+                        ),
+                        child: const Center(child: Text('S', style: TextStyle(color: Color(0xFFD05858), fontSize: 8, fontWeight: FontWeight.w800))),
+                      ),
+                    ]),
+                  ],
+                ),
+              );
+            }),
+            Row(
+              children: [
+                Expanded(child: precisionDropdown),
+                const SizedBox(width: 10),
+                dotToggle,
+              ],
+            ),
           ],
         ),
       ],

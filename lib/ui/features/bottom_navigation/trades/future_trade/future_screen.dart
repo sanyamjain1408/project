@@ -54,6 +54,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   bool _showOrderTypeDropdown = false;
   String _bookFilter = 'all';
   String _bookPrecision = '0.01';
+  double _tradeFormHeight = 0;
 
   String _countdown = '00:00:00';
   Timer? _countdownTimer;
@@ -311,7 +312,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
       final markPrice = pair?.currentPrice ?? 0;
       final pp = pair?.pricePrecision ?? 2;
       final qp = pair?.quantityPrecision ?? 4;
-      final bookRows = _bookFilter == 'all' ? 8 : 15;
+      final bookRows = _bookFilter == 'all' ? 7 : 15;
 
       final rawBids = _ctrl.orderBookBids;
       final rawAsks = _ctrl.orderBookAsks;
@@ -359,6 +360,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   SizedBox(
                     width: colWidth,
+                    height: _tradeFormHeight > 0 ? _tradeFormHeight : null,
                     child: FutureOrderBook(
                       asks: asksReversed, bids: bids, markPrice: markPrice, pp: pp,
                       quote: pair?.quoteCurrency ?? 'USDT', base: pair?.baseCurrency ?? 'BTC', change: pair?.priceChange24h ?? 0,
@@ -370,7 +372,15 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(child: FutureTradeForm(
+                  Expanded(child: _HeightReporter(
+                    onHeight: (h) {
+                      if (_tradeFormHeight != h) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) setState(() => _tradeFormHeight = h);
+                        });
+                      }
+                    },
+                    child: FutureTradeForm(
                     pair: pair, pp: pp, qp: qp,
                     base: pair?.baseCurrency ?? 'BTC', quote: pair?.quoteCurrency ?? 'USDT',
                     activePrice: activePrice, marginVal: marginVal, cost: cost, maxQty: maxQty,
@@ -393,6 +403,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
                     onLeverageTap: () => setState(() => _showLevModal = true),
                     onBuySellChanged: (v) => setState(() => _buySell = v),
                     onPlaceOrder: () => _placeOrder(pair, marginVal),
+                  ),
                   )),
                 ]),
               ),
@@ -704,6 +715,43 @@ class _FutureMarqueeTickerState extends State<_FutureMarqueeTicker> {
         ),
       ]),
     );
+  }
+}
+
+class _HeightReporter extends StatefulWidget {
+  const _HeightReporter({required this.onHeight, required this.child});
+  final ValueChanged<double> onHeight;
+  final Widget child;
+
+  @override
+  State<_HeightReporter> createState() => _HeightReporterState();
+}
+
+class _HeightReporterState extends State<_HeightReporter> {
+  final _key = GlobalKey();
+
+  void _report() {
+    final ctx = _key.currentContext;
+    if (ctx == null) return;
+    final h = (ctx.findRenderObject() as RenderBox).size.height;
+    widget.onHeight(h);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _report());
+  }
+
+  @override
+  void didUpdateWidget(_HeightReporter old) {
+    super.didUpdateWidget(old);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _report());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return KeyedSubtree(key: _key, child: widget.child);
   }
 }
 
