@@ -3764,12 +3764,29 @@ class FutureTpSlModal {
                 Expanded(
                   child: GestureDetector(
                     onTap: () async {
-                      await ctrl.updateTpSl(
+                      final success = await ctrl.updateTpSl(
                         pos.id,
                         double.tryParse(tpCtrl.text) ?? 0,
                         double.tryParse(slCtrl.text) ?? 0,
                       );
-                      Get.back();
+                      if (!context.mounted) return;
+                      final messenger = ScaffoldMessenger.of(context);
+                      Navigator.of(context).pop();
+                      if (success) {
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'TP/SL updated successfully',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                              ),
+                              backgroundColor: futureGreen,
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        });
+                      }
                     },
                     child: Container(
                       height: 40,

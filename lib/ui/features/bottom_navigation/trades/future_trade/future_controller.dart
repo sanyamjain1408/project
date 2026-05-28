@@ -368,10 +368,10 @@ class NewFutureController extends GetxController {
     } catch (_) {}
   }
 
-  Future<void> updateTpSl(int positionId, double tp, double sl) async {
+  Future<bool> updateTpSl(int positionId, double tp, double sl) async {
     try {
       final token = getFutureToken();
-      if (token.isEmpty) return;
+      if (token.isEmpty) return false;
       final res = await http.patch(
         Uri.parse('$_base/positions/$positionId/tpsl'),
         headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
@@ -380,8 +380,8 @@ class NewFutureController extends GetxController {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true) {
-          Get.snackbar('Success', 'TP/SL updated', snackPosition: SnackPosition.BOTTOM);
           fetchPositions();
+          return true;
         } else {
           Get.snackbar('Error', data['message']?.toString() ?? 'Failed to update TP/SL', snackPosition: SnackPosition.BOTTOM);
         }
@@ -391,5 +391,6 @@ class NewFutureController extends GetxController {
     } catch (e) {
       Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
+    return false;
   }
 }
