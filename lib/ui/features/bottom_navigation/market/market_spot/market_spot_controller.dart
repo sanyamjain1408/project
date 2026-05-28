@@ -142,7 +142,7 @@ class MarketSpotController extends GetxController implements SocketListener {
         }
       }
     }, onError: (err) {
-      print("=== AUTO REFRESH ERROR: $err ===");
+      // print("=== AUTO REFRESH ERROR: $err ===");
       // Silent fail — user ko toast nahi dikhayenge
     });
   }

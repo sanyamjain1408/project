@@ -168,6 +168,93 @@ class FutureOrder {
   );
 }
 
+class FutureTrade {
+  final int id;
+  final String symbol;
+  final String side;
+  final double price;
+  final double quantity;
+  final double fee;
+  final double pnl;
+  final double? takeProfit;
+  final double? stopLoss;
+  final String createdAt;
+
+  FutureTrade({
+    required this.id,
+    required this.symbol,
+    required this.side,
+    required this.price,
+    required this.quantity,
+    required this.fee,
+    required this.pnl,
+    this.takeProfit,
+    this.stopLoss,
+    required this.createdAt,
+  });
+
+  factory FutureTrade.fromJson(Map<String, dynamic> j) => FutureTrade(
+    id: j['id'] ?? 0,
+    symbol: j['symbol'] ?? '',
+    side: j['side'] ?? 'long',
+    price: double.tryParse(j['price']?.toString() ?? '0') ?? 0,
+    quantity: double.tryParse(j['quantity']?.toString() ?? '0') ?? 0,
+    fee: double.tryParse(j['fee']?.toString() ?? '0') ?? 0,
+    pnl: double.tryParse(j['pnl']?.toString() ?? '0') ?? 0,
+    takeProfit: j['take_profit'] != null ? double.tryParse(j['take_profit'].toString()) : null,
+    stopLoss: j['stop_loss'] != null ? double.tryParse(j['stop_loss'].toString()) : null,
+    createdAt: j['created_at'] ?? '',
+  );
+}
+
+class FuturePositionHistory {
+  final int id;
+  final String symbol;
+  final String side;
+  final double entryPrice;
+  final double closePrice;
+  final double quantity;
+  final double margin;
+  final double fee;
+  final double pnl;
+  final int leverage;
+  final String status;
+  final String openedAt;
+  final String closedAt;
+
+  FuturePositionHistory({
+    required this.id,
+    required this.symbol,
+    required this.side,
+    required this.entryPrice,
+    required this.closePrice,
+    required this.quantity,
+    required this.margin,
+    required this.fee,
+    required this.pnl,
+    required this.leverage,
+    required this.status,
+    required this.openedAt,
+    required this.closedAt,
+  });
+
+  factory FuturePositionHistory.fromJson(Map<String, dynamic> j) => FuturePositionHistory(
+    id: j['id'] ?? 0,
+    symbol: j['symbol'] ?? '',
+    side: j['side'] ?? 'long',
+    entryPrice: double.tryParse(j['entry_price']?.toString() ?? '0') ?? 0,
+    closePrice: double.tryParse(j['close_price']?.toString() ?? '0') ?? 0,
+    quantity: double.tryParse(j['quantity']?.toString() ?? '0') ?? 0,
+    margin: double.tryParse(j['margin']?.toString() ?? '0') ?? 0,
+    fee: double.tryParse(j['fee']?.toString() ?? '0') ?? 0,
+    pnl: double.tryParse(j['pnl']?.toString() ?? '0') ?? 0,
+    leverage: j['leverage'] ?? 1,
+    status: j['status'] ?? 'closed',
+    openedAt: j['opened_at'] ?? j['created_at'] ?? '',
+    closedAt: j['closed_at'] ?? '',
+  );
+}
+
 // ── HELPER FUNCTIONS ──────────────────────────────────────────────────────────
 String formatFutureVolume(double vol) {
   if (vol >= 1.0e9) return '\$${(vol / 1.0e9).toStringAsFixed(2)}B';

@@ -513,7 +513,7 @@ class _VideoHeroWidgetState extends State<VideoHeroWidget> {
           _controller.play();
         });
     } catch (e) {
-      print("Video Error: $e");
+      // print("Video Error: $e");
     }
   }
 

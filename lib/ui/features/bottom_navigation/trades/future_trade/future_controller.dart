@@ -10,6 +10,8 @@ class NewFutureController extends GetxController {
   final currentPair = Rxn<FuturePair>();
   final positions = <FuturePosition>[].obs;
   final orders = <FutureOrder>[].obs;
+  final trades = <FutureTrade>[].obs;
+  final positionHistory = <FuturePositionHistory>[].obs;
   final balance = 0.0.obs;
   final isLoggedIn = false.obs;
   final orderLoading = false.obs;
@@ -218,6 +220,40 @@ class NewFutureController extends GetxController {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
           orders.value = (data['data'] as List).map((e) => FutureOrder.fromJson(e)).toList();
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> fetchTrades() async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      final res = await http.get(
+        Uri.parse('$_base/trades'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          trades.value = (data['data'] as List).map((e) => FutureTrade.fromJson(e)).toList();
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> fetchPositionHistory() async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      final res = await http.get(
+        Uri.parse('$_base/positions?status=closed'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          positionHistory.value = (data['data'] as List).map((e) => FuturePositionHistory.fromJson(e)).toList();
         }
       }
     } catch (_) {}

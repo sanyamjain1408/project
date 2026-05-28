@@ -75,7 +75,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
               );
             }
           } catch (e) {
-            print("Deposit fetch error: $e");
+            // print("Deposit fetch error: $e");
           }
         }
       },
@@ -95,7 +95,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                 );
               }
             } catch (e) {
-              print("Withdraw fetch error: $e");
+              // print("Withdraw fetch error: $e");
             }
           }
         });

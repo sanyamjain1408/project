@@ -133,13 +133,13 @@ class SwapController extends GetxController {
 
     try {
       // 1. Fetch swap coins list
-      print("[SWAP] Fetching swap coins...");
+      // print("[SWAP] Fetching swap coins...");
       final coinsResp = await http
           .get(Uri.parse('$_kBase/api/v1/swap/coins'), headers: _publicHeaders())
           .timeout(const Duration(seconds: 15));
 
-      print("[SWAP] Coins status: ${coinsResp.statusCode}");
-      print("[SWAP] Coins body: ${coinsResp.body}");
+      // print("[SWAP] Coins status: ${coinsResp.statusCode}");
+      // print("[SWAP] Coins body: ${coinsResp.body}");
 
       final coinsBody = jsonDecode(coinsResp.body) as Map<String, dynamic>;
       if (coinsBody['success'] != true) {
@@ -149,7 +149,7 @@ class SwapController extends GetxController {
 
       final rawCoins = coinsBody['data'] as List;
       final coins = rawCoins.map((e) => SwapCoin.fromJson(e)).toList();
-      print("[SWAP] Parsed ${coins.length} coins.");
+      // print("[SWAP] Parsed ${coins.length} coins.");
 
       // 2. Try wallet API for balance (may 403, handled gracefully)
       await _enrichFromWalletApi(coins);
@@ -162,10 +162,10 @@ class SwapController extends GetxController {
 
       coinList.value = coins;
 
-      print("[SWAP] ── FINAL COIN SUMMARY ──");
-      for (var c in coins) {
-        print("${c.symbol} | Bal: ${c.availableBalance} | USD: ${c.usdPrice} | Icon: ${c.iconUrl}");
-      }
+      // print("[SWAP] ── FINAL COIN SUMMARY ──");
+      // for (var c in coins) {
+      //   print("${c.symbol} | Bal: ${c.availableBalance} | USD: ${c.usdPrice} | Icon: ${c.iconUrl}");
+      // }
 
       // 5. Set initial selections
       if (preWallet != null) {
@@ -188,7 +188,7 @@ class SwapController extends GetxController {
 
       getAndSetCoinRate();
     } catch (e) {
-      print("[SWAP] Exception in getCoinSwapApp: $e");
+      // print("[SWAP] Exception in getCoinSwapApp: $e");
       showToast('Please check your internet connection'.tr);
     } finally {
       isLoading.value = false;
@@ -207,7 +207,7 @@ class SwapController extends GetxController {
           .toList();
 
       if (geckoIds.isEmpty) {
-        print("[SWAP][CoinGecko] No known geckoIds to fetch.");
+        // print("[SWAP][CoinGecko] No known geckoIds to fetch.");
         return;
       }
 
@@ -215,21 +215,21 @@ class SwapController extends GetxController {
       final url =
           'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=$idsParam&order=market_cap_desc&sparkline=false';
 
-      print("[SWAP][CoinGecko] Fetching: $url");
+      // print("[SWAP][CoinGecko] Fetching: $url");
 
       final resp = await http
           .get(Uri.parse(url), headers: {'Accept': 'application/json'})
           .timeout(const Duration(seconds: 15));
 
-      print("[SWAP][CoinGecko] Status: ${resp.statusCode}");
+      // print("[SWAP][CoinGecko] Status: ${resp.statusCode}");
 
       if (resp.statusCode != 200) {
-        print("[SWAP][CoinGecko] Non-200 response, skipping.");
+        // print("[SWAP][CoinGecko] Non-200 response, skipping.");
         return;
       }
 
       final List geckoList = jsonDecode(resp.body);
-      print("[SWAP][CoinGecko] Got ${geckoList.length} items.");
+      // print("[SWAP][CoinGecko] Got ${geckoList.length} items.");
 
       // Build geckoId → data map
       final Map<String, dynamic> geckoMap = {};
@@ -247,18 +247,18 @@ class SwapController extends GetxController {
         final image = data['image'] as String?;
         if (image != null && image.isNotEmpty) {
           coin.iconUrl = image;
-          print("[SWAP][CoinGecko] Icon set for ${coin.symbol}: $image");
+          // print("[SWAP][CoinGecko] Icon set for ${coin.symbol}: $image");
         }
 
         // USD Price
         final price = makeDouble(data['current_price']);
         if (price > 0) {
           coin.usdPrice = price;
-          print("[SWAP][CoinGecko] Price set for ${coin.symbol}: $price");
+          // print("[SWAP][CoinGecko] Price set for ${coin.symbol}: $price");
         }
       }
     } catch (e) {
-      print("[SWAP][CoinGecko] Exception: $e");
+      // print("[SWAP][CoinGecko] Exception: $e");
     }
   }
 
@@ -269,17 +269,17 @@ class SwapController extends GetxController {
           .get(Uri.parse('$_kBase/api/coin-swap-app'), headers: _authHeaders())
           .timeout(const Duration(seconds: 10));
 
-      print("[SWAP][WalletApi] Status: ${walletResp.statusCode}");
+      // print("[SWAP][WalletApi] Status: ${walletResp.statusCode}");
 
       if (walletResp.statusCode != 200) {
-        print("[SWAP][WalletApi] Non-200, skipping.");
+        // print("[SWAP][WalletApi] Non-200, skipping.");
         return;
       }
 
       final walletBody = jsonDecode(walletResp.body);
       if (walletBody is Map && walletBody['data'] is Map) {
         final wallets = (walletBody['data'] as Map)['wallets'] as List? ?? [];
-        print("[SWAP][WalletApi] Found ${wallets.length} wallets.");
+        // print("[SWAP][WalletApi] Found ${wallets.length} wallets.");
 
         for (final coin in coins) {
           final match = wallets.firstWhereOrNull(
@@ -302,7 +302,7 @@ class SwapController extends GetxController {
         }
       }
     } catch (e) {
-      print("[SWAP][WalletApi] Exception: $e");
+      // print("[SWAP][WalletApi] Exception: $e");
     }
   }
 
@@ -359,7 +359,7 @@ class SwapController extends GetxController {
     if (isRateLoading.value) return;
     isRateLoading.value = true;
     try {
-      print("[SWAP][Rate] Requesting rate for $amount ($fromCoinId -> $toCoinId)");
+      // print("[SWAP][Rate] Requesting rate for $amount ($fromCoinId -> $toCoinId)");
       final resp = await http
           .post(
             Uri.parse('$_kBase/api/v1/swap/calculate'),
@@ -372,7 +372,7 @@ class SwapController extends GetxController {
           )
           .timeout(const Duration(seconds: 15));
 
-      print("[SWAP][Rate] Response: ${resp.body}");
+      // print("[SWAP][Rate] Response: ${resp.body}");
       final body = jsonDecode(resp.body) as Map<String, dynamic>;
       if (body['success'] == true) {
         final data = body['data'] as Map<String, dynamic>;
@@ -385,12 +385,12 @@ class SwapController extends GetxController {
             (grossReceive.value - feeAmount.value));
         convertRate.value = toAmt;
         toEditController.text = toAmt.toStringAsFixed(8);
-        print("[SWAP][Rate] Success. Rate: ${rate.value}");
+        // print("[SWAP][Rate] Success. Rate: ${rate.value}");
       } else {
         showToast(body['message']?.toString() ?? 'Rate error');
       }
     } catch (e) {
-      print("[SWAP][Rate] Exception: $e");
+      // print("[SWAP][Rate] Exception: $e");
     } finally {
       isRateLoading.value = false;
     }

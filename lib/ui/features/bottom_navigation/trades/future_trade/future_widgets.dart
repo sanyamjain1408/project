@@ -2036,9 +2036,9 @@ class _FutureHistoryFullScreenState extends State<FutureHistoryFullScreen>
             pp: widget.pp,
             filter: 'all',
           ),
-          const _FutureNoDataTab(),
-          const _FutureNoDataTab(),
-          const _FutureNoDataTab(),
+          _FuturePositionHistoryTab(ctrl: widget.ctrl, pp: widget.pp),
+          const _FutureNoDataTab(label: 'Funding History'),
+          const _FutureNoDataTab(label: 'Futures Bonus'),
         ],
       ),
     );
@@ -2046,7 +2046,8 @@ class _FutureHistoryFullScreenState extends State<FutureHistoryFullScreen>
 }
 
 class _FutureNoDataTab extends StatefulWidget {
-  const _FutureNoDataTab();
+  final String label;
+  const _FutureNoDataTab({this.label = ''});
 
   @override
   State<_FutureNoDataTab> createState() => _FutureNoDataTabState();
@@ -2134,6 +2135,191 @@ class _FutureNoDataTabState extends State<_FutureNoDataTab> {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+// ── Position History Tab ──────────────────────────────────────────────────────
+class _FuturePositionHistoryTab extends StatefulWidget {
+  final NewFutureController ctrl;
+  final int pp;
+
+  const _FuturePositionHistoryTab({required this.ctrl, required this.pp});
+
+  @override
+  State<_FuturePositionHistoryTab> createState() => _FuturePositionHistoryTabState();
+}
+
+class _FuturePositionHistoryTabState extends State<_FuturePositionHistoryTab> {
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!_loaded) {
+      _loaded = true;
+      widget.ctrl.fetchPositionHistory();
+    }
+  }
+
+  String _fmtDate(String s) {
+    if (s.isEmpty) return '—';
+    try {
+      final dt = DateTime.parse(s).toLocal();
+      return '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')} '
+          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return s;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final list = widget.ctrl.positionHistory;
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            child: Row(
+              children: [
+                _FutureFilterChipBtn(
+                  label: 'Pair',
+                  selected: null,
+                  onTap: () {},
+                ),
+                const SizedBox(width: 8),
+                _FutureFilterChipBtn(
+                  label: 'Order Type',
+                  selected: null,
+                  onTap: () {},
+                ),
+                const SizedBox(width: 8),
+                _FutureFilterChipBtn(
+                  label: 'Status',
+                  selected: null,
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: list.isEmpty
+                ? Center(
+                    child: Text(
+                      'No records found',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 14,
+                        fontFamily: futureDmSans,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: list.length,
+                    itemBuilder: (_, i) {
+                      final pos = list[i];
+                      final isLong = pos.side == 'long';
+                      final pnlPos = pos.pnl >= 0;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: futureCard,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: futureBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(pos.symbol, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14, fontFamily: futureDmSans)),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isLong ? futureGreenLight : futureRedLight,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    isLong ? 'Long' : 'Short',
+                                    style: TextStyle(color: isLong ? futureGreen : futureRed, fontSize: 12, fontFamily: futureDmSans),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(color: futureCard2, borderRadius: BorderRadius.circular(4)),
+                                  child: Text('${pos.leverage}x', style: const TextStyle(color: Colors.white70, fontSize: 11, fontFamily: futureDmSans)),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  pos.status.toUpperCase(),
+                                  style: TextStyle(
+                                    color: pos.status == 'liquidated' ? futureRed : Colors.white54,
+                                    fontSize: 11,
+                                    fontFamily: futureDmSans,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(child: _phItem('Entry Price', pos.entryPrice.toStringAsFixed(widget.pp))),
+                                Expanded(child: _phItem('Close Price', pos.closePrice.toStringAsFixed(widget.pp))),
+                                Expanded(child: _phItem('Quantity', pos.quantity.toStringAsFixed(4))),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Expanded(child: _phItem('Margin', '${pos.margin.toStringAsFixed(2)} USDT')),
+                                Expanded(child: _phItem('Fee', '-${pos.fee.toStringAsFixed(4)} USDT')),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('PnL', style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 11, fontFamily: futureDmSans)),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${pnlPos ? "+" : ""}${pos.pnl.toStringAsFixed(4)} USDT',
+                                        style: TextStyle(color: pnlPos ? futureGreen : futureRed, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: futureDmSans),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Expanded(child: _phItem('Opened', _fmtDate(pos.openedAt))),
+                                Expanded(child: _phItem('Closed', _fmtDate(pos.closedAt))),
+                                const Expanded(child: SizedBox()),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _phItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 11, fontFamily: futureDmSans)),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: futureDmSans)),
       ],
     );
   }
