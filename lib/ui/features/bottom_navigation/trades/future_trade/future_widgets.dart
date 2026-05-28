@@ -1948,7 +1948,7 @@ class _FutureHistoryFullScreenState extends State<FutureHistoryFullScreen>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 3, vsync: this);
+    _tab = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -2008,6 +2008,9 @@ class _FutureHistoryFullScreenState extends State<FutureHistoryFullScreen>
               Tab(text: 'Open Order'),
               Tab(text: 'Order History'),
               Tab(text: 'Trade History'),
+              Tab(text: 'Position History'),
+              Tab(text: 'Funding History'),
+              Tab(text: 'Futures Bonus'),
             ],
           ),
         ),
@@ -2033,8 +2036,105 @@ class _FutureHistoryFullScreenState extends State<FutureHistoryFullScreen>
             pp: widget.pp,
             filter: 'all',
           ),
+          const _FutureNoDataTab(),
+          const _FutureNoDataTab(),
+          const _FutureNoDataTab(),
         ],
       ),
+    );
+  }
+}
+
+class _FutureNoDataTab extends StatefulWidget {
+  const _FutureNoDataTab();
+
+  @override
+  State<_FutureNoDataTab> createState() => _FutureNoDataTabState();
+}
+
+class _FutureNoDataTabState extends State<_FutureNoDataTab> {
+  String? selectedSymbol;
+  String? selectedType;
+  String? selectedStatus;
+
+  void _showFilterDrawer({
+    required String title,
+    required List<String> options,
+    required String? selected,
+    required void Function(String?) onSelect,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _FutureFilterDrawer(
+        title: title,
+        options: options,
+        selected: selected,
+        onSelect: (val) {
+          Navigator.pop(context);
+          setState(() => onSelect(val));
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+          child: Row(
+            children: [
+              _FutureFilterChipBtn(
+                label: 'Pair',
+                selected: selectedSymbol,
+                onTap: () => _showFilterDrawer(
+                  title: 'Select Pair',
+                  options: const ['USDT', 'BTC', 'USDC'],
+                  selected: selectedSymbol,
+                  onSelect: (v) => selectedSymbol = v,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _FutureFilterChipBtn(
+                label: 'Order Type',
+                selected: selectedType,
+                onTap: () => _showFilterDrawer(
+                  title: 'Select Order Type',
+                  options: const ['Buy', 'Sell'],
+                  selected: selectedType,
+                  onSelect: (v) => selectedType = v,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _FutureFilterChipBtn(
+                label: 'Status',
+                selected: selectedStatus,
+                onTap: () => _showFilterDrawer(
+                  title: 'Select Status',
+                  options: const ['Success', 'Pending'],
+                  selected: selectedStatus,
+                  onSelect: (v) => selectedStatus = v,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Center(
+            child: Text(
+              'No records found',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 14,
+                fontFamily: futureDmSans,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
