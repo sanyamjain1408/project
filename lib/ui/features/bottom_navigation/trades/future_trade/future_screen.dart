@@ -529,6 +529,76 @@ class _FutureChartScreenState extends State<FutureChartScreen> {
     );
   }
 
+  Widget _buildLastTrade() {
+    final pair = _ctrl.currentPair.value;
+    final pp = pair?.pricePrecision ?? 2;
+    final qp = pair?.quantityPrecision ?? 4;
+    final base = pair?.baseCurrency ?? 'BTC';
+    final quote = pair?.quoteCurrency ?? 'USDT';
+
+    return Obx(() {
+      final trades = _ctrl.lastTrades;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Expanded(child: Text('Price($quote)',
+                  style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5),
+                      fontFamily: futureDmSans, fontWeight: FontWeight.w400, height: 16 / 12))),
+              Expanded(child: Text('Amount($base)',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5),
+                      fontFamily: futureDmSans, fontWeight: FontWeight.w400, height: 16 / 12))),
+              Expanded(child: Text('Time',
+                  textAlign: TextAlign.end,
+                  style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5),
+                      fontFamily: futureDmSans, fontWeight: FontWeight.w400, height: 16 / 12))),
+            ]),
+            const SizedBox(height: 5),
+            trades.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: Text('No trade data',
+                        style: TextStyle(fontSize: 13, color: futureMuted, fontFamily: futureDmSans))),
+                  )
+                : Column(
+                    children: trades.take(50).map((t) {
+                      final sideRaw = (t['side']?.toString() ?? '').toLowerCase();
+                      final isBuy = sideRaw == 'buy' || sideRaw == 'long' || sideRaw == 'b' || sideRaw == '1';
+                      final color = isBuy ? futureGreen : futureRed;
+                      final price = double.tryParse(t['price']?.toString() ?? '') ?? 0;
+                      final amount = double.tryParse(
+                            (t['amount'] ?? t['qty'] ?? t['quantity'] ?? t['size'] ?? t['vol'] ?? '0').toString()) ?? 0;
+                      final ts = t['time'] as int? ?? 0;
+                      final dt = DateTime.fromMillisecondsSinceEpoch(ts * 1000);
+                      final timeStr =
+                          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}';
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(children: [
+                          Expanded(child: Text(price.toStringAsFixed(pp),
+                              style: TextStyle(color: color, fontSize: 11,
+                                  fontFamily: 'monospace', fontWeight: FontWeight.w500))),
+                          Expanded(child: Text(amount.toStringAsFixed(qp),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white, fontSize: 11,
+                                  fontFamily: 'monospace', fontWeight: FontWeight.w400))),
+                          Expanded(child: Text(timeStr,
+                              textAlign: TextAlign.end,
+                              style: const TextStyle(color: Colors.white, fontSize: 11,
+                                  fontFamily: 'monospace', fontWeight: FontWeight.w400))),
+                        ]),
+                      );
+                    }).toList(),
+                  ),
+          ],
+        ),
+      );
+    });
+  }
+
   Widget _buildFullOrderBook() {
     final pair = _ctrl.currentPair.value;
     final pp = pair?.pricePrecision ?? 2;
@@ -569,7 +639,7 @@ class _FutureChartScreenState extends State<FutureChartScreen> {
   @override
   Widget build(BuildContext context) {
     final chartTabIdx = _chartSubTab == 'Chart' ? 0 : _chartSubTab == 'Coin Info' ? 1 : 2;
-    final bookTabIdx = _unifiedTab == 'Order Book' ? 0 : _unifiedTab == 'Trade History' ? 1 : 2;
+    final bookTabIdx = _unifiedTab == 'Order Book' ? 0 : _unifiedTab == 'Last Trade' ? 1 : 2;
 
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
@@ -619,8 +689,8 @@ class _FutureChartScreenState extends State<FutureChartScreen> {
             TrapixChartWidget(symbol: symbol, height: MediaQuery.of(context).size.width * 1.05, isFuture: true),
             Column(children: [
               tabBarText(
-                ['Order Book'.tr, 'Trade History'.tr, 'Data Analysis'.tr], bookTabIdx,
-                (i) => setState(() => _unifiedTab = i == 0 ? 'Order Book' : i == 1 ? 'Trade History' : 'Data Analysis'),
+                ['Order Book'.tr, 'Last Trade'.tr, 'Data Analysis'.tr], bookTabIdx,
+                (i) => setState(() => _unifiedTab = i == 0 ? 'Order Book' : i == 1 ? 'Last Trade' : 'Data Analysis'),
                 selectedColor: Colors.white, unSelectedColor: Colors.white.withValues(alpha: 0.5),
                 fontSize: 16, selectedFontWeight: FontWeight.w700, unSelectedFontWeight: FontWeight.w400, fontFamily: futureDmSans,
               ),
@@ -629,10 +699,11 @@ class _FutureChartScreenState extends State<FutureChartScreen> {
               vSpacer10(),
               Builder(builder: (_) {
                 if (_unifiedTab == 'Order Book') return _buildFullOrderBook();
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: Text(_unifiedTab == 'Trade History' ? 'No trade history data' : 'No data analysis available',
-                      style: const TextStyle(fontSize: 13, color: futureMuted, fontFamily: futureDmSans))),
+                if (_unifiedTab == 'Last Trade') return _buildLastTrade();
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: Text('No data analysis available',
+                      style: TextStyle(fontSize: 13, color: futureMuted, fontFamily: futureDmSans))),
                 );
               }),
             ]),

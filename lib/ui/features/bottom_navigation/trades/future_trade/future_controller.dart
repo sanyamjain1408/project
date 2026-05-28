@@ -21,6 +21,9 @@ class NewFutureController extends GetxController {
   final orderBookBids = <List<String>>[].obs;
   final orderBookAsks = <List<String>>[].obs;
 
+  // Live last trades from WebSocket
+  final lastTrades = <Map<String, dynamic>>[].obs;
+
   final _ws = FutureWebSocket();
   Timer? _fallbackTimer;
   String lastError = '';
@@ -71,6 +74,7 @@ class NewFutureController extends GetxController {
     currentPair.value = pair;
     orderBookBids.clear();
     orderBookAsks.clear();
+    lastTrades.clear();
     _fallbackTimer?.cancel();
 
     if (_ws.isAlive) {
@@ -115,6 +119,12 @@ class NewFutureController extends GetxController {
       // Also update in pairs list
       final idx = pairs.indexWhere((p) => p.symbol == prev.symbol);
       if (idx >= 0) pairs[idx] = currentPair.value!;
+    }
+
+    // Update last trades
+    final tradesList = msg['trades'] as List?;
+    if (tradesList != null) {
+      lastTrades.value = tradesList.cast<Map<String, dynamic>>();
     }
 
     // Update order book
