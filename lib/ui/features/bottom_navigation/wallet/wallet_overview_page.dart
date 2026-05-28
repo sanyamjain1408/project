@@ -1152,7 +1152,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
         leading: IconButton(
           padding: EdgeInsets.symmetric(horizontal: 16),
           icon: const Icon(Icons.arrow_back, color: _white),
-          onPressed: () => Get.back(),
+          onPressed: () => Navigator.of(context).pop(),
         ),
 
         title: TabBar(
