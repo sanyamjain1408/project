@@ -534,36 +534,35 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
 
   @override
   Widget build(BuildContext context) {
-    // 👇 same text multiple times
-    const marqueeText = "   Trapix.com lists TDO/USDT Trading Pair!   ";
+    final announcements = () {
+      try {
+        return Get.find<LandingController>().landingData.value.announcementList ?? [];
+      } catch (_) { return []; }
+    }();
+    final marqueeText = announcements.isNotEmpty
+        ? announcements.map((a) => '   ${a.title ?? ''}   ').join('')
+        : '   Trapix Exchange   ';
 
     return Container(
-      height: 25,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.volume_up_outlined,
-            color: Color(0xFF007958),
-            size: 20,
-          ),
-
+          const Icon(Icons.volume_up_outlined, color: Color(0xFF007958), size: 20),
           const SizedBox(width: 6),
-
           Expanded(
             child: SingleChildScrollView(
               controller: _sc,
               scrollDirection: Axis.horizontal,
               physics: const NeverScrollableScrollPhysics(),
-
               child: Text(
-                marqueeText * 5, //  5 times repeat
+                marqueeText * 5,
                 style: const TextStyle(
                   color: Color(0xFF007958),
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   fontFamily: "DMSans",
-                  height: 16 / 12,
                 ),
               ),
             ),

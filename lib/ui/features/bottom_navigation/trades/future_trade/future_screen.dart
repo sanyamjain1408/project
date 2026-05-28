@@ -16,6 +16,7 @@ import 'future_chart_widget.dart';
 import 'future_controller.dart';
 import 'future_models.dart';
 import 'future_widgets.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
 
 class NewFutureScreen extends StatefulWidget {
   const NewFutureScreen({super.key, this.showTopTabs = true});
@@ -695,25 +696,35 @@ class _FutureMarqueeTickerState extends State<_FutureMarqueeTicker> {
 
   @override
   Widget build(BuildContext context) {
-    const marqueeText = '   Trapix.com lists TDO/USDT Trading Pair!   ';
+    final announcements = () {
+      try {
+        return Get.find<LandingController>().landingData.value.announcementList ?? [];
+      } catch (_) { return []; }
+    }();
+    final marqueeText = announcements.isNotEmpty
+        ? announcements.map((a) => '   ${a.title ?? ''}   ').join('')
+        : '   Trapix Exchange   ';
     return Container(
-      height: 25,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-      child: Row(children: [
-        const Icon(Icons.volume_up_outlined, color: Color(0xFF007958), size: 20),
-        const SizedBox(width: 6),
-        Expanded(
-          child: SingleChildScrollView(
-            controller: _sc,
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            child: Text(
-              marqueeText * 5,
-              style: const TextStyle(color: Color(0xFF007958), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: futureDmSans, height: 16 / 12),
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(Icons.volume_up_outlined, color: Color(0xFF007958), size: 20),
+          const SizedBox(width: 6),
+          Expanded(
+            child: SingleChildScrollView(
+              controller: _sc,
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              child: Text(
+                marqueeText * 5,
+                style: const TextStyle(color: Color(0xFF007958), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: futureDmSans),
+              ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
