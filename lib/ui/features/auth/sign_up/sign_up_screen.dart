@@ -400,7 +400,7 @@ class _Step2 extends StatelessWidget {
                   child: textSpanWithAction(
                     "By creating an account, I agree to"
                         .trParams({"appName": parent._appName.value}),
-                    "${"Privacy Police".tr}.",
+                    "${"Privacy Policy".tr}.",
                     maxLines: 3,
                     textAlign: TextAlign.start,
                     onTap: () =>
