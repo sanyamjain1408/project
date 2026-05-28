@@ -291,7 +291,10 @@ class NewFutureController extends GetxController {
   Future<void> closePosition(int positionId) async {
     try {
       final token = getFutureToken();
-      if (token.isEmpty) return;
+      if (token.isEmpty) {
+        Get.snackbar('Error', 'Not logged in', snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
       final res = await http.post(
         Uri.parse('$_base/close/$positionId'),
         headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
@@ -300,11 +303,18 @@ class NewFutureController extends GetxController {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true) {
+          Get.snackbar('Success', 'Position closed', snackPosition: SnackPosition.BOTTOM);
           fetchPositions();
           fetchBalance();
+        } else {
+          Get.snackbar('Error', data['message']?.toString() ?? 'Failed to close', snackPosition: SnackPosition.BOTTOM);
         }
+      } else {
+        Get.snackbar('Error', 'Server error ${res.statusCode}', snackPosition: SnackPosition.BOTTOM);
       }
-    } catch (_) {}
+    } catch (e) {
+      Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   Future<void> cancelOrder(int orderId) async {
@@ -332,8 +342,18 @@ class NewFutureController extends GetxController {
         body: jsonEncode({'take_profit': tp, 'stop_loss': sl}),
       );
       if (res.statusCode == 200) {
-        fetchPositions();
+        final data = jsonDecode(res.body);
+        if (data['success'] == true) {
+          Get.snackbar('Success', 'TP/SL updated', snackPosition: SnackPosition.BOTTOM);
+          fetchPositions();
+        } else {
+          Get.snackbar('Error', data['message']?.toString() ?? 'Failed to update TP/SL', snackPosition: SnackPosition.BOTTOM);
+        }
+      } else {
+        Get.snackbar('Error', 'Server error ${res.statusCode}', snackPosition: SnackPosition.BOTTOM);
       }
-    } catch (_) {}
+    } catch (e) {
+      Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.BOTTOM);
+    }
   }
 }
