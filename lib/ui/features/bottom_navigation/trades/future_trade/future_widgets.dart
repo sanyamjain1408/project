@@ -502,8 +502,6 @@ class FutureTradeForm extends StatelessWidget {
       'market': 'Market',
       'stop_limit': 'Stop limit',
     };
-    final dotColor = buySell == 'Buy' ? futureGreen : futureRed;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -662,24 +660,53 @@ class FutureTradeForm extends StatelessWidget {
         const SizedBox(height: 8),
         FutureQtyInput(base: base, qty: qty, qp: qp, onChanged: onQtyChanged),
         const SizedBox(height: 8),
-        // Slider dots
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [0, 25, 50, 75, 100].map((pct) {
-            final active = sliderPct >= pct;
-            return GestureDetector(
-              onTap: () => onSliderPct(pct.toDouble()),
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: active ? dotColor : futureCard2,
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: futureBorder),
+        // Slider with dots overlay
+        SizedBox(
+          height: 20,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 2,
+                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                  activeTrackColor: Colors.white.withValues(alpha: 0.5),
+                  inactiveTrackColor: const Color(0xFF1A1A1A),
+                  thumbColor: Colors.transparent,
+                ),
+                child: Slider(
+                  value: sliderPct,
+                  min: 0,
+                  max: 100,
+                  divisions: 4,
+                  onChanged: (v) {
+                    final snapped = (v / 25).round() * 25.0;
+                    onSliderPct(snapped);
+                  },
                 ),
               ),
-            );
-          }).toList(),
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [0.0, 25.0, 50.0, 75.0, 100.0].map((point) {
+                      final active = sliderPct >= point;
+                      return Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: active ? Colors.white.withValues(alpha: 0.5) : const Color(0xFF1A1A1A),
+                          shape: BoxShape.circle,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         GestureDetector(
@@ -693,7 +720,7 @@ class FutureTradeForm extends StatelessWidget {
                   border: Border.all(
                     color: showTpSl ? futureGreen : futureMuted,
                   ),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(7),
                   color: showTpSl ? futureGreen : Colors.transparent,
                 ),
                 child: showTpSl
