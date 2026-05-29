@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/helper/app_helper.dart';
+import 'package:tradexpro_flutter/ui/features/root/root_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/referrals/referral_controller.dart';
 
 // ─── Wave Glow Painter (Stats Cards) ────────────────────────────────────────
@@ -249,7 +252,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     ),
                   ),
                   TextSpan(
-                    text: "20%",
+                    text: "${(_ctrl.referralData.value.commissionPercentage ?? 20).toStringAsFixed(0)}%",
                     style: TextStyle(
                       color: Color(0xFFD7FF00),
                       fontSize: 30,
@@ -289,7 +292,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       ),
 
                       TextSpan(
-                        text: "earn up to 20% ",
+                        text: "earn up to ${(_ctrl.referralData.value.commissionPercentage ?? 20).toStringAsFixed(0)}% ",
                         style: const TextStyle(
                           color: Color(0xFFCCFF00),
                           fontSize: 12,
@@ -319,7 +322,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       ),
 
                       TextSpan(
-                        text: "0.3% exchange free ",
+                        text: "${(_ctrl.referralData.value.feePercentage ?? 0.3).toStringAsFixed(1)}% exchange free ",
                         style: TextStyle(
                           color: Color(0xFFCCFF00),
                           fontSize: 12,
@@ -356,7 +359,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   ),
                   children: [
                     TextSpan(
-                      text: "Receive 20%",
+                      text: "Receive ${(_ctrl.referralData.value.commissionPercentage ?? 20).toStringAsFixed(0)}%",
                       style: TextStyle(color: Color(0xFFCCFF00)),
                     ),
                     const TextSpan(
@@ -767,7 +770,11 @@ Widget _buildGlowCard({
             width: double.infinity,
 
             child: OutlinedButton(
-              onPressed: () {},
+              onPressed: () async {
+                Get.offAll(() => const RootScreen());
+                await Future.delayed(const Duration(milliseconds: 300));
+                getRootController().changeBottomNavIndex(AppBottomNavKey.wallet);
+              },
 
               style: OutlinedButton.styleFrom(
                 side: BorderSide(

@@ -100,12 +100,12 @@ class ReferralController extends GetxController {
             url:                  d['referral_link'] as String? ?? referralData.value.url,
             referralLink:         d['referral_link'] as String? ?? referralData.value.referralLink,
             referralCode:         d['referral_code'] as String? ?? referralData.value.referralCode,
-            totalReward:          _toDouble(d['total_earned'])     ?? referralData.value.totalReward,
-            countReferrals:       _toInt(d['total_referrals'])     ?? referralData.value.countReferrals,
-            pendingBalance:       _toDouble(d['pending_balance'])  ?? referralData.value.pendingBalance,
-            activeReferrals:      _toInt(d['active_referrals'])    ?? referralData.value.activeReferrals,
-            commissionPercentage: _toDouble(d['commission'])       ?? referralData.value.commissionPercentage,
-            feePercentage:        _toDouble(d['fee_percentage'])   ?? referralData.value.feePercentage,
+            totalReward:          _toDouble(d['total_earned'])        ?? referralData.value.totalReward,
+            countReferrals:       _toInt(d['total_referrals'])        ?? referralData.value.countReferrals,
+            pendingBalance:       _toDouble(d['available_balance'])   ?? referralData.value.pendingBalance,
+            activeReferrals:      _toInt(d['active_referrals'])       ?? referralData.value.activeReferrals,
+            commissionPercentage: _toDouble(d['commission_rate'])     ?? referralData.value.commissionPercentage,
+            feePercentage:        _toDouble(d['fee_percentage'])      ?? referralData.value.feePercentage,
           );
         }
       }
@@ -139,7 +139,6 @@ if (rewardsResp.statusCode == 200) {
         if (json['success'] == true && json['data'] != null) {
           final list = (json['data'] as List<dynamic>).cast<Map<String, dynamic>>();
           rewards.value = list.map((m) => SimpleReward.fromJson(m)).toList();
-          print('=== FIRST REWARD tradeType: ${rewards.isNotEmpty ? rewards.first.tradeType : "empty"} ===');
         }
       }
     } catch (_) {
