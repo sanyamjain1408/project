@@ -35,9 +35,9 @@ class IBController extends GetxController {
   var networkMembers = <Map<String, dynamic>>[].obs;
   var isWithdrawing  = false.obs;
 
-  static const String _baseUrl = 'https://api.trapix.com/api/referral';
+  static const String _baseUrl = 'https://api.trapix.com/api/referral-commission';
 
-  // ── Step 1: load IB stats + network (mirrors ReferralController exactly) ───
+  // ── Load IB stats + network ───────────────────────────────────────────────
   void getIBData() {
     showLoadingDialog();
     APIRepository().getReferralApp().then((resp) {
@@ -45,7 +45,6 @@ class IBController extends GetxController {
       if (resp.success) {
         final data = ReferralData.fromJson(resp.data);
 
-        // Map ReferralData → IBStats
         stats.value = IBStats(
           userId:          data.user?.id,
           referralLink:    data.referralLink ?? data.url,
@@ -57,7 +56,6 @@ class IBController extends GetxController {
           pendingBalance:  data.pendingBalance ?? 0.0,
         );
 
-        // Map referrals list → networkMembers
         networkMembers.value = (data.referrals ?? []).map((r) {
           final joinedAt = r.joiningDate != null
               ? "${r.joiningDate!.year}-"
@@ -73,11 +71,9 @@ class IBController extends GetxController {
           };
         }).toList();
 
-        // Step 2: also fetch /stats and /tree to get backend data
-        // (user?.id is the correct field — ReferralData has no userId)
         final userId = data.user?.id;
         if (userId != null) {
-          _fetchStatsAndTree(userId);
+          _fetchStatsAndNetwork(userId);
         }
       } else {
         showToast(resp.message);
@@ -88,8 +84,8 @@ class IBController extends GetxController {
     });
   }
 
-  // ── GET /api/referral/stats?user_id=X  +  GET /api/referral/tree?user_id=X ─
-  Future<void> _fetchStatsAndTree(int userId) async {
+  // ── GET /referral-commission/stats + /referral-commission/network ─────────
+  Future<void> _fetchStatsAndNetwork(int userId) async {
     try {
       final results = await Future.wait([
         http.get(
@@ -97,12 +93,12 @@ class IBController extends GetxController {
           headers: _headers(),
         ),
         http.get(
-          Uri.parse('$_baseUrl/tree?user_id=$userId'),
+          Uri.parse('$_baseUrl/network?user_id=$userId'),
           headers: _headers(),
         ),
       ]);
 
-      // ── /stats response ──────────────────────────────────────────────────
+      // ── /stats ────────────────────────────────────────────────────────────
       final statsResp = results[0];
       if (statsResp.statusCode == 200) {
         final json = jsonDecode(statsResp.body) as Map<String, dynamic>;
@@ -110,27 +106,25 @@ class IBController extends GetxController {
           final d = json['data'] as Map<String, dynamic>;
           stats.value = IBStats(
             userId:          stats.value.userId,
-            referralLink:    d['referral_link']    as String? ?? stats.value.referralLink,
-            referralCode:    d['referral_code']    as String? ?? stats.value.referralCode,
-            totalReferrals:  _parseInt(d['total_referrals'])  ?? stats.value.totalReferrals,
-            totalEarned:     _parseDouble(d['total_earned'])  ?? stats.value.totalEarned,
-            tierName:        d['tier_name']         as String? ?? stats.value.tierName,
-            activeReferrals: _parseInt(d['active_referrals']) ?? stats.value.activeReferrals,
+            referralLink:    d['referral_link']     as String? ?? stats.value.referralLink,
+            referralCode:    d['referral_code']     as String? ?? stats.value.referralCode,
+            totalReferrals:  _parseInt(d['total_referrals'])   ?? stats.value.totalReferrals,
+            totalEarned:     _parseDouble(d['total_earned'])   ?? stats.value.totalEarned,
+            tierName:        d['tier_name']          as String? ?? stats.value.tierName,
+            activeReferrals: _parseInt(d['active_referrals'])  ?? stats.value.activeReferrals,
             pendingBalance:  _parseDouble(d['pending_balance']) ?? stats.value.pendingBalance,
           );
         }
       }
 
-      // ── /tree response ───────────────────────────────────────────────────
-      final treeResp = results[1];
-      if (treeResp.statusCode == 200) {
-        final json = jsonDecode(treeResp.body) as Map<String, dynamic>;
-        if (json['success'] == true) {
-          final list =
-              (json['data']?['direct_referrals'] as List<dynamic>?) ?? [];
+      // ── /network ──────────────────────────────────────────────────────────
+      final networkResp = results[1];
+      if (networkResp.statusCode == 200) {
+        final json = jsonDecode(networkResp.body) as Map<String, dynamic>;
+        if (json['success'] == true && json['data'] != null) {
+          final list = (json['data'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
           if (list.isNotEmpty) {
-            networkMembers.value = list.map((r) {
-              final m       = r as Map<String, dynamic>;
+            networkMembers.value = list.map((m) {
               final rawDate = m['joined_at'] as String?;
               String joinedAt = '';
               if (rawDate != null && rawDate.isNotEmpty) {
@@ -156,7 +150,7 @@ class IBController extends GetxController {
     }
   }
 
-  // ── POST /api/referral/withdraw-to-wallet ──────────────────────────────────
+  // ── POST /referral-commission/withdraw ────────────────────────────────────
   Future<void> withdrawToWallet() async {
     final balance = stats.value.pendingBalance ?? 0.0;
     if (balance <= 0) {
@@ -175,7 +169,7 @@ class IBController extends GetxController {
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/withdraw-to-wallet'),
+        Uri.parse('$_baseUrl/withdraw'),
         headers: _headers(),
         body: jsonEncode({'user_id': userId}),
       );

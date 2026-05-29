@@ -6,8 +6,56 @@ import 'package:tradexpro_flutter/data/models/referral.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 
+class SimpleReward {
+  final int? id;
+  final int? traderUserId;
+  final String? tradeType;
+  final double? tradeVolume;
+  final double? exchangeFee;
+  final double? commissionRate;
+  final double? rewardAmount;
+  final String? status;
+  final DateTime? createdAt;
+
+  SimpleReward({
+    this.id,
+    this.traderUserId,
+    this.tradeType,
+    this.tradeVolume,
+    this.exchangeFee,
+    this.commissionRate,
+    this.rewardAmount,
+    this.status,
+    this.createdAt,
+  });
+
+  factory SimpleReward.fromJson(Map<String, dynamic> json) {
+    return SimpleReward(
+      id:             json['id'] as int?,
+      traderUserId:   json['trader_user_id'] as int?,
+      tradeType:      json['trade_type'] as String?,
+      tradeVolume:    _toDouble(json['trade_volume']),
+      exchangeFee:    _toDouble(json['exchange_fee']),
+      commissionRate: _toDouble(json['commission_rate']),
+      rewardAmount:   _toDouble(json['reward_amount']),
+      status:         json['status'] as String?,
+      createdAt:      json['created_at'] == null
+          ? null
+          : DateTime.tryParse(json['created_at'].toString()),
+    );
+  }
+
+  static double? _toDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v.toString());
+  }
+}
+
 class ReferralController extends GetxController {
   Rx<ReferralData> referralData = ReferralData().obs;
+  var rewards      = <SimpleReward>[].obs;
   var isWithdrawing = false.obs;
 
   static const String _baseUrl = 'https://api.trapix.com/api/simple-referral';
@@ -37,6 +85,7 @@ class ReferralController extends GetxController {
       final results = await Future.wait([
         http.get(Uri.parse('$_baseUrl/stats?user_id=$userId')),
         http.get(Uri.parse('$_baseUrl/network?user_id=$userId')),
+        http.get(Uri.parse('$_baseUrl/rewards?user_id=$userId')),
       ]);
 
       // ── stats ──────────────────────────────────────────────────────────────
@@ -80,6 +129,17 @@ class ReferralController extends GetxController {
             feePercentage:        referralData.value.feePercentage,
             referrals:            list.map((m) => Referral.fromJson(m)).toList(),
           );
+        }
+      }
+
+      // ── rewards history ────────────────────────────────────────────────────
+      final rewardsResp = results[2];
+if (rewardsResp.statusCode == 200) {
+        final json = jsonDecode(rewardsResp.body) as Map<String, dynamic>;
+        if (json['success'] == true && json['data'] != null) {
+          final list = (json['data'] as List<dynamic>).cast<Map<String, dynamic>>();
+          rewards.value = list.map((m) => SimpleReward.fromJson(m)).toList();
+          print('=== FIRST REWARD tradeType: ${rewards.isNotEmpty ? rewards.first.tradeType : "empty"} ===');
         }
       }
     } catch (_) {

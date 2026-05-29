@@ -848,10 +848,10 @@ Widget _buildGlowCard({
         ),
         const SizedBox(height: 20),
         Obx(() {
-          final all = _ctrl.referralData.value.referrals ?? [];
+          final all = _ctrl.rewards;
           final filtered = all.where((item) {
             if (_startDate == null && _endDate == null) return true;
-            final d = item.joiningDate;
+            final d = item.createdAt;
             if (d == null) return true;
             if (_startDate != null && d.isBefore(_startDate!)) return false;
             if (_endDate != null && d.isAfter(_endDate!.add(const Duration(days: 1)))) return false;
@@ -863,7 +863,7 @@ Widget _buildGlowCard({
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 30),
                 child: Text(
-                  "No referrals yet",
+                  "No referral history yet",
                   style: TextStyle(
                     color: Colors.white38,
                     fontSize: 13,
@@ -884,31 +884,55 @@ Widget _buildGlowCard({
                   Row(
                     children: [
                       _refCell("No.", 36, isHeader: true),
-                      _refCell("Referral", 110, isHeader: true),
-                      _refCell("Joined", 110, isHeader: true),
-                      _refCell("Trading Volume", 140, isHeader: true),
-                      _refCell("You Earned (${(_ctrl.referralData.value.commissionPercentage ?? 20).toStringAsFixed(0)}%)", 150, isHeader: true),
+                      _refCell("Trade Type", 90, isHeader: true),
+                      _refCell("Date", 110, isHeader: true),
+                      _refCell("Volume", 120, isHeader: true),
+                      _refCell("Commission", 100, isHeader: true),
+                      _refCell("Reward", 130, isHeader: true),
+                      _refCell("Status", 90, isHeader: true),
                     ],
                   ),
-                  Divider(color: Colors.white.withOpacity(0.08), height: 24),
+                  Divider(color: Colors.white.withValues(alpha: 0.08), height: 24),
                   ...List.generate(filtered.length, (i) {
                     final item = filtered[i];
-                    final joinedAt = item.joiningDate != null
-                        ? "${item.joiningDate!.day.toString().padLeft(2, '0')}-${item.joiningDate!.month.toString().padLeft(2, '0')}-${item.joiningDate!.year}"
+                    final dateStr = item.createdAt != null
+                        ? "${item.createdAt!.day.toString().padLeft(2, '0')}-${item.createdAt!.month.toString().padLeft(2, '0')}-${item.createdAt!.year}"
                         : '—';
+                    final isCredited = item.status == 'credited';
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 18),
                       child: Row(
                         children: [
                           _refCell("${i + 1}", 36),
-                          _refCell(item.fullName ?? '—', 110),
-                          _refCell(joinedAt, 110),
                           SizedBox(
-                            width: 140,
+                            width: 90,
                             child: Text(
-                              "\$${(item.tradeVolume ?? 0).toStringAsFixed(2)} USDT",
+                              (item.tradeType ?? '—').toUpperCase(),
+                              style: TextStyle(
+                                color: item.tradeType == 'buy'
+                                    ? const Color(0xFF00E5FF)
+                                    : const Color(0xFFFF6F00),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: "DMSans",
+                              ),
+                            ),
+                          ),
+                          _refCell(dateStr, 110),
+                          _refCell(
+                            "${(item.tradeVolume ?? 0).toStringAsFixed(2)} USDT",
+                            120,
+                          ),
+                          _refCell(
+                            "${(item.commissionRate ?? 0).toStringAsFixed(0)}%",
+                            100,
+                          ),
+                          SizedBox(
+                            width: 130,
+                            child: Text(
+                              "+${(item.rewardAmount ?? 0).toStringAsFixed(5)} USDT",
                               style: const TextStyle(
-                                color: Color(0xFF00E5FF),
+                                color: Color(0xFFCCFF00),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: "DMSans",
@@ -916,13 +940,14 @@ Widget _buildGlowCard({
                             ),
                           ),
                           SizedBox(
-                            width: 150,
+                            width: 90,
                             child: Text(
-                              "+${(item.youEarned ?? 0).toStringAsFixed(5)} USDT",
-                              style: const TextStyle(
-                                color: Color(0xFFCCFF00),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                              item.status ?? '—',
+                              style: TextStyle(
+                                color: isCredited
+                                    ? const Color(0xFF00E5FF)
+                                    : Colors.white54,
+                                fontSize: 12,
                                 fontFamily: "DMSans",
                               ),
                             ),
@@ -946,7 +971,7 @@ Widget _buildGlowCard({
       child: Text(
         text,
         style: TextStyle(
-          color: isHeader ? Colors.white.withOpacity(0.5) : Colors.white,
+          color: isHeader ? Colors.white.withValues(alpha: 0.5) : Colors.white,
           fontSize: isHeader ? 11 : 13,
           fontWeight: isHeader ? FontWeight.w500 : FontWeight.w400,
           fontFamily: "DMSans",
@@ -986,10 +1011,11 @@ Widget _buildGlowCard({
     );
     if (picked != null) {
       setState(() {
-        if (isStart)
+        if (isStart) {
           _startDate = picked;
-        else
+        } else {
           _endDate = picked;
+        }
       });
     }
   }
