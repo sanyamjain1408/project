@@ -37,9 +37,9 @@ class IBController extends GetxController {
   var networkMembers = <Map<String, dynamic>>[].obs;
   var isWithdrawing  = false.obs;
 
-  static const String _baseUrl = 'https://api.trapix.com/api/referral-commission';
+  static const String _apiBase = 'https://api.trapix.com/api';
 
-  // ── Load IB stats + network ───────────────────────────────────────────────
+  // ── Load initial data then fetch from /referral/stats + /referral/tree ─────
   void getIBData() {
     showLoadingDialog();
     APIRepository().getReferralApp().then((resp) {
@@ -47,35 +47,23 @@ class IBController extends GetxController {
       if (resp.success) {
         final data = ReferralData.fromJson(resp.data);
 
+        // Seed with whatever getReferralApp returns
         stats.value = IBStats(
-          userId:          data.user?.id,
-          referralLink:    data.referralLink ?? data.url,
-          referralCode:    data.referralCode ?? data.user?.affiliate?.code,
-          totalReferrals:  data.countReferrals ?? 0,
-          totalEarned:     data.totalReward ?? 0.0,
-          tierName:        data.select,
+          userId:         data.user?.id,
+          referralLink:   data.referralLink ?? data.url,
+          referralCode:   data.referralCode ?? data.user?.affiliate?.code,
+          totalReferrals: data.countReferrals ?? 0,
+          totalEarned:    data.totalReward ?? 0.0,
+          tierName:       data.select,
           activeReferrals: data.activeReferrals ?? 0,
-          pendingBalance:  data.pendingBalance ?? 0.0,
+          pendingBalance: data.pendingBalance ?? 0.0,
         );
-
-        networkMembers.value = (data.referrals ?? []).map((r) {
-          final joinedAt = r.joiningDate != null
-              ? "${r.joiningDate!.year}-"
-                "${r.joiningDate!.month.toString().padLeft(2, '0')}-"
-                "${r.joiningDate!.day.toString().padLeft(2, '0')}"
-              : '';
-          return <String, dynamic>{
-            'name':         r.fullName ?? '',
-            'email':        r.email    ?? '',
-            'joined_at':    joinedAt,
-            'trade_volume': r.tradeVolume ?? 0.0,
-            'you_earned':   r.youEarned   ?? 0.0,
-          };
-        }).toList();
 
         final userId = data.user?.id;
         if (userId != null) {
-          _fetchStatsAndNetwork(userId);
+          // Same two endpoints the website uses
+          _fetchReferralStats(userId);
+          _fetchReferralTree(userId);
         }
       } else {
         showToast(resp.message);
@@ -86,53 +74,67 @@ class IBController extends GetxController {
     });
   }
 
-  // ── GET /referral-commission/stats + /referral-commission/network ─────────
-  Future<void> _fetchStatsAndNetwork(int userId) async {
+  // ── GET /referral/stats ───────────────────────────────────────────────────
+  // Website: fetch(`https://api.trapix.com/api/referral/stats?user_id=${userId}`)
+  // Returns: referral_link, referral_code, total_referrals, total_earned,
+  //          tier_name, active_referrals, pending_balance
+  Future<void> _fetchReferralStats(int userId) async {
     try {
-      final statsR  = await http.get(Uri.parse('$_baseUrl/stats?user_id=$userId'),  headers: _headers());
-      final walletR = await http.get(Uri.parse('$_baseUrl/wallet?user_id=$userId'), headers: _headers());
-
-      // ── /stats ────────────────────────────────────────────────────────────
-      if (statsR.statusCode == 200) {
-        final json = jsonDecode(statsR.body) as Map<String, dynamic>;
+      final resp = await http.get(
+        Uri.parse('$_apiBase/referral/stats?user_id=$userId'),
+        headers: _headers(),
+      );
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body) as Map<String, dynamic>;
         if (json['success'] == true && json['data'] != null) {
           final d = json['data'] as Map<String, dynamic>;
           stats.value = IBStats(
-            userId:          stats.value.userId,
-            referralLink:    d['referral_link'] as String?       ?? stats.value.referralLink,
-            referralCode:    d['referral_code'] as String?       ?? stats.value.referralCode,
-            totalReferrals:  _parseInt(d['total_referrals'])     ?? stats.value.totalReferrals,
-            totalEarned:     _parseDouble(d['total_earned'])     ?? stats.value.totalEarned,
-            tierName:        d['tier_name']     as String?       ?? stats.value.tierName,
-            activeReferrals: _parseInt(d['active_referrals'])    ?? stats.value.activeReferrals,
-            pendingBalance:  _parseDouble(d['available_balance']) ?? stats.value.pendingBalance,
+            userId:         stats.value.userId,
+            referralLink:   d['referral_link']  as String? ?? stats.value.referralLink,
+            referralCode:   d['referral_code']  as String? ?? stats.value.referralCode,
+            totalReferrals: _parseInt(d['total_referrals'])    ?? stats.value.totalReferrals,
+            totalEarned:    _parseDouble(d['total_earned'])    ?? stats.value.totalEarned,
+            tierName:       d['tier_name']       as String?    ?? stats.value.tierName,
+            activeReferrals: _parseInt(d['active_referrals']) ?? stats.value.activeReferrals,
+            pendingBalance: _parseDouble(d['pending_balance']) ?? stats.value.pendingBalance,
           );
         }
       }
-
-      // ── /wallet ───────────────────────────────────────────────────────────
-      if (walletR.statusCode == 200) {
-        final json = jsonDecode(walletR.body) as Map<String, dynamic>;
-        if (json['success'] == true && json['data'] != null) {
-          final d = json['data'] as Map<String, dynamic>;
-          stats.value = IBStats(
-            userId:          stats.value.userId,
-            referralLink:    stats.value.referralLink,
-            referralCode:    stats.value.referralCode,
-            totalReferrals:  stats.value.totalReferrals,
-            tierName:        stats.value.tierName,
-            activeReferrals: stats.value.activeReferrals,
-            totalEarned:     _parseDouble(d['total_earned'])      ?? stats.value.totalEarned,
-            pendingBalance:  _parseDouble(d['available_balance']) ?? stats.value.pendingBalance,
-          );
-        }
-      }
-    } catch (_) {
-      // silently fail — app already has data from getReferralApp()
-    }
+    } catch (_) {}
   }
 
-  // ── POST /referral-commission/withdraw ────────────────────────────────────
+  // ── GET /referral/tree ────────────────────────────────────────────────────
+  // Website: fetch(`https://api.trapix.com/api/referral/tree?user_id=${userId}`)
+  // Returns: data.direct_referrals[] with name, email, joined_at,
+  //          trade_volume, you_earned, their_referrals
+  Future<void> _fetchReferralTree(int userId) async {
+    try {
+      final resp = await http.get(
+        Uri.parse('$_apiBase/referral/tree?user_id=$userId'),
+        headers: _headers(),
+      );
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body) as Map<String, dynamic>;
+        if (json['success'] == true && json['data'] != null) {
+          final directReferrals =
+              (json['data']['direct_referrals'] as List<dynamic>?) ?? [];
+          networkMembers.value = directReferrals.map((r) {
+            return <String, dynamic>{
+              'name':            r['name']      ?? '',
+              'email':           r['email']     ?? '',
+              'joined_at':       r['joined_at'] ?? '',
+              'trade_volume':    _parseDouble(r['trade_volume'])   ?? 0.0,
+              'you_earned':      _parseDouble(r['you_earned'])     ?? 0.0,
+              'their_referrals': _parseInt(r['their_referrals'])   ?? 0,
+            };
+          }).toList();
+        }
+      }
+    } catch (_) {}
+  }
+
+  // ── POST /referral/withdraw-to-wallet ─────────────────────────────────────
+  // Website: fetch("https://api.trapix.com/api/referral/withdraw-to-wallet", ...)
   Future<void> withdrawToWallet() async {
     final balance = stats.value.pendingBalance ?? 0.0;
     if (balance <= 0) {
@@ -151,7 +153,7 @@ class IBController extends GetxController {
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/withdraw'),
+        Uri.parse('$_apiBase/referral/withdraw-to-wallet'),
         headers: _headers(),
         body: jsonEncode({'user_id': userId}),
       );
@@ -163,7 +165,7 @@ class IBController extends GetxController {
           showToast("IB Rewards withdrawn to your Rewards Wallet!");
           getIBData();
         } else {
-          showToast(json['message'] ?? "Withdrawal failed");
+          showToast(json['message'] as String? ?? "Withdrawal failed");
         }
       } else {
         showToast("Something went wrong");
@@ -207,7 +209,7 @@ class IBController extends GetxController {
   static double? _parseDouble(dynamic v) {
     if (v == null) return null;
     if (v is double) return v;
+    if (v is int) return v.toDouble();
     return double.tryParse(v.toString());
   }
-
 }
