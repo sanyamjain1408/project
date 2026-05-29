@@ -13,6 +13,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_overview_page.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_widgets.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_screen.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
@@ -868,6 +869,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       case "Deposit":
         break;
       case "Champion":
+        Get.to(() => const ChampionScreen());
         break;
       case "Swap":
         break;
