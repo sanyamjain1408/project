@@ -5,6 +5,7 @@ import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/data/models/dashboard_data.dart';
 import 'package:tradexpro_flutter/data/models/settings.dart';
 import 'package:tradexpro_flutter/data/models/spot_data.dart';
+import 'package:tradexpro_flutter/data/remote/spot_socket.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/helper/favorite_helper.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
@@ -34,6 +35,30 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
   final isLogin = gUserRx.value.id > 0;
   RxInt chartIndex = 0.obs;
   RxInt tabIndex = 0.obs;
+
+  final _tradesWs = SpotWebSocket();
+
+  @override
+  void initState() {
+    super.initState();
+    final sym = (_controller.selectedCoinPair.value.coinPair ?? 'BTC_USDT')
+        .replaceAll('_', '')
+        .replaceAll('/', '');
+    _tradesWs.connect(sym, (msg) {
+      if (msg['trades'] is List) {
+        final list = (msg['trades'] as List)
+            .map((t) => SpotTrade.fromJson(Map<String, dynamic>.from(t as Map)))
+            .toList();
+        _controller.applyLastTrades(list);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tradesWs.dispose();
+    super.dispose();
+  }
 
   List<Announcement> get _announcements {
     try {
@@ -157,14 +182,14 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                         height: MediaQuery.of(context).size.width * 1.05,
                       );
                     }),
-                    // Order Book / Trade History / Asset Overview tabs
+                    // Order Book / Last Trade / Asset Overview tabs
                     Column(
                       children: [
                         Obx(
                           () => tabBarText(
                             [
                               "Order Book".tr,
-                              "Trade History".tr,
+                              "Last Trade".tr,
                               "Asset Overview".tr,
                             ],
                             tabIndex.value,
@@ -196,12 +221,12 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                                 baseCoinOverride: _controller.selectedCoinPair.value.childCoinName,
                               );
                             case 1:
-                              return TradeListView(
+                              return Obx(() => TradeListView(
                                 exchangeTrades: _controller.exchangeTrades,
                                 total: _controller.dashboardData.value.orderData?.total,
                                 tradeCoinOverride: _controller.selectedCoinPair.value.parentCoinName,
                                 baseCoinOverride: _controller.selectedCoinPair.value.childCoinName,
-                              );
+                              ));
                             case 2:
                               return AssetOverviewView();
                             default:

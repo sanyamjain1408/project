@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -196,6 +198,8 @@ class SpotTradeController extends GetxController implements SocketListener {
     }).toList();
   }
 
+  void applyLastTrades(List<SpotTrade> trades) => _applyTrades(trades);
+
   void _applyTrades(List<SpotTrade> trades) {
     exchangeTrades.value = trades
         .map((t) => ExchangeTrade(
@@ -249,6 +253,40 @@ class SpotTradeController extends GetxController implements SocketListener {
       }
     }
     return body;
+  }
+
+  /// Called from SpotTradeDetailsScreen to ensure trades are loaded.
+  /// WebSocket is primary; HTTP is fallback if WS hasn't sent trades yet.
+  void fetchLastTrades() {
+    // If WS already has trades, nothing to do
+    if (exchangeTrades.isNotEmpty) return;
+    // Otherwise kick off WS connection (if not already) + HTTP fallback
+    _connectSpotWs();
+    _doHttpFetchTrades();
+  }
+
+  void _doHttpFetchTrades() async {
+    final sym = _spotSymbol;
+    if (sym.isEmpty) return;
+    try {
+      final res = await http
+          .get(Uri.parse('https://api.trapix.com/api/v1/spot/trades/$sym'))
+          .timeout(const Duration(seconds: 10));
+      if (res.statusCode != 200) return;
+      final body = jsonDecode(res.body);
+      List? list;
+      if (body is List) {
+        list = body;
+      } else if (body is Map) {
+        final d = body['data'];
+        if (d is List) list = d;
+      }
+      if (list != null && list.isNotEmpty) {
+        _applyTrades(list
+            .map((t) => SpotTrade.fromJson(Map<String, dynamic>.from(t as Map)))
+            .toList());
+      }
+    } catch (_) {}
   }
 
   void _doHttpFetch() {
