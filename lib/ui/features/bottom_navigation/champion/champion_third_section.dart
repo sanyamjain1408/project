@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_controller.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/competition_deposit_history_screen.dart';
 
 // ─── Data Models (swap with API models later) ─────────────────────────────────
 
@@ -128,7 +129,8 @@ class ChampionThirdSection extends StatefulWidget {
   State<ChampionThirdSection> createState() => _ChampionThirdSectionState();
 }
 
-class _ChampionThirdSectionState extends State<ChampionThirdSection> {
+class _ChampionThirdSectionState extends State<ChampionThirdSection>
+    with TickerProviderStateMixin {
   static const _green  = Color(0xFFCCFF00);
   static const _bg     = Color(0xFF0B0B0F);
   static const _card   = Color(0xFF1A1A1A);
@@ -137,6 +139,8 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
   late ThirdContestModel _contest;
   Duration _remaining = Duration.zero;
   Timer? _timer;
+  late AnimationController _circleSpinCtrl;
+  late Animation<double> _circleSpinAnim;
   int _leaderboardPage = 0;
   static const _perPage = 5;
   bool _apiLoading = false;
@@ -146,6 +150,15 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
   @override
   void initState() {
     super.initState();
+    _circleSpinCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+    _circleSpinAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -3.1416 / 2), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: -3.1416 / 2, end: 0.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _circleSpinCtrl, curve: Curves.easeInOut));
+    _circleSpinCtrl.repeat();
     if (widget.competitionId != null) {
       _apiLoading = true;
       _ctrl = Get.find<ChampionController>();
@@ -169,8 +182,8 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
     await _ctrl!.fetchDetail(id);
     if (!mounted) return;
     final detail = _ctrl!.currentDetail.value;
+    final lb = List<ApiLeaderboardEntry>.from(_ctrl!.leaderboard);
     if (detail != null) {
-      final lb = _ctrl!.leaderboard;
       setState(() {
         _contest = _apiToContest(detail, lb);
         _hasData = true;
@@ -282,6 +295,7 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
   @override
   void dispose() {
     _timer?.cancel();
+    _circleSpinCtrl.dispose();
     super.dispose();
   }
 
@@ -387,10 +401,34 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
                   icon: const Icon(Icons.arrow_back_outlined,
                       color: Colors.white, size: 24),
                 ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.timer_outlined,
-                      color: Colors.white, size: 24),
+                Padding(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: GestureDetector(
+                    onTap: () {
+                      if (widget.competitionId != null) {
+                        Get.to(() => CompetitionDepositHistoryScreen(
+                              competitionId: widget.competitionId!,
+                            ));
+                      }
+                    },
+                    child: AnimatedBuilder(
+                      animation: _circleSpinAnim,
+                      builder: (context, child) => Transform.rotate(
+                        angle: _circleSpinAnim.value,
+                        child: child,
+                      ),
+                      child: Image.asset(
+                        'assets/icons/time.png',
+                        width: 28,
+                        height: 28,
+                        errorBuilder: (context, err, stack) => const Icon(
+                          Icons.history_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -636,7 +674,8 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
                     ? null
                     : () async {
                         if (widget.competitionId != null && _ctrl != null) {
-                          await _ctrl!.joinCompetition(widget.competitionId!);
+                          final ok = await _ctrl!.joinCompetition(widget.competitionId!);
+                          if (ok && mounted) await _loadFromApi();
                         }
                       },
                 style: ElevatedButton.styleFrom(
