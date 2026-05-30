@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_controller.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/competition_deposit_history_screen.dart';
 
 // ─── Data Models (replace with API models later) ──────────────────────────────
 
@@ -125,7 +126,7 @@ class PopularChampionScreen extends StatefulWidget {
 }
 
 class _PopularChampionScreenState extends State<PopularChampionScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static const _green = Color(0xFFCCFF00);
   static const _bg = Color(0xFF111111);
   static const _card = Color(0xFF1A1A1A);
@@ -134,6 +135,8 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
   late ContestModel _contest;
   Duration _remaining = Duration.zero;
   Timer? _timer;
+  late AnimationController _circleSpinCtrl;
+  late Animation<double> _circleSpinAnim;
   int _leaderboardPage = 0;
   static const _perPage = 5;
   int _pairTabIndex = 0;
@@ -144,6 +147,15 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
   @override
   void initState() {
     super.initState();
+    _circleSpinCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+    _circleSpinAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -3.1416 / 2), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: -3.1416 / 2, end: 0.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _circleSpinCtrl, curve: Curves.easeInOut));
+    _circleSpinCtrl.repeat();
     if (widget.competitionId != null) {
       _apiLoading = true;
       _ctrl = Get.find<ChampionController>();
@@ -326,6 +338,7 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
   @override
   void dispose() {
     _timer?.cancel();
+    _circleSpinCtrl.dispose();
     super.dispose();
   }
 
@@ -479,12 +492,35 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
                     size: 24,
                   ),
                 ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.timer_outlined,
-                    color: Colors.white,
-                    size: 24,
+                Padding(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: GestureDetector(
+                    onTap: () {
+                      if (widget.competitionId != null) {
+                        Get.to(() => CompetitionDepositHistoryScreen(
+                              competitionId: widget.competitionId!,
+                            ));
+                      }
+                    },
+                    child: AnimatedBuilder(
+                      animation: _circleSpinAnim,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _circleSpinAnim.value,
+                          child: child,
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/icons/time.png',
+                        width: 20,
+                        height: 20,
+                        errorBuilder: (context, err, stack) => const Icon(
+                          Icons.history_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],

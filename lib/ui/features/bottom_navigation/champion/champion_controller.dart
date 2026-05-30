@@ -202,6 +202,36 @@ class ApiLeaderboardEntry {
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
+// ─── Deposit History Model ─────────────────────────────────────────────────────
+
+class ApiDepositHistory {
+  final String date;
+  final String amount;
+  final String coin;
+  final String status;
+  final String bonus;
+
+  ApiDepositHistory({
+    required this.date,
+    required this.amount,
+    required this.coin,
+    required this.status,
+    required this.bonus,
+  });
+
+  factory ApiDepositHistory.fromJson(Map<String, dynamic> j) {
+    return ApiDepositHistory(
+      date: j['date'] as String? ?? j['created_at'] as String? ?? '',
+      amount: j['amount']?.toString() ?? '0',
+      coin: j['coin'] as String? ?? j['currency'] as String? ?? 'USDT',
+      status: j['status'] as String? ?? '',
+      bonus: j['bonus']?.toString() ?? j['reward']?.toString() ?? '0',
+    );
+  }
+}
+
+// ─── Controller ───────────────────────────────────────────────────────────────
+
 class ChampionController extends GetxController {
   static const _base = 'https://api.trapix.com/api';
 
@@ -212,6 +242,8 @@ class ChampionController extends GetxController {
 
   var currentDetail    = Rxn<ApiCompetition>();
   var leaderboard      = <ApiLeaderboardEntry>[].obs;
+  var depositHistory   = <ApiDepositHistory>[].obs;
+  var isLoadingHistory = false.obs;
 
   // ── Fetch competitions list ───────────────────────────────────────────────
   Future<void> fetchCompetitions() async {
@@ -290,6 +322,36 @@ class ChampionController extends GetxController {
       }
     } catch (e) {
       debugPrint('fetchLeaderboard error: $e');
+    }
+  }
+
+  // ── Fetch deposit history ─────────────────────────────────────────────────
+  Future<void> fetchDepositHistory(int competitionId) async {
+    isLoadingHistory.value = true;
+    depositHistory.value = [];
+    try {
+      final userId = gUserRx.value.id;
+      final resp = await http.get(
+        Uri.parse('$_base/competitions/$competitionId/deposit-history?user_id=$userId'),
+        headers: _headers(),
+      );
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body) as Map<String, dynamic>;
+        final raw = json['data'];
+        List<dynamic> list = [];
+        if (raw is List) {
+          list = raw;
+        } else if (raw is Map) {
+          list = (raw['data'] as List<dynamic>?) ?? (raw['deposits'] as List<dynamic>?) ?? [];
+        }
+        depositHistory.value = list
+            .map((e) => ApiDepositHistory.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('fetchDepositHistory error: $e');
+    } finally {
+      isLoadingHistory.value = false;
     }
   }
 
