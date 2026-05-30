@@ -186,16 +186,25 @@ class ApiLeaderboardEntry {
   });
 
   factory ApiLeaderboardEntry.fromJson(Map<String, dynamic> j) {
+    final prizeStatus = j['prize_status'] as String?;
     return ApiLeaderboardEntry(
       userId: _parseInt(j['user_id']),
-      nickname: j['nickname'] as String? ?? j['uid'] as String? ?? 'Unknown',
-      rank: _parseInt(j['rank']) ?? 0,
-      totalVolume: _parseDouble(j['total_volume']) ?? 0,
+      nickname: j['nickname'] as String?
+          ?? j['uid'] as String?
+          ?? j['username'] as String?
+          ?? j['name'] as String?
+          ?? 'Unknown',
+      rank: _parseInt(j['rank']) ?? _parseInt(j['position']) ?? 0,
+      totalVolume: _parseDouble(j['total_volume'])
+          ?? _parseDouble(j['volume'])
+          ?? _parseDouble(j['trading_volume'])
+          ?? 0,
       spotVolume: _parseDouble(j['spot_volume']) ?? 0,
       futureVolume: _parseDouble(j['future_volume']) ?? 0,
       prize: j['prize'] as String?,
       volReward: j['vol_reward'] as String? ?? j['volume_reward'] as String?,
-      prizeStatus: j['prize_status'] as String?,
+      // 'none' means not yet distributed — treat as null
+      prizeStatus: (prizeStatus == null || prizeStatus == 'none') ? null : prizeStatus,
     );
   }
 }
@@ -268,7 +277,7 @@ class ChampionController extends GetxController {
             .toList();
       }
     } catch (e) {
-      debugPrint('fetchCompetitions error: $e');
+      // debugPrint('fetchCompetitions error: $e');
     } finally {
       isLoadingList.value = false;
     }
@@ -292,7 +301,7 @@ class ChampionController extends GetxController {
       }
       await fetchLeaderboard(id);
     } catch (e) {
-      debugPrint('fetchDetail error: $e');
+      // debugPrint('fetchDetail error: $e');
     } finally {
       isLoadingDetail.value = false;
     }
@@ -316,12 +325,34 @@ class ChampionController extends GetxController {
               (raw['leaderboard'] as List<dynamic>?) ??
               [];
         }
-        leaderboard.value = list
-            .map((e) => ApiLeaderboardEntry.fromJson(e as Map<String, dynamic>))
+        final entries = list
+            .asMap()
+            .entries
+            .map((entry) {
+              final e = ApiLeaderboardEntry.fromJson(entry.value as Map<String, dynamic>);
+              // If rank is 0/missing from API, use list index + 1
+              if (e.rank == 0) {
+                return ApiLeaderboardEntry(
+                  userId: e.userId,
+                  nickname: e.nickname,
+                  rank: entry.key + 1,
+                  totalVolume: e.totalVolume,
+                  spotVolume: e.spotVolume,
+                  futureVolume: e.futureVolume,
+                  prize: e.prize,
+                  volReward: e.volReward,
+                  prizeStatus: e.prizeStatus,
+                );
+              }
+              return e;
+            })
             .toList();
+        // Sort by rank ascending
+        entries.sort((a, b) => a.rank.compareTo(b.rank));
+        leaderboard.value = entries;
       }
     } catch (e) {
-      debugPrint('fetchLeaderboard error: $e');
+      // debugPrint('fetchLeaderboard error: $e');
     }
   }
 
@@ -349,7 +380,7 @@ class ChampionController extends GetxController {
             .toList();
       }
     } catch (e) {
-      debugPrint('fetchDepositHistory error: $e');
+      // debugPrint('fetchDepositHistory error: $e');
     } finally {
       isLoadingHistory.value = false;
     }
@@ -367,26 +398,32 @@ class ChampionController extends GetxController {
       );
       if (resp.statusCode == 200) {
         final json = jsonDecode(resp.body) as Map<String, dynamic>;
-        if (json['success'] == true || json['status'] == 'success') {
-          // Website also refreshes list + detail after join
-          await fetchDetail(id);
-          fetchCompetitions();
+        final msg = json['message'] as String? ?? '';
+        final isSuccess = json['success'] == true
+            || json['status'] == 'success'
+            || json['status'] == true
+            || (json['success'] == null && json['status'] == null && msg.isNotEmpty && !msg.toLowerCase().contains('fail') && !msg.toLowerCase().contains('error') && !msg.toLowerCase().contains('already'));
+        if (isSuccess) {
           Get.snackbar(
             'Success',
-            json['message'] as String? ?? 'Joined successfully!',
+            msg.isNotEmpty ? msg : 'Joined successfully!',
             backgroundColor: const Color(0xFFCCFF00),
             colorText: Colors.black,
           );
           return true;
         }
-        Get.snackbar('Error', json['message'] as String? ?? 'Failed to join',
+        Get.snackbar('Error', msg.isNotEmpty ? msg : 'Failed to join',
             backgroundColor: Colors.red, colorText: Colors.white);
+      } else if (resp.statusCode == 422 || resp.statusCode == 400) {
+        final json = jsonDecode(resp.body) as Map<String, dynamic>;
+        final msg = json['message'] as String? ?? 'Failed to join';
+        Get.snackbar('Error', msg, backgroundColor: Colors.red, colorText: Colors.white);
       } else {
         Get.snackbar('Error', 'Something went wrong',
             backgroundColor: Colors.red, colorText: Colors.white);
       }
     } catch (e) {
-      debugPrint('joinCompetition error: $e');
+      // debugPrint('joinCompetition error: $e');
     } finally {
       isJoining.value = false;
     }

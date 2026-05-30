@@ -176,11 +176,13 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
     }
     _ctrl ??= Get.find<ChampionController>();
     setState(() => _apiLoading = true);
+    // fetchDetail also calls fetchLeaderboard internally
     await _ctrl!.fetchDetail(id);
     if (!mounted) return;
     final detail = _ctrl!.currentDetail.value;
+    // Read leaderboard AFTER fetchDetail completes (it includes fetchLeaderboard)
+    final lb = List<ApiLeaderboardEntry>.from(_ctrl!.leaderboard);
     if (detail != null) {
-      final lb = _ctrl!.leaderboard;
       setState(() {
         _contest = _apiToContest(detail, lb);
         _hasData = true;
@@ -840,7 +842,8 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
                     ? null
                     : () async {
                         if (widget.competitionId != null && _ctrl != null) {
-                          await _ctrl!.joinCompetition(widget.competitionId!);
+                          final ok = await _ctrl!.joinCompetition(widget.competitionId!);
+                          if (ok && mounted) await _loadFromApi();
                         }
                       },
                 style: ElevatedButton.styleFrom(
