@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_controller.dart';
 
 // ─── Data Models (swap with API models later) ─────────────────────────────────
 
@@ -117,91 +118,11 @@ class RuleModel3 {
   });
 }
 
-// ─── Static mock — replace with API call later ────────────────────────────────
-ThirdContestModel _mockThirdContest() {
-  return ThirdContestModel(
-    title: 'MEGA TRADE FESTIVAL',
-    prizePool: 'DEPOSIT JUST\n10 USDT',
-    subtitle: '& JOIN THE BIGGEST\nTRADING FESTIVAL',
-    heroImage: 'assets/images/champion5.png',
-    endsAt: DateTime.now()
-        .add(const Duration(days: 2, hours: 23, minutes: 37, seconds: 53)),
-    participantsCount: 231,
-    marqueeText: '362****128 has registered for the contest',
-    myStats: const ThirdMyStats(
-      yourDeposit: 1,
-      totalDeposited: 0.0,
-      availableBonus: '20%',
-      nextBonus: 0,
-      myRanking: 'N/A',
-      tradingVolume: 0.0,
-      isRegistered: false,
-    ),
-    leaderboard: const [
-      ThirdLeaderboardEntry(rank: 1, uid: '362****128', spotVol: 2026651.58, futureVol: 0, totalVol: 2026651.58, prize: '💰 50 USDT', volReward: '20 USDT'),
-      ThirdLeaderboardEntry(rank: 2, uid: '362****128', spotVol: 2026651.58, futureVol: 0, totalVol: 2026651.58, prize: '💰 50 USDT', volReward: '20 USDT'),
-      ThirdLeaderboardEntry(rank: 3, uid: '362****128', spotVol: 1242.52,    futureVol: 1242.52, totalVol: 2026651.58, prize: '💰 50 USDT', volReward: '20 USDT'),
-      ThirdLeaderboardEntry(rank: 4, uid: '362****128', spotVol: 1242.52,    futureVol: 1242.52, totalVol: 2026651.58, prize: '💰 50 USDT', volReward: '20 USDT'),
-      ThirdLeaderboardEntry(rank: 5, uid: '362****128', spotVol: 1242.52,    futureVol: 1242.52, totalVol: 2026651.58, prize: '💰 50 USDT', volReward: '20 USDT'),
-    ],
-    volumeRewards: const [
-      VolumeRewardTier(volume: '100 USDT',    reward: '5 USDT'),
-      VolumeRewardTier(volume: '500 USDT',    reward: '10 USDT'),
-      VolumeRewardTier(volume: '1,000 USDT',  reward: '20 USDT'),
-      VolumeRewardTier(volume: '5,000 USDT',  reward: '50 USDT'),
-      VolumeRewardTier(volume: '10,000 USDT', reward: '120 USDT'),
-      VolumeRewardTier(volume: '50,000 USDT', reward: '300 USDT'),
-      VolumeRewardTier(volume: '100,000 USDT',reward: '1000 USDT'),
-    ],
-    prizeTiers: const [
-      ThirdPrizeTier(rankLabel: '#1',        reward: 'Iphone 17',  isPhysical: true),
-      ThirdPrizeTier(rankLabel: '#2',        reward: 'Ipad Air',   isPhysical: true),
-      ThirdPrizeTier(rankLabel: '#3',        reward: 'Airpods',    isPhysical: true),
-      ThirdPrizeTier(rankLabel: '#4 – #10',  reward: '50 USDT'),
-      ThirdPrizeTier(rankLabel: '#11 – #25', reward: '25 USDT'),
-      ThirdPrizeTier(rankLabel: '#26 – #50', reward: '15 USDT'),
-      ThirdPrizeTier(rankLabel: '#51 – #100',reward: '10 USDT'),
-    ],
-    schedule: [
-      EventScheduleItem3(title: 'Warm-up',              dateTime: DateTime(2026, 2, 22, 12, 15), completed: true),
-      EventScheduleItem3(title: 'Contest Launch',        dateTime: DateTime(2026, 2, 22, 12, 15), completed: true),
-      EventScheduleItem3(title: 'Eligibility Review',    dateTime: DateTime(2026, 2, 22, 12, 15), completed: true),
-      EventScheduleItem3(title: 'Rewards Distributions', dateTime: DateTime(2026, 2, 22, 12, 15), completed: true),
-    ],
-    rules: const [
-      RuleModel3(
-        number: 'Rule 1',
-        title: 'Trading Volume Milestone Rewards',
-        badge: '💎 First Milestone Rewards (During Contest)',
-        description:
-            'If a user reaches the required trading volume milestone during the contest period, they will become eligible for milestone rewards.',
-        bullets: [
-          'Rewards will be distributed after the contest ends',
-          'Only verified (KYC completed) users are eligible',
-          'Trading volume will include all eligible spot trades',
-        ],
-        footer: '👉 Reach the milestone and unlock exciting rewards.',
-      ),
-      RuleModel3(
-        number: 'Rule 2',
-        title: 'Special Trader Bonus',
-        badge: '',
-        description: 'After the competition ends:',
-        bullets: [
-          'The Top 3 traders with the highest trading volume will receive the exclusive rewards.',
-          'In case of equal trading volume, the user who reached the volume first will rank higher.',
-          'Only users who meet the required trading volume conditions will qualify.',
-        ],
-        footer: '👉 Compete with traders and secure your position among the top winners.',
-      ),
-    ],
-  );
-}
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 class ChampionThirdSection extends StatefulWidget {
   final ThirdContestModel? contest;
-  const ChampionThirdSection({super.key, this.contest});
+  final int? competitionId;
+  const ChampionThirdSection({super.key, this.contest, this.competitionId});
 
   @override
   State<ChampionThirdSection> createState() => _ChampionThirdSectionState();
@@ -214,15 +135,134 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
   static const _dmSans = 'DMSans';
 
   late ThirdContestModel _contest;
-  late Duration _remaining;
+  Duration _remaining = Duration.zero;
   Timer? _timer;
   int _leaderboardPage = 0;
   static const _perPage = 5;
+  bool _apiLoading = false;
+  bool _hasData = false;
+  ChampionController? _ctrl;
 
   @override
   void initState() {
     super.initState();
-    _contest = widget.contest ?? _mockThirdContest();
+    if (widget.competitionId != null) {
+      _apiLoading = true;
+      _ctrl = Get.find<ChampionController>();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadFromApi());
+    } else if (widget.contest != null) {
+      _contest = widget.contest!;
+      _hasData = true;
+      _startTimer();
+    }
+  }
+
+  Future<void> _loadFromApi() async {
+    if (!mounted) return;
+    final id = widget.competitionId;
+    if (id == null) {
+      setState(() => _apiLoading = false);
+      return;
+    }
+    _ctrl ??= Get.find<ChampionController>();
+    setState(() => _apiLoading = true);
+    await _ctrl!.fetchDetail(id);
+    if (!mounted) return;
+    final detail = _ctrl!.currentDetail.value;
+    if (detail != null) {
+      final lb = _ctrl!.leaderboard;
+      setState(() {
+        _contest = _apiToContest(detail, lb);
+        _hasData = true;
+        _timer?.cancel();
+        _startTimer();
+        _apiLoading = false;
+      });
+    } else {
+      setState(() => _apiLoading = false);
+    }
+  }
+
+  ThirdContestModel _apiToContest(ApiCompetition d, List<ApiLeaderboardEntry> lb) {
+    final endAt   = d.endAt   != null ? DateTime.tryParse(d.endAt!)   : null;
+    final startAt = d.startAt != null ? DateTime.tryParse(d.startAt!) : null;
+
+    final lbEntries = lb.map((e) => ThirdLeaderboardEntry(
+      rank:      e.rank,
+      uid:       e.nickname,
+      spotVol:   e.spotVolume,
+      futureVol: e.futureVolume,
+      totalVol:  e.totalVolume,
+      prize:     e.prize ?? '',
+      volReward: e.volReward ?? '',
+    )).toList();
+
+    final prizes = d.prizes;
+    final prizeTiers = prizes.map((p) => ThirdPrizeTier(
+      rankLabel: p.rankLabel ?? '#${p.rank}',
+      reward: p.prizeDescription,
+      isPhysical: p.prizeType == 'physical',
+    )).toList();
+
+    final schedule = <EventScheduleItem3>[];
+    if (startAt != null) {
+      schedule.add(EventScheduleItem3(
+        title: 'Contest Launch',
+        dateTime: startAt,
+        completed: startAt.isBefore(DateTime.now()),
+      ));
+    }
+    if (endAt != null) {
+      schedule.add(EventScheduleItem3(
+        title: 'Contest Ends',
+        dateTime: endAt,
+        completed: endAt.isBefore(DateTime.now()),
+      ));
+      schedule.add(EventScheduleItem3(
+        title: 'Rewards Distribution',
+        dateTime: endAt.add(const Duration(days: 1)),
+        completed: endAt.add(const Duration(days: 1)).isBefore(DateTime.now()),
+      ));
+    }
+
+    final topPrize = prizes.where((p) => p.rank == 1).map((p) => p.prizeDescription).firstOrNull ?? '';
+
+    return ThirdContestModel(
+      title: d.title.toUpperCase(),
+      prizePool: topPrize.isNotEmpty ? topPrize : 'Prize Pool',
+      subtitle: '${d.participantsCount} Participants',
+      heroImage: 'assets/images/champion5.png',
+      endsAt: endAt,
+      participantsCount: d.participantsCount,
+      marqueeText: d.participantsCount > 0
+          ? '${d.participantsCount} users have registered for the contest'
+          : null,
+      myStats: ThirdMyStats(
+        yourDeposit: d.myDeposit ?? 0,
+        totalDeposited: d.totalDeposited ?? 0,
+        availableBonus: d.availableBonus ?? '0%',
+        nextBonus: d.nextBonus ?? 0,
+        myRanking: d.myRank != null ? '#${d.myRank}' : 'N/A',
+        tradingVolume: d.myVolume ?? 0.0,
+        isRegistered: d.joined,
+      ),
+      leaderboard: lbEntries,
+      volumeRewards: d.volumeRewards.map((v) =>
+          VolumeRewardTier(volume: v.volume, reward: v.reward)).toList(),
+      prizeTiers: prizeTiers,
+      schedule: schedule,
+      rules: d.rules.asMap().entries.map((e) => RuleModel3(
+        number: 'Rule ${e.key + 1}',
+        title: e.value.title,
+        badge: e.value.badge ?? '',
+        description: e.value.description ?? '',
+        bullets: e.value.bullets,
+        footer: e.value.footer ?? '',
+      )).toList(),
+    );
+  }
+
+  void _startTimer() {
     _remaining = _contest.endsAt != null
         ? _contest.endsAt!.difference(DateTime.now())
         : Duration.zero;
@@ -255,7 +295,11 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
     ));
     return Scaffold(
       backgroundColor: _bg,
-      body: ListView(
+      body: _apiLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFCCFF00)))
+          : !_hasData
+              ? _buildEmptyState()
+              : ListView(
         padding: EdgeInsets.zero,
         children: [
           _buildHero(),
@@ -275,8 +319,33 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
           const SizedBox(height: 16),
           _buildEventSchedule(),
           const SizedBox(height: 16),
-          ..._contest.rules.map(_buildRule),
+          ..._defaultRules().map(_buildRule),
           const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.emoji_events_outlined,
+              color: Color(0xFFCCFF00), size: 56),
+          const SizedBox(height: 16),
+          const Text('No contest data',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: _dmSans)),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: _loadFromApi,
+            child: const Text('Retry',
+                style: TextStyle(color: Color(0xFFCCFF00), fontFamily: _dmSans)),
+          ),
         ],
       ),
     );
@@ -563,9 +632,13 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
               height: 46,
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: wire register API
-                },
+                onPressed: s?.isRegistered == true
+                    ? null
+                    : () async {
+                        if (widget.competitionId != null && _ctrl != null) {
+                          await _ctrl!.joinCompetition(widget.competitionId!);
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _green,
                   shadowColor: Colors.transparent,
@@ -690,7 +763,7 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
             ),
             const SizedBox(height: 10),
             Center(
-              child: Text('The last update was on March 10 at 12:00',
+              child: Text('Last updated: ${_fmtNow()}',
                   style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.35),
                       fontSize: 11, fontFamily: _dmSans)),
@@ -1048,6 +1121,33 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
   }
 
   // ── Rules ──────────────────────────────────────────────────────────────────
+  List<RuleModel3> _defaultRules() => const [
+    RuleModel3(
+      number: 'Rule 1',
+      title: 'Trading Volume Milestone Rewards',
+      badge: '💎 First Milestone Rewards (During Contest)',
+      description: 'If a user reaches the required trading volume milestone during the contest period, they will become eligible for milestone rewards.',
+      bullets: [
+        'Rewards will be distributed after the contest ends',
+        'Only verified (KYC completed) users are eligible',
+        'Trading volume will include all eligible spot trades',
+      ],
+      footer: '👉 Reach the milestone and unlock exciting rewards.',
+    ),
+    RuleModel3(
+      number: 'Rule 2',
+      title: 'Special Trader Bonus',
+      badge: '',
+      description: 'After the competition ends:',
+      bullets: [
+        'The Top 3 traders with the highest trading volume will receive the exclusive rewards.',
+        'In case of equal trading volume, the user who reached the volume first will rank higher.',
+        'Only users who meet the required trading volume conditions will qualify.',
+      ],
+      footer: '👉 Compete with traders and secure your position among the top winners.',
+    ),
+  ];
+
   Widget _buildRule(RuleModel3 rule) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -1158,6 +1258,11 @@ class _ChampionThirdSectionState extends State<ChampionThirdSection> {
             color: enabled ? Colors.white : Colors.white24, size: 22),
       ),
     );
+  }
+
+  String _fmtNow() {
+    final now = DateTime.now();
+    return '${now.year}-${_pad(now.month)}-${_pad(now.day)} ${_pad(now.hour)}:${_pad(now.minute)}';
   }
 
   String _fmtVol(double v) {

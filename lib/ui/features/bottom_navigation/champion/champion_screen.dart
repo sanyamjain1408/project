@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/popular_champion.dart';
-import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_third_section.dart';
 
 class ChampionScreen extends StatefulWidget {
   const ChampionScreen({super.key});
@@ -14,12 +14,12 @@ class ChampionScreen extends StatefulWidget {
 class _ChampionScreenState extends State<ChampionScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late ChampionController _ctrl;
 
   static const _green = Color(0xFFCCFF00);
-  static const _bg    = Color(0xFF0B0B0F);
-  static const _card  = Color(0xFF1A1A1A);
 
-  static const _popularPosters = [
+  // Fallback poster assets if banner_image is null
+  static const _fallbackPosters = [
     'assets/images/champion1.png',
     'assets/images/champion2.png',
     'assets/images/champion3.png',
@@ -29,6 +29,8 @@ class _ChampionScreenState extends State<ChampionScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _ctrl = Get.put(ChampionController());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ctrl.fetchCompetitions());
   }
 
   @override
@@ -65,7 +67,6 @@ class _ChampionScreenState extends State<ChampionScreen>
     );
   }
 
-  // ── Header ─────────────────────────────────────────────────────────────────
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
@@ -81,75 +82,113 @@ class _ChampionScreenState extends State<ChampionScreen>
     );
   }
 
-  // ── Tab Bar ────────────────────────────────────────────────────────────────
   Widget _buildTabBar() {
-    return  Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-        ),
-        child: TabBar(
-          controller: _tabController,
-          indicator: BoxDecoration(
-            color: Colors.transparent,
-          ),
-          indicatorSize: TabBarIndicatorSize.tab,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withOpacity(0.5),
-          labelStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              height: 20/16,
-              fontFamily: 'DMSans'),
-          unselectedLabelStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              height: 20/16,
-              fontFamily: 'DMSans'),
-          dividerColor: Colors.transparent,
-          tabs: const [
-            Tab(text: 'Popular Contests'),
-            Tab(text: 'Previous Contests'),
-          ],
-        ),
-      );
+    return Container(
+      decoration: const BoxDecoration(color: Colors.transparent),
+      child: TabBar(
+        controller: _tabController,
+        indicator: const BoxDecoration(color: Colors.transparent),
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white54,
+        labelStyle: const TextStyle(
+            fontSize: 16, fontWeight: FontWeight.w700,
+            height: 20 / 16, fontFamily: 'DMSans'),
+        unselectedLabelStyle: const TextStyle(
+            fontSize: 16, fontWeight: FontWeight.w400,
+            height: 20 / 16, fontFamily: 'DMSans'),
+        dividerColor: Colors.transparent,
+        tabs: const [
+          Tab(text: 'Popular Contests'),
+          Tab(text: 'Previous Contests'),
+        ],
+      ),
+    );
   }
 
   // ── Popular Contests ───────────────────────────────────────────────────────
   Widget _buildPopularContests() {
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-      itemCount: _popularPosters.length,
-      separatorBuilder: (context, i) => const SizedBox(height: 16),
-      itemBuilder: (context, i) => _buildPosterCard(_popularPosters[i], i),
+    return Obx(() {
+      if (_ctrl.isLoadingList.value) {
+        return const Center(child: CircularProgressIndicator(color: _green));
+      }
+
+      final comps = _ctrl.competitions;
+
+      // If API returned competitions, show them dynamically
+      if (comps.isNotEmpty) {
+        return RefreshIndicator(
+          color: _green,
+          onRefresh: _ctrl.fetchCompetitions,
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+            itemCount: comps.length,
+            separatorBuilder: (context, i) => const SizedBox(height: 16),
+            itemBuilder: (context, i) => _buildApiCard(comps[i], i),
+          ),
+        );
+      }
+
+      // Fallback: show static poster assets
+      return RefreshIndicator(
+        color: _green,
+        onRefresh: _ctrl.fetchCompetitions,
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+          itemCount: _fallbackPosters.length,
+          separatorBuilder: (context, i) => const SizedBox(height: 16),
+          itemBuilder: (context, i) => _buildFallbackCard(_fallbackPosters[i], i),
+        ),
+      );
+    });
+  }
+
+  Widget _buildApiCard(ApiCompetition comp, int index) {
+    return GestureDetector(
+      onTap: () => _openDetail(comp, index),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: comp.bannerImage != null && comp.bannerImage!.isNotEmpty
+            ? Image.network(
+                comp.bannerImage!,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, err, stack) =>
+                    _fallbackImage(_fallbackPosters[index % _fallbackPosters.length]),
+              )
+            : _fallbackImage(_fallbackPosters[index % _fallbackPosters.length]),
+      ),
     );
   }
 
-  Widget _buildPosterCard(String imagePath, int index) {
+  Widget _buildFallbackCard(String imagePath, int index) {
     return GestureDetector(
-      onTap: () {
-        if (index == 2) {
-          Get.to(() => const ChampionThirdSection());
-        } else {
-          Get.to(() => const PopularChampionScreen());
-        }
-      },
+      onTap: () => Get.to(() => const PopularChampionScreen()),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Image.asset(
-          imagePath,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (context, err, stack) => Container(
-            height: 200,
-            color: Colors.transparent,
-            child: const Center(
-              child: Icon(Icons.image_not_supported_outlined,
-                  color: Colors.white24, size: 48),
-            ),
-          ),
+        child: _fallbackImage(imagePath),
+      ),
+    );
+  }
+
+  Widget _fallbackImage(String path) {
+    return Image.asset(
+      path,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, err, stack) => Container(
+        height: 200,
+        color: Colors.transparent,
+        child: const Center(
+          child: Icon(Icons.image_not_supported_outlined,
+              color: Colors.white24, size: 48),
         ),
       ),
     );
+  }
+
+  void _openDetail(ApiCompetition comp, int index) {
+    Get.to(() => PopularChampionScreen(competitionId: comp.id));
   }
 
   // ── Previous Contests ──────────────────────────────────────────────────────
@@ -162,9 +201,10 @@ class _ChampionScreenState extends State<ChampionScreen>
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: _card,
+              color: const Color(0xFF1A1A1A),
               shape: BoxShape.circle,
-              border: Border.all(color: _green.withValues(alpha: 0.3), width: 1.5),
+              border: Border.all(
+                  color: _green.withValues(alpha: 0.3), width: 1.5),
             ),
             child: const Icon(Icons.emoji_events_outlined,
                 color: Color(0xFFCCFF00), size: 40),
