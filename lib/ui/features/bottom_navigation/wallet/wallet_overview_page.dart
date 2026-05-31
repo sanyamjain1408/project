@@ -1223,21 +1223,19 @@ class _FutureWalletBody extends StatelessWidget {
       fc = Get.put(NewFutureController());
     }
 
-    final wc = Get.find<WalletController>();
-
     return Obx(() {
       final isHide = gIsBalanceHide.value;
       final balance = fc.balance.value;
-
-      // Use same PnL as overview screen (from API)
-      final todayPnl = wc.totalBalance.value.todayPnl ?? 0.0;
-      final todayPnlPct = wc.totalBalance.value.todayPnlPercent ?? 0.0;
+      final available = fc.availableBalance.value;
+      final margin = fc.marginUsed.value;
+      final todayPnl = fc.futurePnlToday.value;
+      final todayPnlPct = fc.futurePnlPct.value;
 
       final screenW = MediaQuery.of(Get.context!).size.width;
       const cardH = 220.0;
       const svgW = 362.0;
       const svgH = 204.0;
-      final pnlText = '${todayPnl >= 0 ? '+' : ''}${todayPnl.toStringAsFixed(2)} (${todayPnlPct.toStringAsFixed(2)}%)';
+      final pnlText = '${todayPnl >= 0 ? '+' : ''}${todayPnl.toStringAsFixed(2)} USD (${todayPnlPct >= 0 ? '+' : ''}${todayPnlPct.toStringAsFixed(2)}%)';
 
       return SingleChildScrollView(
         child: Column(
@@ -1292,7 +1290,7 @@ class _FutureWalletBody extends StatelessWidget {
                                 // Title row
                                 Row(
                                   children: [
-                                    Text('Margin Balance', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
+                                    Text('Est. Total Value', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
                                     const SizedBox(width: 6),
                                     GestureDetector(
                                       onTap: () {
@@ -1343,9 +1341,17 @@ class _FutureWalletBody extends StatelessWidget {
                                           Text('USDT', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
                                         ],
                                       ),
-                                if (!isHide) const SizedBox(height: 2),
+                                if (!isHide) const SizedBox(height: 4),
                                 if (!isHide)
-                                  Text('≈ \$${currencyFormat(balance)}', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
+                                  Row(
+                                    children: [
+                                      Text('Available: ', style: TextStyle(color: Colors.white54, fontSize: 11, fontFamily: _dmSans)),
+                                      Text('\$${available.toStringAsFixed(2)}', style: const TextStyle(color: Color(0xFF4ED78E), fontSize: 11, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                                      const SizedBox(width: 12),
+                                      Text('In Margin: ', style: TextStyle(color: Colors.white54, fontSize: 11, fontFamily: _dmSans)),
+                                      Text('\$${margin.toStringAsFixed(2)}', style: const TextStyle(color: Color(0xFFCCFF00), fontSize: 11, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                                    ],
+                                  ),
                                 if (!isHide) const SizedBox(height: 2),
                                 if (!isHide)
                                   RichText(
@@ -1552,18 +1558,137 @@ class _FutureWalletTabsState extends State<_FutureWalletTabs> {
               onLeverageTap: () {},
               hideHeader: true,
             )
+          else if (_tab == 'Crypto Assets')
+            _FutureCryptoAssetsTab(fc: widget.fc)
           else
-            Container(
-              height: 200,
-              alignment: Alignment.center,
-              child: const Text('Coming Soon', style: TextStyle(fontSize: 16, color: Colors.white38, fontFamily: _dmSans)),
-            ),
+            const _FutureFiatTab(),
         ],
       ),
     );
   }
 }
 
+
+// ── Future Crypto Assets Tab ──────────────────────────────────────────────────
+class _FutureCryptoAssetsTab extends StatelessWidget {
+  final NewFutureController fc;
+  const _FutureCryptoAssetsTab({required this.fc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final isHide = gIsBalanceHide.value;
+      final total = fc.balance.value;
+      final available = fc.availableBalance.value;
+      final margin = fc.marginUsed.value;
+
+      // Header row
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Column headers
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Expanded(flex: 3, child: Text('Asset', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans))),
+                Expanded(flex: 2, child: Text('Total', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans))),
+                Expanded(flex: 2, child: Text('In Margin', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans))),
+                Expanded(flex: 2, child: Text('Available', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans))),
+              ],
+            ),
+          ),
+          const Divider(color: Color(0xFF2A2A2A), height: 1),
+          const SizedBox(height: 12),
+          // USDT row
+          Row(
+            children: [
+              // Asset name + icon
+              Expanded(
+                flex: 3,
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.network(
+                        'https://api.trapix.com/uploaded_file/uploads/coin/657c66c3067d81702651587.png',
+                        width: 20,
+                        height: 20,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 20,
+                          height: 20,
+                          decoration: const BoxDecoration(color: Color(0xFF26A17B), shape: BoxShape.circle),
+                          alignment: Alignment.center,
+                          child: const Text('U', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('USDT', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white, fontFamily: _dmSans)),
+                        Text('TetherUS', style: TextStyle(fontSize: 10,fontWeight: FontWeight.w400, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Total
+              Expanded(
+                flex: 2,
+                child: Text(
+                  isHide ? '****' : total.toStringAsFixed(4),
+                  style: const TextStyle(fontSize: 12,height: 16/12, fontWeight: FontWeight.w700, color: Colors.white, fontFamily: _dmSans),
+                ),
+              ),
+              // In Margin
+              Expanded(
+                flex: 2,
+                child: Text(
+                  isHide ? '****' : margin.toStringAsFixed(4),
+                  style: const TextStyle(fontSize: 12,height: 16/12, fontWeight: FontWeight.w700, color: Color(0xFFCCFF00), fontFamily: _dmSans),
+                ),
+              ),
+              // Available
+              Expanded(
+                flex: 2,
+                child: Text(
+                  isHide ? '****' : available.toStringAsFixed(4),
+                  style: const TextStyle(fontSize: 12,height: 16/12, fontWeight: FontWeight.w700, color: Color(0xFF4ED78E), fontFamily: _dmSans),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    });
+  }
+}
+
+// ── Future Fiat Tab ───────────────────────────────────────────────────────────
+class _FutureFiatTab extends StatelessWidget {
+  const _FutureFiatTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 200,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('⏳', style: TextStyle(fontSize: 40)),
+          const SizedBox(height: 12),
+          const Text('Coming Soon', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFFCCFF00), fontFamily: _dmSans)),
+          const SizedBox(height: 6),
+          Text('Fiat support will be available shortly.', style: TextStyle(fontSize: 13, color: Colors.white38, fontFamily: _dmSans)),
+        ],
+      ),
+    );
+  }
+}
 
 // ── PAINTERS ──────────────────────────────────────────────────────────────────
 class _WaveLinePainter extends CustomPainter {

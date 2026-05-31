@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/remote/future_socket.dart';
 import 'future_models.dart';
 
@@ -12,7 +13,11 @@ class NewFutureController extends GetxController {
   final orders = <FutureOrder>[].obs;
   final trades = <FutureTrade>[].obs;
   final positionHistory = <FuturePositionHistory>[].obs;
-  final balance = 0.0.obs;
+  final balance = 0.0.obs;       // total (available + margin_used)
+  final availableBalance = 0.0.obs; // data['available']
+  final marginUsed = 0.0.obs;       // data['margin_used']
+  final futurePnlToday = 0.0.obs;   // from /api/future/pnl
+  final futurePnlPct = 0.0.obs;
   final isLoggedIn = false.obs;
   final orderLoading = false.obs;
   final priceGoingUp = true.obs;
@@ -51,6 +56,7 @@ class NewFutureController extends GetxController {
       fetchBalance();
       fetchPositions();
       fetchOrders();
+      fetchFuturePnl();
     }
   }
 
@@ -195,7 +201,36 @@ class NewFutureController extends GetxController {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true) {
-          balance.value = double.tryParse(data['data']?['balance']?.toString() ?? '0') ?? 0;
+          final d = data['data'] ?? {};
+          print('[FutureBalance] raw data: $d');
+          // backend fields: balance=available(free), margin_used=locked, total=grand total
+          final legacyBalance = double.tryParse(d['balance']?.toString() ?? '0') ?? 0;
+          final avail = double.tryParse(d['available']?.toString() ?? '0') ?? 0;
+          final margin = double.tryParse(d['margin_used']?.toString() ?? '0') ?? 0;
+          final total = double.tryParse(d['total']?.toString() ?? '0') ?? 0;
+          // available = whichever field is the free/liquid balance (not total)
+          availableBalance.value = avail > 0 ? avail : legacyBalance;
+          marginUsed.value = margin;
+          // grand total for hero big number
+          balance.value = total > 0 ? total : (availableBalance.value + margin);
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> fetchFuturePnl() async {
+    try {
+      final userId = gUserRx.value.id;
+      if (userId <= 0) return;
+      final res = await http.get(
+        Uri.parse('https://api.trapix.com/api/future/pnl?user_id=$userId'),
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true) {
+          final d = data['data'] ?? {};
+          futurePnlToday.value = double.tryParse(d['today_pnl']?.toString() ?? '0') ?? 0;
+          futurePnlPct.value = double.tryParse(d['today_pct']?.toString() ?? '0') ?? 0;
         }
       }
     } catch (_) {}

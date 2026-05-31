@@ -1161,7 +1161,7 @@ class FutureBalanceInfo extends StatelessWidget {
             ),
             Obx(
               () => Text(
-                '${ctrl.balance.value.toStringAsFixed(2)} $quote',
+                '${ctrl.availableBalance.value.toStringAsFixed(2)} $quote',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
