@@ -269,12 +269,12 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                           sTitle: "Take-Loss Price".tr,
                           sSubtitle: baseCType,
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 0),
                       ],
                     ),
                   ),
                   // Limit/Market me Limit field nahi hota (45px) — woh gap yahan dete hai
-                  if (subIndex != 2) const SizedBox(height: 45),
+                  if (subIndex != 2) const SizedBox(height: 20),
                   if (isLoggedIn)
                     buttonRoundedMain(
                       text: "${isBuy ? "Buy".tr : "Sell".tr} ",

@@ -171,9 +171,6 @@ class OderBookFixedView extends StatelessWidget {
                 ),
               ),
 
-            if (selectedOrderSort != FromKey.buy) const SizedBox(height: 2),
-
-            vSpacer5(),
             if (selectedOrderSort != FromKey.buy)
               MidPriceBlock(
                 lastPData: lastPData,
@@ -183,9 +180,6 @@ class OderBookFixedView extends StatelessWidget {
                           ? const Color(0xFF4ED78E)
                           : const Color(0xFFD05858)),
               ),
-            vSpacer5(),
-
-            if (selectedOrderSort != FromKey.buy) const SizedBox(height: 2),
 
             // ── BUY LIST ──────────────────────────────────────────────────────
             if (selectedOrderSort != FromKey.sell)
@@ -205,16 +199,16 @@ class OderBookFixedView extends StatelessWidget {
                   }),
                 ),
               ),
-            vSpacer20(),
+           
 
             // ── Mid price — buy-only mode ──────────────────────────────────────
-            if (selectedOrderSort == FromKey.buy) const SizedBox(height: 2),
+            if (selectedOrderSort == FromKey.buy) const SizedBox(height: 0),
             if (selectedOrderSort == FromKey.buy)
               MidPriceBlock(
                 lastPData: lastPData,
                 priceColor: const Color(0xFF4ED78E),
               ),
-            if (selectedOrderSort == FromKey.buy) const SizedBox(height: 2),
+            if (selectedOrderSort == FromKey.buy) const SizedBox(height: 0),
           ],
         ),
 
@@ -229,8 +223,8 @@ class OderBookFixedView extends StatelessWidget {
               final bidPct = total > 0 ? (totalBid / total * 100).round() : 50;
               final askPct = 100 - bidPct;
               return Container(
-                height: 24,
-                margin: const EdgeInsets.symmetric(vertical: 7),
+                height: 25,
+                margin: const EdgeInsets.only(bottom: 5),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
                   gradient: LinearGradient(
