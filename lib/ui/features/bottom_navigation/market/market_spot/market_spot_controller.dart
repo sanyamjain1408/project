@@ -265,6 +265,9 @@ class MarketSpotController extends GetxController implements SocketListener {
       } else {
         currentList.sort((a, b) => (b.change ?? 0).compareTo(a.change ?? 0));
       }
+    } else {
+      // Default: price high to low
+      currentList.sort((a, b) => (b.price ?? 0).compareTo(a.price ?? 0));
     }
 
     marketList.value = currentList;
