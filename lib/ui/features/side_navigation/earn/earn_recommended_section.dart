@@ -96,31 +96,18 @@ class _RecommendedCard extends StatelessWidget {
         height: 100,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              color.withOpacity(0.60),
-              Colors.transparent,
-              color.withOpacity(0.35),
-            ],
-          ),
+          color: const Color(0xFF1A1A1A),
         ),
         child: Padding(
           padding: const EdgeInsets.all(1),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF111111),
+              color: const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(20),
             ),
             clipBehavior: Clip.hardEdge,
             child: Stack(
               children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: RecommendedCardPainter(color: color),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: Column(
