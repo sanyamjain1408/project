@@ -85,7 +85,7 @@ class _TradesScreenState extends State<TradesScreen>
                 indicator: const BoxDecoration(),
                 indicatorSize: TabBarIndicatorSize.label,
                 dividerColor: Colors.transparent,
-                overlayColor: WidgetStateProperty.all(Color(0xFF111111)),
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white.withValues(alpha: 0.5),
                 labelPadding: const EdgeInsets.symmetric(horizontal: 10),
