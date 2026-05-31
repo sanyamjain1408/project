@@ -313,7 +313,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
       final markPrice = pair?.currentPrice ?? 0;
       final pp = pair?.pricePrecision ?? 2;
       final qp = pair?.quantityPrecision ?? 4;
-      final bookRows = _bookFilter == 'all' ? 7 : 15;
+      final bookRows = _bookFilter == 'all' ? 8 : 15;
 
       final rawBids = _ctrl.orderBookBids;
       final rawAsks = _ctrl.orderBookAsks;

@@ -201,7 +201,7 @@ class FutureOrderBook extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             Builder(
               builder: (context) {
                 final totalAsk = asks.fold(
