@@ -10,6 +10,7 @@ import 'dual_investment_controller.dart';
 import 'dual_investment_screen.dart';
 import 'dual_subscribe_modal.dart';
 import 'calc_plan_card.dart';
+import 'mc_staking_screen.dart';
 
 const String _baseUrl = 'https://api.trapix.com';
 
@@ -73,7 +74,7 @@ class _EarnScreenState extends State<EarnScreen> {
 
   int _selectedMainTab = 0;
   int _selectedEasyTab = 0; // 0=Position, 1=History
-  final List<String> _mainTabs = ["Overview", "Easy Earn", "Dual Investment"];
+  final List<String> _mainTabs = ["Overview", "Easy Earn", "Dual Investment", "Staking"];
 
   String _searchCoin = "";
   String _filterStatus = "All";
@@ -548,7 +549,9 @@ class _EarnScreenState extends State<EarnScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: _selectedMainTab == 2
+              child: _selectedMainTab == 3
+                  ? const McStakingScreen()
+                  : _selectedMainTab == 2
                   ? _buildDualInvestmentWithHero() // ← Dual tab
                   : _selectedMainTab == 1
                   ? _buildEasyEarnContent()
@@ -562,32 +565,37 @@ class _EarnScreenState extends State<EarnScreen> {
 
   Widget _buildMainTabs() {
     return SizedBox(
-      height: 35,
-      child: Row(
-        children: List.generate(_mainTabs.length, (index) {
-          final isSel = _selectedMainTab == index;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedMainTab = index;
-                if (index == 1) _showEasyEarnHome = true;
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              padding: const EdgeInsets.only(right: 20, bottom: 5, top: 5),
-              child: Text(
-                _mainTabs[index],
-                style: TextStyle(
-                  color: isSel ? Colors.white : Colors.white.withOpacity(0.5),
-                  fontSize: 16,
-                  fontWeight: isSel ? FontWeight.w700 : FontWeight.w400,
-                  height: 24 / 16,
+      height: 40,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: List.generate(_mainTabs.length, (index) {
+            final isSel = _selectedMainTab == index;
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedMainTab = index;
+                  if (index == 1) _showEasyEarnHome = true;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(right: 24),
+                child: Center(
+                  child: Text(
+                    _mainTabs[index],
+                    style: TextStyle(
+                      color: isSel ? Colors.white : Colors.white.withOpacity(0.5),
+                      fontSize: 16,
+                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
