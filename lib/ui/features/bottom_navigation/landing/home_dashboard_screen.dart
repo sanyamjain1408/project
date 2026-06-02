@@ -488,6 +488,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                       24,
                                       24,
                                     ),
+                                    overlayColor: Colors.transparent,
+                                    splashFactory: NoSplash.splashFactory,
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 12,
                                     ),

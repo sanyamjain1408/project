@@ -784,9 +784,11 @@ class _WalletActionButton extends StatelessWidget {
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: bgColor,
+          overlayColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10), // 🔹 radius control
+            borderRadius: BorderRadius.circular(10),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 7),
         ),

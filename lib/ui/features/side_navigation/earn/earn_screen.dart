@@ -925,16 +925,28 @@ class _EarnScreenState extends State<EarnScreen> {
                               ],
                             ),
                           ),
-                          Text(
-                            minApr == maxApr
-                                ? '${minApr.toStringAsFixed(2)}%'
-                                : '${minApr.toStringAsFixed(2)}%=${maxApr.toStringAsFixed(2)}%',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: "DMSans",
-                              height: 24 / 16,
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFF00B2E3),
+                                Color(0xFFFFA600),
+                                Color(0xFFF03A89),
+                              ],
+                              stops: [0.0, 0.5326, 1.0],
+                            ).createShader(bounds),
+                            child: Text(
+                              minApr == maxApr
+                                  ? '${minApr.toStringAsFixed(2)}%'
+                                  : '${minApr.toStringAsFixed(2)}%–${maxApr.toStringAsFixed(2)}%',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: "DMSans",
+                                height: 24 / 16,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 6),
