@@ -225,14 +225,20 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   _buildPageHeader(),
                   const SizedBox(height: 20),
                   _buildLiveCard(hasStakes),
-                  const SizedBox(height: 16),
                   _buildStatsGrid(),
-                  const SizedBox(height: 16),
-                  if (portfolio?.userTier != null)
-                    _buildTierCard(portfolio!.userTier!),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
+                  _buildTierCard(
+                    portfolio?.userTier ??
+                        McUserTier(
+                          tierName: 'Basic',
+                          level1Percent: 0,
+                          level2Percent: 0,
+                          level3Percent: 0,
+                        ),
+                  ),
+                  const SizedBox(height: 20),
                   if (hasStakes) _buildPositionsTable(portfolio!.portfolio),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   _buildNavCards(),
                 ],
               ),
@@ -282,9 +288,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: _kGreen,
-                  ),
+                  border: Border.all(color: _kGreen),
                 ),
                 child: const Text(
                   '+ New Stake',
@@ -313,7 +317,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                 child: const Text(
                   'My Stake',
                   style: TextStyle(
-                    color: Colors.black,
+                    color: Colors.black,0
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     fontFamily: 'DMSans',
@@ -336,7 +340,9 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
           decoration: BoxDecoration(
             color: Color(0xFF1A1A1A).withOpacity(0.2),
             borderRadius: BorderRadius.circular(20),
-            border: Border.symmetric(vertical: BorderSide(color: Colors.white.withOpacity(0.5))),
+            border: Border.symmetric(
+              vertical: BorderSide(color: Colors.white.withOpacity(0.5)),
+            ),
           ),
           child: Stack(
             children: [
@@ -403,9 +409,11 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color:  Color(0xFF1A1A1A).withOpacity(0.2),
+          color: Color(0xFF1A1A1A).withOpacity(0.2),
           borderRadius: BorderRadius.circular(20),
-          border: Border.symmetric(horizontal: BorderSide(color: Colors.white.withOpacity(0.5))),
+          border: Border.symmetric(
+            horizontal: BorderSide(color: Colors.white.withOpacity(0.5)),
+          ),
         ),
         child: Stack(
           children: [
@@ -472,8 +480,8 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                       ),
                       Text(
                         _availableToWithdraw.toStringAsFixed(7),
-                        style:  TextStyle(
-                           color: Colors.white.withOpacity(0.5),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'DMSans',
@@ -484,10 +492,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   ),
                   const SizedBox(height: 20),
                   // Divider
-                  Container(
-                    height: 1,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
+                  Container(height: 1, color: Colors.white.withOpacity(0.1)),
                   const SizedBox(height: 20),
                   // 3 stats with vertical dividers
                   IntrinsicHeight(
@@ -516,18 +521,30 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   const SizedBox(height: 20),
                   // Session timer — bottom
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                     
-                      Flexible(
+                      const Text(
+                        '⏱',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+
+                      const SizedBox(width: 6),
+
+                      Expanded(
                         child: Text(
-                          '⏱ Session: ${_fmtTime(_uptime)} ·  Actual rewards credited every 24h at midnight',
+                          'Session: ${_fmtTime(_uptime)} · Actual rewards credited every 24h at midnight',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.35),
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             fontFamily: 'DMSans',
                           ),
-                          textAlign: TextAlign.center,
+                          textAlign: TextAlign.left,
                         ),
                       ),
                     ],
@@ -589,28 +606,28 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
         'label': 'Portfolio Value',
         'value': '${portfolioVal.toStringAsFixed(2)}',
         'sub': 'USDT',
-        'color': _kGreen,
-        'icon': '🏦',
+        'color': const Color(0xFFCCFF00),
+        'icon': '💼',
       },
       {
         'label': 'Active Stakes',
         'value': '${stats?.totalActiveStakes ?? 0}',
         'sub': 'Positions',
-        'color': const Color(0xFFA78BFA),
-        'icon': '📊',
+        'color': const Color(0xFFE946FF),
+        'icon': '📈',
       },
       {
         'label': 'Total Earned',
         'value': (stats?.totalRewardEarned ?? 0).toStringAsFixed(4),
         'sub': 'All time',
-        'color': const Color(0xFF22C55E),
+        'color': const Color(0xFF00B052),
         'icon': '💰',
       },
       {
         'label': 'Referrals',
         'value': '${stats?.totalReferralCommissions ?? 0}',
         'sub': 'Commissions',
-        'color': const Color(0xFF60A5FA),
+        'color': const Color(0xFF00E5FF),
         'icon': '🔗',
       },
     ];
@@ -618,16 +635,16 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
+      crossAxisSpacing: 20,
+      mainAxisSpacing: 20,
       childAspectRatio: 1.6,
       children: items
           .map(
             (item) => Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: _kCard,
-                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -640,7 +657,8 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                         item['label'] as String,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.5),
-                          fontSize: 11,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
                           fontFamily: 'DMSans',
                         ),
                       ),
@@ -650,12 +668,12 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   Text(
                     item['value'] as String,
                     style: TextStyle(
                       color: item['color'] as Color,
-                      fontSize: 22,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'DMSans',
                     ),
@@ -663,8 +681,9 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   Text(
                     item['sub'] as String,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.3),
-                      fontSize: 10,
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
                       fontFamily: 'DMSans',
                     ),
                   ),
@@ -694,10 +713,10 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   // ── TIER CARD (Figma: shows tier + levels + Portfolio Value on right) ─────
   Widget _buildTierCard(McUserTier tier) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _kCard,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         children: [
@@ -706,9 +725,9 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
             children: [
               Text(
                 _tierEmoji(tier.tierName),
-                style: const TextStyle(fontSize: 36),
+                style: const TextStyle(fontSize: 40),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -716,17 +735,19 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                     Text(
                       'Your Referral Tier',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white,
                         fontSize: 12,
+                        fontWeight: FontWeight.w400,
                         fontFamily: 'DMSans',
                       ),
                     ),
+                    const SizedBox(height: 10),
                     Text(
                       tier.tierName,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                         fontFamily: 'DMSans',
                       ),
                     ),
@@ -739,11 +760,13 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   Text(
                     'Portfolio Value',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white,
                       fontSize: 12,
+                      fontWeight: FontWeight.w400,
                       fontFamily: 'DMSans',
                     ),
                   ),
+                  const SizedBox(height: 10),
                   Text(
                     '\$${_portfolioValue.toStringAsFixed(2)} USDT',
                     style: const TextStyle(
@@ -757,7 +780,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 30),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -776,12 +799,13 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       Text(
         label,
         style: TextStyle(
-          color: Colors.white.withOpacity(0.4),
-          fontSize: 11,
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
           fontFamily: 'DMSans',
         ),
       ),
-      const SizedBox(height: 4),
+      const SizedBox(height: 5),
       Text(
         '${pct.toStringAsFixed(4)}%',
         style: const TextStyle(
@@ -799,13 +823,13 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     return Container(
       decoration: BoxDecoration(
         color: _kCard,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -813,7 +837,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   'Active Positions',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'DMSans',
                   ),
@@ -825,14 +849,14 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                       height: 6,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Color(0xFF22C55E),
+                        color: Color(0xFF00B052),
                       ),
                     ),
                     const SizedBox(width: 4),
                     const Text(
                       'LIVE',
                       style: TextStyle(
-                        color: Color(0xFF22C55E),
+                        color: Color(0xFF00B052),
                         fontSize: 12,
                         fontFamily: 'DMSans',
                       ),
@@ -842,27 +866,42 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+         
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Table header
-                Row(
-                  children: [
-                    _thdr('Coin', 110),
-                    _thdr('Plan', 140),
-                    _thdr('Staked Amount', 110),
-                    _thdr('Daily Rate', 90),
-                    _thdr('Live Earned', 160),
-                    _thdr('USDT Value', 90),
-                    _thdr('Ends', 100),
-                    _thdr('Action', 130),
-                  ],
+                 Container(
+                  height: 1,
+                  width: 930,
+                  color: Colors.white.withOpacity(0.1),
+                  margin: const EdgeInsets.symmetric(vertical: 10),
                 ),
-                Container(height: 1, width: 930, color: Colors.white.withOpacity(0.1), margin: const EdgeInsets.symmetric(vertical: 8)),
+                // Table header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      _thdr('Coin', 110),
+                      _thdr('Plan', 140),
+                      _thdr('Staked Amount', 110),
+                      _thdr('Daily Rate', 90),
+                      _thdr('Live Earned', 160),
+                      _thdr('USDT Value', 90),
+                      _thdr('Ends', 100),
+                      _thdr('Action', 130),
+                    ],
+                  ),
+                ),
+                Container(
+                  height: 1,
+                  width: 930,
+                  color: Colors.white.withOpacity(0.1),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                ),
                 ...positions.map((item) => _positionRowNew(item)),
               ],
             ),
@@ -881,39 +920,118 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
 
   Widget _thdr(String t, double w) => SizedBox(
     width: w,
-    child: Text(t,
-      style: const TextStyle(color: Color(0x66FFFFFF), fontSize: 11, fontFamily: 'DMSans'),
+    child: Text(
+      t,
+      style: const TextStyle(
+        color: Color(0x66FFFFFF),
+        fontSize: 11,
+        fontFamily: 'DMSans',
+      ),
     ),
   );
 
   // ── ACTIVE POSITIONS ROW — per-column text styles (customize each one) ─────
   //
   // COIN column
-  static const _tCoinSymbol    = TextStyle(color: Colors.white,              fontSize: 13, fontWeight: FontWeight.w700, height: 1.4, fontFamily: 'DMSans');
-  static const _tCoinSub       = TextStyle(color: Color(0x66FFFFFF),         fontSize: 10, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  static const _tCoinSymbol = TextStyle(
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
+  static const _tCoinSub = TextStyle(
+    color: Color(0x66FFFFFF),
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
   // PLAN column
-  static const _tPlanName      = TextStyle(color: Colors.white,              fontSize: 12, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
-  static const _tPlanDays      = TextStyle(color: Color(0x80FFFFFF),         fontSize: 11, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  static const _tPlanName = TextStyle(
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
+  static const _tPlanDays = TextStyle(
+    color: Color(0x80FFFFFF),
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
   // STAKED AMOUNT column
-  static const _tStakedAmt     = TextStyle(color: Colors.white,              fontSize: 13, fontWeight: FontWeight.w600, height: 1.4, fontFamily: 'DMSans');
+  static const _tStakedAmt = TextStyle(
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
   // DAILY RATE column
-  static const _tDailyRate     = TextStyle(color: Colors.white,              fontSize: 13, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  static const _tDailyRate = TextStyle(
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
   // LIVE EARNED column — coin value (top)
-  static const _tLiveEarnedCoin = TextStyle(color: Color(0xFF00B052),        fontSize: 12, fontWeight: FontWeight.w700, height: 1.4, fontFamily: 'DMSans');
+  static const _tLiveEarnedCoin = TextStyle(
+    color: Color(0xFF00B052),
+    fontSize: 12,
+    fontWeight: FontWeight.w700,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
   // LIVE EARNED column — USDT sub (bottom)
-  static const _tLiveEarnedUsdt = TextStyle(color: Color(0x66FFFFFF),        fontSize: 10, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  static const _tLiveEarnedUsdt = TextStyle(
+    color: Color(0x66FFFFFF),
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
   // USDT VALUE column
-  static const _tUsdtValue     = TextStyle(color: Colors.white,              fontSize: 13, fontWeight: FontWeight.w600, height: 1.4, fontFamily: 'DMSans');
+  static const _tUsdtValue = TextStyle(
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
   // ENDS column
-  static const _tEndsDate      = TextStyle(color: Colors.white,              fontSize: 12, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  static const _tEndsDate = TextStyle(
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+    fontFamily: 'DMSans',
+  );
   // ACTION button — label
-  static const _tWithdrawLabel = TextStyle(color: Colors.black,              fontSize: 11, fontWeight: FontWeight.w700, height: 1.3, fontFamily: 'DMSans');
+  static const _tWithdrawLabel = TextStyle(
+    color: Colors.black,
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    height: 1.3,
+    fontFamily: 'DMSans',
+  );
   // ACTION button — coin amount sub
-  static const _tWithdrawAmt   = TextStyle(color: Colors.black,              fontSize: 10, fontWeight: FontWeight.w400, height: 1.3, fontFamily: 'DMSans');
+  static const _tWithdrawAmt = TextStyle(
+    color: Colors.black,
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    height: 1.3,
+    fontFamily: 'DMSans',
+  );
 
   Widget _positionRowNew(McPortfolioItem item) {
     final earnedUsdt = _stakeAvailable(item.stakeUid);
-    final earnedCoin = item.coinPriceUsdt > 0 ? earnedUsdt / item.coinPriceUsdt : earnedUsdt;
+    final earnedCoin = item.coinPriceUsdt > 0
+        ? earnedUsdt / item.coinPriceUsdt
+        : earnedUsdt;
     final nameParts = _splitPlanName(item.planName);
 
     return Padding(
@@ -927,7 +1045,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.coinSymbol,   style: _tCoinSymbol),
+                Text(item.coinSymbol, style: _tCoinSymbol),
                 Text('Live Dashboard →', style: _tCoinSub),
               ],
             ),
@@ -952,32 +1070,49 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
           // ── Daily Rate ────────────────────────────────────────────────────
           SizedBox(
             width: 90,
-            child: Text('${item.dailyRate.toStringAsFixed(2)}%', style: _tDailyRate),
+            child: Text(
+              '${item.dailyRate.toStringAsFixed(2)}%',
+              style: _tDailyRate,
+            ),
           ),
           // ── Live Earned ───────────────────────────────────────────────────
-          Builder(builder: (_) {
-            final eu = _stakeAvailable(item.stakeUid);
-            final ec = item.coinPriceUsdt > 0 ? eu / item.coinPriceUsdt : eu;
-            return SizedBox(
-              width: 160,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${ec.toStringAsFixed(8)} ${item.coinSymbol}', style: _tLiveEarnedCoin),
-                  Text('≈ \$${eu.toStringAsFixed(4)} USDT',           style: _tLiveEarnedUsdt),
-                ],
-              ),
-            );
-          }),
+          Builder(
+            builder: (_) {
+              final eu = _stakeAvailable(item.stakeUid);
+              final ec = item.coinPriceUsdt > 0 ? eu / item.coinPriceUsdt : eu;
+              return SizedBox(
+                width: 160,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${ec.toStringAsFixed(8)} ${item.coinSymbol}',
+                      style: _tLiveEarnedCoin,
+                    ),
+                    Text(
+                      '≈ \$${eu.toStringAsFixed(4)} USDT',
+                      style: _tLiveEarnedUsdt,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           // ── USDT Value ────────────────────────────────────────────────────
           SizedBox(
             width: 90,
-            child: Text('\$${item.usdtValue.toStringAsFixed(0)}', style: _tUsdtValue),
+            child: Text(
+              '\$${item.usdtValue.toStringAsFixed(0)}',
+              style: _tUsdtValue,
+            ),
           ),
           // ── Ends ──────────────────────────────────────────────────────────
           SizedBox(
             width: 100,
-            child: Text(item.endDate?.split('T').first ?? '—', style: _tEndsDate),
+            child: Text(
+              item.endDate?.split('T').first ?? '—',
+              style: _tEndsDate,
+            ),
           ),
           // ── Action — Withdraw button ───────────────────────────────────────
           SizedBox(
@@ -987,9 +1122,14 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
               return GestureDetector(
                 onTap: withdrawing ? null : () => _openWithdrawModal(item),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: withdrawing ? _kGreen.withValues(alpha: 0.3) : _kGreen,
+                    color: withdrawing
+                        ? _kGreen.withValues(alpha: 0.3)
+                        : _kGreen,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -998,10 +1138,16 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text('💰 ', style: TextStyle(fontSize: 10)),
-                          Text(withdrawing ? '...' : 'Withdraw', style: _tWithdrawLabel),
+                          Text(
+                            withdrawing ? '...' : 'Withdraw',
+                            style: _tWithdrawLabel,
+                          ),
                         ],
                       ),
-                      Text('${earnedCoin.toStringAsFixed(4)} ${item.coinSymbol}', style: _tWithdrawAmt),
+                      Text(
+                        '${earnedCoin.toStringAsFixed(4)} ${item.coinSymbol}',
+                        style: _tWithdrawAmt,
+                      ),
                     ],
                   ),
                 ),

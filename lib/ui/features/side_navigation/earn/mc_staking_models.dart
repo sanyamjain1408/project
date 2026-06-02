@@ -200,7 +200,9 @@ class McPortfolioData {
   factory McPortfolioData.fromJson(Map<String, dynamic> j) => McPortfolioData(
         portfolio: (j['portfolio'] as List? ?? []).map((e) => McPortfolioItem.fromJson(e)).toList(),
         totalUsdtValue: double.tryParse(j['total_usdt_value'].toString()) ?? 0,
-        userTier: j['user_tier'] != null ? McUserTier.fromJson(j['user_tier']) : null,
+        userTier: j['user_tier'] != null
+            ? McUserTier.fromJson(j['user_tier'])
+            : McUserTier(tierName: 'Basic', level1Percent: 0, level2Percent: 0, level3Percent: 0),
       );
 }
 
