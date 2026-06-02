@@ -578,20 +578,10 @@ Widget _buildGlowCard({
       borderRadius: BorderRadius.circular(10),
 
       /// SAME GRADIENT FOR ALL CARDS
-      gradient: const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFF081A00),
-          Color(0xFF0C2600),
-          Color(0xFF00391A),
-          
-        ],
-        stops: [0.0, 0.5962, 0.9519],
-      ),
+     color: Color(0xFF1A1A1A),
 
       border: Border.all(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.transparent,
       ),
     ),
 
@@ -656,19 +646,10 @@ Widget _buildGlowCard({
       borderRadius: BorderRadius.circular(10),
 
       /// SAME GRADIENT
-      gradient: const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFF00391A),
-          Color(0xFF0C2600),
-          Color(0xFF081A00),
-        ],
-        stops: [0.0, 0.5962, 0.9519],
-      ),
+      color: Color(0xFF1A1A1A),
 
       border: Border.all(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.transparent,
       ),
     ),
 
