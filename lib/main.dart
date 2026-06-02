@@ -24,6 +24,7 @@ import 'ui/features/root/root_screen.dart';
 import 'ui/ui_helper/maintains_mood_widgets.dart';
 
 void main() async {
+  debugPrint = (String? message, {int? wrapWidth}) {};
   WidgetsFlutterBinding.ensureInitialized(); // <-- Pehle ye hona chahiye
   await dotenv.load(fileName: EnvKeyValue.kEnvFile);
   await GetStorage.init();
