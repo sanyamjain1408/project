@@ -155,7 +155,7 @@ class McStakingController extends GetxController {
     if (amount <= 0) { calcResult.value = null; return; }
     try {
       final j = _decode(await _post('/api/mc-staking/calculate-reward', {'plan_id': planId, 'amount': amount}));
-      calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
+calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
     } catch (_) {
       calcResult.value = null;
     }

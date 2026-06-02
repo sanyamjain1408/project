@@ -392,14 +392,15 @@ class _McStakingScreenState extends State<McStakingScreen> {
                                       _selectPlanRow(r.plan, r.rule);
                                       Get.to(() => _StakingSubscribeScreen(
                                         coin: coin,
-                                        plan: r.plan,
-                                        rule: r.rule,
+                                        initialPlan: r.plan,
+                                        initialRule: r.rule,
+                                        allRows: rows,
                                         controller: _c,
                                         amountCtrl: _amountCtrl,
+                                        onPlanSelected: _selectPlanRow,
                                         onAmountChange: _onAmountChange,
                                         onStake: _handleStake,
                                         perSecGetter: () => _perSec,
-                                        onPerSecUpdate: (v) => setState(() => _perSec = v),
                                       ));
                                     },
                                     child: Container(
@@ -1603,25 +1604,27 @@ class _McStakingScreenState extends State<McStakingScreen> {
 // ── Subscribe Screen (opens on Subscribe tap) ─────────────────────────────────
 class _StakingSubscribeScreen extends StatefulWidget {
   final McStakingCoin coin;
-  final McStakingPlan plan;
-  final McRateRule rule;
+  final McStakingPlan initialPlan;
+  final McRateRule initialRule;
+  final List<_PlanRow> allRows;
   final McStakingController controller;
   final TextEditingController amountCtrl;
+  final void Function(McStakingPlan, McRateRule) onPlanSelected;
   final void Function(String) onAmountChange;
   final Future<void> Function() onStake;
   final double Function() perSecGetter;
-  final void Function(double) onPerSecUpdate;
 
   const _StakingSubscribeScreen({
     required this.coin,
-    required this.plan,
-    required this.rule,
+    required this.initialPlan,
+    required this.initialRule,
+    required this.allRows,
     required this.controller,
     required this.amountCtrl,
+    required this.onPlanSelected,
     required this.onAmountChange,
     required this.onStake,
     required this.perSecGetter,
-    required this.onPerSecUpdate,
   });
 
   @override
@@ -1631,18 +1634,48 @@ class _StakingSubscribeScreen extends StatefulWidget {
 class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
   McStakingController get _c => widget.controller;
   bool _agreed = false;
+  late McStakingPlan _selectedPlan;
+  late McRateRule _selectedRule;
+  double _perSec = 0;
+  Timer? _calcTimer;
 
-  String _dateStr(int addDays) {
-    final d = DateTime.now().add(Duration(days: addDays));
-    return "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}";
+  @override
+  void initState() {
+    super.initState();
+    _selectedPlan = widget.initialPlan;
+    _selectedRule = widget.initialRule;
   }
 
   @override
+  void dispose() {
+    _calcTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onAmountChange(String val) {
+    _calcTimer?.cancel();
+    final amount = double.tryParse(val) ?? 0;
+    if (amount <= 0) {
+      _c.calcResult.value = null;
+      setState(() => _perSec = 0);
+      return;
+    }
+    _calcTimer = Timer(const Duration(milliseconds: 600), () async {
+      await _c.calculateReward(_selectedPlan.id, amount);
+      final cr = _c.calcResult.value;
+      setState(() => _perSec = (cr != null && cr.dailyRate > 0)
+          ? (amount * (cr.dailyRate / 100)) / 86400
+          : 0);
+    });
+  }
+
+  String _planTypeLabel(int t) => t == 1 ? 'Flexible' : t == 2 ? 'Locked' : 'Long-Term';
+
+  @override
   Widget build(BuildContext context) {
-    final plan = widget.plan;
+    final plan = _selectedPlan;
+    final rule = _selectedRule;
     final coin = widget.coin;
-    final isFlexible = plan.durationDays == 0;
-    final lockLabel = isFlexible ? 'Flexible' : '${plan.durationDays} Days';
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
       resizeToAvoidBottomInset: true,
@@ -1680,38 +1713,62 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Plan pill (single plan)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: _green, width: 0.5),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              lockLabel,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: "DMSans",
-                                height: 24 / 16,
+                      // Plan pills (all plans horizontal scroll)
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: widget.allRows.map((r) {
+                            final isA = _selectedPlan.id == r.plan.id && _selectedRule.minAmount == r.rule.minAmount;
+                            final label = r.plan.durationDays == 0 ? 'Flexible' : "${r.plan.durationDays} day's";
+                            final sub = "${r.rule.dailyRate.toStringAsFixed(2)}% Max";
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedPlan = r.plan;
+                                  _selectedRule = r.rule;
+                                });
+                                widget.onPlanSelected(r.plan, r.rule);
+                                widget.amountCtrl.clear();
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 10),
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                                decoration: BoxDecoration(
+                                  color: isA ? Colors.transparent : const Color(0xFF1A1A1A),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isA ? _green : Colors.transparent,
+                                    width: isA ? 0.5 : 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      label,
+                                      style: TextStyle(
+                                        color: isA ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w400,
+                                        fontFamily: "DMSans",
+                                        height: 24 / 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      sub,
+                                      style: TextStyle(
+                                        color: isA ? _green : Colors.white.withValues(alpha: 0.5),
+                                        fontSize: 11,
+                                        fontFamily: "DMSans",
+                                        height: 24 / 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "${widget.rule.dailyRate.toStringAsFixed(2)}% /day",
-                              style: const TextStyle(
-                                color: _green,
-                                fontSize: 11,
-                                fontFamily: "DMSans",
-                                height: 24 / 16,
-                              ),
-                            ),
-                          ],
+                            );
+                          }).toList(),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -1745,7 +1802,7 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                                   child: TextField(
                                     controller: widget.amountCtrl,
                                     onChanged: (v) {
-                                      widget.onAmountChange(v);
+                                      _onAmountChange(v);
                                       setState(() {});
                                     },
                                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1771,8 +1828,8 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                                 ),
                                 GestureDetector(
                                   onTap: () {
-                                    widget.amountCtrl.text = _fmtNum(widget.rule.maxAmount > 0 ? widget.rule.maxAmount : plan.minStake);
-                                    widget.onAmountChange(widget.amountCtrl.text);
+                                    widget.amountCtrl.text = _fmtNum(rule.maxAmount > 0 ? rule.maxAmount : plan.minStake);
+                                    _onAmountChange(widget.amountCtrl.text);
                                     setState(() {});
                                   },
                                   child: const Text(
@@ -1814,7 +1871,7 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                               children: [
                                 Text(_fmtNum(plan.minStake), style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: "DMSans", height: 16 / 12)),
                                 Text(
-                                  widget.rule.maxAmount > 0 ? _fmtNum(widget.rule.maxAmount) : '∞',
+                                  rule.maxAmount > 0 ? _fmtNum(rule.maxAmount) : '∞',
                                   style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: "DMSans", height: 16 / 12),
                                 ),
                               ],
@@ -1824,43 +1881,34 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Est. info + timeline
-                      if (isFlexible) ...[
-                        Text("Est. Daily Total Profit", style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 15, fontWeight: FontWeight.w600, fontFamily: "DMSans", height: 20 / 15)),
-                        const SizedBox(height: 20),
-                        Obx(() {
-                          final cr = _c.calcResult.value;
-                          final dailyReward = cr?.dailyReward ?? 0.0;
-                          return Text(
-                            "${dailyReward.toStringAsFixed(6)} ${coin.symbol}",
-                            style: const TextStyle(color: _green, fontSize: 20, fontWeight: FontWeight.w700, fontFamily: "DMSans"),
-                          );
-                        }),
-                        const SizedBox(height: 20),
-                        Text("Hourly interest rate, access at any time", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 15, height: 20 / 15, fontFamily: "DMSans", fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 20),
-                        _buildTimeline([
-                          MapEntry("Subscription Time", _dateStr(0)),
-                          MapEntry("Interest Start Time", _dateStr(0)),
-                          MapEntry("Interest Payout Time", _dateStr(0)),
-                        ]),
-                      ] else ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      // Live Reward Estimate
+                      const Text(
+                        "Live Reward Estimate",
+                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: "DMSans"),
+                      ),
+                      const SizedBox(height: 16),
+                      Obx(() {
+                        final cr = _c.calcResult.value;
+                        final dailyRate = cr?.dailyRate ?? rule.dailyRate;
+                        final dailyReward = cr?.dailyReward ?? 0.0;
+                        final perSec = _perSec;
+                        final totalReward = cr?.totalReward ?? 0.0;
+                        final sym = coin.symbol;
+                        return Column(
                           children: [
-                            Text("Est. APR", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 15, fontWeight: FontWeight.w600, fontFamily: "DMSans", height: 20 / 15)),
-                            Text("${widget.rule.dailyRate.toStringAsFixed(2)}%", style: const TextStyle(color: Color(0xFF4ED78E), fontSize: 15, fontWeight: FontWeight.w600, fontFamily: "DMSans", height: 20 / 15)),
+                            _rewardRow("Daily Rate", "${dailyRate.toStringAsFixed(2)}%"),
+                            _rewardRow("Daily Reward", "${dailyReward.toStringAsFixed(6)} $sym"),
+                            _rewardRow("Per Second", "${perSec.toStringAsFixed(8)} $sym"),
+                            _rewardRow("Total Reward", "${totalReward.toStringAsFixed(4)} $sym"),
                           ],
-                        ),
-                        const SizedBox(height: 20),
-                        _buildTimeline([
-                          MapEntry("Subscription Time", _dateStr(0)),
-                          MapEntry("Interest Start Time", _dateStr(1)),
-                          MapEntry("Interest Payout Time", _dateStr(1)),
-                          MapEntry("Maturity Time", _dateStr(plan.durationDays)),
-                          MapEntry("Fund Arrival Time", _dateStr(plan.durationDays)),
-                        ]),
-                      ],
+                        );
+                      }),
+                      const SizedBox(height: 20),
+
+                      // Plan info
+                      _rewardRow("Plan type", _planTypeLabel(plan.planType)),
+                      _rewardRow("Lock Period", plan.durationDays > 0 ? '${plan.durationDays} Days' : 'No Lock'),
+                      _rewardRow("Reward Coin", coin.symbol, valColor: _green),
                     ],
                   ),
                 ),
@@ -1910,8 +1958,8 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                     const SizedBox(height: 20),
                     Obx(() {
                       final loading = _c.isStaking.value;
-                      final hasAmt = widget.amountCtrl.text.isNotEmpty;
-                      final disabled = loading || !hasAmt || !_agreed;
+                      final amt = double.tryParse(widget.amountCtrl.text) ?? 0;
+                      final disabled = loading || amt < _selectedPlan.minStake || !_agreed;
                       return SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -1953,43 +2001,16 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
     );
   }
 
-  Widget _buildTimeline(List<MapEntry<String, String>> items) {
-    const dotColor = Color(0xFFD9D9D9);
-    const lineColor = Color(0x80FFFFFF);
-    const textStyle = TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w400, fontSize: 12, height: 16 / 12, color: Color(0x80FFFFFF));
-    return Column(
-      children: List.generate(items.length, (i) {
-        final isLast = i == items.length - 1;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 20,
-              child: Column(
-                children: [
-                  Container(width: 10, height: 10, margin: const EdgeInsets.only(top: 3), decoration: const BoxDecoration(shape: BoxShape.circle, color: dotColor)),
-                  if (!isLast) Container(width: 1, height: 28, color: lineColor),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(items[i].key, style: textStyle),
-                    Text(items[i].value, style: textStyle),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      }),
-    );
-  }
+  Widget _rewardRow(String label, String val, {Color? valColor}) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13, fontFamily: 'DMSans')),
+        Text(val, style: TextStyle(color: valColor ?? const Color(0xFF4ED78E), fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'DMSans')),
+      ],
+    ),
+  );
 }
 
 class _PlanRow {

@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
+import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'earn_controller.dart';
-import 'earn_subscribe_modal.dart';
 import 'dual_investment_controller.dart';
 import 'dual_investment_screen.dart';
 import 'dual_subscribe_modal.dart';
@@ -2595,8 +2595,6 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
   bool _agreed = false;
   bool _autoSub = false;
   bool _loading = false;
-  String _error = "";
-  String _success = "";
   final _earnCtrl = Get.find<EarnController>();
 
   String get _uid => gUserRx.value.id > 0 ? gUserRx.value.id.toString() : '';
@@ -2633,11 +2631,8 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
 
   void _handleConfirm() async {
     if (_amountNum <= 0 || !_agreed || _uid.isEmpty) return;
-    setState(() {
-      _loading = true;
-      _error = "";
-      _success = "";
-    });
+    FocusScope.of(context).unfocus();
+    setState(() => _loading = true);
     try {
       final res = await http.post(
         Uri.parse('$_baseUrl/api/tf/earn/subscribe?user_id=$_uid'),
@@ -2650,14 +2645,14 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
       );
       final json = jsonDecode(res.body);
       if (json['success'] == true) {
-        setState(() => _success = "Subscribed successfully!");
-        await Future.delayed(const Duration(seconds: 1));
-        if (mounted) Navigator.pop(context, true);
+        showToast("Subscribed successfully!");
+        await Future.delayed(const Duration(milliseconds: 1500));
+        Get.back();
       } else {
-        setState(() => _error = json['message'] ?? "Failed");
+        showToast(json['message'] ?? "Failed");
       }
     } catch (_) {
-      setState(() => _error = "Subscription failed");
+      showToast("Subscription failed");
     } finally {
       setState(() => _loading = false);
     }
@@ -2721,7 +2716,6 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
                             onTap: () => setState(() {
                               _selectedPlan = p;
                               _autoSub = false;
-                              _error = "";
                             }),
                             child: Container(
                               margin: const EdgeInsets.only(right: 10),
@@ -3054,33 +3048,6 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
                       ]),
                     ],
 
-                    // Error/Success messages
-                    if (_error.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1A0000),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(_error,
-                            style: const TextStyle(
-                                color: Color(0xFFFF6666), fontSize: 13)),
-                      ),
-                    ],
-                    if (_success.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF001A00),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(_success,
-                            style: const TextStyle(
-                                color: Color(0xFF00FF88), fontSize: 13)),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -3165,24 +3132,21 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
                         backgroundColor:
                             (_loading || _amountNum <= 0 || !_agreed)
                                 ? const Color(0xFF222222)
-                                : const Color(0xFF1A1A1A),
-                        disabledBackgroundColor: const Color(0xFF1A1A1A),
+                                : const Color(0xFFCCFF00),
+                        disabledBackgroundColor: const Color(0xFF222222),
+                        overlayColor: Colors.transparent,
+                        splashFactory: NoSplash.splashFactory,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                         elevation: 0,
-                        side: BorderSide(
-                          color: (_loading || _amountNum <= 0 || !_agreed)
-                              ? Colors.transparent
-                              : Colors.transparent,
-                        ),
                       ),
                       child: Text(
                         _loading ? "Processing..." : "Preview Order",
                         style: TextStyle(
                           color: (_loading || _amountNum <= 0 || !_agreed)
-                              ? Colors.white
-                              : Colors.white,
+                              ? Colors.white.withValues(alpha: 0.5)
+                              : Colors.black,
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           fontFamily: "DMSans",
