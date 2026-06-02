@@ -1718,7 +1718,10 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
     final plan = _selectedPlan;
     final rule = _selectedRule;
     final coin = widget.coin;
-    return Scaffold(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
       backgroundColor: const Color(0xFF111111),
       resizeToAvoidBottomInset: true,
       body: SafeArea(
@@ -2110,6 +2113,7 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 
