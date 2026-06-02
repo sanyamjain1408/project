@@ -15,6 +15,11 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_co
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_widgets.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_screen.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/spin_win/spin_win_screen.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/referrals/referral_screen.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/profile/profile_screen.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/airdrop/airdrop_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_screen.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
@@ -892,6 +897,21 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         break;
       case "Spot":
         Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.trade);
+        break;
+      case "Spin":
+        Get.to(() => const SpinWinScreen());
+        break;
+      case "Referals":
+        Get.to(() => const ReferralScreen());
+        break;
+      case "KYC":
+        Get.to(() => const ProfileScreen(initialTab: 3));
+        break;
+      case "Easy Earn":
+        Get.to(() => const EarnScreen(initialTab: 1));
+        break;
+      case "Airdrop":
+        Get.to(() => const AirdropScreen());
         break;
       case "Funds":
         break;

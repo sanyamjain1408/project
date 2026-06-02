@@ -35,7 +35,8 @@ const Color _primary = Color(0xFF111111);
 const Color _secondary = Color(0xFF1A1A1A);
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final int initialTab;
+  const ProfileScreen({super.key, this.initialTab = 0});
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
@@ -53,6 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.initState();
     _tabController = TabController(
       length: _controller.getProfileMenus().length,
+      initialIndex: widget.initialTab,
       vsync: this,
     );
     _tabController.addListener(() {

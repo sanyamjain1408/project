@@ -62,7 +62,8 @@ Widget _fallbackIcon(double size, Color bg) {
 }
 
 class EarnScreen extends StatefulWidget {
-  const EarnScreen({super.key});
+  final int initialTab;
+  const EarnScreen({super.key, this.initialTab = 0});
 
   @override
   State<EarnScreen> createState() => _EarnScreenState();
@@ -72,7 +73,7 @@ class _EarnScreenState extends State<EarnScreen> {
   final _controller = Get.put(EarnController());
   late DualInvestmentController _dualController;
 
-  int _selectedMainTab = 0;
+  late int _selectedMainTab;
   int _selectedEasyTab = 0; // 0=Position, 1=History
   final List<String> _mainTabs = ["Overview", "Easy Earn", "Dual Investment", "Staking"];
 
@@ -91,6 +92,7 @@ class _EarnScreenState extends State<EarnScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedMainTab = widget.initialTab;
     _dualController = Get.isRegistered<DualInvestmentController>()
         ? Get.find<DualInvestmentController>()
         : Get.put(DualInvestmentController());
