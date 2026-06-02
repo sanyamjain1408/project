@@ -225,6 +225,8 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   _buildPageHeader(),
                   const SizedBox(height: 20),
                   _buildLiveCard(hasStakes),
+                  const SizedBox(height: 20),
+                  _buildPageHeadersecond(),
                   _buildStatsGrid(),
                   const SizedBox(height: 20),
                   _buildTierCard(
@@ -274,11 +276,19 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
             fontFamily: 'DMSans',
           ),
         ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            // "+ New Stake" outlined — compact size
-            GestureDetector(
+       
+      ],
+    );
+  }
+
+  Widget _buildPageHeadersecond() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
               onTap: () => Get.back(),
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -290,20 +300,25 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: _kGreen),
                 ),
-                child: const Text(
-                  '+ New Stake',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'DMSans',
+                child: const Center(
+                  child: Text(
+                    '+ New Stake',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'DMSans',
+                    ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            // "My Stake" green filled — compact size
-            GestureDetector(
+          ),
+
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: GestureDetector(
               onTap: () => Get.to(() => const McMyStakesScreen()),
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -314,23 +329,25 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   color: _kGreen,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text(
-                  'My Stake',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'DMSans',
+                child: const Center(
+                  child: Text(
+                    'My Stake',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'DMSans',
+                    ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
-      ],
-    );
-  }
-
+          ),
+        ],
+      ),
+    ],
+  );
+}
   // ── LIVE EARNING CARD (Figma exact) ──────────────────────────────────────
   Widget _buildLiveCard(bool hasStakes) {
     if (!hasStakes) {
@@ -631,67 +648,70 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
         'icon': '🔗',
       },
     ];
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 20,
-      mainAxisSpacing: 20,
-      childAspectRatio: 1.6,
-      children: items
-          .map(
-            (item) => Container(
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        item['label'] as String,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: 'DMSans',
+    return Transform.translate(
+      offset: const Offset(0, -10),
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        crossAxisSpacing: 20,
+        mainAxisSpacing: 20,
+        childAspectRatio: 1.6,
+        children: items
+            .map(
+              (item) => Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          item['label'] as String,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'DMSans',
+                          ),
                         ),
-                      ),
-                      Text(
-                        item['icon'] as String,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    item['value'] as String,
-                    style: TextStyle(
-                      color: item['color'] as Color,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'DMSans',
+                        Text(
+                          item['icon'] as String,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
                     ),
-                  ),
-                  Text(
-                    item['sub'] as String,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'DMSans',
+                    const SizedBox(height: 5),
+                    Text(
+                      item['value'] as String,
+                      style: TextStyle(
+                        color: item['color'] as Color,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'DMSans',
+                      ),
                     ),
-                  ),
-                ],
+                    Text(
+                      item['sub'] as String,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          )
-          .toList(),
+            )
+            .toList(),
+      ),
     );
   }
 
