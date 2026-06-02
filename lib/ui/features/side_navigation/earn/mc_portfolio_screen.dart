@@ -238,7 +238,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   ),
                   const SizedBox(height: 20),
                   if (hasStakes) _buildPositionsTable(portfolio!.portfolio),
-                  const SizedBox(height: 20),
+                  
                   _buildNavCards(),
                 ],
               ),
@@ -317,7 +317,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                 child: const Text(
                   'My Stake',
                   style: TextStyle(
-                    color: Colors.black,0
+                    color: Colors.black,
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     fontFamily: 'DMSans',
@@ -876,7 +876,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
               children: [
                  Container(
                   height: 1,
-                  width: 930,
+                  width: 950,
                   color: Colors.white.withOpacity(0.1),
                   margin: const EdgeInsets.symmetric(vertical: 10),
                 ),
@@ -891,14 +891,14 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                       _thdr('Daily Rate', 90),
                       _thdr('Live Earned', 160),
                       _thdr('USDT Value', 90),
-                      _thdr('Ends', 100),
-                      _thdr('Action', 130),
+                      _thdr('Ends', 130),
+                      _thdr('Action', 50),
                     ],
                   ),
                 ),
                 Container(
                   height: 1,
-                  width: 930,
+                  width: 950,
                   color: Colors.white.withOpacity(0.1),
                   margin: const EdgeInsets.symmetric(vertical: 8),
                 ),
@@ -1035,7 +1035,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     final nameParts = _splitPlanName(item.planName);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 14,left: 20,right: 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -1116,7 +1116,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
           ),
           // ── Action — Withdraw button ───────────────────────────────────────
           SizedBox(
-            width: 130,
+            width: 110,
             child: Obx(() {
               final withdrawing = _c.isWithdrawing.value == item.stakeUid;
               return GestureDetector(
