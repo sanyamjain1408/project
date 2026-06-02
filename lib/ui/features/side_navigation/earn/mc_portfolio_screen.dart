@@ -842,187 +842,171 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
               ],
             ),
           ),
-          // Table header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _tableHdr('Coin', flex: 2),
-                _tableHdr('Plan', flex: 3),
-                _tableHdr('Stacked Amount', flex: 3),
+                // Table header
+                Row(
+                  children: [
+                    _thdr('Coin', 110),
+                    _thdr('Plan', 140),
+                    _thdr('Staked Amount', 110),
+                    _thdr('Daily Rate', 90),
+                    _thdr('Live Earned', 160),
+                    _thdr('USDT Value', 90),
+                    _thdr('Ends', 100),
+                    _thdr('Action', 130),
+                  ],
+                ),
+                Container(height: 1, width: 930, color: Colors.white.withOpacity(0.1), margin: const EdgeInsets.symmetric(vertical: 8)),
+                ...positions.map((item) => _positionRowNew(item)),
               ],
             ),
           ),
-          const SizedBox(height: 4),
-          ...positions.map((item) => _positionRow(item)),
           const SizedBox(height: 8),
         ],
       ),
     );
   }
 
-  Widget _tableHdr(String t, {int flex = 1}) => Expanded(
-    flex: flex,
-    child: Text(
-      t,
-      style: const TextStyle(
-        color: Color(0x66FFFFFF),
-        fontSize: 11,
-        fontFamily: 'DMSans',
-      ),
+  String _fmt(double v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+    return v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
+  }
+
+  Widget _thdr(String t, double w) => SizedBox(
+    width: w,
+    child: Text(t,
+      style: const TextStyle(color: Color(0x66FFFFFF), fontSize: 11, fontFamily: 'DMSans'),
     ),
   );
 
-  Widget _positionRow(McPortfolioItem item) {
+  // ── ACTIVE POSITIONS ROW — per-column text styles (customize each one) ─────
+  //
+  // COIN column
+  static const _tCoinSymbol    = TextStyle(color: Colors.white,              fontSize: 13, fontWeight: FontWeight.w700, height: 1.4, fontFamily: 'DMSans');
+  static const _tCoinSub       = TextStyle(color: Color(0x66FFFFFF),         fontSize: 10, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  // PLAN column
+  static const _tPlanName      = TextStyle(color: Colors.white,              fontSize: 12, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  static const _tPlanDays      = TextStyle(color: Color(0x80FFFFFF),         fontSize: 11, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  // STAKED AMOUNT column
+  static const _tStakedAmt     = TextStyle(color: Colors.white,              fontSize: 13, fontWeight: FontWeight.w600, height: 1.4, fontFamily: 'DMSans');
+  // DAILY RATE column
+  static const _tDailyRate     = TextStyle(color: Colors.white,              fontSize: 13, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  // LIVE EARNED column — coin value (top)
+  static const _tLiveEarnedCoin = TextStyle(color: Color(0xFF00B052),        fontSize: 12, fontWeight: FontWeight.w700, height: 1.4, fontFamily: 'DMSans');
+  // LIVE EARNED column — USDT sub (bottom)
+  static const _tLiveEarnedUsdt = TextStyle(color: Color(0x66FFFFFF),        fontSize: 10, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  // USDT VALUE column
+  static const _tUsdtValue     = TextStyle(color: Colors.white,              fontSize: 13, fontWeight: FontWeight.w600, height: 1.4, fontFamily: 'DMSans');
+  // ENDS column
+  static const _tEndsDate      = TextStyle(color: Colors.white,              fontSize: 12, fontWeight: FontWeight.w400, height: 1.4, fontFamily: 'DMSans');
+  // ACTION button — label
+  static const _tWithdrawLabel = TextStyle(color: Colors.black,              fontSize: 11, fontWeight: FontWeight.w700, height: 1.3, fontFamily: 'DMSans');
+  // ACTION button — coin amount sub
+  static const _tWithdrawAmt   = TextStyle(color: Colors.black,              fontSize: 10, fontWeight: FontWeight.w400, height: 1.3, fontFamily: 'DMSans');
+
+  Widget _positionRowNew(McPortfolioItem item) {
     final earnedUsdt = _stakeAvailable(item.stakeUid);
-    final earnedCoin = item.coinPriceUsdt > 0
-        ? earnedUsdt / item.coinPriceUsdt
-        : earnedUsdt;
-    // Split plan name into 2 lines like figma: "Power Plan" / "200 Days"
+    final earnedCoin = item.coinPriceUsdt > 0 ? earnedUsdt / item.coinPriceUsdt : earnedUsdt;
     final nameParts = _splitPlanName(item.planName);
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: _kCard2,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              // Coin
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.coinSymbol,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'DMSans',
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {},
-                      child: Text(
-                        'Live Dashboard →',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.4),
-                          fontSize: 10,
-                          fontFamily: 'DMSans',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Plan
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      nameParts.$1,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontFamily: 'DMSans',
-                      ),
-                    ),
-                    if (nameParts.$2.isNotEmpty)
-                      Text(
-                        nameParts.$2,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 11,
-                          fontFamily: 'DMSans',
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // Stacked Amount
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.stakedAmount.toStringAsFixed(0),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'DMSans',
-                      ),
-                    ),
-                    if (item.planType == 1)
-                      Obx(() {
-                        final withdrawing =
-                            _c.isWithdrawing.value == item.stakeUid;
-                        return GestureDetector(
-                          onTap: withdrawing
-                              ? null
-                              : () => _openWithdrawModal(item),
-                          child: Container(
-                            margin: const EdgeInsets.only(top: 4),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: withdrawing
-                                  ? _kGreen.withOpacity(0.3)
-                                  : _kGreen,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              withdrawing ? '...' : 'Withdraw',
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'DMSans',
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                  ],
-                ),
-              ),
-            ],
+          // ── Coin ──────────────────────────────────────────────────────────
+          SizedBox(
+            width: 110,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.coinSymbol,   style: _tCoinSymbol),
+                Text('Live Dashboard →', style: _tCoinSub),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          // Live earned row
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Live Earned',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.4),
-                    fontSize: 9,
-                    fontFamily: 'DMSans',
+          // ── Plan ──────────────────────────────────────────────────────────
+          SizedBox(
+            width: 140,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(nameParts.$1, style: _tPlanName),
+                if (nameParts.$2.isNotEmpty)
+                  Text(nameParts.$2, style: _tPlanDays),
+              ],
+            ),
+          ),
+          // ── Staked Amount ─────────────────────────────────────────────────
+          SizedBox(
+            width: 110,
+            child: Text(_fmt(item.stakedAmount), style: _tStakedAmt),
+          ),
+          // ── Daily Rate ────────────────────────────────────────────────────
+          SizedBox(
+            width: 90,
+            child: Text('${item.dailyRate.toStringAsFixed(2)}%', style: _tDailyRate),
+          ),
+          // ── Live Earned ───────────────────────────────────────────────────
+          Builder(builder: (_) {
+            final eu = _stakeAvailable(item.stakeUid);
+            final ec = item.coinPriceUsdt > 0 ? eu / item.coinPriceUsdt : eu;
+            return SizedBox(
+              width: 160,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${ec.toStringAsFixed(8)} ${item.coinSymbol}', style: _tLiveEarnedCoin),
+                  Text('≈ \$${eu.toStringAsFixed(4)} USDT',           style: _tLiveEarnedUsdt),
+                ],
+              ),
+            );
+          }),
+          // ── USDT Value ────────────────────────────────────────────────────
+          SizedBox(
+            width: 90,
+            child: Text('\$${item.usdtValue.toStringAsFixed(0)}', style: _tUsdtValue),
+          ),
+          // ── Ends ──────────────────────────────────────────────────────────
+          SizedBox(
+            width: 100,
+            child: Text(item.endDate?.split('T').first ?? '—', style: _tEndsDate),
+          ),
+          // ── Action — Withdraw button ───────────────────────────────────────
+          SizedBox(
+            width: 130,
+            child: Obx(() {
+              final withdrawing = _c.isWithdrawing.value == item.stakeUid;
+              return GestureDetector(
+                onTap: withdrawing ? null : () => _openWithdrawModal(item),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: withdrawing ? _kGreen.withValues(alpha: 0.3) : _kGreen,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('💰 ', style: TextStyle(fontSize: 10)),
+                          Text(withdrawing ? '...' : 'Withdraw', style: _tWithdrawLabel),
+                        ],
+                      ),
+                      Text('${earnedCoin.toStringAsFixed(4)} ${item.coinSymbol}', style: _tWithdrawAmt),
+                    ],
                   ),
                 ),
-              ),
-              Text(
-                '${earnedCoin.toStringAsFixed(6)} ${item.coinSymbol}',
-                style: const TextStyle(
-                  color: Color(0xFF00B052),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  fontFeatures: [FontFeature.tabularFigures()],
-                  fontFamily: 'DMSans',
-                ),
-              ),
-            ],
+              );
+            }),
           ),
         ],
       ),
