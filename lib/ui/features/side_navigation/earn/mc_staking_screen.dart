@@ -1769,6 +1769,24 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                                     ),
                                   ),
                                 ),
+                                GestureDetector(
+                                  onTap: () {
+                                    widget.amountCtrl.text = _fmtNum(widget.rule.maxAmount > 0 ? widget.rule.maxAmount : plan.minStake);
+                                    widget.onAmountChange(widget.amountCtrl.text);
+                                    setState(() {});
+                                  },
+                                  child: const Text(
+                                    "Max",
+                                    style: TextStyle(
+                                      color: Color(0xFFCCFF00),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: "DMSans",
+                                      height: 20 / 15,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
                                 Text(
                                   coin.symbol,
                                   style: const TextStyle(
@@ -1904,17 +1922,19 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                             Get.back();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: disabled ? const Color(0xFF222222) : const Color(0xFF1A1A1A),
-                            disabledBackgroundColor: const Color(0xFF1A1A1A),
+                            backgroundColor: disabled ? const Color(0xFF222222) : _green,
+                            disabledBackgroundColor: const Color(0xFF222222),
+                            overlayColor: Colors.transparent,
+                            splashFactory: NoSplash.splashFactory,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             elevation: 0,
                           ),
                           child: loading
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
                               : Text(
-                                  "Confirm Stake",
+                                  "⚡ Stake ${widget.coin.symbol} Now",
                                   style: TextStyle(
-                                    color: disabled ? Colors.white.withValues(alpha: 0.5) : Colors.white,
+                                    color: disabled ? Colors.white.withValues(alpha: 0.5) : Colors.black,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
                                     fontFamily: "DMSans",
