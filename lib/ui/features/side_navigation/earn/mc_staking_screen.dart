@@ -148,7 +148,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildMainCard(),
+                _buildCoinList(),
                 const SizedBox(height: 20),
                 _buildNavCards(),
               ],
@@ -157,6 +157,284 @@ class _McStakingScreenState extends State<McStakingScreen> {
         ],
       ),
     );
+  }
+
+  // ── COIN LIST (overview style) ────────────────────────────────────────────
+  Widget _buildCoinList() {
+    return Obx(() {
+      if (_c.isLoadingCoins.value) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: CircularProgressIndicator(color: _green),
+          ),
+        );
+      }
+      if (_c.coins.isEmpty) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: Text('No coins available.', style: TextStyle(color: Color(0xFF555555))),
+          ),
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Staking',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'DMSans',
+            ),
+          ),
+          const SizedBox(height: 16),
+          ..._c.coins.map((coin) {
+            final isExpanded = _selectedCoin?.id == coin.id;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Coin header row ──
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isExpanded) {
+                        _selectedCoin = null;
+                        _selectedPlan = null;
+                        _selectedRule = null;
+                      } else {
+                        _selectCoin(coin);
+                      }
+                    });
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Row(
+                      children: [
+                        _coinImg(coin.logo, size: 34, symbol: coin.symbol),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                coin.symbol,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'DMSans',
+                                  height: 24 / 16,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                coin.coinName,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 12,
+                                  fontFamily: 'DMSans',
+                                  height: 16 / 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Obx(() {
+                          final dur = _c.coinDurations[coin.id];
+                          if (dur == null) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF00B2E3),
+                                  Color(0xFFFFA600),
+                                  Color(0xFFF03A89),
+                                ],
+                                stops: [0.0, 0.5326, 1.0],
+                              ).createShader(bounds),
+                              child: Text(
+                                dur,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'DMSans',
+                                  height: 24 / 16,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                        AnimatedRotation(
+                          turns: isExpanded ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 250),
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Colors.white.withOpacity(0.5),
+                            size: 22,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── Expanded plan rows ──
+                if (isExpanded)
+                  Obx(() {
+                    if (_c.isLoadingPlans.value) {
+                      return const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Center(child: CircularProgressIndicator(color: _green)),
+                      );
+                    }
+                    if (_c.plans.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          'No plans for ${coin.symbol}.',
+                          style: const TextStyle(color: Color(0xFF555555), fontSize: 12),
+                        ),
+                      );
+                    }
+                    final rows = <_PlanRow>[];
+                    for (final plan in _c.plans) {
+                      if (plan.rateRules.isNotEmpty) {
+                        for (final rule in plan.rateRules) {
+                          rows.add(_PlanRow(
+                            plan: plan,
+                            rule: rule,
+                            rowId: '${plan.id}-${rule.id ?? rule.minAmount}',
+                          ));
+                        }
+                      } else {
+                        rows.add(_PlanRow(
+                          plan: plan,
+                          rule: McRateRule(minAmount: plan.minStake, maxAmount: 0, dailyRate: 0),
+                          rowId: '${plan.id}-fallback',
+                        ));
+                      }
+                    }
+                    return Column(
+                      children: [
+                        ...rows.map((r) {
+                          final rateTiers =
+                              '${_fmtNum(r.rule.minAmount)} – ${r.rule.maxAmount > 0 ? _fmtNum(r.rule.maxAmount) : '∞'}';
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1A1A1A),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          rateTiers,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'DMSans',
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Min ${_fmtNum(r.plan.minStake)} ${coin.symbol}',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(0.5),
+                                            fontSize: 12,
+                                            fontFamily: 'DMSans',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  RichText(
+                                    text: TextSpan(children: [
+                                      TextSpan(
+                                        text: '${r.rule.dailyRate.toStringAsFixed(2)}%',
+                                        style: const TextStyle(
+                                          color: Color(0xFF4ED78E),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'DMSans',
+                                          height: 24 / 16,
+                                        ),
+                                      ),
+                                      const TextSpan(
+                                        text: '/day',
+                                        style: TextStyle(
+                                          color: Color(0xFF4ED78E),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                          fontFamily: 'DMSans',
+                                          height: 16 / 12,
+                                        ),
+                                      ),
+                                    ]),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      _selectPlanRow(r.plan, r.rule);
+                                      Get.to(() => _StakingSubscribeScreen(
+                                        coin: coin,
+                                        plan: r.plan,
+                                        rule: r.rule,
+                                        controller: _c,
+                                        amountCtrl: _amountCtrl,
+                                        onAmountChange: _onAmountChange,
+                                        onStake: _handleStake,
+                                        perSecGetter: () => _perSec,
+                                        onPerSecUpdate: (v) => setState(() => _perSec = v),
+                                      ));
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: _green,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Text(
+                                        'Subscribe',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'DMSans',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 6),
+                      ],
+                    );
+                  }),
+
+              ],
+            );
+          }),
+        ],
+      );
+    });
   }
 
   // ── HERO ──────────────────────────────────────────────────────────────────
@@ -1319,6 +1597,309 @@ class _McStakingScreenState extends State<McStakingScreen> {
         ),
       ),
     ],
+  );
+}
+
+// ── Subscribe Screen (opens on Subscribe tap) ─────────────────────────────────
+class _StakingSubscribeScreen extends StatefulWidget {
+  final McStakingCoin coin;
+  final McStakingPlan plan;
+  final McRateRule rule;
+  final McStakingController controller;
+  final TextEditingController amountCtrl;
+  final void Function(String) onAmountChange;
+  final Future<void> Function() onStake;
+  final double Function() perSecGetter;
+  final void Function(double) onPerSecUpdate;
+
+  const _StakingSubscribeScreen({
+    required this.coin,
+    required this.plan,
+    required this.rule,
+    required this.controller,
+    required this.amountCtrl,
+    required this.onAmountChange,
+    required this.onStake,
+    required this.perSecGetter,
+    required this.onPerSecUpdate,
+  });
+
+  @override
+  State<_StakingSubscribeScreen> createState() => _StakingSubscribeScreenState();
+}
+
+class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
+  McStakingController get _c => widget.controller;
+
+  String _planTypeLabel(int t) => t == 1 ? 'Flexible' : t == 2 ? 'Locked' : 'Long-Term';
+
+  @override
+  Widget build(BuildContext context) {
+    final plan = widget.plan;
+    final coin = widget.coin;
+    final lockLabel = plan.durationDays == 0 ? 'Flexible' : '${plan.durationDays} Days';
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF111111),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF111111),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
+        title: Row(
+          children: [
+            _coinImg(coin.logo, size: 28, symbol: coin.symbol),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  coin.symbol,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'DMSans',
+                  ),
+                ),
+                Text(
+                  lockLabel,
+                  style: const TextStyle(
+                    color: Color(0xFF888888),
+                    fontSize: 12,
+                    fontFamily: 'DMSans',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Plan Details ──────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Plan Details',
+                    style: TextStyle(
+                      color: _green,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _row('Plan Type', _planTypeLabel(plan.planType)),
+                  _row('Lock Period', plan.durationDays > 0 ? '${plan.durationDays} days' : 'No Lock'),
+                  _row('Daily Rate', '${widget.rule.dailyRate.toStringAsFixed(2)}%'),
+                  _row('Min Stake', _fmtNum(plan.minStake)),
+                  _row('Reward Coin', coin.symbol, valColor: _green),
+                  if (plan.rewardCap > 0) _row('Reward Cap', _fmtNum(plan.rewardCap)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Amount Input ──────────────────────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: widget.amountCtrl,
+                      onChanged: widget.onAmountChange,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontFamily: 'DMSans',
+                        fontWeight: FontWeight.w700,
+                      ),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Minimum ${_fmtNum(plan.minStake)}',
+                        hintStyle: const TextStyle(
+                          color: Color(0xFF555555),
+                          fontSize: 16,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    coin.symbol,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Live Reward Estimate ──────────────────────────────────────
+            Obx(() {
+              final cr = _c.calcResult.value;
+              final dailyRate = cr?.dailyRate ?? widget.rule.dailyRate;
+              final dailyReward = cr?.dailyReward ?? 0.0;
+              final totalReward = cr?.totalReward ?? 0.0;
+              final perSec = widget.perSecGetter();
+              final sym = coin.symbol;
+
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '⚡ Live Reward Estimate',
+                      style: TextStyle(
+                        color: _green,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: _rewardBox('Daily Rate', '${dailyRate.toStringAsFixed(2)}%')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _rewardBox('Daily Reward', '${dailyReward.toStringAsFixed(4)} $sym')),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _rewardBox('Per Second', '${perSec.toStringAsFixed(4)} $sym')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _rewardBox(
+                          'Total (${plan.durationDays > 0 ? '${plan.durationDays} days' : 'Flexible'})',
+                          '${totalReward.toStringAsFixed(4)} $sym',
+                        )),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 20),
+
+            // ── Stake Button ──────────────────────────────────────────────
+            if (gUserRx.value.id <= 0)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => Get.to(() => const SignInPage()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _green,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Login', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                  const SizedBox(width: 10),
+                  OutlinedButton(
+                    onPressed: () => Get.to(() => const SignUpScreen()),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _green,
+                      side: const BorderSide(color: _green),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Register'),
+                  ),
+                ],
+              )
+            else
+              Obx(() {
+                final loading = _c.isStaking.value;
+                final cr = _c.calcResult.value;
+                final hasAmt = widget.amountCtrl.text.isNotEmpty;
+                final disabled = loading || !hasAmt || (cr != null && cr.dailyRate == 0);
+                return SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: disabled ? null : () async {
+                      await widget.onStake();
+                      await Future.delayed(const Duration(milliseconds: 1500));
+                      Get.back();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: disabled ? const Color(0xFF1A1A1A) : _green,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: loading
+                        ? const SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                          )
+                        : Text(
+                            '⚡ Stake ${coin.symbol} Now',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
+                  ),
+                );
+              }),
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _row(String label, String val, {Color? valColor}) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'DMSans')),
+        Text(val, style: TextStyle(color: valColor ?? Colors.white, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w600)),
+      ],
+    ),
+  );
+
+  Widget _rewardBox(String label, String val) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+    decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(10)),
+    child: Column(
+      children: [
+        Text(label, style: const TextStyle(color: Color(0xFF888888), fontSize: 11, fontFamily: 'DMSans'), textAlign: TextAlign.center),
+        const SizedBox(height: 8),
+        Text(val, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600, fontFamily: 'DMSans'), textAlign: TextAlign.center),
+      ],
+    ),
   );
 }
 

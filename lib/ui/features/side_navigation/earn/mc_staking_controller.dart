@@ -65,6 +65,7 @@ class McStakingController extends GetxController {
 
   final isLoadingCoins = false.obs;
   final isLoadingPlans = false.obs;
+  final coinDurations = <int, String>{}.obs;
   final isLoadingStakes = false.obs;
   final isLoadingPortfolio = false.obs;
   final isLoadingRewards = false.obs;
@@ -101,11 +102,34 @@ class McStakingController extends GetxController {
       final j = _decode(await _get('/api/mc-staking/coins'));
       if (j['success'] == true) {
         coins.assignAll((j['data'] as List).map((e) => McStakingCoin.fromJson(e)));
+        _prefetchDurations();
       }
     } catch (e) {
       showToast('Error loading coins');
     } finally {
       isLoadingCoins.value = false;
+    }
+  }
+
+  Future<void> _prefetchDurations() async {
+    for (final coin in coins) {
+      try {
+        final j = _decode(await _get('/api/mc-staking/plans?coin_id=${coin.id}'));
+        if (j['success'] == true) {
+          final coinPlans = (j['data'] as List).map((e) => McStakingPlan.fromJson(e)).toList();
+          if (coinPlans.isNotEmpty) {
+            final days = coinPlans.map((p) => p.durationDays).toSet().toList()..sort();
+            String text;
+            if (days.length == 1) {
+              text = days.first == 0 ? 'Flexible' : '${days.first} Days';
+            } else {
+              final min = days.first == 0 ? 'Flexible' : '${days.first}D';
+              text = '$min – ${days.last}D';
+            }
+            coinDurations[coin.id] = text;
+          }
+        }
+      } catch (_) {}
     }
   }
 
