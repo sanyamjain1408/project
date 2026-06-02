@@ -14,10 +14,13 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_ov
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_widgets.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_screen.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/ui/features/root/root_controller.dart';
+import 'package:tradexpro_flutter/helper/bottom_nav_helper.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_controller.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_recommended_section.dart';
@@ -882,10 +885,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       case "Buy":
         break;
       case "Future":
+        Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
         break;
       case "Transfer":
+        Get.to(() => const TransferScreen());
         break;
       case "Spot":
+        Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.trade);
         break;
       case "Funds":
         break;
