@@ -202,7 +202,7 @@ class NewFutureController extends GetxController {
         final data = jsonDecode(res.body);
         if (data['success'] == true) {
           final d = data['data'] ?? {};
-          print('[FutureBalance] raw data: $d');
+          // print('[FutureBalance] raw data: $d');
           // backend fields: balance=available(free), margin_used=locked, total=grand total
           final legacyBalance = double.tryParse(d['balance']?.toString() ?? '0') ?? 0;
           final avail = double.tryParse(d['available']?.toString() ?? '0') ?? 0;
