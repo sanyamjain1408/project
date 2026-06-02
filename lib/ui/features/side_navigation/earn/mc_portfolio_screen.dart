@@ -1172,26 +1172,26 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   Widget _buildNavCards() {
     final navItems = [
       _NavCard(
-        Icons.flash_on,
+        '⚡',
         'New Stake',
         'Add Stake to Earn',
         () => Get.until((route) => route.isFirst),
       ),
-      _NavCard(Icons.people_outline, 'My Network', 'Referral', () {}),
+      _NavCard('🌐', 'My Network', 'Referral', () {}),
       _NavCard(
-        Icons.link,
+        '🔗',
         'Referral Earnings',
         'Commission history',
         () => Get.to(() => const McReferralRewardsScreen()),
       ),
       _NavCard(
-        Icons.monetization_on_outlined,
+        '💰',
         'Reward History',
         'Daily logs',
         () => Get.to(() => const McRewardsScreen()),
       ),
       _NavCard(
-        Icons.account_balance_outlined,
+        '🏧',
         'Withdraw History',
         'Check History',
         () => Get.to(() => const McWithdrawHistoryScreen()),
@@ -1209,16 +1209,16 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
             (item) => GestureDetector(
               onTap: item.onTap,
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: _kCard,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.transparent),
                 ),
                 child: Row(
                   children: [
-                    Icon(item.icon, color: _kGreen, size: 22),
-                    const SizedBox(width: 8),
+                    Text(item.icon, style: const TextStyle(fontSize: 20)),
+                    const SizedBox(width: 5),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1228,16 +1228,18 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                             item.label,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 11,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'DMSans',
                             ),
                           ),
+                          const SizedBox(height: 5),
                           Text(
                             item.desc,
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.4),
-                              fontSize: 9,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w400,
+                              fontSize: 11,
                               fontFamily: 'DMSans',
                             ),
                           ),
@@ -1430,7 +1432,7 @@ class _WithdrawInfo {
 }
 
 class _NavCard {
-  final IconData icon;
+  final String icon;
   final String label, desc;
   final VoidCallback onTap;
   _NavCard(this.icon, this.label, this.desc, this.onTap);
