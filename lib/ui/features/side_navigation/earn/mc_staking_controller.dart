@@ -118,13 +118,25 @@ class McStakingController extends GetxController {
         if (j['success'] == true) {
           final coinPlans = (j['data'] as List).map((e) => McStakingPlan.fromJson(e)).toList();
           if (coinPlans.isNotEmpty) {
-            final days = coinPlans.map((p) => p.durationDays).toSet().toList()..sort();
+            // Collect all daily rates from all rate rules across all plans
+            final rates = <double>[];
+            for (final p in coinPlans) {
+              if (p.rateRules.isNotEmpty) {
+                rates.addAll(p.rateRules.map((r) => r.dailyRate));
+              }
+            }
             String text;
-            if (days.length == 1) {
-              text = days.first == 0 ? 'Flexible' : '${days.first} Days';
+            if (rates.isNotEmpty) {
+              rates.sort();
+              final minRate = rates.first;
+              final maxRate = rates.last;
+              if (minRate == maxRate) {
+                text = '${minRate.toStringAsFixed(2)}%';
+              } else {
+                text = '${minRate.toStringAsFixed(2)}% – ${maxRate.toStringAsFixed(2)}%';
+              }
             } else {
-              final min = days.first == 0 ? 'Flexible' : '${days.first}D';
-              text = '$min – ${days.last}D';
+              text = '';
             }
             coinDurations[coin.id] = text;
           }

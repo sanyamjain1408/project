@@ -341,8 +341,13 @@ class _McStakingScreenState extends State<McStakingScreen> {
                     return Column(
                       children: [
                         ...rows.map((r) {
-                          final rateTiers =
-                              '${_fmtNum(r.rule.minAmount)} – ${r.rule.maxAmount > 0 ? _fmtNum(r.rule.maxAmount) : '∞'}';
+                          final durationLabel = r.plan.durationDays == 0
+                              ? 'Flexible'
+                              : '${r.plan.durationDays} Days';
+                          final totalRate = r.rule.dailyRate * r.plan.durationDays;
+                          final totalRateLabel = r.plan.durationDays == 0
+                              ? '${r.rule.dailyRate.toStringAsFixed(2)}% Daily'
+                              : '${totalRate.toStringAsFixed(2)}% Total';
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: Container(
@@ -362,7 +367,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          rateTiers,
+                                          durationLabel,
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 14,
@@ -372,7 +377,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          '${_fmtNum(r.plan.minStake)} Min ${coin.symbol}',
+                                          totalRateLabel,
                                           style: TextStyle(
                                             color: Colors.white.withOpacity(
                                               0.5,
@@ -399,11 +404,9 @@ class _McStakingScreenState extends State<McStakingScreen> {
                                           ),
                                         ),
                                         TextSpan(
-                                          text: ' Rate',
+                                          text: ' /day',
                                           style: TextStyle(
-                                            color: Colors.white.withOpacity(
-                                              0.5,
-                                            ),
+                                            color: Color(0xFF4ED78E),
                                             fontSize: 12,
                                             fontWeight: FontWeight.w400,
                                             fontFamily: 'DMSans',
@@ -1772,9 +1775,11 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                               _selectedRule.minAmount == r.rule.minAmount;
                           final label = r.plan.durationDays == 0
                               ? 'Flexible'
-                              : "${r.plan.durationDays} day's";
-                          final sub =
-                              "${r.rule.dailyRate.toStringAsFixed(2)}% Max";
+                              : "${r.plan.durationDays} Days";
+                          final totalRate = r.rule.dailyRate * r.plan.durationDays;
+                          final sub = r.plan.durationDays == 0
+                              ? "${r.rule.dailyRate.toStringAsFixed(2)}% Daily"
+                              : "${totalRate.toStringAsFixed(2)}% Total";
                           return GestureDetector(
                             onTap: () {
                               setState(() {
