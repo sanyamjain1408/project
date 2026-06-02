@@ -729,7 +729,7 @@ class WalletTopButtonsView extends StatelessWidget {
               iconPath: null, //  NO ICON
               isMain: true,
               width: btnWidth,
-              onTap: () => _showAddFundsSheet(context),
+              onTap: () => showAddFundsSheet(context),
             ),
             _WalletActionButton(
               label: "Withdraw".tr,
@@ -828,7 +828,7 @@ class _WalletActionButton extends StatelessWidget {
   }
 }
 
-void _showAddFundsSheet(BuildContext context) {
+void showAddFundsSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
