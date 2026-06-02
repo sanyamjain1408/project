@@ -450,6 +450,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                               physics: const NeverScrollableScrollPhysics(),
                               mainAxisSpacing: 5,
                               crossAxisSpacing: 5,
+                              childAspectRatio: 0.85,
                               children: List.generate(finalGridItems.length, (
                                 index,
                               ) {
@@ -767,11 +768,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
             title,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w300,
               fontFamily: "DMSans",
             ),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
