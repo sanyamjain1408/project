@@ -352,7 +352,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Min ${_fmtNum(r.plan.minStake)} ${coin.symbol}',
+                                          '${_fmtNum(r.plan.minStake)} Min ${coin.symbol}',
                                           style: TextStyle(
                                             color: Colors.white.withOpacity(0.5),
                                             fontSize: 12,
@@ -374,10 +374,10 @@ class _McStakingScreenState extends State<McStakingScreen> {
                                           height: 24 / 16,
                                         ),
                                       ),
-                                      const TextSpan(
-                                        text: '/day',
+                                       TextSpan(
+                                        text: ' Rate',
                                         style: TextStyle(
-                                          color: Color(0xFF4ED78E),
+                                          color: Colors.white.withOpacity(0.5),
                                           fontSize: 12,
                                           fontWeight: FontWeight.w400,
                                           fontFamily: 'DMSans',
