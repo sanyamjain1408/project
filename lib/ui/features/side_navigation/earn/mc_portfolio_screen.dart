@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'mc_staking_controller.dart' show McStakingController, mcLogoUrl;
+import 'mc_staking_controller.dart' show McStakingController;
 import 'mc_staking_models.dart';
 import 'mc_my_stakes_screen.dart';
 import 'mc_withdraw_history_screen.dart';
@@ -11,23 +11,6 @@ const _kGreen = Color(0xFFCCFF00);
 const _kBg = Color(0xFF0A0B0D);
 const _kCard = Color(0xFF1A1A1A);
 const _kCard2 = Color(0xFF111111);
-
-Widget _coinImg(String? logo, {double size = 40}) {
-  final url = mcLogoUrl(logo);
-  if (url.isNotEmpty) {
-    return ClipOval(
-      child: Image.network(url, width: size, height: size, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _fallback(size)),
-    );
-  }
-  return _fallback(size);
-}
-
-Widget _fallback(double size) => Container(
-      width: size, height: size,
-      decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF1E2128)),
-      child: const Icon(Icons.monetization_on, color: _kGreen, size: 16),
-    );
 
 class McPortfolioScreen extends StatefulWidget {
   const McPortfolioScreen({super.key});
@@ -39,19 +22,16 @@ class McPortfolioScreen extends StatefulWidget {
 class _McPortfolioScreenState extends State<McPortfolioScreen> {
   late McStakingController _c;
 
-  // Live counter state
   double _totalEarned = 0;
   double _availableToWithdraw = 0;
   double _sessionEarned = 0;
   int _uptime = 0;
   double _totalPerSec = 0;
 
-  // Per-stake independent bases
   final Map<String, _StakeBase> _stakeBases = {};
   bool _counterReady = false;
   Timer? _ticker;
 
-  // Withdraw modal
   _WithdrawInfo? _withdrawInfo;
   bool _isConfirmingWithdraw = false;
 
@@ -80,10 +60,16 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     for (final item in portfolio.portfolio) {
       final perSec = item.perSecUsdt;
       totalPerSec += perSec;
-      final startMs = _parseDate(item.stakedAt ?? item.endDate ?? '')?.millisecondsSinceEpoch ?? now;
+      final startMs =
+          _parseDate(
+            item.stakedAt ?? item.endDate ?? '',
+          )?.millisecondsSinceEpoch ??
+          now;
       final secsSince = ((now - startMs) / 1000).clamp(0.0, double.infinity);
       final earned = perSec * secsSince;
-      final withdrawn = item.totalWithdrawn * (item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1);
+      final withdrawn =
+          item.totalWithdrawn *
+          (item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1);
       final avail = (earned - withdrawn).clamp(0.0, double.infinity);
       initTotal += earned;
       initAvail += avail;
@@ -105,7 +91,10 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       final sinceSession = (nowMs - sessionStart) / 1000;
       setState(() {
         _totalEarned = initTotal + _totalPerSec * sinceSession;
-        _availableToWithdraw = (initAvail + _totalPerSec * sinceSession).clamp(0.0, double.infinity);
+        _availableToWithdraw = (initAvail + _totalPerSec * sinceSession).clamp(
+          0.0,
+          double.infinity,
+        );
         _sessionEarned = _totalPerSec * sinceSession;
         _uptime = sinceSession.toInt();
       });
@@ -113,7 +102,11 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   }
 
   DateTime? _parseDate(String s) {
-    try { return DateTime.parse(s); } catch (_) { return null; }
+    try {
+      return DateTime.parse(s);
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -125,37 +118,65 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   double _stakeAvailable(String uid) {
     final sb = _stakeBases[uid];
     if (sb == null) return 0;
-    final elapsed = (DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000;
+    final elapsed =
+        (DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000;
     return (sb.base + sb.perSec * elapsed).clamp(0.0, double.infinity);
   }
 
   double get _totalDailyReward {
     final p = _c.portfolio.value;
     if (p == null) return 0;
-    return p.portfolio.fold(0.0, (s, i) => s + i.stakedAmount * (i.dailyRate / 100));
+    return p.portfolio.fold(
+      0.0,
+      (s, i) => s + i.stakedAmount * (i.dailyRate / 100),
+    );
+  }
+
+  // Compute portfolio value from positions if totalUsdtValue is 0
+  double get _portfolioValue {
+    final p = _c.portfolio.value;
+    if (p == null) return 0;
+    if (p.totalUsdtValue > 0) return p.totalUsdtValue;
+    return p.portfolio.fold(0.0, (s, i) => s + i.usdtValue);
   }
 
   void _openWithdrawModal(McPortfolioItem item) {
     final earnedUsdt = _stakeAvailable(item.stakeUid);
-    final earnedCoin = item.coinPriceUsdt > 0 ? earnedUsdt / item.coinPriceUsdt : earnedUsdt;
+    final earnedCoin = item.coinPriceUsdt > 0
+        ? earnedUsdt / item.coinPriceUsdt
+        : earnedUsdt;
     if (earnedUsdt <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No rewards to withdraw yet.'), backgroundColor: Colors.red));
+        const SnackBar(
+          content: Text('No rewards to withdraw yet.'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
-    setState(() => _withdrawInfo = _WithdrawInfo(
-        uid: item.stakeUid, earnedCoin: earnedCoin, earnedUsdt: earnedUsdt, symbol: item.coinSymbol));
+    setState(
+      () => _withdrawInfo = _WithdrawInfo(
+        uid: item.stakeUid,
+        earnedCoin: earnedCoin,
+        earnedUsdt: earnedUsdt,
+        symbol: item.coinSymbol,
+      ),
+    );
   }
 
   Future<void> _confirmWithdraw() async {
     final info = _withdrawInfo;
     if (info == null) return;
-    setState(() { _isConfirmingWithdraw = true; _withdrawInfo = null; });
+    setState(() {
+      _isConfirmingWithdraw = true;
+      _withdrawInfo = null;
+    });
     final ok = await _c.withdrawReward(info.uid, info.earnedUsdt);
     if (ok) {
       final sb = _stakeBases[info.uid];
       if (sb != null) {
-        final elapsed = (DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000;
+        final elapsed =
+            (DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000;
         final cur = sb.base + sb.perSec * elapsed;
         sb.base = (cur - info.earnedUsdt).clamp(0.0, double.infinity);
         sb.baseTime = DateTime.now().millisecondsSinceEpoch;
@@ -167,16 +188,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
-      appBar: AppBar(
-        backgroundColor: _kBg,
-        title: const Text('Live Dashboard', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Get.back()),
-        actions: [
-          TextButton(onPressed: () => Get.to(() => const McMyStakesScreen()),
-              child: const Text('My Stakes', style: TextStyle(color: _kGreen, fontWeight: FontWeight.w700))),
-        ],
-      ),
+      backgroundColor: const Color(0xFF111111),
       body: Obx(() {
         if (_c.isLoadingPortfolio.value) {
           return const Center(child: CircularProgressIndicator(color: _kGreen));
@@ -190,13 +202,34 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
               color: _kGreen,
               onRefresh: _loadData,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                 children: [
+                  // Back arrow — scrolls with content, left-aligned
+                  SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 10, bottom: 10),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: GestureDetector(
+                          onTap: () => Get.back(),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _buildPageHeader(),
+                  const SizedBox(height: 20),
                   _buildLiveCard(hasStakes),
                   const SizedBox(height: 16),
                   _buildStatsGrid(),
                   const SizedBox(height: 16),
-                  if (portfolio?.userTier != null) _buildTierCard(portfolio!.userTier!),
+                  if (portfolio?.userTier != null)
+                    _buildTierCard(portfolio!.userTier!),
                   const SizedBox(height: 16),
                   if (hasStakes) _buildPositionsTable(portfolio!.portfolio),
                   const SizedBox(height: 16),
@@ -204,7 +237,6 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                 ],
               ),
             ),
-            // Withdraw modal overlay
             if (_withdrawInfo != null) _buildWithdrawModal(),
           ],
         );
@@ -212,94 +244,375 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     );
   }
 
-  Widget _buildLiveCard(bool hasStakes) {
-    if (!hasStakes) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(20)),
-        child: Column(children: [
-          const Icon(Icons.flash_on, color: Colors.white24, size: 48),
-          const SizedBox(height: 12),
-          const Text('No Active Stakes', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          Text('Start staking to see your live earnings', style: TextStyle(color: Colors.white.withOpacity(0.4))),
-        ]),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _kCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Column(children: [
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Container(width: 8, height: 8,
-              decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF00B052))),
-          const SizedBox(width: 6),
-          const Text('LIVE EARNING', style: TextStyle(color: Color(0xFF00B052), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
-        ]),
-        const SizedBox(height: 6),
-        Text('Total Rewards Earned (All Time)', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
-        const SizedBox(height: 10),
-        Text(_totalEarned.toStringAsFixed(8),
-            style: const TextStyle(color: _kGreen, fontSize: 32, fontWeight: FontWeight.w800,
-                fontFeatures: [FontFeature.tabularFigures()])),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFF00FF04).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF00FF04).withOpacity(0.4)),
+  // ── PAGE HEADER (title + subtitle + buttons — outside the card) ──────────
+  Widget _buildPageHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Live Dashboard',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 30,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'DMSans',
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Text('Available to Withdraw: ', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
-            Text(_availableToWithdraw.toStringAsFixed(8),
-                style: const TextStyle(color: Color(0xFF00FF04), fontWeight: FontWeight.w700, fontSize: 13,
-                    fontFeatures: [FontFeature.tabularFigures()])),
-          ]),
         ),
-        const SizedBox(height: 16),
-        Row(children: [
-          _statMini('Per Second', '+${_totalPerSec.toStringAsFixed(8)}', Colors.white),
-          _statMini('Daily Total', _totalDailyReward.toStringAsFixed(6), _kGreen),
-          _statMini('Session Earned', _sessionEarned.toStringAsFixed(8), const Color(0xFF00B052)),
-        ]),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
-          '⏱ Session: ${_fmtTime(_uptime)} · Rewards credited every 24h',
-          style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 10),
+          'Real-time staking earnings — updating every 10 seconds',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'DMSans',
+          ),
         ),
-      ]),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            // "+ New Stake" outlined — compact size
+            GestureDetector(
+              onTap: () => Get.back(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _kGreen,
+                  ),
+                ),
+                child: const Text(
+                  '+ New Stake',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'DMSans',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            // "My Stake" green filled — compact size
+            GestureDetector(
+              onTap: () => Get.to(() => const McMyStakesScreen()),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: _kGreen,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'My Stake',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'DMSans',
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
-  Widget _statMini(String label, String value, Color color) => Expanded(
+  // ── LIVE EARNING CARD (Figma exact) ──────────────────────────────────────
+  Widget _buildLiveCard(bool hasStakes) {
+    if (!hasStakes) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: _kCard2, borderRadius: BorderRadius.circular(12)),
-          child: Column(children: [
-            Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9)),
-            const SizedBox(height: 4),
-            Text(value, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700,
-                fontFeatures: const [FontFeature.tabularFigures()]),
-                textAlign: TextAlign.center),
-          ]),
+          decoration: BoxDecoration(
+            color: Color(0xFF1A1A1A).withOpacity(0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.symmetric(vertical: BorderSide(color: Colors.white.withOpacity(0.5))),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -100,
+                top: -40,
+                child: Transform.rotate(
+                  angle: -0.4,
+                  child: Opacity(
+                    opacity: 0.5,
+                    child: Image.asset(
+                      'assets/images/wallet_green_wave.png',
+                      width: 280,
+                      height: 280,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Live Earning',
+                      style: TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      'No Active Stakes',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Start staking to see your live earnings dashboard',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        fontSize: 13,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       );
+    }
 
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color:  Color(0xFF1A1A1A).withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.symmetric(horizontal: BorderSide(color: Colors.white.withOpacity(0.5))),
+        ),
+        child: Stack(
+          children: [
+            // Green wave — positioned right like the overview hero
+            Positioned(
+              right: -100,
+              top: -40,
+              child: Transform.rotate(
+                angle: -0.4,
+                child: Opacity(
+                  opacity: 0.55,
+                  child: Image.asset(
+                    'assets/images/wallet_green_wave.png',
+                    width: 300,
+                    height: 300,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // "Live Earning" label — top-left, small
+                  const Text(
+                    'Live Earning',
+                    style: TextStyle(
+                      color: Color(0xFFFFFFFF),
+                      fontSize: 12,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  // Big $ number — left-aligned
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '\$ ${_totalEarned.toStringAsFixed(8)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'DMSans',
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  // Available to Withdraw — plain text, left-aligned
+                  Row(
+                    children: [
+                      Text(
+                        'Available to Withdraw: ',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                      Text(
+                        _availableToWithdraw.toStringAsFixed(7),
+                        style:  TextStyle(
+                           color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'DMSans',
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Divider
+                  Container(
+                    height: 1,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                  const SizedBox(height: 20),
+                  // 3 stats with vertical dividers
+                  IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        _statCol(
+                          'Per Second',
+                          '+${_totalPerSec.toStringAsFixed(8)}',
+                          const Color(0xFF00B052),
+                        ),
+                        _vDivider(),
+                        _statCol(
+                          'Daily Total',
+                          _totalDailyReward.toStringAsFixed(6),
+                          const Color(0xFF00B052),
+                        ),
+                        _vDivider(),
+                        _statCol(
+                          'Session Earned',
+                          _sessionEarned.toStringAsFixed(8),
+                          const Color(0xFF00B052),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Session timer — bottom
+                  Row(
+                    children: [
+                     
+                      Flexible(
+                        child: Text(
+                          '⏱ Session: ${_fmtTime(_uptime)} ·  Actual rewards credited every 24h at midnight',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.35),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'DMSans',
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statCol(String label, String value, Color valueColor) => Expanded(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'DMSans',
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'DMSans',
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _vDivider() => Container(
+    width: 1,
+    margin: const EdgeInsets.symmetric(vertical: 2),
+    color: Colors.white.withValues(alpha: 0.12),
+  );
+
+  // ── STATS GRID ────────────────────────────────────────────────────────────
   Widget _buildStatsGrid() {
     final stats = _c.statistics.value;
-    final portfolio = _c.portfolio.value;
+    final portfolioVal = _portfolioValue;
     final items = [
-      {'label': 'Portfolio Value', 'value': '\$${(portfolio?.totalUsdtValue ?? 0).toStringAsFixed(2)}', 'sub': 'USDT', 'color': _kGreen},
-      {'label': 'Active Stakes', 'value': '${stats?.totalActiveStakes ?? 0}', 'sub': 'Positions', 'color': const Color(0xFFA78BFA)},
-      {'label': 'Total Earned', 'value': (stats?.totalRewardEarned ?? 0).toStringAsFixed(4), 'sub': 'All time', 'color': const Color(0xFF22C55E)},
-      {'label': 'Referrals', 'value': '${stats?.totalReferralCommissions ?? 0}', 'sub': 'Commissions', 'color': const Color(0xFF60A5FA)},
+      {
+        'label': 'Portfolio Value',
+        'value': '${portfolioVal.toStringAsFixed(2)}',
+        'sub': 'USDT',
+        'color': _kGreen,
+        'icon': '🏦',
+      },
+      {
+        'label': 'Active Stakes',
+        'value': '${stats?.totalActiveStakes ?? 0}',
+        'sub': 'Positions',
+        'color': const Color(0xFFA78BFA),
+        'icon': '📊',
+      },
+      {
+        'label': 'Total Earned',
+        'value': (stats?.totalRewardEarned ?? 0).toStringAsFixed(4),
+        'sub': 'All time',
+        'color': const Color(0xFF22C55E),
+        'icon': '💰',
+      },
+      {
+        'label': 'Referrals',
+        'value': '${stats?.totalReferralCommissions ?? 0}',
+        'sub': 'Commissions',
+        'color': const Color(0xFF60A5FA),
+        'icon': '🔗',
+      },
     ];
     return GridView.count(
       shrinkWrap: true,
@@ -308,136 +621,451 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
       childAspectRatio: 1.6,
-      children: items.map((item) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(16)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text(item['label'] as String, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
-          const SizedBox(height: 4),
-          Text(item['value'] as String, style: TextStyle(color: item['color'] as Color, fontSize: 20, fontWeight: FontWeight.w700)),
-          Text(item['sub'] as String, style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10)),
-        ]),
-      )).toList(),
+      children: items
+          .map(
+            (item) => Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _kCard,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item['label'] as String,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 11,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                      Text(
+                        item['icon'] as String,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item['value'] as String,
+                    style: TextStyle(
+                      color: item['color'] as Color,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  Text(
+                    item['sub'] as String,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.3),
+                      fontSize: 10,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 
   String _tierEmoji(String name) {
     switch (name.toLowerCase()) {
-      case 'diamond': return '💎';
-      case 'platinum': return '🔵';
-      case 'gold': return '🥇';
-      case 'silver': return '🥈';
-      default: return '🥉';
+      case 'diamond':
+        return '💎';
+      case 'platinum':
+        return '🔵';
+      case 'gold':
+        return '🥇';
+      case 'silver':
+        return '🥈';
+      default:
+        return '🥉';
     }
   }
 
+  // ── TIER CARD (Figma: shows tier + levels + Portfolio Value on right) ─────
   Widget _buildTierCard(McUserTier tier) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(16)),
-      child: Row(children: [
-        Text(_tierEmoji(tier.tierName), style: const TextStyle(fontSize: 32)),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Your Referral Tier', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
-          Text(tier.tierName, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
-        ])),
-        Row(children: [
-          _tierLevel('L1', tier.level1Percent),
-          const SizedBox(width: 16),
-          _tierLevel('L2', tier.level2Percent),
-          const SizedBox(width: 16),
-          _tierLevel('L3', tier.level3Percent),
-        ]),
-      ]),
+      decoration: BoxDecoration(
+        color: _kCard,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _tierEmoji(tier.tierName),
+                style: const TextStyle(fontSize: 36),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your Referral Tier',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                    Text(
+                      tier.tierName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Portfolio Value',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 12,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  Text(
+                    '\$${_portfolioValue.toStringAsFixed(2)} USDT',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _tierLevelBox('Level 1', tier.level1Percent),
+              _tierLevelBox('Level 2', tier.level2Percent),
+              _tierLevelBox('Level 3', tier.level3Percent),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _tierLevel(String label, double pct) => Column(children: [
-        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
-        const SizedBox(height: 2),
-        Text('${pct.toStringAsFixed(2)}%', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-      ]);
+  Widget _tierLevelBox(String label, double pct) => Column(
+    children: [
+      Text(
+        label,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.4),
+          fontSize: 11,
+          fontFamily: 'DMSans',
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        '${pct.toStringAsFixed(4)}%',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'DMSans',
+        ),
+      ),
+    ],
+  );
 
+  // ── ACTIVE POSITIONS TABLE ────────────────────────────────────────────────
   Widget _buildPositionsTable(List<McPortfolioItem> positions) {
     return Container(
-      decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(16)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Active Positions', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
-            Row(children: [
-              Container(width: 6, height: 6,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF22C55E))),
-              const SizedBox(width: 4),
-              const Text('LIVE', style: TextStyle(color: Color(0xFF22C55E), fontSize: 12)),
-            ]),
-          ]),
-        ),
-        const SizedBox(height: 10),
-        ...positions.map((item) => _positionRow(item)),
-      ]),
+      decoration: BoxDecoration(
+        color: _kCard,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Active Positions',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'DMSans',
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFF22C55E),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'LIVE',
+                      style: TextStyle(
+                        color: Color(0xFF22C55E),
+                        fontSize: 12,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Table header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              children: [
+                _tableHdr('Coin', flex: 2),
+                _tableHdr('Plan', flex: 3),
+                _tableHdr('Stacked Amount', flex: 3),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          ...positions.map((item) => _positionRow(item)),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
+
+  Widget _tableHdr(String t, {int flex = 1}) => Expanded(
+    flex: flex,
+    child: Text(
+      t,
+      style: const TextStyle(
+        color: Color(0x66FFFFFF),
+        fontSize: 11,
+        fontFamily: 'DMSans',
+      ),
+    ),
+  );
 
   Widget _positionRow(McPortfolioItem item) {
     final earnedUsdt = _stakeAvailable(item.stakeUid);
-    final earnedCoin = item.coinPriceUsdt > 0 ? earnedUsdt / item.coinPriceUsdt : earnedUsdt;
+    final earnedCoin = item.coinPriceUsdt > 0
+        ? earnedUsdt / item.coinPriceUsdt
+        : earnedUsdt;
+    // Split plan name into 2 lines like figma: "Power Plan" / "200 Days"
+    final nameParts = _splitPlanName(item.planName);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: _kCard2, borderRadius: BorderRadius.circular(12)),
-      child: Column(children: [
-        Row(children: [
-          _coinImg(item.coinLogo, size: 32),
-          const SizedBox(width: 8),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(item.coinSymbol, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-            Text(item.planName, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11)),
-          ])),
-          if (item.planType == 1) // flexible only
-            Obx(() {
-              final withdrawing = _c.isWithdrawing.value == item.stakeUid;
-              return ElevatedButton(
-                onPressed: withdrawing ? null : () => _openWithdrawModal(item),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kGreen, foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: _kCard2,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Coin
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.coinSymbol,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {},
+                      child: Text(
+                        'Live Dashboard →',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.4),
+                          fontSize: 10,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: withdrawing
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                    : const Text('Withdraw', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-              );
-            }),
-        ]),
-        const SizedBox(height: 8),
-        Row(children: [
-          _miniStat('Staked', '${item.stakedAmount.toStringAsFixed(2)} ${item.coinSymbol}', Colors.white),
-          _miniStat('Rate', '${item.dailyRate.toStringAsFixed(2)}%/day', _kGreen),
-          _miniStat('Live Earned', '${earnedCoin.toStringAsFixed(6)} ${item.coinSymbol}', const Color(0xFF00B052)),
-          _miniStat('Ends', item.endDate ?? 'Flexible', Colors.white70),
-        ]),
-      ]),
+              ),
+              // Plan
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nameParts.$1,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                    if (nameParts.$2.isNotEmpty)
+                      Text(
+                        nameParts.$2,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 11,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Stacked Amount
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.stakedAmount.toStringAsFixed(0),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                    if (item.planType == 1)
+                      Obx(() {
+                        final withdrawing =
+                            _c.isWithdrawing.value == item.stakeUid;
+                        return GestureDetector(
+                          onTap: withdrawing
+                              ? null
+                              : () => _openWithdrawModal(item),
+                          child: Container(
+                            margin: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: withdrawing
+                                  ? _kGreen.withOpacity(0.3)
+                                  : _kGreen,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              withdrawing ? '...' : 'Withdraw',
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'DMSans',
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Live earned row
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Live Earned',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.4),
+                    fontSize: 9,
+                    fontFamily: 'DMSans',
+                  ),
+                ),
+              ),
+              Text(
+                '${earnedCoin.toStringAsFixed(6)} ${item.coinSymbol}',
+                style: const TextStyle(
+                  color: Color(0xFF00B052),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                  fontFamily: 'DMSans',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _miniStat(String label, String value, Color color) => Expanded(
-        child: Column(children: [
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9)),
-          const SizedBox(height: 2),
-          Text(value, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center, overflow: TextOverflow.ellipsis),
-        ]),
-      );
+  (String, String) _splitPlanName(String name) {
+    final match = RegExp(
+      r'^(.*?)\s+(\d+\s*Days)$',
+      caseSensitive: false,
+    ).firstMatch(name);
+    if (match != null) return (match.group(1)!, match.group(2)!);
+    return (name, '');
+  }
 
+  // ── NAV CARDS (matches Figma bottom grid) ─────────────────────────────────
   Widget _buildNavCards() {
     final navItems = [
-      {'icon': Icons.flash_on, 'label': 'New Stake', 'desc': 'Add Stake to Earn'},
-      {'icon': Icons.history, 'label': 'Withdraw History', 'desc': 'Check History'},
-      {'icon': Icons.monetization_on, 'label': 'Reward History', 'desc': 'Daily logs'},
-      {'icon': Icons.people, 'label': 'Referral Earnings', 'desc': 'Commission history'},
+      _NavCard(
+        Icons.flash_on,
+        'New Stake',
+        'Add Stake to Earn',
+        () => Get.until((route) => route.isFirst),
+      ),
+      _NavCard(Icons.people_outline, 'My Network', 'Referral', () {}),
+      _NavCard(
+        Icons.link,
+        'Referral Earnings',
+        'Commission history',
+        () => Get.to(() => const McReferralRewardsScreen()),
+      ),
+      _NavCard(
+        Icons.monetization_on_outlined,
+        'Reward History',
+        'Daily logs',
+        () => Get.to(() => const McRewardsScreen()),
+      ),
+      _NavCard(
+        Icons.account_balance_outlined,
+        'Withdraw History',
+        'Check History',
+        () => Get.to(() => const McWithdrawHistoryScreen()),
+      ),
     ];
     return GridView.count(
       shrinkWrap: true,
@@ -446,36 +1074,56 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
       childAspectRatio: 2.2,
-      children: navItems.asMap().entries.map((e) {
-        final item = e.value;
-        return GestureDetector(
-          onTap: () {
-            switch (e.key) {
-              // Pop all the way back to earn_screen where Staking tab is
-              case 0: Get.until((route) => route.isFirst); break;
-              case 1: Get.to(() => const McWithdrawHistoryScreen()); break;
-              case 2: Get.to(() => const McRewardsScreen()); break;
-              case 3: Get.to(() => const McReferralRewardsScreen()); break;
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withOpacity(0.05))),
-            child: Row(children: [
-              Icon(item['icon'] as IconData, color: _kGreen, size: 22),
-              const SizedBox(width: 8),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(item['label'] as String, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-                Text(item['desc'] as String, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9)),
-              ])),
-            ]),
-          ),
-        );
-      }).toList(),
+      children: navItems
+          .map(
+            (item) => GestureDetector(
+              onTap: item.onTap,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _kCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(item.icon, color: _kGreen, size: 22),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            item.label,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
+                          Text(
+                            item.desc,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.4),
+                              fontSize: 9,
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 
+  // ── WITHDRAW MODAL ────────────────────────────────────────────────────────
   Widget _buildWithdrawModal() {
     final info = _withdrawInfo!;
     final fee = info.earnedCoin * 0.02;
@@ -490,41 +1138,101 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
             child: Container(
               margin: const EdgeInsets.all(24),
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(20)),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Text('💰', style: TextStyle(fontSize: 40)),
-                const SizedBox(height: 8),
-                const Text('Confirm Withdrawal', style: TextStyle(color: _kGreen, fontSize: 20, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text('Rewards sent to your spot wallet', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(color: _kCard2, borderRadius: BorderRadius.circular(12)),
-                  child: Column(children: [
-                    _modalRow('Gross Reward', '${info.earnedCoin.toStringAsFixed(8)} ${info.symbol}', Colors.white),
-                    const Divider(color: Color(0xFF222222)),
-                    _modalRow('Service Fee (2%)', '- ${fee.toStringAsFixed(8)} ${info.symbol}', const Color(0xFFF87171)),
-                    const Divider(color: Color(0xFF222222)),
-                    _modalRow('You Receive', '${receive.toStringAsFixed(8)} ${info.symbol}', _kGreen, bold: true),
-                  ]),
-                ),
-                const SizedBox(height: 16),
-                Row(children: [
-                  Expanded(child: OutlinedButton(
-                    onPressed: () => setState(() => _withdrawInfo = null),
-                    style: OutlinedButton.styleFrom(foregroundColor: Colors.white54, side: const BorderSide(color: Color(0xFF333333))),
-                    child: const Text('Cancel'),
-                  )),
-                  const SizedBox(width: 12),
-                  Expanded(flex: 2, child: ElevatedButton(
-                    onPressed: _isConfirmingWithdraw ? null : _confirmWithdraw,
-                    style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14)),
-                    child: const Text('Confirm Withdraw', style: TextStyle(fontWeight: FontWeight.w700)),
-                  )),
-                ]),
-              ]),
+              decoration: BoxDecoration(
+                color: _kCard,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('💰', style: TextStyle(fontSize: 40)),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Confirm Withdrawal',
+                    style: TextStyle(
+                      color: _kGreen,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Rewards will be sent to your spot wallet',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.4),
+                      fontSize: 12,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: _kCard2,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        _modalRow(
+                          'Gross Reward',
+                          '${info.earnedCoin.toStringAsFixed(8)} ${info.symbol}',
+                          Colors.white,
+                        ),
+                        const Divider(color: Color(0xFF222222)),
+                        _modalRow(
+                          'Service Fee (2%)',
+                          '- ${fee.toStringAsFixed(8)} ${info.symbol}',
+                          const Color(0xFFF87171),
+                        ),
+                        const Divider(color: Color(0xFF222222)),
+                        _modalRow(
+                          'You Receive',
+                          '${receive.toStringAsFixed(8)} ${info.symbol}',
+                          _kGreen,
+                          bold: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => setState(() => _withdrawInfo = null),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white54,
+                            side: const BorderSide(color: Color(0xFF333333)),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _isConfirmingWithdraw
+                              ? null
+                              : _confirmWithdraw,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kGreen,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text(
+                            'Confirm Withdraw',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -532,13 +1240,36 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     );
   }
 
-  Widget _modalRow(String label, String value, Color color, {bool bold = false}) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
-          Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: bold ? FontWeight.w700 : FontWeight.w500)),
-        ]),
-      );
+  Widget _modalRow(
+    String label,
+    String value,
+    Color color, {
+    bool bold = false,
+  }) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 13,
+            fontFamily: 'DMSans',
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 13,
+            fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+            fontFamily: 'DMSans',
+          ),
+        ),
+      ],
+    ),
+  );
 
   String _fmtTime(int s) =>
       '${(s ~/ 3600).toString().padLeft(2, '0')}:${((s % 3600) ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
@@ -548,7 +1279,11 @@ class _StakeBase {
   double base;
   final double perSec;
   int baseTime;
-  _StakeBase({required this.base, required this.perSec, required this.baseTime});
+  _StakeBase({
+    required this.base,
+    required this.perSec,
+    required this.baseTime,
+  });
 }
 
 class _WithdrawInfo {
@@ -556,5 +1291,17 @@ class _WithdrawInfo {
   final double earnedCoin;
   final double earnedUsdt;
   final String symbol;
-  _WithdrawInfo({required this.uid, required this.earnedCoin, required this.earnedUsdt, required this.symbol});
+  _WithdrawInfo({
+    required this.uid,
+    required this.earnedCoin,
+    required this.earnedUsdt,
+    required this.symbol,
+  });
+}
+
+class _NavCard {
+  final IconData icon;
+  final String label, desc;
+  final VoidCallback onTap;
+  _NavCard(this.icon, this.label, this.desc, this.onTap);
 }
