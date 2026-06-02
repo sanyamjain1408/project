@@ -28,65 +28,7 @@ const _kTiers = [
 ];
 
 // ─── Painters ─────────────────────────────────────────────────────────────────
-class _StatWavePainter extends CustomPainter {
-  final List<Color> colors;
-  const _StatWavePainter({required this.colors});
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, 0, size.width, size.height),
-          const Radius.circular(20)),
-      Paint()..color = const Color(0xFF1A1A1A),
-    );
-    final fractions = [0.55, 0.67, 0.78, 0.90];
-    for (int i = 0; i < 4; i++) {
-      final topY = size.height * fractions[i];
-      final path = Path();
-      path.moveTo(0, topY);
-      path.cubicTo(
-        size.width * 0.25, topY - size.height * 0.25,
-        size.width * 0.55, topY + size.height * 0.12,
-        size.width, topY - size.height * 0.06,
-      );
-      path.lineTo(size.width, size.height + 50);
-      path.lineTo(0, size.height + 50);
-      path.close();
-      canvas.drawPath(
-          path,
-          Paint()
-            ..color = colors[i]
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 25));
-    }
-  }
-
-  @override
-  bool shouldRepaint(_StatWavePainter old) => old.colors != colors;
-}
-
-class _TierCardPainter extends CustomPainter {
-  final Color color;
-  const _TierCardPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height),
-        Paint()..color = const Color(0xFF1A1A1A));
-    canvas.drawOval(
-      Rect.fromCenter(
-          center: Offset(size.width * 0.50, size.height * 0.85),
-          width: size.width * 0.90,
-          height: size.height * 0.90),
-      Paint()
-        ..color = color.withOpacity(0.55)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _TierCardPainter old) => old.color != color;
-}
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 class IBScreen extends StatefulWidget {
@@ -397,13 +339,6 @@ class _IBScreenState extends State<IBScreen> {
   // ══════════════════════════════════════════════════════════════════════════
   // STATS GRID
   // ══════════════════════════════════════════════════════════════════════════
-  static const _statCardColors = [
-    [Color(0xFFFF6F00), Color(0xFFFF8A30), Color(0xFFFFB781), Color(0xFFFFE6D2)],
-    [Color(0xFF00E5FF), Color(0xFF37EBFF), Color(0xFF9AF5FF), Color(0xFFC9FAFF)],
-    [Color(0xFF0062FF), Color(0xFF428AFF), Color(0xFF7EAFFF), Color(0xFFD8E7FF)],
-    [Color(0xFFCCFF00), Color(0xFFD9FF41), Color(0xFFE8FF8C), Color(0xFFF3FFC2)],
-  ];
-
   Widget _buildStatsSection() {
     return Obx(() {
       final s = _ctrl.stats.value;
@@ -422,19 +357,20 @@ class _IBScreenState extends State<IBScreen> {
         mainAxisSpacing: 16,
         children: List.generate(cards.length, (i) {
           final (title, value, suffix) = cards[i];
-          return _buildGlowCard(title, value, suffix, _statCardColors[i]);
+          return _buildGlowCard(title, value, suffix);
         }),
       );
     });
   }
 
-  Widget _buildGlowCard(
-      String title, String value, String suffix, List<Color> waveColors) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: CustomPaint(
-        painter: _StatWavePainter(colors: waveColors),
-        child: Padding(
+  Widget _buildGlowCard(String title, String value, String suffix) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.transparent),
+      ),
+      child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,7 +405,6 @@ class _IBScreenState extends State<IBScreen> {
               ),
             ],
           ),
-        ),
       ),
     );
   }
@@ -485,12 +420,7 @@ class _IBScreenState extends State<IBScreen> {
       return Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF00391A), Color(0xFF0C2600), Color(0xFF081A00)],
-            stops: [0.0, 0.5962, 0.9519],
-          ),
+          color: const Color(0xFF1A1A1A),
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -679,7 +609,7 @@ class _IBScreenState extends State<IBScreen> {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-          color: const Color(0xFF111111),
+          color: const Color(0xFF1A1A1A),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.transparent)),
       child: Row(
@@ -734,7 +664,7 @@ class _IBScreenState extends State<IBScreen> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-              color: const Color(0XFF1A1A1A),
+              color: const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.transparent, width: 2)),
           child: Column(
@@ -895,57 +825,33 @@ class _IBScreenState extends State<IBScreen> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            tier.color.withOpacity(0.6),
-            Colors.transparent,
-            tier.color.withOpacity(0.4),
-          ],
-        ),
+        color: const Color(0xFF111111),
+        border: Border.all(color: Colors.transparent),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(1),
-        child: Container(
-          decoration: BoxDecoration(
-              color: const Color(0xFF111111),
-              borderRadius: BorderRadius.circular(15)),
-          clipBehavior: Clip.hardEdge,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              Positioned.fill(
-                  child: CustomPaint(
-                      painter: _TierCardPainter(color: tier.color))),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(tier.name,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 12,
-                          fontFamily: _dmSans, fontWeight: FontWeight.w400)),
-                  const SizedBox(height: 5),
-                  Text("${tier.commission}%",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          color: Color(0XFFCCFF00), fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: _dmSans, height: 1)),
-                  const SizedBox(height: 5),
-                  const Text("of 0.3% fee",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.white, fontSize: 12,
-                          fontWeight: FontWeight.w300,
-                          fontFamily: _dmSans, height: 1)),
-                ],
-              ),
-            ],
-          ),
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(tier.name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 12,
+                  fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+          const SizedBox(height: 5),
+          Text("${tier.commission}%",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  color: Color(0XFFCCFF00), fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: _dmSans, height: 1)),
+          const SizedBox(height: 5),
+          const Text("of 0.3% fee",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: Colors.white, fontSize: 12,
+                  fontWeight: FontWeight.w300,
+                  fontFamily: _dmSans, height: 1)),
+        ],
       ),
     );
   }
@@ -971,30 +877,12 @@ class _IBScreenState extends State<IBScreen> {
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: const Color(0xFF111111),
+            color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-                color: const Color(0xFF1AFF00).withOpacity(0.15), width: 1),
+            border: Border.all(color: Colors.transparent, width: 1),
           ),
           child: Stack(
             children: [
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        const Color(0xFF00FF04).withOpacity(0.95),
-                        const Color(0xFF00FF04).withOpacity(0.45),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.0, 0.45, 1.0],
-                    ),
-                  ),
-                ),
-              ),
               Padding(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 18, vertical: 20),
