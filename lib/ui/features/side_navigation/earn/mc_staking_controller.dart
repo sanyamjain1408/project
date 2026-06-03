@@ -234,7 +234,9 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
       ]);
       final pj = _decode(pRes);
       final sj = _decode(sRes);
-      if (pj['success'] == true) portfolio.value = McPortfolioData.fromJson(pj['data']);
+      if (pj['success'] == true) {
+        portfolio.value = McPortfolioData.fromJson(pj['data']);
+      }
       if (sj['success'] == true) statistics.value = McStatistics.fromJson(sj['data']);
     } catch (e) {
       showToast('Error loading portfolio');

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'mc_staking_controller.dart' show McStakingController;
@@ -45,7 +46,10 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   }
 
   Future<void> _loadData() async {
-    await _c.fetchPortfolio();
+    await Future.wait([
+      _c.fetchPortfolio(),
+      _c.fetchReferralRewards(),
+    ]);
     _initCounter();
   }
 
@@ -804,14 +808,26 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _tierLevelBox('Level 1', tier.level1Percent),
-              _tierLevelBox('Level 2', tier.level2Percent),
-              _tierLevelBox('Level 3', tier.level3Percent),
+              _tierLevelBox('Level 1', _getLevelPct(1, tier.level1Percent)),
+              _tierLevelBox('Level 2', _getLevelPct(2, tier.level2Percent)),
+              _tierLevelBox('Level 3', _getLevelPct(3, tier.level3Percent)),
             ],
           ),
         ],
       ),
     );
+  }
+
+  double _getLevelPct(int level, double fromTier) {
+    if (fromTier > 0) return fromTier;
+    // Try from referral rewards commissionPct
+    for (final r in _c.referralRewards) {
+      if (r.referralLevel == level && r.commissionPct != null && r.commissionPct! > 0) {
+        return r.commissionPct!;
+      }
+    }
+    // Defaults matching web LEVEL_META
+    return level == 1 ? 10.0 : level == 2 ? 5.0 : 3.0;
   }
 
   Widget _tierLevelBox(String label, double pct) => Column(
@@ -827,7 +843,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       ),
       const SizedBox(height: 5),
       Text(
-        '${pct.toStringAsFixed(4)}%',
+        '${pct.toStringAsFixed(2)}%',
         style: const TextStyle(
           color: Colors.white,
           fontSize: 16,
