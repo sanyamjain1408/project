@@ -11,8 +11,8 @@ class McStakingCoin {
   factory McStakingCoin.fromJson(Map<String, dynamic> j) => McStakingCoin(
         id: j['id'] ?? 0,
         symbol: j['symbol'] ?? '',
-        coinName: j['coin_name'] ?? '',
-        logo: j['logo'],
+        coinName: j['coin_name'] ?? j['name'] ?? '',
+        logo: j['logo'] ?? j['coin_logo'] ?? j['icon'] ?? j['image'],
       );
 }
 
@@ -102,17 +102,30 @@ class McStake {
     this.plan,
   });
 
-  factory McStake.fromJson(Map<String, dynamic> j) => McStake(
-        uid: j['uid'] ?? '',
-        status: j['status'] ?? 1,
-        startDate: j['start_date'],
-        endDate: j['end_date'],
-        amount: double.tryParse(j['amount'].toString()) ?? 0,
-        dailyRate: double.tryParse(j['daily_rate'].toString()) ?? 0,
-        totalRewardEarned: double.tryParse(j['total_reward_earned'].toString()) ?? 0,
-        coin: j['coin'] != null ? McStakingCoin.fromJson(j['coin']) : null,
-        plan: j['plan'] != null ? McStakingPlan.fromJson(j['plan']) : null,
+  factory McStake.fromJson(Map<String, dynamic> j) {
+    McStakingCoin? coin;
+    if (j['coin'] != null) {
+      coin = McStakingCoin.fromJson(j['coin']);
+    } else if (j['coin_symbol'] != null || j['coin_logo'] != null) {
+      coin = McStakingCoin(
+        id: j['coin_id'] ?? 0,
+        symbol: j['coin_symbol'] ?? '',
+        coinName: j['coin_name'] ?? '',
+        logo: j['coin_logo'],
       );
+    }
+    return McStake(
+      uid: j['uid'] ?? '',
+      status: j['status'] ?? 1,
+      startDate: j['start_date'],
+      endDate: j['end_date'],
+      amount: double.tryParse(j['amount'].toString()) ?? 0,
+      dailyRate: double.tryParse(j['daily_rate'].toString()) ?? 0,
+      totalRewardEarned: double.tryParse(j['total_reward_earned'].toString()) ?? 0,
+      coin: coin,
+      plan: j['plan'] != null ? McStakingPlan.fromJson(j['plan']) : null,
+    );
+  }
 }
 
 class McPortfolioItem {
