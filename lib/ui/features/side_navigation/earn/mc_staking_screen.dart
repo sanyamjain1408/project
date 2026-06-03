@@ -2260,7 +2260,9 @@ class _McRewardsScreenState extends State<McRewardsScreen> {
     final isMyStake = label == 'My Stake';
     return GestureDetector(
       onTap: () {
-        if (!isMyStake) {
+        if (isMyStake) {
+          Get.to(() => const McMyStakesScreen());
+        } else {
           Get.to(() => const McReferralRewardsScreen());
         }
       },
