@@ -2184,8 +2184,6 @@ class McRewardsScreen extends StatefulWidget {
 class _McRewardsScreenState extends State<McRewardsScreen> {
   late McStakingController _c;
   int _page = 1;
-  // 0 = My Stake, 1 = Referral Reward
-  int _tab = 0;
 
   @override
   void initState() {
@@ -2195,7 +2193,6 @@ class _McRewardsScreenState extends State<McRewardsScreen> {
         : Get.put(McStakingController());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _c.fetchRewards(page: _page);
-      _c.fetchReferralRewards(page: _page);
       if (_c.portfolio.value == null) _c.fetchPortfolio();
     });
   }
@@ -2204,70 +2201,83 @@ class _McRewardsScreenState extends State<McRewardsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111111),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        titleSpacing: 16,
-        title: const Column(
+      body: SafeArea(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Reward History',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+            // ── Header ───────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Get.back(),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 10, 20, 10),
+                    child: Text(
+                      'Reward History',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                    child: Text(
+                      'All your rewards',
+                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Text(
-              'All your rewards',
-              style: TextStyle(color: Color(0xFF666666), fontSize: 12),
+            // ── Tab pills ────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Row(
+                children: [
+                  _tabPill('My Stake'),
+                  const SizedBox(width: 10),
+                  _tabPill('Referral Reward'),
+                ],
+              ),
             ),
+            // ── Content ──────────────────────────────────────────────────
+            Expanded(child: _buildMyStakeTab()),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          // ── Tab pills ────────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              children: [
-                _tabPill('My Stake', 0),
-                const SizedBox(width: 10),
-                _tabPill('Referral Reward', 1),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // ── Content ──────────────────────────────────────────────────────────
-          Expanded(child: _tab == 0 ? _buildMyStakeTab() : _buildReferralTab()),
-        ],
       ),
     );
   }
 
-  Widget _tabPill(String label, int idx) {
-    final active = _tab == idx;
+  Widget _tabPill(String label) {
+    final isMyStake = label == 'My Stake';
     return GestureDetector(
-      onTap: () => setState(() => _tab = idx),
+      onTap: () {
+        if (!isMyStake) {
+          Get.to(() => const McReferralRewardsScreen());
+        }
+      },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? _green : Colors.transparent,
-          borderRadius: BorderRadius.circular(50),
-          border: active ? null : Border.all(color: const Color(0xFF333333)),
+          color: isMyStake ? _green : _green,
+          borderRadius: BorderRadius.circular(10),
+          border: isMyStake ? null : Border.all(color: Colors.transparent),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: active ? Colors.black : Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+            color: isMyStake ? const Color(0xFF111111) : Color(0xFF111111),
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'DMSans',
           ),
         ),
       ),
@@ -2287,20 +2297,26 @@ class _McRewardsScreenState extends State<McRewardsScreen> {
         );
       }
       return ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Column(
-              children: [
-                _rewardsTableHeader(),
-                ..._c.rewards.asMap().entries.map(
-                  (e) => _rewardsTableRow(e.key, e.value),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: 600,
+                child: Column(
+                  children: [
+                    _rewardsTableHeader(),
+                    ..._c.rewards.asMap().entries.map(
+                      (e) => _rewardsTableRow(e.key, e.value),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -2315,17 +2331,17 @@ class _McRewardsScreenState extends State<McRewardsScreen> {
   }
 
   Widget _rewardsTableHeader() => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    decoration: const BoxDecoration(
-      border: Border(bottom: BorderSide(color: Color(0xFF2A2A2A))),
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+    decoration:  BoxDecoration(
+      border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1), width: 1)),
     ),
-    child: Row(
+    child:  Row(
       children: [
-        _th('No.', flex: 1),
-        _th('Coin', flex: 2),
-        _th('Reward Amount', flex: 3),
-        _th('Daily Rate', flex: 3),
-        _th('Date', flex: 3),
+        SizedBox(width: 36, child: Text('No.', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'), textAlign: TextAlign.center)),
+        SizedBox(width: 76, child: Text('Coin', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'), textAlign: TextAlign.center)),
+        SizedBox(width: 168, child: Text('Reward Amount', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'), textAlign: TextAlign.center)),
+        SizedBox(width: 136, child: Text('Daily Rate', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'), textAlign: TextAlign.center)),
+        SizedBox(width: 142, child: Text('Date', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'), textAlign: TextAlign.center)),
       ],
     ),
   );
@@ -2333,259 +2349,86 @@ class _McRewardsScreenState extends State<McRewardsScreen> {
   Widget _rewardsTableRow(int idx, McStakingReward r) {
     final dateStr = _formatRewardDate(r.rewardDate);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFF222222), width: 0.5),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFF222222), width: 0.5)),
       ),
       child: Row(
         children: [
-          Expanded(
-            flex: 1,
+          SizedBox(
+            width: 36,
             child: Text(
               '${(_page - 1) * 15 + idx + 1}',
-              style: const TextStyle(color: Color(0xFF888888), fontSize: 12),
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
               textAlign: TextAlign.center,
             ),
           ),
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 76,
             child: Text(
               r.coin?.symbol ?? '—',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 13,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
+                fontFamily: 'DMSans',
               ),
               textAlign: TextAlign.center,
             ),
           ),
-          Expanded(
-            flex: 3,
+          SizedBox(
+            width: 168,
             child: Text(
-              '+${r.rewardAmount.toStringAsFixed(7).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '')} ${r.coin?.symbol ?? ''}',
+              r.rewardAmount.toStringAsFixed(8),
               style: const TextStyle(
                 color: Color(0xFF00B052),
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'DMSans',
               ),
               textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Expanded(
-            flex: 3,
+          SizedBox(
+            width: 136,
             child: Text(
               '${r.dailyRate.toStringAsFixed(6)}%',
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Column(
-              children: [
-                Text(
-                  dateStr.$1,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (dateStr.$2.isNotEmpty)
-                  Text(
-                    dateStr.$2,
-                    style: const TextStyle(
-                      color: Color(0xFF666666),
-                      fontSize: 10,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Referral Reward tab ──────────────────────────────────────────────────
-  Widget _buildReferralTab() {
-    return Obx(() {
-      if (_c.isLoadingReferral.value) {
-        return const Center(child: CircularProgressIndicator(color: _green));
-      }
-      if (_c.referralRewards.isEmpty) {
-        return _emptyState(
-          'No referral rewards yet',
-          'Invite friends to stake and earn commissions',
-        );
-      }
-      final pcts = _referralPcts();
-      return ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                _referralTableHeader(),
-                ..._c.referralRewards.asMap().entries.map(
-                  (e) => _referralTableRow(e.key, e.value, pcts),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _pagination(_c.referralMeta.value, (p) {
-            setState(() => _page = p);
-            _c.fetchReferralRewards(page: p);
-          }),
-          const SizedBox(height: 24),
-        ],
-      );
-    });
-  }
-
-  Widget _referralTableHeader() => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    decoration: const BoxDecoration(
-      border: Border(bottom: BorderSide(color: Color(0xFF2A2A2A))),
-    ),
-    child: Row(
-      children: [
-        _th('No.', flex: 1),
-        _th('Date & Time', flex: 3),
-        _th('Level', flex: 2),
-        _th('Their Earning', flex: 3),
-        _th('Commission', flex: 3),
-      ],
-    ),
-  );
-
-  Widget _referralTableRow(int idx, McReferralReward r, Map<int, String> pcts) {
-    const lvlColors = {1: _green, 2: Color(0xFFE946FF), 3: Color(0xFF00B052)};
-    final color = lvlColors[r.referralLevel] ?? _green;
-    final pct = r.commissionPct != null
-        ? '${r.commissionPct!.toStringAsFixed(0)}%'
-        : (pcts[r.referralLevel] ?? '—');
-    final dateStr = _formatRewardDate(r.rewardDate);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFF222222), width: 0.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 1,
-            child: Text(
-              '${(_page - 1) * 15 + idx + 1}',
-              style: const TextStyle(color: Color(0xFF888888), fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Column(
-              children: [
-                Text(
-                  dateStr.$1,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (dateStr.$2.isNotEmpty)
-                  Text(
-                    dateStr.$2,
-                    style: const TextStyle(
-                      color: Color(0xFF666666),
-                      fontSize: 10,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              'L${r.referralLevel} · $pct',
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              r.fromEarning
-                  .toStringAsFixed(7)
-                  .replaceAll(RegExp(r'0+$'), '')
-                  .replaceAll(RegExp(r'\.$'), ''),
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              '+${r.rewardAmount.toStringAsFixed(7)}'
-                  .replaceAll(RegExp(r'0+$'), '')
-                  .replaceAll(RegExp(r'\.$'), ''),
               style: const TextStyle(
-                color: Color(0xFF00B052),
+                color: Colors.white,
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'DMSans',
               ),
               textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          SizedBox(
+            width: 152,
+            child: Column(
+              children: [
+                Text(
+                  dateStr.$1,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'DMSans',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (dateStr.$2.isNotEmpty)
+                  Text(
+                    dateStr.$2,
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
+                    textAlign: TextAlign.center,
+                  ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-
-  Map<int, String> _referralPcts() {
-    final res = <int, String>{1: '—', 2: '—', 3: '—'};
-    for (final r in _c.referralRewards) {
-      final l = r.referralLevel;
-      if (r.commissionPct != null && res[l] == '—')
-        res[l] = '${r.commissionPct!.toStringAsFixed(0)}%';
-    }
-    final tier = _c.portfolio.value?.userTier;
-    if (tier != null) {
-      if (res[1] == '—') res[1] = '${tier.level1Percent.toStringAsFixed(0)}%';
-      if (res[2] == '—') res[2] = '${tier.level2Percent.toStringAsFixed(0)}%';
-      if (res[3] == '—') res[3] = '${tier.level3Percent.toStringAsFixed(0)}%';
-    }
-    return res;
-  }
-
-  Widget _th(String t, {int flex = 1}) => Expanded(
-    flex: flex,
-    child: Text(
-      t,
-      style: const TextStyle(color: Color(0xFF666666), fontSize: 11),
-      textAlign: TextAlign.center,
-    ),
-  );
 
   (String, String) _formatRewardDate(String? raw) {
     if (raw == null) return ('—', '');
@@ -2594,11 +2437,7 @@ class _McRewardsScreenState extends State<McRewardsScreen> {
       final date = '${d.month}/${d.day}/${d.year}';
       final h = d.hour;
       final time =
-          '${h > 12
-              ? h - 12
-              : h == 0
-              ? 12
-              : h}:${d.minute.toString().padLeft(2, '0')}:${d.second.toString().padLeft(2, '0')} ${h >= 12 ? 'PM' : 'AM'}';
+          '${h > 12 ? h - 12 : h == 0 ? 12 : h}:${d.minute.toString().padLeft(2, '0')}:${d.second.toString().padLeft(2, '0')} ${h >= 12 ? 'PM' : 'AM'}';
       return (date, time);
     } catch (_) {
       return (raw, '');
