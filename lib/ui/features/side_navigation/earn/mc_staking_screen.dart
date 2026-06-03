@@ -2663,165 +2663,197 @@ class _McReferralRewardsScreenState extends State<McReferralRewardsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111111),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        titleSpacing: 16,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Referral Earnings',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              'Commission earned from your referrals\' staking rewards',
-              style: TextStyle(color: Color(0xFF666666), fontSize: 11),
-            ),
-          ],
-        ),
-      ),
       body: Obx(() {
         if (_c.isLoadingReferral.value) {
           return const Center(child: CircularProgressIndicator(color: _green));
         }
         final pcts = _pcts();
         return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: EdgeInsets.zero,
           children: [
-            // ── Live Dashboard button ────────────────────────────────────
+            // ── Header (Figma style: back arrow + title stacked) ─────────
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Transform.translate(
+                      offset: const Offset(-15, 0),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Get.back(),
+                      ),
+                    ),
+                     Container(
+                      color: Colors.transparent,
+                      child: Text(
+                        'Referral Earnings',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      color: Colors.transparent,
+                      child: Text(
+                        'Commission earned from your referrals\' staking rewards',
+                        style: TextStyle(color: Colors.white,fontFamily: "DMSans", fontWeight: FontWeight.w400, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+            // ── Live Dashboard button (small, left-aligned) ──────────────
             GestureDetector(
               onTap: () => Get.to(() => const McPortfolioScreen()),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: BoxDecoration(
                   color: _green,
-                  borderRadius: BorderRadius.circular(50),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Text(
                   'Live Dashboard',
                   style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF111111),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'DMSans',
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 20),
 
-            // ── 3 Level cards (horizontal scroll on small screens) ───────
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [1, 2, 3].map((lvl) {
-                  final color = _lvlColors[lvl] ?? _green;
-                  final label = _lvlLabels[lvl] ?? '';
-                  final pct = pcts[lvl] ?? '—';
-                  final earned = _c.referralRewards
-                      .where((r) => r.referralLevel == lvl)
-                      .fold(0.0, (s, r) => s + r.rewardAmount);
-                  return Container(
-                    width: 160,
-                    margin: EdgeInsets.only(right: lvl < 3 ? 12 : 0),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1C1C1C),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF2A2A2A)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Level $lvl',
-                              style: const TextStyle(
-                                color: Color(0xFF888888),
-                                fontSize: 12,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: color.withValues(alpha: 0.5),
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                label,
-                                style: TextStyle(
-                                  color: color,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          pct,
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'of referral\'s daily\nstaking reward',
-                          style: TextStyle(
-                            color: Color(0xFF666666),
-                            fontSize: 11,
-                            height: 1.4,
-                          ),
-                        ),
-                        if (earned > 0) ...[
-                          const SizedBox(height: 10),
+            // ── 3 Level cards — 2×2 grid (Figma layout) ─────────────────
+            Builder(builder: (_) {
+              Widget levelCard(int lvl) {
+                final color = _lvlColors[lvl] ?? _green;
+                final label = _lvlLabels[lvl] ?? '';
+                final pct = pcts[lvl] ?? '—';
+                final earned = _c.referralRewards
+                    .where((r) => r.referralLevel == lvl)
+                    .fold(0.0, (s, r) => s + r.rewardAmount);
+                return Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1A1A),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.transparent),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           Text(
-                            'Earned this page:\n+${earned.toStringAsFixed(8)}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                            'Level $lvl',
+                            style:  TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'DMSans',
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        pct,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'DMSans',
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                       Text(
+                        'of referral\'s daily\nstaking reward',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'DMSans',
+                          height: 1.4,
+                        ),
+                      ),
+                      if (earned > 0) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Earned this page:\n+${earned.toStringAsFixed(8)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'DMSans',
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  // Row 1: Level 1 & Level 2 side by side
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: levelCard(1)),
+                        const SizedBox(width: 20),
+                        Expanded(child: levelCard(2)),
                       ],
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Row 2: Level 3 half-width left aligned
+                  Row(
+                    children: [
+                      Expanded(child: levelCard(3)),
+                      const SizedBox(width: 20),
+                      const Expanded(child: SizedBox()),
+                    ],
+                  ),
+                ],
+              );
+            }),
 
             const SizedBox(height: 20),
 
             // ── How it works ─────────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1C),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF2A2A2A)),
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.transparent),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2830,31 +2862,37 @@ class _McReferralRewardsScreenState extends State<McReferralRewardsScreen> {
                     '💡 How Referral Earnings Work',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   Obx(() {
                     final p = _pcts();
                     return RichText(
                       text: TextSpan(
-                        style: const TextStyle(
-                          color: Color(0xFF888888),
-                          fontSize: 13,
-                          height: 1.65,
+                        style:  TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          height: 1.5,
+                          fontFamily: 'DMSans',
                         ),
                         children: [
-                          const TextSpan(
+                           TextSpan(
                             text:
                                 'When your referred users earn staking rewards, you automatically receive a commission. If your Level 1 referral earns ',
                           ),
                           const TextSpan(
                             text: '\$100',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                          fontFamily: 'DMSans',
+                        ),
                           ),
                           const TextSpan(
                             text: ' in staking rewards, you earn ',
@@ -2863,7 +2901,9 @@ class _McReferralRewardsScreenState extends State<McReferralRewardsScreen> {
                             text: '\$10\n(${p[1] ?? '10%'})',
                             style: const TextStyle(
                               color: _green,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
+                              fontFamily: 'DMSans',
                             ),
                           ),
                           const TextSpan(
@@ -2874,7 +2914,9 @@ class _McReferralRewardsScreenState extends State<McReferralRewardsScreen> {
                             text: p[2] ?? '5%',
                             style: const TextStyle(
                               color: Color(0xFFE946FF),
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
+                              fontFamily: 'DMSans',
                             ),
                           ),
                           const TextSpan(text: ' and Level 3 earns '),
@@ -2882,7 +2924,9 @@ class _McReferralRewardsScreenState extends State<McReferralRewardsScreen> {
                             text: p[3] ?? '3%',
                             style: const TextStyle(
                               color: Color(0xFF00B052),
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
+                              fontFamily: 'DMSans',
                             ),
                           ),
                           const TextSpan(
@@ -2907,9 +2951,9 @@ class _McReferralRewardsScreenState extends State<McReferralRewardsScreen> {
             else
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1C),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF2A2A2A)),
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.transparent),
                 ),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -2927,11 +2971,14 @@ class _McReferralRewardsScreenState extends State<McReferralRewardsScreen> {
                 ),
               ),
 
-            const SizedBox(height: 16),
-            _pagination(_c.referralMeta.value, (p) {
-              setState(() => _page = p);
-              _c.fetchReferralRewards(page: p);
-            }),
+                  const SizedBox(height: 20),
+                  _pagination(_c.referralMeta.value, (p) {
+                    setState(() => _page = p);
+                    _c.fetchReferralRewards(page: p);
+                  }),
+                ],
+              ),
+            ),
           ],
         );
       }),
