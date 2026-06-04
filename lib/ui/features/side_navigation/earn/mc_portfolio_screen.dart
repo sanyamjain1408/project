@@ -7,6 +7,7 @@ import 'mc_staking_models.dart';
 import 'mc_my_stakes_screen.dart';
 import 'mc_withdraw_history_screen.dart';
 import 'mc_staking_screen.dart' show McRewardsScreen, McReferralRewardsScreen;
+import 'mc_network_screen.dart';
 
 const _kGreen = Color(0xFFCCFF00);
 const _kBg = Color(0xFF0A0B0D);
@@ -1211,9 +1212,9 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
         '⚡',
         'New Stake',
         'Add Stake to Earn',
-        () => Get.until((route) => route.isFirst),
+        () => Get.back(),
       ),
-      _NavCard('🌐', 'My Network', 'Referral', () {}),
+      _NavCard('🌐', 'My Network', 'Referral', () => Get.to(() => const McNetworkScreen())),
       _NavCard(
         '🔗',
         'Referral Earnings',
