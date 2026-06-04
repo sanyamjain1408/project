@@ -279,7 +279,7 @@ class _McNetworkScreenState extends State<McNetworkScreen> {
             ),
 
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -353,12 +353,12 @@ class _McNetworkScreenState extends State<McNetworkScreen> {
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: SizedBox(
-                              width: 720,
+                              width: 660,
                               child: Column(
                                 children: [
                                   _tableHeader(),
                                   ...referrals.asMap().entries.map(
-                                    (e) => _tableRow(e.key, e.value),
+                                    (e) => _tableRow(e.key, e.value, isLast: e.key == referrals.length - 1),
                                   ),
                                 ],
                               ),
@@ -367,7 +367,6 @@ class _McNetworkScreenState extends State<McNetworkScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
 
                   // ── Bottom Nav Cards (same as staking home) ───────────────
                   GridView.count(
@@ -479,53 +478,30 @@ class _McNetworkScreenState extends State<McNetworkScreen> {
     );
   }
 
+  // col widths: 36 + 170 + 100 + 150 + 164 = 620  (SizedBox=620, padding h=20 each side)
+  static const double _w0 = 36;
+  static const double _w1 = 170;
+  static const double _w2 = 100;
+  static const double _w3 = 150;
+  static const double _w4 = 164;
+
   Widget _tableHeader() => Container(
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-    decoration:  BoxDecoration(
+    decoration: BoxDecoration(
       border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1), width: 0.5)),
     ),
-    child:  Row(
+    child: Row(
       children: [
-        SizedBox(
-          width: 56,
-          child: Text(
-            'No.',
-            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
-          ),
-        ),
-        SizedBox(
-          width: 160,
-          child: Text(
-            'Member',
-            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
-          ),
-        ),
-        SizedBox(
-          width: 110,
-          child: Text(
-            'Level',
-            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
-          ),
-        ),
-        SizedBox(
-          width: 170,
-          child: Text(
-            'You Commission',
-            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
-          ),
-        ),
-        SizedBox(
-          width: 160,
-          child: Text(
-            'Joined',
-            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
-          ),
-        ),
+        SizedBox(width: _w0, child: Text('No.', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: 'DMSans'))),
+        SizedBox(width: _w1, child: Text('Member', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: 'DMSans'))),
+        SizedBox(width: _w2, child: Text('Level', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: 'DMSans'))),
+        SizedBox(width: _w3, child: Text('You Commission', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: 'DMSans'))),
+        SizedBox(width: _w4, child: Text('Joined', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: 'DMSans'))),
       ],
     ),
   );
 
-  Widget _tableRow(int idx, dynamic r) {
+  Widget _tableRow(int idx, dynamic r, {bool isLast = false}) {
     final color = _levelColor(r.level);
     final pct = _levelPct(r.level);
     final name = (r.fullName?.isNotEmpty == true) ? r.fullName! : 'Trapix User';
@@ -537,92 +513,63 @@ class _McNetworkScreenState extends State<McNetworkScreen> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      
+      decoration: BoxDecoration(
+        border: isLast ? null : const Border(bottom: BorderSide(color: Color(0xFF222222), width: 0.5)),
+      ),
       child: Row(
         children: [
           // No.
           SizedBox(
-            width: 56,
-            child: Text(
-              '${idx + 1}',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
-            ),
+            width: _w0,
+            child: Text('${idx + 1}',
+              style: const TextStyle(color: Color(0xFF888888), fontSize: 13, fontFamily: 'DMSans')),
           ),
           // Member (name + email)
           SizedBox(
-            width: 120,
-            child: Row(
+            width: _w1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'DMSans',
-                        ),
-                      ),
-                      if (email.isNotEmpty)
-                        Text(
-                          email,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            fontFamily: 'DMSans',
-                          ),
-                        ),
-                    ],
+                Text(name,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'DMSans',
                   ),
                 ),
+                if (email.isNotEmpty)
+                  Text(email,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF888888),
+                      fontSize: 11,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
               ],
             ),
           ),
           // Level
           SizedBox(
-            width: 130,
+            width: _w2,
             child: Text(
-                'L${_norm(r.level).replaceAll('Level ', '')} · $pct',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'DMSans',
-                ),
-              ),
+              'L${_norm(r.level).replaceAll('Level ', '')} · $pct',
+              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
+            ),
           ),
           // You Commission
           SizedBox(
-            width: 180,
-            child: Text(
-              '+0.1000000 USDT',
-              style: const TextStyle(
-                color: Color(0xFF00B052),
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'DMSans',
-              ),
-            ),
+            width: _w3,
+            child: Text('+0.1000000 USDT',
+              style: const TextStyle(color: Color(0xFF00B052), fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
           ),
-          // Date & Time
+          // Joined
           SizedBox(
-            width: 160,
-            child: Text(
-              joined,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'DMSans',
-              ),
-            ),
+            width: _w4,
+            child: Text(joined,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
           ),
         ],
       ),
