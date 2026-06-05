@@ -1,162 +1,462 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:tradexpro_flutter/data/local/constants.dart';
-import 'package:tradexpro_flutter/utils/appbar_util.dart';
-import 'package:tradexpro_flutter/utils/common_utils.dart';
-import 'package:tradexpro_flutter/utils/common_widgets.dart';
-import 'package:tradexpro_flutter/utils/decorations.dart';
+import 'package:http/http.dart' as http;
+import 'package:tradexpro_flutter/utils/number_util.dart';
+import 'package:tradexpro_flutter/utils/text_field_util.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
+import 'package:tradexpro_flutter/utils/spacers.dart';
+import 'package:get/get.dart';
+import 'package:tradexpro_flutter/utils/common_widgets.dart';
+import '../market_spot/market_spot_controller.dart';
 
-import '../market_widgets.dart';
-import 'market_future_controller.dart';
+// Global icon cache — coin symbol → icon URL (built from spot market data)
+final Map<String, String> _iconCache = {};
 
-class MarketFutureScreen extends StatefulWidget {
-  const MarketFutureScreen({super.key});
+// ─── Design tokens (same as spot) ────────────────────────────────────────────
+const _green  = Color(0xFFB5F000);
+const _dim    = Color(0xFF1A1A1A);
+const _dm     = 'DMSans';
 
-  @override
-  MarketFutureState createState() => MarketFutureState();
+// ─── Model ───────────────────────────────────────────────────────────────────
+class _FuturePair {
+  final String symbol, baseAsset, quoteAsset;
+  final double lastPrice, priceChange, priceChangePct, volume;
+  final String? icon;
+
+  _FuturePair({
+    required this.symbol, required this.baseAsset, required this.quoteAsset,
+    required this.lastPrice, required this.priceChange,
+    required this.priceChangePct, required this.volume,
+    this.icon,
+  });
+
+  factory _FuturePair.fromJson(Map<String, dynamic> j) {
+    double toD(String k) => double.tryParse(j[k]?.toString() ?? '0') ?? 0;
+    return _FuturePair(
+      symbol:         j['symbol'] as String? ?? '',
+      baseAsset:      j['base_currency'] as String? ?? '',
+      quoteAsset:     j['quote_currency'] as String? ?? 'USDT',
+      lastPrice:      toD('current_price'),
+      priceChange:    toD('price_change_24h'),
+      priceChangePct: toD('price_change_24h'),
+      volume:         toD('volume_24h'),
+      icon:           j['icon'] as String?,
+    );
+  }
 }
 
-class MarketFutureState extends State<MarketFutureScreen> with SingleTickerProviderStateMixin {
-  final _controller = Get.put(FutureController());
-  late final TabController _tabController;
+// ─── Screen ───────────────────────────────────────────────────────────────────
+class MarketFutureScreen extends StatefulWidget {
+  const MarketFutureScreen({super.key});
+  @override State<MarketFutureScreen> createState() => MarketFutureState();
+}
 
-  List<String> getTabList() => ["Core Assets".tr, "24H Gainers".tr, "New Listing".tr];
+class MarketFutureState extends State<MarketFutureScreen> {
+  List<_FuturePair> _allPairs   = [];
+  List<_FuturePair> _filtered   = [];
+  Map<String, String> _iconMap  = {}; // coinType → icon URL from spot data
+  bool _loading  = true;
+  int  _filterIndex = 0;
+  int  _catIndex    = 0;
+  final _searchCtrl = TextEditingController();
+  Timer? _timer;
+
+  static const _apiUrl     = 'https://api.trapix.com/api/v1/future/pairs';
+  static const _filters    = ['ALL', 'USDT', 'USDC', 'BTC'];
+  static const _categories = ['All', '🔥 Top', 'BTC', 'ETH', 'SOL'];
 
   @override
   void initState() {
-    _tabController = TabController(length: getTabList().length, vsync: this);
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _controller.getFutureCoinList(false);
-      _controller.subscribeSocketChannels();
-    });
+    _buildIconMap();
+    _fetchPairs();
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchPairs());
+    _searchCtrl.addListener(_applyFilter);
+  }
+
+  void _buildIconMap() {
+    try {
+      final sc = Get.find<MarketSpotController>();
+      for (final coin in sc.marketFullList) {
+        final type = coin.coinType?.toUpperCase() ?? '';
+        final icon = coin.coinIcon ?? '';
+        if (type.isNotEmpty && icon.isNotEmpty) _iconMap[type] = icon;
+      }
+    } catch (_) {}
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _searchCtrl.dispose();
     super.dispose();
-    _controller.coinPairList.clear();
-    _controller.unSubscribeChannel();
+  }
+
+  Future<void> _fetchPairs() async {
+    try {
+      final res = await http.get(Uri.parse(_apiUrl),
+          headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        final raw  = (body['data'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
+        if (raw.isNotEmpty) {
+          final pairs = raw.map((e) => _FuturePair.fromJson(e)).toList()
+            ..sort((a, b) => b.volume.compareTo(a.volume));
+          _buildIconMap(); // refresh icon map after spot data loads
+          if (mounted) setState(() { _allPairs = pairs; _loading = false; _applyFilter(); });
+          return;
+        }
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loading = false);
+  }
+
+  void _applyFilter() {
+    final q = _searchCtrl.text.toLowerCase();
+    var list = List<_FuturePair>.from(_allPairs);
+
+    // Quote filter (ALL, USDT, USDC, BTC)
+    if (_filterIndex > 0) {
+      final quote = _filters[_filterIndex];
+      list = list.where((p) => p.quoteAsset == quote).toList();
+    }
+
+    // Category filter
+    if (_catIndex == 1) {
+      list = list.take(20).toList();
+    } else if (_catIndex >= 2) {
+      final cat = _categories[_catIndex].replaceAll('🔥 ', '').toUpperCase();
+      list = list.where((p) => p.baseAsset.toUpperCase().contains(cat)).toList();
+    }
+
+    // Search filter
+    if (q.isNotEmpty) {
+      list = list.where((p) =>
+          p.symbol.toLowerCase().contains(q) ||
+          p.baseAsset.toLowerCase().contains(q)).toList();
+    }
+
+    setState(() => _filtered = list);
   }
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        decoration: boxDecorationTopRound(color: context.theme.dialogTheme.backgroundColor),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            tabBarUnderline(getTabList(), _tabController,
-                indicator: tabCustomIndicator(context, padding: Dimens.paddingLargeExtra),
-                isScrollable: true,
-                fontSize: Dimens.fontSizeMid,
-                onTap: (index) => _controller.changeTab(index)),
-            dividerHorizontal(height: 0),
-            Obx(() => SpotMarketHeaderView(sort: _controller.marketSort.value, hideCap: true, onTap: (sort) => _controller.onSortChanged(sort))),
-            Obx(() {
-              return _controller.coinPairList.isEmpty
-                  ? handleEmptyViewWithLoading(_controller.isLoadingList.value)
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Filter tabs — All / Spot / Futures (same as spot screen)
+          _buildFilterTabs(),
+
+          // Category pills
+          _buildCategoryList(),
+
+          const SizedBox(height: 10),
+
+          // Search
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: textFieldSearch(
+                controller: _searchCtrl,
+                height: Dimens.btnHeightSmall,
+                margin: 0,
+                borderRadius: Dimens.radiusCornerMid,
+                onTextChange: (_) {},
+                bgColor: _dim,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Header row (same as spot)
+          _buildHeaderRow(),
+
+          const SizedBox(height: 7),
+
+          // List
+          _loading
+              ? const Expanded(child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)))
+              : _filtered.isEmpty
+                  ? Expanded(child: showEmptyView(height: 100))
                   : Expanded(
-                      child: ListView.separated(
-                        padding: const EdgeInsets.all(Dimens.paddingMid),
-                        separatorBuilder: (context, index) => dividerHorizontal(height: 10),
-                        itemCount: _controller.coinPairList.length,
-                        itemBuilder: (context, index) {
-                          /// if (_controller.hasMoreData && index == _controller.coinPairList.length - 1) {
-                          ///   WidgetsBinding.instance.addPostFrameCallback((t) => _controller.getFutureCoinList(true));
-                          /// }
-                          return MarketCoinPairItemView(
-                              pair: _controller.coinPairList[index],
-                              fromKey: FromKey.future,
-                              onFavChange: (message) => showToast(message, isError: false));
-                        },
+                      child: RefreshIndicator(
+                        color: _green,
+                        onRefresh: _fetchPairs,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(5),
+                          itemCount: _filtered.length,
+                          itemBuilder: (_, i) => _FuturePairItem(pair: _filtered[i], iconMap: _iconMap),
+                        ),
                       ),
-                    );
-            }),
-          ],
-        ),
+                    ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterTabs() {
+    return Container(
+      height: 35,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      color: Colors.transparent,
+      child: Row(
+        children: _filters.asMap().entries.map((e) {
+          final isSelected = _filterIndex == e.key;
+          return GestureDetector(
+            onTap: () { setState(() => _filterIndex = e.key); _applyFilter(); },
+            child: Container(
+              height: 35,
+              color: Colors.transparent,
+              margin: const EdgeInsets.only(right: 20),
+              alignment: Alignment.center,
+              child: Text(e.value,
+                style: TextStyle(
+                  fontSize: 14, fontFamily: _dm,
+                  fontWeight: isSelected ? FontWeight.w400 : FontWeight.w300,
+                  color: isSelected ? Colors.white : Colors.white54)),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCategoryList() {
+    return Container(
+      height: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.only(top: 10, bottom: 10),
+      color: Colors.transparent,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _categories.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 10),
+        itemBuilder: (_, i) {
+          final on = _catIndex == i;
+          return GestureDetector(
+            onTap: () { setState(() => _catIndex = i); _applyFilter(); },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+              decoration: BoxDecoration(
+                color: on ? _green : _dim,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(_categories[i],
+                  style: TextStyle(
+                    color: on ? Colors.black : Colors.white,
+                    fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm)),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeaderRow() {
+    return Container(
+      height: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      color: Colors.transparent,
+      child: const Row(
+        children: [
+          Expanded(flex: 3,
+            child: Text('Pair/Vol', style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w400, height: 1.6))),
+          Expanded(flex: 2,
+            child: Text('Price', textAlign: TextAlign.right,
+                style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w400, height: 1.6))),
+          SizedBox(width: 20),
+          Expanded(flex: 2,
+            child: Text('24h Change', textAlign: TextAlign.right,
+                style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w400, height: 1.6))),
+        ],
       ),
     );
   }
 }
 
-// class MarketFutureState extends State<MarketFutureScreen> {
-//   final _controller = Get.put(FutureController());
-//
-//   List<String> getTabList() => ["Core Assets".tr, "24H Gainers".tr, "New Listing".tr];
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _controller.getFutureExchangeMarketDetail());
-//   }
-//
-//   @override
-//   void dispose() {
-//     super.dispose();
-//     _controller.marketData.value = FutureMarketData();
-//     _controller.coinPairList.clear();
-//     _controller.unSubscribeChannel();
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Obx(() => _controller.isLoading.value
-//         ? showLoading()
-//         : Expanded(
-//       child: ListView(
-//         padding: const EdgeInsets.all(Dimens.paddingMid),
-//         children: [
-//           Obx(() {
-//             final mData = _controller.marketData.value;
-//             return Column(
-//               children: [
-//                 if ((mData.coins?.length ?? 0) > 0) OpenInterestView(coinPair: mData.coins!.first),
-//                 if (mData.highestVolumePair != null) LongShortRatioView(lsPair: mData.highestVolumePair!, plPair: mData.profitLossByCoinPair!),
-//                 if (mData.coins.isValid) HighestSearchView(pairs: mData.coins!),
-//               ],
-//             );
-//           }),
-//           vSpacer20(),
-//           Obx(() {
-//             final selected = _controller.selectedTab.value;
-//             return tabBarText(getTabList(), selected, selectedColor: context.theme.focusColor, (index) => _controller.changeTab(index));
-//           }),
-//           Obx(() {
-//             return Column(
-//               children: [
-//                 if (_controller.isLoadingList.value) showLoadingSmall(),
-//                 vSpacer10(),
-//                 MarketListHeaderView(first: "Market".tr, second: "${"Price".tr}/${"Volume".tr}", third: "24H Change".tr),
-//                 vSpacer2(),
-//                 _controller.coinPairList.isValid
-//                     ? Column(
-//                   children: List.generate(_controller.coinPairList.length, (index) {
-//                     return FutureMarketCoinItemView(coinPair: _controller.coinPairList[index]);
-//                   }),
-//                 )
-//                     : showEmptyView(height: Dimens.menuHeight)
-//               ],
-//             );
-//           }),
-//           vSpacer20(),
-//           TextRobotoAutoBold("Market Index".tr),
-//           vSpacer10(),
-//           Obx(() {
-//             final mDataCoins = _controller.marketData.value.coins;
-//             return mDataCoins.isValid
-//                 ? Wrap(
-//                 spacing: Dimens.paddingMid,
-//                 runSpacing: Dimens.paddingMid,
-//                 children: List.generate(mDataCoins?.length ?? 0, (index) => MarketIndexView(coinPair: mDataCoins![index])))
-//                 : showEmptyView(height: Dimens.menuHeight);
-//           }),
-//           vSpacer10(),
-//         ],
-//       ),
-//     ));
-//   }
-// }
-//
+// ─── Pair item (same layout as spot MarketCoinItemViewBottom) ─────────────────
+class _FuturePairItem extends StatelessWidget {
+  const _FuturePairItem({required this.pair, required this.iconMap});
+  final _FuturePair pair;
+  final Map<String, String> iconMap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isUp       = pair.priceChangePct >= 0;
+    final changeStr  = '${isUp ? '+' : ''}${pair.priceChangePct.toStringAsFixed(2)}%';
+    final priceStr   = coinFormat(pair.lastPrice);
+    final priceStr6  = '\$${coinFormat(pair.lastPrice, fixed: 6)}';
+    final volStr     = '\$${numberFormatCompact(pair.volume, decimals: 2)}';
+    final cColor     = isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+
+    return GestureDetector(
+      onTap: () {
+        // Navigate to future trading page — pair details
+        // Get.to(() => FuturePairDetailsScreen(symbol: pair.symbol));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        margin: const EdgeInsets.only(bottom: 5),
+        color: Colors.transparent,
+        child: Row(
+          children: [
+            hSpacer10(),
+
+            // ── Coin icon + name + volume ──
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  // Coin icon — from spot market cache, else jsdelivr, else fallback
+                  ClipOval(child: _buildIcon()),
+                  hSpacer10(),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AutoSizeText.rich(
+                          TextSpan(
+                            text: pair.baseAsset,
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            children: [
+                              TextSpan(
+                                text: '/${pair.quoteAsset}',
+                                style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
+                        ),
+                        Text(volStr,
+                            style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            maxLines: 1),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            hSpacer5(),
+
+            // ── Price ──
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(priceStr,
+                      maxLines: 1, textAlign: TextAlign.end,
+                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600, fontFamily: _dm)),
+                  Text(priceStr6,
+                      style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
+                      maxLines: 1),
+                ],
+              ),
+            ),
+
+            hSpacer20(),
+
+            // ── 24h Change badge ──
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 30,
+                child: Container(
+                  decoration: BoxDecoration(color: cColor, borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(changeStr,
+                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                          maxLines: 1),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            hSpacer15(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIcon() {
+    final spotUrl = iconMap[pair.baseAsset.toUpperCase()];
+    return _CoinIcon(
+      symbol: pair.baseAsset.toLowerCase(),
+      fallback: pair.baseAsset,
+      spotUrl: spotUrl,
+    );
+  }
+
+}
+
+// ─── Coin icon with dual CDN fallback (same as FutureCoinIcon in future_widgets) ─
+class _CoinIcon extends StatefulWidget {
+  const _CoinIcon({required this.symbol, required this.fallback, this.spotUrl});
+  final String symbol;
+  final String fallback;
+  final String? spotUrl;
+  @override State<_CoinIcon> createState() => _CoinIconState();
+}
+
+class _CoinIconState extends State<_CoinIcon> {
+  int _attempt = 0;
+
+  // attempt 0 = spotUrl (if available), 1 = atomiclabs, 2 = coincap, 3 = fallback
+  String _url(int attempt) {
+    final s = widget.symbol.toLowerCase();
+    if (widget.spotUrl != null && widget.spotUrl!.isNotEmpty) {
+      switch (attempt) {
+        case 0: return widget.spotUrl!;
+        case 1: return 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa/128/color/$s.png';
+        case 2: return 'https://assets.coincap.io/assets/icons/$s@2x.png';
+        default: return '';
+      }
+    }
+    switch (attempt) {
+      case 0: return 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa/128/color/$s.png';
+      case 1: return 'https://assets.coincap.io/assets/icons/$s@2x.png';
+      default: return '';
+    }
+  }
+
+  int get _maxAttempts => (widget.spotUrl != null && widget.spotUrl!.isNotEmpty) ? 3 : 2;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_attempt >= _maxAttempts) return _fallback();
+    return Image.network(
+      _url(_attempt),
+      width: 30, height: 30, fit: BoxFit.cover,
+      errorBuilder: (context, error, stack) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _attempt++);
+        });
+        return _fallback();
+      },
+    );
+  }
+
+  Widget _fallback() => Container(
+    width: 30, height: 30,
+    decoration: const BoxDecoration(color: _dim, shape: BoxShape.circle),
+    alignment: Alignment.center,
+    child: Text(
+      widget.fallback.isNotEmpty ? widget.fallback.substring(0, widget.fallback.length >= 2 ? 2 : 1).toUpperCase() : '?',
+      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+    ),
+  );
+}
