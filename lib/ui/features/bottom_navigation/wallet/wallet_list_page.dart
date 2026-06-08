@@ -19,6 +19,7 @@ import 'wallet_controller.dart';
 import 'wallet_widgets.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/spot_trade/spot_trade_history_views.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/spot_trade/spot_trade_controller.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/spot_pnl_screen.dart';
 
 const double _svgW = 362.0;
 const double _svgH = 204.0;
@@ -852,31 +853,41 @@ class _SpotHeroCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          if (total?.todayPnl != null)
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: "Today's PnL  ",
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.5),
-                                      fontSize: 12,
-                                      fontFamily: 'DMSans',
-                                    ),
+                          GestureDetector(
+                            onTap: () => Get.to(() => const SpotPnlScreen()),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: "Today's PnL  ",
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.5),
+                                          fontSize: 12,
+                                          fontFamily: 'DMSans',
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: formatPnl(total?.todayPnl, total?.todayPnlPercent),
+                                        style: TextStyle(
+                                          color: (total?.todayPnl ?? 0) >= 0
+                                              ? const Color(0xFF4ED78E)
+                                              : Colors.redAccent,
+                                          fontSize: 12,
+                                          fontFamily: 'DMSans',
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  TextSpan(
-                                    text: formatPnl(total?.todayPnl, total?.todayPnlPercent),
-                                    style: TextStyle(
-                                      color: (total?.todayPnl ?? 0) >= 0
-                                          ? const Color(0xFF4ED78E)
-                                          : Colors.redAccent,
-                                      fontSize: 12,
-                                      fontFamily: 'DMSans',
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.arrow_forward_ios,
+                                    size: 9, color: Color(0xFFCCFF00)),
+                              ],
                             ),
+                          ),
                         ],
                       ],
                     ),

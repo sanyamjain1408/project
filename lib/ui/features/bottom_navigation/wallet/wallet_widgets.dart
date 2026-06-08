@@ -6,6 +6,7 @@ import 'package:tradexpro_flutter/data/models/history.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/activity/activity_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_pnl_screen.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
@@ -637,32 +638,35 @@ class TotalBalanceView extends StatelessWidget {
                   const SizedBox(height: 5),
 
                   if (!isHide)
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: "Today ",
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 12,
-                              fontFamily: 'DMSans',
-                              fontWeight: FontWeight.w400,
-                              height: 16 / 12,
+                    GestureDetector(
+                      onTap: () => Get.to(() => const WalletPnlScreen()),
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: "Today ",
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                fontSize: 12,
+                                fontFamily: 'DMSans',
+                                fontWeight: FontWeight.w400,
+                                height: 16 / 12,
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: formatPnl(balance.todayPnl, balance.todayPnlPercent),
-                            style: TextStyle(
-                              color: (balance.todayPnl ?? 0) >= 0
-                                  ? const Color(0xFFCCFF00)
-                                  : Colors.redAccent,
-                              fontSize: 12,
-                              fontFamily: 'DMSans',
-                              fontWeight: FontWeight.w500,
-                              height: 16 / 12,
+                            TextSpan(
+                              text: formatPnl(balance.todayPnl, balance.todayPnlPercent),
+                              style: TextStyle(
+                                color: (balance.todayPnl ?? 0) >= 0
+                                    ? const Color(0xFFCCFF00)
+                                    : Colors.redAccent,
+                                fontSize: 12,
+                                fontFamily: 'DMSans',
+                                fontWeight: FontWeight.w500,
+                                height: 16 / 12,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                 ],

@@ -25,6 +25,7 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/future_tr
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/future_trade/future_widgets.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/future_pnl_screen.dart';
 
 const Color _primary = Color(0xFF111111);
 const Color _green = Color(0xFFCCFF00);
@@ -1354,18 +1355,28 @@ class _FutureWalletBody extends StatelessWidget {
                                   ),
                                 if (!isHide) const SizedBox(height: 2),
                                 if (!isHide)
-                                  RichText(
-                                    text: TextSpan(children: [
-                                      TextSpan(text: "Today's PnL  ", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
-                                      TextSpan(
-                                        text: pnlText,
-                                        style: TextStyle(
-                                          color: todayPnl >= 0 ? const Color(0xFF4ED78E) : Colors.redAccent,
-                                          fontSize: 12,
-                                          fontFamily: _dmSans,
+                                  GestureDetector(
+                                    onTap: () => Get.to(() => const FuturePnlScreen()),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        RichText(
+                                          text: TextSpan(children: [
+                                            TextSpan(text: "Today's PnL  ", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: _dmSans)),
+                                            TextSpan(
+                                              text: pnlText,
+                                              style: TextStyle(
+                                                color: todayPnl >= 0 ? const Color(0xFF4ED78E) : Colors.redAccent,
+                                                fontSize: 12,
+                                                fontFamily: _dmSans,
+                                              ),
+                                            ),
+                                          ]),
                                         ),
-                                      ),
-                                    ]),
+                                        const SizedBox(width: 4),
+                                        const Icon(Icons.arrow_forward_ios, size: 9, color: Color(0xFFCCFF00)),
+                                      ],
+                                    ),
                                   ),
                               ],
                             ),
