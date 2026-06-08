@@ -150,10 +150,9 @@ class _SpotPnlScreenState extends State<SpotPnlScreen> {
         } else if (raw is List) {
           items = raw;
         }
-        // ignore: avoid_print
-        print(
-          'SPOT_PNL_WALLETS count=${items.length} first=${items.isNotEmpty ? items.first : null}',
-        );
+        // print(
+        //   'SPOT_PNL_WALLETS count=${items.length} first=${items.isNotEmpty ? items.first : null}',
+        // );
         final list =
             items
                 .map((e) => Wallet.fromJson(e as Map<String, dynamic>))
@@ -165,12 +164,10 @@ class _SpotPnlScreenState extends State<SpotPnlScreen> {
               );
         if (mounted) setState(() => _wallets = list);
       } else {
-        // ignore: avoid_print
-        print('SPOT_PNL_WALLETS_FAIL: ${resp.message}');
+        // print('SPOT_PNL_WALLETS_FAIL: ${resp.message}');
       }
     } catch (e) {
-      // ignore: avoid_print
-      print('SPOT_PNL_WALLETS_ERROR: $e');
+      // print('SPOT_PNL_WALLETS_ERROR: $e');
     }
     if (mounted) setState(() => _walletLoading = false);
   }
@@ -192,36 +189,30 @@ class _SpotPnlScreenState extends State<SpotPnlScreen> {
       final liveQ = _spotTotal > 0 ? '&live_total=$_spotTotal' : '';
       final q = '$liveQ&days=$days';
       final url = '${APIURLConstants.baseUrl}/api/pnl/summary?user_id=$uid$q';
-      // ignore: avoid_print
-      print('PNL_URL: $url');
+      // print('PNL_URL: $url');
       final r = await http.get(
         Uri.parse(url),
         headers: {'Accept': 'application/json'},
       );
-      // ignore: avoid_print
-      print('PNL_STATUS: ${r.statusCode}');
+      // print('PNL_STATUS: ${r.statusCode}');
       if (r.statusCode == 200) {
         final j = jsonDecode(r.body) as Map<String, dynamic>;
-        // ignore: avoid_print
-        print(
-          'PNL_SUCCESS: ${j['success']}  chart_data_len: ${(j['data']?['chart_data'] as List?)?.length}  period_keys: ${(j['data']?['period_changes'] as Map?)?.keys.toList()}',
-        );
+        // print(
+        //   'PNL_SUCCESS: ${j['success']}  chart_data_len: ${(j['data']?['chart_data'] as List?)?.length}  period_keys: ${(j['data']?['period_changes'] as Map?)?.keys.toList()}',
+        // );
         if (j['success'] == true && j['data'] != null) {
           final parsed = _PnlData.fromJson(j['data'] as Map<String, dynamic>);
-          // ignore: avoid_print
-          print('PNL_CHART_POINTS: ${parsed.chart.length}  range: $_range');
-          // ignore: avoid_print
-          print(
-            'PNL_CHART_VALUES: ${parsed.chart.map((p) => '${p.date}:${p.value.toStringAsFixed(0)}').join(', ')}',
-          );
+          // print('PNL_CHART_POINTS: ${parsed.chart.length}  range: $_range');
+          // print(
+          //   'PNL_CHART_VALUES: ${parsed.chart.map((p) => '${p.date}:${p.value.toStringAsFixed(0)}').join(', ')}',
+          // );
           if (_spotTotal == 0 && parsed.todayValue > 0)
             _spotTotal = parsed.todayValue;
           if (mounted) setState(() => _pnl = parsed);
         }
       }
     } catch (e) {
-      // ignore: avoid_print
-      print('SPOT_PNL_ERROR: $e');
+      // print('SPOT_PNL_ERROR: $e');
     }
     if (mounted) setState(() => _pnlLoading = false);
   }

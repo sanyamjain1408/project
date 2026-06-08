@@ -395,7 +395,6 @@ class _State extends State<FuturePnlScreen> {
                   0,
                   lifetimePnl,
                   align: CrossAxisAlignment.center,
-                  hidePct: true,
                 ),
               ),
             ],
@@ -479,7 +478,7 @@ class _State extends State<FuturePnlScreen> {
                 : FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      _fmtPct(pct),
+                      pct == 0 ? '+0.00%' : _fmtPct(pct),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
