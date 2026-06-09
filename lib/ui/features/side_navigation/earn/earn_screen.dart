@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -11,6 +13,11 @@ import 'dual_investment_screen.dart';
 import 'dual_subscribe_modal.dart';
 import 'calc_plan_card.dart';
 import 'mc_staking_screen.dart';
+import 'mc_staking_controller.dart' show McStakingController; // ignore: unused_import
+import 'mc_my_stakes_screen.dart';
+import 'mc_portfolio_screen.dart';
+import 'earn_history_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_widgets.dart' show RotatingIcon;
 
 const String _baseUrl = 'https://api.trapix.com';
 
@@ -31,7 +38,7 @@ Color getLockColor(int days) {
   }
 }
 
-// ─── Coin icon helper ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Coin icon helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Widget _coinIcon(String? iconUrl, {double size = 32, Color? fallbackColor}) {
   final bg = fallbackColor ?? const Color(0xFF1E2128);
   if (iconUrl != null && iconUrl.isNotEmpty) {
@@ -192,7 +199,7 @@ class _EarnScreenState extends State<EarnScreen> {
     }
   }
 
-  // ── Navigate to Easy Earn > History ──────────────────────────────────────
+  // â”€â”€ Navigate to Easy Earn > History â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Called from Dual Investment hero "View my History" button
   void _goToEasyEarnHistory() {
     setState(() {
@@ -203,7 +210,7 @@ class _EarnScreenState extends State<EarnScreen> {
     _fetchEasyHistory();
   }
 
-  // ── Calculator dialog ─────────────────────────────────────────────────────
+  // â”€â”€ Calculator dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   void _showCalculatorDialog() {
     showDialog(
       context: context,
@@ -537,7 +544,7 @@ class _EarnScreenState extends State<EarnScreen> {
     }
   }
 
-  // ── BUILD ─────────────────────────────────────────────────────────────────
+  // â”€â”€ BUILD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -545,16 +552,11 @@ class _EarnScreenState extends State<EarnScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildMainTabs(),
-            ),
-            const SizedBox(height: 16),
             Expanded(
               child: _selectedMainTab == 3
-                  ? const McStakingScreen()
+                  ? _buildStakingWithHero()
                   : _selectedMainTab == 2
-                  ? _buildDualInvestmentWithHero() // ← Dual tab
+                  ? _buildDualInvestmentWithHero() // â† Dual tab
                   : _selectedMainTab == 1
                   ? _buildEasyEarnContent()
                   : _buildOverviewContent(),
@@ -602,174 +604,194 @@ class _EarnScreenState extends State<EarnScreen> {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildTabIndicatorStrip() {
+    return SizedBox(
+      height: 36,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.only(left: 20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: List.generate(_mainTabs.length, (index) {
+            final isSel = _selectedMainTab == index;
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedMainTab = index;
+                  if (index == 1) _showEasyEarnHome = true;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(right: 24),
+                child: Center(
+                  child: Text(
+                    _mainTabs[index],
+                    style: TextStyle(
+                      color: isSel ? Colors.white : Colors.white.withOpacity(0.5),
+                      fontSize: 14,
+                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SHARED HERO
   //
   // Parameters:
-  //   showCalculator — show the dark "Calculator" button (Overview only)
-  //   primaryLabel   — label for the lime-green button
-  //   onPrimaryTap   — callback; defaults to "View my Earnings" navigation
-  // ══════════════════════════════════════════════════════════════════════════
+  //   showCalculator â€” show the dark "Calculator" button (Overview only)
+  //   primaryLabel   â€” label for the lime-green button
+  //   onPrimaryTap   â€” callback; defaults to "View my Earnings" navigation
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   Widget _buildOverviewHero({
     required bool isLoggedIn,
     required double totalAssets,
     required double totalInterest,
+    double todayProfit = 0,
     required int posCount,
     bool showCalculator = true,
     String primaryLabel = "View my Earnings",
     VoidCallback? onPrimaryTap,
+    String? secondaryLabel,
+    VoidCallback? onSecondaryTap,
+    String tabLabel = "Overview",
+    VoidCallback? onHistoryTap,
   }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.25), width: 1),
-        ),
-        child: Stack(
-          clipBehavior: Clip.hardEdge,
+    return _EarnHeroShell(
+      onHistoryTap: onHistoryTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Green wave background (same asset as wallet hero)
-            Positioned(
-              right: -140,
-              top: -55,
-              child: Transform.rotate(
-                angle: -0.4,
-                child: Opacity(
-                  opacity: 0.5,
-                  child: Image.asset(
-                    'assets/images/wallet_green_wave.png',
-                    width: 340,
-                    height: 350,
-                    fit: BoxFit.contain,
+            // Top group
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Tab label — green
+                Text(
+                  tabLabel,
+                  style: const TextStyle(
+                    color: Color(0xFFCCFF00),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
+                    height: 1.4,
                   ),
                 ),
-              ),
+                const SizedBox(height: 2),
+                Text(
+                  "Total Assets (USDT)",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontFamily: "DMSans",
+                    fontWeight: FontWeight.w400,
+                    height: 1.33,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  isLoggedIn ? "\$${totalAssets.toStringAsFixed(2)}" : "\$0.00",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "DMSans",
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _heroStat(
+                        "Cumulative Profit (USDT)",
+                        isLoggedIn ? totalInterest.toStringAsFixed(2) : "0",
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 36,
+                      color: Colors.white.withOpacity(0.10),
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    Expanded(
+                      child: _heroStat(
+                        "Today's Profit (USDT)",
+                        isLoggedIn ? todayProfit.toStringAsFixed(2) : "0",
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Total Assets (USDT)",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 12,
-                      fontFamily: "DMSans",
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isLoggedIn
-                        ? "\$${totalAssets.toStringAsFixed(2)}"
-                        : "\$0.00",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: "DMSans",
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(height: 1, color: Colors.white.withOpacity(0.10)),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _heroStat(
-                          "Total Interest (USDT)",
-                          isLoggedIn ? totalInterest.toStringAsFixed(2) : "0",
+            // Buttons row
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onPrimaryTap ?? () {
+                      setState(() {
+                        _selectedMainTab = 1;
+                        _showEasyEarnHome = false;
+                        _selectedEasyTab = 0;
+                      });
+                      _fetchEasyPositions();
+                    },
+                    child: Container(
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFCCFF00),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        primaryLabel,
+                        style: const TextStyle(
+                          color: Color(0xFF111111),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: "DMSans",
                         ),
                       ),
-                      Container(
-                        width: 1,
-                        height: 55,
-                        color: Colors.white.withOpacity(0.10),
-                        margin: const EdgeInsets.symmetric(horizontal: 20),
-                      ),
-                      Expanded(
-                        child: _heroStat(
-                          "Total Interest (USDT)",
-                          isLoggedIn ? totalInterest.toStringAsFixed(2) : "0",
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // ── Buttons row ──────────────────────────────────────────
-                  Row(
-                    children: [
-                      // Primary (lime-green) button — always present
-                      Expanded(
-                        child: GestureDetector(
-                          onTap:
-                              onPrimaryTap ??
-                              () {
-                                setState(() {
-                                  _selectedMainTab = 1;
-                                  _showEasyEarnHome = false;
-                                  _selectedEasyTab = 0;
-                                });
-                                _fetchEasyPositions();
-                              },
-                          child: Container(
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFCCFF00),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              primaryLabel,
-                              style: const TextStyle(
-                                color: Color(0xFF111111),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: "DMSans",
-                                height: 20 / 15,
-                              ),
-                            ),
+                ),
+                if (showCalculator || secondaryLabel != null) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: showCalculator ? _showCalculatorDialog : onSecondaryTap,
+                      child: Container(
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1A1A),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          showCalculator ? "Calculator" : secondaryLabel!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: "DMSans",
                           ),
                         ),
                       ),
-
-                      // Second slot always present — keeps primary button at consistent width
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: showCalculator
-                            ? GestureDetector(
-                                onTap: _showCalculatorDialog,
-                                child: Container(
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1A1A1A),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: const Text(
-                                    "Calculator",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w400,
-                                      fontFamily: "DMSans",
-                                      height: 20 / 15,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : const SizedBox.shrink(),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
-              ),
+              ],
             ),
           ],
         ),
@@ -790,12 +812,12 @@ class _EarnScreenState extends State<EarnScreen> {
             fontFamily: "DMSans",
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             fontFamily: "DMSans",
             height: 1,
@@ -805,9 +827,9 @@ class _EarnScreenState extends State<EarnScreen> {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // Shared: Products list
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   Widget _buildProductsSection(List<EarnProduct> products) {
     final uniqueCoins = products.map((p) => p.coin).toSet().toList();
     final filteredCoins = uniqueCoins.where((coin) {
@@ -885,7 +907,7 @@ class _EarnScreenState extends State<EarnScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Coin header row (tap to toggle) ──
+                  // â”€â”€ Coin header row (tap to toggle) â”€â”€
                   GestureDetector(
                     onTap: () => setState(() {
                       if (isExpanded)
@@ -941,7 +963,7 @@ class _EarnScreenState extends State<EarnScreen> {
                             child: Text(
                               minApr == maxApr
                                   ? '${minApr.toStringAsFixed(2)}%'
-                                  : '${minApr.toStringAsFixed(2)}%–${maxApr.toStringAsFixed(2)}%',
+                                  : '${minApr.toStringAsFixed(2)}%â€“${maxApr.toStringAsFixed(2)}%',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -966,7 +988,7 @@ class _EarnScreenState extends State<EarnScreen> {
                     ),
                   ),
 
-                  // ── Expanded product rows ──
+                  // â”€â”€ Expanded product rows â”€â”€
                   if (isExpanded) ...[
                     ...coinProducts.map((plan) {
                       final lockLabel = plan.lockDays == 0
@@ -1239,11 +1261,11 @@ class _EarnScreenState extends State<EarnScreen> {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // Shared: Recommended horizontal scroll
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   Widget _buildRecommendedSection(List<EarnProduct> products) {
-    // One card per unique coin — pick the highest APR product for each coin
+    // One card per unique coin â€” pick the highest APR product for each coin
     final Map<String, EarnProduct> bestPerCoin = {};
     for (final p in products) {
       if (!bestPerCoin.containsKey(p.coin) || p.apr > bestPerCoin[p.coin]!.apr) {
@@ -1524,9 +1546,9 @@ class _EarnScreenState extends State<EarnScreen> {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // OVERVIEW TAB  — hero with Calculator
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // OVERVIEW TAB  â€” hero with Calculator
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   Widget _buildOverviewContent() {
     return Obx(() {
       final products = _controller.products;
@@ -1547,8 +1569,17 @@ class _EarnScreenState extends State<EarnScreen> {
               totalAssets: totalAssets,
               totalInterest: totalInterest,
               posCount: positions.length,
-              showCalculator: true, // ← Calculator shown
+              showCalculator: true, // â† Calculator shown
               primaryLabel: "View my Earnings",
+              tabLabel: "Overview",
+              onHistoryTap: () {
+                setState(() {
+                  _selectedMainTab = 1;
+                  _showEasyEarnHome = false;
+                  _selectedEasyTab = 1;
+                });
+                _fetchEasyHistory();
+              },
               onPrimaryTap: () {
                 setState(() {
                   _selectedMainTab = 1;
@@ -1558,6 +1589,8 @@ class _EarnScreenState extends State<EarnScreen> {
                 _fetchEasyPositions();
               },
             ),
+            const SizedBox(height: 16),
+            _buildTabIndicatorStrip(),
             const SizedBox(height: 20),
             _buildRecommendedSection(products),
             const SizedBox(height: 20),
@@ -1568,9 +1601,9 @@ class _EarnScreenState extends State<EarnScreen> {
     });
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // DUAL INVESTMENT TAB — hero WITHOUT Calculator, "View my History" → Easy Earn History
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // DUAL INVESTMENT TAB â€” hero WITHOUT Calculator, "View my History" â†’ Easy Earn History
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   Widget _buildDualInvestmentWithHero() {
     return Obx(() {
       final positions = _controller.positions;
@@ -1584,18 +1617,25 @@ class _EarnScreenState extends State<EarnScreen> {
       return SingleChildScrollView(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0),
-              child: _buildOverviewHero(
-                isLoggedIn: isLoggedIn,
-                totalAssets: totalAssets,
-                totalInterest: totalInterest,
-                posCount: positions.length,
-                showCalculator: false,
-                primaryLabel: "View my History",
-                onPrimaryTap: _goToEasyEarnHistory,
-              ),
+            _buildOverviewHero(
+              isLoggedIn: isLoggedIn,
+              totalAssets: totalAssets,
+              totalInterest: totalInterest,
+              posCount: positions.length,
+              showCalculator: true,
+              primaryLabel: "View my Earnings",
+              tabLabel: "Dual Investment",
+              onHistoryTap: () {
+                setState(() {
+                  _selectedMainTab = 1;
+                  _showEasyEarnHome = false;
+                  _selectedEasyTab = 1;
+                });
+                _fetchEasyHistory();
+              },
             ),
+            const SizedBox(height: 16),
+            _buildTabIndicatorStrip(),
             const SizedBox(height: 8),
             const DualInvestmentScreen(),
           ],
@@ -1604,9 +1644,27 @@ class _EarnScreenState extends State<EarnScreen> {
     });
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // EASY EARN TAB — hero WITHOUT Calculator
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // STAKING TAB â€” live earning hero + coin list
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  Widget _buildStakingWithHero() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _StakingLiveHero(),
+          const SizedBox(height: 16),
+          _buildTabIndicatorStrip(),
+          const SizedBox(height: 16),
+          const McStakingScreen(),
+        ],
+      ),
+    );
+  }
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // EASY EARN TAB â€” hero WITHOUT Calculator
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   Widget _buildEasyEarnContent() {
     if (_showEasyEarnHome) {
       return Obx(() {
@@ -1628,8 +1686,16 @@ class _EarnScreenState extends State<EarnScreen> {
                 totalAssets: totalAssets,
                 totalInterest: totalInterest,
                 posCount: positions.length,
-                showCalculator: false, // ← no Calculator
+                showCalculator: true, // â† no Calculator
                 primaryLabel: "View my Earnings",
+                tabLabel: "Easy Earn",
+                onHistoryTap: () {
+                  setState(() {
+                    _showEasyEarnHome = false;
+                    _selectedEasyTab = 1;
+                  });
+                  _fetchEasyHistory();
+                },
                 onPrimaryTap: () {
                   setState(() {
                     _showEasyEarnHome = false;
@@ -1638,6 +1704,8 @@ class _EarnScreenState extends State<EarnScreen> {
                   _fetchEasyPositions();
                 },
               ),
+              const SizedBox(height: 16),
+              _buildTabIndicatorStrip(),
               const SizedBox(height: 20),
               _buildProductsSection(products),
             ],
@@ -1867,7 +1935,7 @@ class _EarnScreenState extends State<EarnScreen> {
     }
   }
 
-  // ── My Position ───────────────────────────────────────────────────────────
+  // â”€â”€ My Position â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildEasyPositionsTab() {
     if (_uid.isEmpty) {
       return const Center(
@@ -2275,7 +2343,7 @@ class _EarnScreenState extends State<EarnScreen> {
     );
   }
 
-  // ── History ───────────────────────────────────────────────────────────────
+  // â”€â”€ History â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildEasyHistoryTab() {
     if (_uid.isEmpty)
       return const Center(
@@ -2517,63 +2585,7 @@ class _EarnScreenState extends State<EarnScreen> {
   }
 }
 
-// ─── Painters ────────────────────────────────────────────────────────────────
-class RecommendedCardPainter extends CustomPainter {
-  final Color color;
-  RecommendedCardPainter({required this.color});
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(
-      -20,
-      size.height * 0.55,
-      size.width + 40,
-      size.height,
-    );
-    final paint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          color.withOpacity(0.95),
-          const Color(0xFFFFB781).withOpacity(0.55),
-          const Color(0xFFFFE6D2).withOpacity(0.20),
-          Colors.transparent,
-        ],
-      ).createShader(rect)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 35);
-
-    final path = Path()
-      ..moveTo(0, size.height * 0.72)
-      ..cubicTo(
-        size.width * 0.15,
-        size.height * 0.92,
-        size.width * 0.75,
-        size.height * 0.30,
-        size.width,
-        size.height * 0.95,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(path, paint);
-
-    canvas.drawCircle(
-      Offset(size.width / 2, -45),
-      70,
-      Paint()
-        ..color = color.withOpacity(0.35)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 45),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// EASY EARN SUBSCRIBE MODAL
-// ══════════════════════════════════════════════════════════════════════════════
 class EasyEarnModal extends StatefulWidget {
   final String coin;
   final List<EarnProduct> plans;
@@ -3294,6 +3306,388 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
           ],
         );
       }),
+    );
+  }
+}
+
+
+// ── Earn Hero — same SVG shape & wave as Spot/Future hero ──────────────────────
+const double _earnSvgW2 = 362.0;
+const double _earnSvgH2 = 204.0;
+const double _earnCardH = 220.0;
+
+class _EarnHeroShell extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onHistoryTap;
+  const _EarnHeroShell({required this.child, this.onHistoryTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    return Container(
+      color: Colors.transparent,
+      child: SizedBox(
+        width: screenW,
+        height: _earnCardH,
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            // SVG-shaped background — same as Spot/Future
+            Positioned.fill(
+              child: ClipPath(
+                clipper: _EarnHeroClipper(cardW: screenW, cardH: _earnCardH),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: CustomPaint(
+                    painter: _EarnHeroPainter(
+                      cardW: screenW,
+                      cardH: _earnCardH,
+                      fillColor: const Color(0xFF111111).withOpacity(0.5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Green wave — rotated, same placement as Spot/Future
+            Positioned(
+              right: 25,
+              top: 30,
+              width: screenW * 0.40,
+              height: _earnCardH * 1.3,
+              child: Transform.rotate(
+                angle: 1.250,
+                alignment: Alignment.center,
+                child: Image.asset(
+                  'assets/images/wallet_green_wave.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.bottomRight,
+                ),
+              ),
+            ),
+            // Border
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _EarnHeroBorderPainter(cardW: screenW, cardH: _earnCardH),
+              ),
+            ),
+            // Content
+            Positioned.fill(child: child),
+            // History icon — top right (same as spot/future)
+            if (onHistoryTap != null)
+              Positioned(
+                top: 14,
+                right: 16,
+                child: GestureDetector(
+                  onTap: onHistoryTap,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.35),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
+                    ),
+                    child: const RotatingIcon(),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EarnHeroBorderPainter extends CustomPainter {
+  const _EarnHeroBorderPainter({required this.cardW, required this.cardH});
+  final double cardW, cardH;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sx = cardW / _earnSvgW2;
+    final sy = cardH / _earnSvgH2;
+    canvas.drawPath(
+      _EarnHeroPainter._buildPath(sx, sy),
+      Paint()
+        ..color = Colors.white.withOpacity(0.15)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+class _EarnHeroPainter extends CustomPainter {
+  const _EarnHeroPainter({
+    required this.cardW,
+    required this.cardH,
+    required this.fillColor,
+  });
+  final double cardW, cardH;
+  final Color fillColor;
+
+  static Path _buildPath(double sx, double sy) => Path()
+    ..moveTo(0, 20 * sy)
+    ..cubicTo(0, 8.9543 * sy, 8.95431 * sx, 0, 20 * sx, 0)
+    ..lineTo(132.716 * sx, 0)
+    ..cubicTo(138.02 * sx, 0, 143.107 * sx, 2.10714 * sy, 146.858 * sx, 5.85786 * sy)
+    ..lineTo(155.142 * sx, 14.1421 * sy)
+    ..cubicTo(158.893 * sx, 17.8929 * sy, 163.98 * sx, 20 * sy, 169.284 * sx, 20 * sy)
+    ..lineTo(192.716 * sx, 20 * sy)
+    ..cubicTo(198.02 * sx, 20 * sy, 203.107 * sx, 17.8929 * sy, 206.858 * sx, 14.1421 * sy)
+    ..lineTo(215.142 * sx, 5.85786 * sy)
+    ..cubicTo(218.893 * sx, 2.10713 * sy, 223.98 * sx, 0, 229.284 * sx, 0)
+    ..lineTo(342 * sx, 0)
+    ..cubicTo(353.046 * sx, 0, 362 * sx, 8.95431 * sy, 362 * sx, 20 * sy)
+    ..lineTo(362 * sx, 184 * sy)
+    ..cubicTo(362 * sx, 195.046 * sy, 353.046 * sx, 204 * sy, 342 * sx, 204 * sy)
+    ..lineTo(20 * sx, 204 * sy)
+    ..cubicTo(8.9543 * sx, 204 * sy, 0, 195.046 * sy, 0, 184 * sy)
+    ..lineTo(0, 20 * sy)
+    ..close();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(
+      _buildPath(cardW / _earnSvgW2, cardH / _earnSvgH2),
+      Paint()..color = fillColor,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+class _EarnHeroClipper extends CustomClipper<Path> {
+  const _EarnHeroClipper({required this.cardW, required this.cardH});
+  final double cardW, cardH;
+
+  @override
+  Path getClip(Size size) =>
+      _EarnHeroPainter._buildPath(cardW / _earnSvgW2, cardH / _earnSvgH2);
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> old) => false;
+}
+
+
+// ── Staking Live Hero ─────────────────────────────────────────────────────────
+class _StakingLiveHero extends StatefulWidget {
+  const _StakingLiveHero();
+  @override
+  State<_StakingLiveHero> createState() => _StakingLiveHeroState();
+}
+
+class _StakingLiveHeroState extends State<_StakingLiveHero> {
+  late McStakingController _c;
+  Timer? _ticker;
+  double _liveEarning = 0;
+  double _perSec = 0;
+  double _dailyTotal = 0;
+  double _availableToWithdraw = 0;
+  bool _ready = false;
+  double _initTotal = 0;
+  double _initAvail = 0;
+  int _sessionStart = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = Get.isRegistered<McStakingController>()
+        ? Get.find<McStakingController>()
+        : Get.put(McStakingController());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // If portfolio already loaded, init immediately
+      if (_c.portfolio.value != null &&
+          _c.portfolio.value!.portfolio.isNotEmpty) {
+        _initCounter();
+      } else {
+        await _c.fetchPortfolio();
+        _initCounter();
+      }
+    });
+  }
+
+  void _initCounter() {
+    final portfolio = _c.portfolio.value;
+    if (portfolio == null || portfolio.portfolio.isEmpty) return;
+    double totalPerSec = 0, initTotal = 0, initAvail = 0, dailyTotal = 0;
+    for (final item in portfolio.portfolio) {
+      totalPerSec += item.perSecUsdt;
+      dailyTotal += item.dailyReward > 0 ? item.dailyReward * (item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1) : item.perSecUsdt * 86400;
+      final startMs = DateTime.tryParse(item.stakedAt ?? '')
+              ?.millisecondsSinceEpoch ??
+          DateTime.now().millisecondsSinceEpoch;
+      final secs = ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000)
+          .clamp(0.0, double.infinity);
+      final earned = item.perSecUsdt * secs;
+      // totalWithdrawn is in coin units, convert to USDT
+      final price = item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1;
+      final withdrawnUsdt = item.totalWithdrawn * price;
+      initTotal += earned;
+      initAvail += (earned - withdrawnUsdt).clamp(0.0, double.infinity);
+    }
+    _perSec = totalPerSec;
+    _dailyTotal = dailyTotal;
+    _initTotal = initTotal;
+    _initAvail = initAvail;
+    _liveEarning = initTotal;
+    _availableToWithdraw = initAvail;
+    _sessionStart = DateTime.now().millisecondsSinceEpoch;
+    if (!mounted) return;
+    setState(() => _ready = true);
+    _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      if (!mounted) return;
+      final sinceSession =
+          (DateTime.now().millisecondsSinceEpoch - _sessionStart) / 1000;
+      final earned = _initTotal + _perSec * sinceSession;
+      _c.liveEarningUsdt.value = earned;
+      setState(() {
+        _liveEarning = earned;
+        _availableToWithdraw = (_initAvail + _perSec * sinceSession).clamp(0.0, double.infinity);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _EarnHeroShell(
+      onHistoryTap: () => Get.to(() => McRewardsScreen()),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Staking',
+                  style: TextStyle(
+                    color: Color(0xFFCCFF00),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'DMSans',
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                 Text(
+                  'Live Earning',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'DMSans',
+                    height: 1.33,
+                  ),
+                ),
+                const SizedBox(height: 0),
+                Text(
+                  _ready
+                      ? '\$ ${_liveEarning.toStringAsFixed(8)}'
+                      : '\$ 0.00000000',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'DMSans',
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 0),
+                Row(
+                  children: [
+                    Text(
+                      'Available to Withdraw: ',
+                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11, fontFamily: 'DMSans'),
+                    ),
+                    Text(
+                      _ready ? _availableToWithdraw.toStringAsFixed(7) : '0.0000000',
+                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11, fontFamily: 'DMSans'),
+                    ),
+                  ],
+                ),
+               const SizedBox(height: 0),
+                Row(
+                  children: [
+                    Expanded(child: _stakeStat('Per Second', _ready ? '+${_perSec.toStringAsFixed(8)}' : '--', const Color(0xFF00B052))),
+                    Container(width: 1, height: 36, color: Colors.white.withOpacity(0.10), margin: const EdgeInsets.symmetric(horizontal: 16)),
+                    Expanded(child: _stakeStat('Daily Total', _ready ? _dailyTotal.toStringAsFixed(6) : '--', const Color(0xFF00B052))),
+                  ],
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Get.to(() => McMyStakesScreen()),
+                    child: Container(
+                      height: 36,
+                      decoration: BoxDecoration(color: const Color(0xFFCCFF00), borderRadius: BorderRadius.circular(10)),
+                      alignment: Alignment.center,
+                      child: const Text('My Stakes', style: TextStyle(color: Color(0xFF111111), fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'DMSans')),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Get.to(() => McPortfolioScreen()),
+                    child: Container(
+                      height: 36,
+                      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(10)),
+                      alignment: Alignment.center,
+                      child: const Text('Live Dashboard', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w400, fontFamily: 'DMSans')),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _stakeStat(String label, String value, [Color valueColor = Colors.white]) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'DMSans',
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'DMSans',
+            height: 1,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }
