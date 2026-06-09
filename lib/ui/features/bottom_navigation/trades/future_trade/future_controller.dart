@@ -29,6 +29,12 @@ class NewFutureController extends GetxController {
   // Live last trades from WebSocket
   final lastTrades = <Map<String, dynamic>>[].obs;
 
+  // Leverage tier system
+  final userMaxLeverage = 100.obs;
+  final leverageTierReason = ''.obs;
+  final leverageTierNext = Rxn<Map<String, dynamic>>();
+  final leverageTiers = <Map<String, dynamic>>[].obs;
+
   final _ws = FutureWebSocket();
   Timer? _fallbackTimer;
   String lastError = '';
@@ -76,12 +82,36 @@ class NewFutureController extends GetxController {
     } catch (_) {}
   }
 
+  Future<void> fetchMaxLeverage(String symbol) async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      final res = await http.get(
+        Uri.parse('$_base/max-leverage?symbol=$symbol'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (res.statusCode == 200) {
+        final j = jsonDecode(res.body);
+        if (j['success'] == true) {
+          final d = j['data'] as Map<String, dynamic>;
+          userMaxLeverage.value = (d['user_max_leverage'] as num?)?.toInt() ?? 100;
+          leverageTierReason.value = d['reason'] as String? ?? '';
+          leverageTierNext.value = d['next'] as Map<String, dynamic>?;
+          leverageTiers.value = ((d['tiers'] as List?) ?? [])
+              .map((e) => e as Map<String, dynamic>)
+              .toList();
+        }
+      }
+    } catch (_) {}
+  }
+
   void selectPair(FuturePair pair) {
     currentPair.value = pair;
     orderBookBids.clear();
     orderBookAsks.clear();
     lastTrades.clear();
     _fallbackTimer?.cancel();
+    fetchMaxLeverage(pair.symbol);
 
     if (_ws.isAlive) {
       _ws.changeSymbol(pair.symbol);

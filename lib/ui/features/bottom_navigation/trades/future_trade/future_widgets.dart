@@ -3563,89 +3563,209 @@ class FutureMarginModeModal extends StatelessWidget {
   }
 }
 
-class FutureLeverageModal extends StatelessWidget {
+class FutureLeverageModal extends StatefulWidget {
   final int leverage;
+  final NewFutureController ctrl;
   final void Function(int val) onSelected;
 
   const FutureLeverageModal({
     super.key,
     required this.leverage,
+    required this.ctrl,
     required this.onSelected,
   });
 
   @override
+  State<FutureLeverageModal> createState() => _FutureLeverageModalState();
+}
+
+class _FutureLeverageModalState extends State<FutureLeverageModal> {
+  late int _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.leverage;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final leverageOptions = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Leverage',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: futureTextWhite,
-              fontFamily: futureDmSans,
+    return Obx(() {
+      final pair = widget.ctrl.currentPair.value;
+      final pairMax = pair?.leverageMax ?? 100;
+      final pairMin = pair?.leverageMin ?? 1;
+      final userMax = widget.ctrl.userMaxLeverage.value;
+      final effectiveMax = pairMax < userMax ? pairMax : userMax;
+      final next = widget.ctrl.leverageTierNext.value;
+
+      // Clamp current if above effectiveMax
+      if (_current > effectiveMax) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _current = effectiveMax);
+        });
+      }
+
+      // Tier quick-pick buttons — same as website [5, 20, 50, 75, 100]
+      final tierButtons = [5, 20, 50, 75, 100];
+
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Adjust Leverage',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: const Icon(Icons.close, color: Colors.white54, size: 20),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: futureCard2,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: futureBorder),
+            const SizedBox(height: 6),
+            const Text(
+              'Leverage changes apply to both positions and orders.',
+              style: TextStyle(fontSize: 11, color: Colors.white38, fontFamily: futureDmSans),
             ),
-            child: Text(
-              '${leverage}x',
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: futureTextWhite,
-                fontFamily: futureDmSans,
+            const SizedBox(height: 14),
+
+            // Tier quick-pick buttons
+            Row(
+              children: tierButtons.map((lv) {
+                final locked = lv > effectiveMax;
+                final active = !locked && _current == lv;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: locked ? null : () => setState(() => _current = lv),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: active ? const Color(0x1FCCFF00) : futureCard2,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: active ? const Color(0xFFCCFF00) : futureBorder,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        locked ? '🔒${lv}x' : '${lv}x',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: futureDmSans,
+                          color: locked
+                              ? Colors.white24
+                              : active
+                                  ? const Color(0xFFCCFF00)
+                                  : futureTextWhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+
+            // Hint: max + next requirement
+            if (userMax < pairMax) ...[
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(fontSize: 11, fontFamily: futureDmSans),
+                  children: [
+                    const TextSpan(text: 'Your max is ', style: TextStyle(color: Colors.white38)),
+                    TextSpan(
+                      text: '${userMax}x',
+                      style: const TextStyle(color: Color(0xFFCCFF00), fontWeight: FontWeight.w700),
+                    ),
+                    if (next != null) ...[
+                      TextSpan(text: ' — ${next['requirement']}', style: const TextStyle(color: Colors.white38)),
+                      TextSpan(
+                        text: ' to unlock ${next['leverage']}x',
+                        style: const TextStyle(color: Colors.white54),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // Current value display
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                decoration: BoxDecoration(
+                  color: futureCard2,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: futureBorder),
+                ),
+                child: Text(
+                  '${_current}x',
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
-            children: leverageOptions.map((val) {
-              final active = leverage == val;
-              return GestureDetector(
-                onTap: () => onSelected(val),
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: futureCard2,
-                    border: Border.all(
-                      color: active ? futureTextWhite : Colors.transparent,
-                      width: 1.5,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '${val}x',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: futureTextWhite,
-                      fontFamily: futureDmSans,
-                    ),
-                  ),
+            const SizedBox(height: 14),
+
+            // Slider
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: const Color(0xFFCCFF00),
+                inactiveTrackColor: futureBorder,
+                thumbColor: const Color(0xFFCCFF00),
+                overlayColor: const Color(0x1FCCFF00),
+                trackHeight: 3,
+              ),
+              child: Slider(
+                min: pairMin.toDouble(),
+                max: effectiveMax.toDouble(),
+                value: _current.toDouble().clamp(pairMin.toDouble(), effectiveMax.toDouble()),
+                onChanged: (v) => setState(() => _current = v.round()),
+              ),
+            ),
+
+            // Tick labels
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [pairMin, effectiveMax ~/ 4, effectiveMax ~/ 2, (effectiveMax * 3) ~/ 4, effectiveMax]
+                    .map((v) => Text('${v}x', style: const TextStyle(fontSize: 10, color: Colors.white38, fontFamily: futureDmSans)))
+                    .toList(),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Confirm button
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: () => widget.onSelected(_current),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFCCFF00),
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
                 ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
+                child: const Text(
+                  'Confirm',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, fontFamily: futureDmSans),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
