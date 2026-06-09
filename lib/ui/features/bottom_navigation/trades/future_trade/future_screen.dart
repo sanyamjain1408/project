@@ -439,6 +439,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
               leverage: _leverage,
               ctrl: _ctrl,
               onSelected: (val) => setState(() { _leverage = val; _showLevModal = false; }),
+              onCancel: () => setState(() => _showLevModal = false),
             ),
           ),
         ]),

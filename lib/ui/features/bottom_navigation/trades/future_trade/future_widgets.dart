@@ -3567,12 +3567,14 @@ class FutureLeverageModal extends StatefulWidget {
   final int leverage;
   final NewFutureController ctrl;
   final void Function(int val) onSelected;
+  final VoidCallback? onCancel;
 
   const FutureLeverageModal({
     super.key,
     required this.leverage,
     required this.ctrl,
     required this.onSelected,
+    this.onCancel,
   });
 
   @override
@@ -3623,7 +3625,7 @@ class _FutureLeverageModalState extends State<FutureLeverageModal> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: futureTextWhite, fontFamily: futureDmSans),
                 ),
                 GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: () => widget.onCancel?.call(),
                   child: const Icon(Icons.close, color: Colors.white54, size: 20),
                 ),
               ],
