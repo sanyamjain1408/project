@@ -63,10 +63,22 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
           final banners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
+          // preload all images before showing popup
+          await _preloadAll(banners);
           if (mounted) setState(() { _banners = banners; _ready = true; });
         }
       }
     } catch (_) {}
+  }
+
+  Future<void> _preloadAll(List<BannerItem> banners) async {
+    for (final b in banners) {
+      if (b.imageUrl != null && b.imageUrl!.isNotEmpty) {
+        try {
+          await precacheImage(NetworkImage(b.imageUrl!), context);
+        } catch (_) {}
+      }
+    }
   }
 
   void _handleClose() {
@@ -95,7 +107,6 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
     final banner = _banners[_index];
     final remaining = _banners.length - _index - 1;
     final screenW = MediaQuery.of(context).size.width;
-    // match mobile web: min(screenW - 32, 340)
     final cardW = (screenW - 32).clamp(0.0, 340.0);
     final btnW = cardW - 48;
 
@@ -156,17 +167,15 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                             child: Stack(
                               children: [
                                 if (banner.imageUrl != null && banner.imageUrl!.isNotEmpty)
-                                  Image.network(
-                                    banner.imageUrl!,
+                                  Image(
+                                    image: NetworkImage(banner.imageUrl!),
                                     width: cardW,
                                     fit: BoxFit.fitWidth,
-                                    // load fast — no fade delay
                                     frameBuilder: (ctx, child, frame, _) => child,
                                     errorBuilder: (_, __, ___) => Container(height: 300, color: const Color(0xFF1a1a1a)),
                                   )
                                 else
                                   Container(height: 300, color: const Color(0xFF1a1a1a)),
-                                // close button
                                 Positioned(
                                   top: 12,
                                   right: 12,
@@ -183,7 +192,6 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                                     ),
                                   ),
                                 ),
-                                // CTA button
                                 Positioned(
                                   bottom: 18,
                                   left: 0,
