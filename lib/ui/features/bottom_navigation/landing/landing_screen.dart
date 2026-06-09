@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
 import 'banner_popup.dart';
+import 'discover_feed.dart';
 
 import '../../../../addons/ico/ico_ui/ico_screen.dart';
 import '../../../../data/local/constants.dart';
@@ -609,8 +610,10 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
   Widget _buildContent() {
     switch (_currentTab) {
       case 0:
-        return _buildBlogsContent();
+        return const DiscoverFeedWidget();
       case 1:
+        return _buildBlogsContent();
+      case 2:
         return const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -621,7 +624,7 @@ class _MarketEmptyStateWidgetState extends State<MarketEmptyStateWidget> {
             ],
           ),
         );
-      case 2:
+      case 3:
         return const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -687,7 +690,7 @@ class CommonTabHeader extends StatefulWidget {
 
 class _CommonTabHeaderState extends State<CommonTabHeader> {
   int _selectedIndex = 0;
-  final List<String> _tabs = [ "Blogs", "News", "Announcement"];
+  final List<String> _tabs = ["Discover", "Blogs", "News", "Announcement"];
 
   @override
   Widget build(BuildContext context) {
