@@ -1,19 +1,36 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:tradexpro_flutter/data/local/api_constants.dart';
+import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/helper/app_helper.dart';
+import 'package:tradexpro_flutter/utils/language_util.dart';
 
-const _base = 'https://api.trapix.com/v1/discover';
+const _baseDiscover = 'https://api.trapix.com/api/v1/discover';
 const _green = Color(0xFFCCFF00);
 const _card  = Color(0xFF15181D);
 const _dim   = Color(0xFF6B7280);
 
+Map<String, String> _discoverHeaders() {
+  final token = GetStorage().read(PreferenceKey.accessToken) ?? '';
+  final type  = GetStorage().read(PreferenceKey.accessType)  ?? 'Bearer';
+  return {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    APIKeyConstants.userApiSecret: dotenv.env[EnvKeyValue.kApiSecret] ?? '',
+    APIKeyConstants.lang: LanguageUtil.getCurrentKey(),
+    if (token.toString().isNotEmpty) APIKeyConstants.authorization: '$type $token',
+  };
+}
+
 String _timeAgo(String? s) {
   if (s == null || s.isEmpty) return '';
   final iso = s.contains('T') ? s : s.replaceFirst(' ', 'T');
-  final d = DateTime.tryParse(iso.endsWith('Z') ? iso : iso + 'Z');
+  final d = DateTime.tryParse(iso.endsWith('Z') ? iso : '${iso}Z');
   if (d == null) return '';
   final diff = DateTime.now().toUtc().difference(d);
   if (diff.inSeconds < 60) return 'now';
@@ -25,21 +42,13 @@ String _timeAgo(String? s) {
 
 String _fmt(int n) {
   if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1).replaceAll(RegExp(r"\.0$"), "")}M';
-  if (n >= 1000) return '${(n / 1000).toStringAsFixed(1).replaceAll(RegExp(r"\.0$"), "")}k';
+  if (n >= 1000)    return '${(n / 1000).toStringAsFixed(1).replaceAll(RegExp(r"\.0$"), "")}k';
   return '$n';
-}
-
-Map<String, String> _authHeaders() {
-  final token = GetStorage().read('access_token') ?? '';
-  return {
-    'Content-Type': 'application/json',
-    if (token.toString().isNotEmpty) 'Authorization': 'Bearer $token',
-  };
 }
 
 Future<Map<String, dynamic>?> _apiGet(String url) async {
   try {
-    final res = await http.get(Uri.parse(url), headers: _authHeaders());
+    final res = await http.get(Uri.parse(url), headers: _discoverHeaders());
     if (res.statusCode == 200) return jsonDecode(res.body);
   } catch (_) {}
   return null;
@@ -47,7 +56,7 @@ Future<Map<String, dynamic>?> _apiGet(String url) async {
 
 Future<Map<String, dynamic>?> _apiPost(String url, Map body) async {
   try {
-    final res = await http.post(Uri.parse(url), headers: _authHeaders(), body: jsonEncode(body));
+    final res = await http.post(Uri.parse(url), headers: _discoverHeaders(), body: jsonEncode(body));
     if (res.statusCode == 200) return jsonDecode(res.body);
   } catch (_) {}
   return null;
@@ -62,10 +71,7 @@ class DiscoverPost {
   final String? body;
   final String? image;
   final List<Map<String, String>> tickers;
-  int likeCount;
-  int commentCount;
-  int repostCount;
-  int viewCount;
+  int likeCount, commentCount, repostCount, viewCount;
   bool liked;
   final String createdAt;
   final bool isMine;
@@ -74,8 +80,8 @@ class DiscoverPost {
     required this.id, required this.authorName, this.authorAvatar,
     required this.isVerified, required this.authorType, this.body, this.image,
     required this.tickers, required this.likeCount, required this.commentCount,
-    required this.repostCount, required this.viewCount, required this.liked,
-    required this.createdAt, required this.isMine,
+    required this.repostCount, required this.viewCount,
+    required this.liked, required this.createdAt, required this.isMine,
   });
 
   factory DiscoverPost.fromJson(Map<String, dynamic> j) => DiscoverPost(
@@ -99,7 +105,6 @@ class DiscoverPost {
   );
 }
 
-// ─── Main feed widget ────────────────────────────────────────────────────────
 class DiscoverFeedWidget extends StatefulWidget {
   const DiscoverFeedWidget({super.key});
   @override
@@ -123,72 +128,59 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
   }
 
   @override
-  void dispose() {
-    _scrollCtrl.dispose();
-    super.dispose();
-  }
+  void dispose() { _scrollCtrl.dispose(); super.dispose(); }
 
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 400) {
-      _loadMore();
-    }
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 400) _loadMore();
   }
 
   Future<void> _load() async {
-    final res = await _apiGet('$_base/feed?page=1&limit=$_pageSize');
-    if (mounted) {
-      setState(() {
-        _loading = false;
-        if (res?['success'] == true) {
-          _posts = (res!['data'] as List).map((e) => DiscoverPost.fromJson(e)).toList();
-          _hasMore = _posts.length >= _pageSize;
-          _page = 1;
-        }
-      });
-    }
+    final res = await _apiGet('$_baseDiscover/feed?page=1&limit=$_pageSize');
+    if (mounted) setState(() {
+      _loading = false;
+      if (res?['success'] == true) {
+        _posts = (res!['data'] as List).map((e) => DiscoverPost.fromJson(e)).toList();
+        _hasMore = _posts.length >= _pageSize;
+        _page = 1;
+      }
+    });
   }
 
   Future<void> _loadMore() async {
     if (_loadingMore || !_hasMore) return;
     setState(() => _loadingMore = true);
     final next = _page + 1;
-    final res = await _apiGet('$_base/feed?page=$next&limit=$_pageSize');
-    if (mounted) {
-      setState(() {
-        _loadingMore = false;
-        if (res?['success'] == true) {
-          final data = (res!['data'] as List).map((e) => DiscoverPost.fromJson(e)).toList();
-          final existing = _posts.map((p) => p.id).toSet();
-          _posts.addAll(data.where((p) => !existing.contains(p.id)));
-          _hasMore = data.length >= _pageSize;
-          _page = next;
-        }
-      });
-    }
+    final res = await _apiGet('$_baseDiscover/feed?page=$next&limit=$_pageSize');
+    if (mounted) setState(() {
+      _loadingMore = false;
+      if (res?['success'] == true) {
+        final data = (res!['data'] as List).map((e) => DiscoverPost.fromJson(e)).toList();
+        final existing = _posts.map((p) => p.id).toSet();
+        _posts.addAll(data.where((p) => !existing.contains(p.id)));
+        _hasMore = data.length >= _pageSize;
+        _page = next;
+      }
+    });
   }
 
   void _toggleLike(DiscoverPost post) {
-    final tok = (GetStorage().read('access_token') ?? '').toString();
+    final tok = (GetStorage().read(PreferenceKey.accessToken) ?? '').toString();
     if (tok.isEmpty) return;
     setState(() { post.liked = !post.liked; post.likeCount += post.liked ? 1 : -1; });
-    _apiPost('$_base/like', {'post_id': post.id});
+    _apiPost('$_baseDiscover/like', {'post_id': post.id});
   }
 
-  void _openComments(DiscoverPost post) {
-    showModalBottomSheet(
-      context: context, isScrollControlled: true,
-      backgroundColor: _card,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => _CommentsSheet(post: post),
-    );
-  }
+  void _openComments(DiscoverPost post) => showModalBottomSheet(
+    context: context, isScrollControlled: true, backgroundColor: _card,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+    builder: (_) => _CommentsSheet(post: post),
+  );
 
   void _openComposer() {
-    final tok = (GetStorage().read('access_token') ?? '').toString();
+    final tok = (GetStorage().read(PreferenceKey.accessToken) ?? '').toString();
     if (tok.isEmpty) return;
     showModalBottomSheet(
-      context: context, isScrollControlled: true,
-      backgroundColor: _card,
+      context: context, isScrollControlled: true, backgroundColor: _card,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => _ComposerSheet(onPosted: (p) => setState(() => _posts.insert(0, p))),
     );
@@ -196,53 +188,38 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
-    }
-    if (_posts.isEmpty) {
-      return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No posts yet.', style: TextStyle(color: _dim, fontSize: 13))));
-    }
-    return Stack(
-      children: [
-        ListView.builder(
-          controller: _scrollCtrl, shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _posts.length + 1,
-          itemBuilder: (ctx, i) {
-            if (i == _posts.length) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: _loadingMore
-                  ? const CircularProgressIndicator(color: _green, strokeWidth: 2)
-                  : Text(_hasMore ? '' : "You're all caught up", style: const TextStyle(color: _dim, fontSize: 12))),
-              );
-            }
-            return _PostCard(
-              post: _posts[i],
-              onLike: () => _toggleLike(_posts[i]),
-              onComment: () => _openComments(_posts[i]),
-              onDelete: () { _apiPost('$_base/delete', {'post_id': _posts[i].id}); setState(() => _posts.removeAt(i)); },
-            );
-          },
-        ),
-        Positioned(
-          right: 16, bottom: 16,
-          child: GestureDetector(
-            onTap: _openComposer,
-            child: Container(
-              width: 52, height: 52,
-              decoration: BoxDecoration(color: _green, shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: _green.withOpacity(0.4), blurRadius: 16, spreadRadius: 2)]),
-              child: const Icon(Icons.add, color: Color(0xFF0A0C0F), size: 28),
-            ),
-          ),
-        ),
-      ],
-    );
+    if (_loading) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
+    if (_posts.isEmpty) return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No posts yet.', style: TextStyle(color: _dim, fontSize: 13))));
+    return Stack(children: [
+      ListView.builder(
+        controller: _scrollCtrl, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+        itemCount: _posts.length + 1,
+        itemBuilder: (ctx, i) {
+          if (i == _posts.length) return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: _loadingMore
+              ? const CircularProgressIndicator(color: _green, strokeWidth: 2)
+              : Text(_hasMore ? '' : "You're all caught up", style: const TextStyle(color: _dim, fontSize: 12))),
+          );
+          return _PostCard(
+            post: _posts[i],
+            onLike: () => _toggleLike(_posts[i]),
+            onComment: () => _openComments(_posts[i]),
+            onDelete: () { _apiPost('$_baseDiscover/delete', {'post_id': _posts[i].id}); setState(() => _posts.removeAt(i)); },
+          );
+        },
+      ),
+      Positioned(right: 16, bottom: 16,
+        child: GestureDetector(onTap: _openComposer, child: Container(
+          width: 52, height: 52,
+          decoration: BoxDecoration(color: _green, shape: BoxShape.circle,
+            boxShadow: [BoxShadow(color: _green.withOpacity(0.4), blurRadius: 16, spreadRadius: 2)]),
+          child: const Icon(Icons.add, color: Color(0xFF0A0C0F), size: 28),
+        ))),
+    ]);
   }
 }
 
-// ─── Post card ───────────────────────────────────────────────────────────────
 class _PostCard extends StatefulWidget {
   final DiscoverPost post;
   final VoidCallback onLike, onComment, onDelete;
@@ -258,7 +235,7 @@ class _PostCardState extends State<_PostCard> {
     final p = widget.post;
     final body = p.body ?? '';
     final long = body.length > 180;
-    final shown = _expanded || !long ? body : '${body.substring(0, 180)}…';
+    final shown = _expanded || !long ? body : '${body.substring(0, 180)}...';
     return Container(
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1C1F26)))),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
@@ -309,10 +286,10 @@ class _PostCardState extends State<_PostCard> {
             _EngBtn(icon: p.liked ? Icons.favorite : Icons.favorite_border, count: p.likeCount,
               color: p.liked ? const Color(0xFFEA3943) : null, onTap: widget.onLike),
             _EngBtn(icon: Icons.bar_chart, count: p.viewCount, onTap: () {}),
-            Row(children: [
-              const Icon(Icons.bookmark_border, color: _dim, size: 16),
-              const SizedBox(width: 14),
-              const Icon(Icons.ios_share, color: _dim, size: 16),
+            const Row(children: [
+              Icon(Icons.bookmark_border, color: _dim, size: 16),
+              SizedBox(width: 14),
+              Icon(Icons.ios_share, color: _dim, size: 16),
             ]),
           ]),
         ])),
@@ -370,7 +347,6 @@ class _AvatarWidgetState extends State<_AvatarWidget> {
   );
 }
 
-// ─── Comments sheet ──────────────────────────────────────────────────────────
 class _CommentsSheet extends StatefulWidget {
   final DiscoverPost post;
   const _CommentsSheet({required this.post});
@@ -384,13 +360,13 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   @override
   void initState() {
     super.initState();
-    _apiGet('$_base/comments?post_id=${widget.post.id}').then((res) {
+    _apiGet('$_baseDiscover/comments?post_id=${widget.post.id}').then((res) {
       if (res?['success'] == true && mounted) setState(() => _comments = res!['data'] ?? []);
     });
   }
   void _submit() async {
     if (_ctrl.text.trim().isEmpty) return;
-    final res = await _apiPost('$_base/comment', {'post_id': widget.post.id, 'body': _ctrl.text.trim()});
+    final res = await _apiPost('$_baseDiscover/comment', {'post_id': widget.post.id, 'body': _ctrl.text.trim()});
     if (res?['success'] == true && mounted) { setState(() => _comments.insert(0, res!['data'])); _ctrl.clear(); }
   }
   @override
@@ -432,7 +408,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             controller: _ctrl,
             style: const TextStyle(color: Colors.white, fontSize: 13),
             decoration: InputDecoration(
-              hintText: 'Add a comment…', hintStyle: const TextStyle(color: _dim, fontSize: 13),
+              hintText: 'Add a comment...', hintStyle: const TextStyle(color: _dim, fontSize: 13),
               filled: true, fillColor: const Color(0xFF0E1117),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Color(0xFF232A36))),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Color(0xFF232A36))),
@@ -452,7 +428,6 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   );
 }
 
-// ─── Composer sheet ──────────────────────────────────────────────────────────
 class _ComposerSheet extends StatefulWidget {
   final void Function(DiscoverPost) onPosted;
   const _ComposerSheet({required this.onPosted});
@@ -468,9 +443,9 @@ class _ComposerSheetState extends State<_ComposerSheet> {
     if (_ctrl.text.trim().isEmpty && _image == null) return;
     setState(() => _posting = true);
     try {
-      final uri = Uri.parse('$_base/post');
+      final uri = Uri.parse('$_baseDiscover/post');
       final request = http.MultipartRequest('POST', uri);
-      final headers = _authHeaders()..remove('Content-Type');
+      final headers = _discoverHeaders()..remove('Content-Type');
       request.headers.addAll(headers);
       request.fields['body'] = _ctrl.text.trim();
       if (_image != null) request.files.add(await http.MultipartFile.fromPath('image', _image!.path));
@@ -484,7 +459,7 @@ class _ComposerSheetState extends State<_ComposerSheet> {
     padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
     child: Container(padding: const EdgeInsets.all(16), child: Column(mainAxisSize: MainAxisSize.min, children: [
       Row(children: [
-        GestureDetector(onTap: () => Navigator.pop(context), child: const Text('×', style: TextStyle(color: Colors.white, fontSize: 24))),
+        GestureDetector(onTap: () => Navigator.pop(context), child: const Text('x', style: TextStyle(color: Colors.white, fontSize: 24))),
         const Spacer(),
         const Text('New Post', style: TextStyle(color: _dim, fontSize: 13, fontWeight: FontWeight.w600)),
       ]),
@@ -510,7 +485,7 @@ class _ComposerSheetState extends State<_ComposerSheet> {
         GestureDetector(onTap: _posting ? null : _submit, child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 9),
           decoration: BoxDecoration(color: _posting ? _green.withOpacity(0.5) : _green, borderRadius: BorderRadius.circular(22)),
-          child: Text(_posting ? 'Posting…' : 'Post', style: const TextStyle(color: Color(0xFF0A0C0F), fontWeight: FontWeight.w800, fontSize: 14)),
+          child: Text(_posting ? 'Posting...' : 'Post', style: const TextStyle(color: Color(0xFF0A0C0F), fontWeight: FontWeight.w800, fontSize: 14)),
         )),
       ]),
     ])),
