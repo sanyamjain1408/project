@@ -38,7 +38,6 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
   List<BannerItem> _banners = [];
   int _index = 0;
   bool _ready = false;
-  bool _animating = false;
   late final AnimationController _animCtrl;
   late final Animation<double> _scaleAnim;
   late final Animation<double> _opacityAnim;
@@ -46,7 +45,7 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 220))
+    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 180))
       ..forward();
     _scaleAnim = Tween<double>(begin: 0.9, end: 1.0).animate(
       CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut),
@@ -63,27 +62,18 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
-          if (mounted) {
-            setState(() {
-              _banners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
-              _ready = true;
-            });
-          }
+          final banners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
+          if (mounted) setState(() { _banners = banners; _ready = true; });
         }
       }
     } catch (_) {}
   }
 
   void _handleClose() {
-    if (_animating) return;
     if (_index < _banners.length - 1) {
-      setState(() => _animating = true);
       _animCtrl.reverse().then((_) {
         if (mounted) {
-          setState(() {
-            _index++;
-            _animating = false;
-          });
+          setState(() => _index++);
           _animCtrl.forward();
         }
       });
@@ -105,7 +95,9 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
     final banner = _banners[_index];
     final remaining = _banners.length - _index - 1;
     final screenW = MediaQuery.of(context).size.width;
-    final cardW = (screenW - 32).clamp(0.0, 502.0);
+    // match mobile web: min(screenW - 32, 340)
+    final cardW = (screenW - 32).clamp(0.0, 340.0);
+    final btnW = cardW - 48;
 
     return GestureDetector(
       onTap: _handleClose,
@@ -120,7 +112,7 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Stack(
-                    alignment: Alignment.center,
+                    alignment: Alignment.topCenter,
                     children: [
                       if (remaining >= 2)
                         Positioned(
@@ -168,10 +160,13 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                                     banner.imageUrl!,
                                     width: cardW,
                                     fit: BoxFit.fitWidth,
+                                    // load fast — no fade delay
+                                    frameBuilder: (ctx, child, frame, _) => child,
                                     errorBuilder: (_, __, ___) => Container(height: 300, color: const Color(0xFF1a1a1a)),
                                   )
                                 else
                                   Container(height: 300, color: const Color(0xFF1a1a1a)),
+                                // close button
                                 Positioned(
                                   top: 12,
                                   right: 12,
@@ -188,6 +183,7 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                                     ),
                                   ),
                                 ),
+                                // CTA button
                                 Positioned(
                                   bottom: 18,
                                   left: 0,
@@ -196,7 +192,7 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                                     child: GestureDetector(
                                       onTap: () => widget.onClose?.call(),
                                       child: Container(
-                                        width: cardW - 48,
+                                        width: btnW,
                                         height: 44,
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
