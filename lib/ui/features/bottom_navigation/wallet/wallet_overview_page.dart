@@ -1146,7 +1146,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
         elevation: 0,
         scrolledUnderElevation: 0,
 
-        leadingWidth: 40, // default 56 hota hai
+        leadingWidth: 30, // default 56 hota hai
 
         titleSpacing: 0, // gap remove
 
@@ -1160,6 +1160,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
           controller: _tabController,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
+          labelPadding: const EdgeInsets.only(right: 16),
           labelColor: _white,
           unselectedLabelColor: Colors.white.withOpacity(0.5),
 
