@@ -1613,7 +1613,7 @@ class _PositionCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _CardBtn(label: 'Leverage', onTap: onLeverageTap),
+                child: _CardBtn(label: 'Leverage', onTap: () {}),
               ),
               const SizedBox(width: 20),
               Expanded(

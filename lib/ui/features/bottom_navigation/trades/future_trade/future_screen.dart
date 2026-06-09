@@ -51,6 +51,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   bool _showChart = false;
   bool _isFavourite = false;
   bool _showMarginModal = false;
+  bool _showLevModal = false;
   bool _showOrderTypeDropdown = false;
   String _bookFilter = 'all';
   String _bookPrecision = '0.01';
@@ -400,7 +401,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
                     onOrderTypeChanged: (v) => setState(() => _orderType = v),
                     onSliderPct: _applyPct,
                     onMarginModeTap: () => setState(() => _showMarginModal = true),
-                    onLeverageTap: () {},
+                    onLeverageTap: () => setState(() => _showLevModal = true),
                     onBuySellChanged: (v) => setState(() => _buySell = v),
                     onPlaceOrder: () => _placeOrder(pair, marginVal),
                   ),
@@ -411,7 +412,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
                 pair: pair, pp: pp, bottomTab: _bottomTab, ctrl: _ctrl,
                 onTabChanged: (t) => setState(() => _bottomTab = t),
                 onTpSlTap: (pos) => FutureTpSlModal.show(context, pos, pp, _ctrl),
-                onLeverageTap: () {},
+                onLeverageTap: () => setState(() => _showLevModal = true),
               ),
             ]),
           )),
@@ -432,7 +433,14 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
             onDismiss: () => setState(() { _showMarginModal = false; }),
             content: FutureMarginModeModal(marginMode: _marginMode, ctrl: _ctrl, onSelected: (mode) => setState(() { _marginMode = mode; _showMarginModal = false; })),
           ),
-
+          if (_showLevModal) FutureOverlayModal(
+            onDismiss: () => setState(() { _showLevModal = false; }),
+            content: FutureLeverageModal(
+              leverage: _leverage,
+              ctrl: _ctrl,
+              onSelected: (val) => setState(() { _leverage = val; _showLevModal = false; }),
+            ),
+          ),
         ]),
       ),
     );
