@@ -58,7 +58,6 @@ class _McStakingScreenState extends State<McStakingScreen> {
   McStakingPlan? _selectedPlan;
   McRateRule? _selectedRule;
   String _filterDuration = 'All';
-  int _step = 1;
   final _amountCtrl = TextEditingController();
   Timer? _calcTimer;
   double _perSec = 0;
@@ -88,7 +87,6 @@ class _McStakingScreenState extends State<McStakingScreen> {
       _selectedPlan = null;
       _selectedRule = null;
       _filterDuration = 'All';
-      _step = 2;
       _amountCtrl.clear();
       _c.calcResult.value = null;
     });
@@ -99,7 +97,6 @@ class _McStakingScreenState extends State<McStakingScreen> {
     setState(() {
       _selectedPlan = plan;
       _selectedRule = rule;
-      _step = 3;
       _amountCtrl.clear();
       _c.calcResult.value = null;
       _perSec = 0;
@@ -138,26 +135,185 @@ class _McStakingScreenState extends State<McStakingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHero(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildCoinList(),
-                const SizedBox(height: 20),
-                _buildNavCards(),
-              ],
-            ),
-          ),
+          // Row(
+          //   children: [
+          //     Expanded(
+          //       child: GestureDetector(
+          //         onTap: () => Get.to(() => const McMyStakesScreen()),
+          //         child: Container(
+          //           height: 40,
+          //           decoration: BoxDecoration(
+          //             color: const Color(0xFFCCFF00),
+          //             borderRadius: BorderRadius.circular(10),
+          //           ),
+          //           alignment: Alignment.center,
+          //           child: const Text(
+          //             'My Stake',
+          //             style: TextStyle(
+          //               color: Color(0xFF111111),
+          //               fontSize: 15,
+          //               fontWeight: FontWeight.w400,
+          //               fontFamily: 'DMSans',
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //     ),
+          //     const SizedBox(width: 14),
+          //     Expanded(
+          //       child: GestureDetector(
+          //         onTap: () => Get.to(() => const McPortfolioScreen()),
+          //         child: Container(
+          //           height: 40,
+          //           decoration: BoxDecoration(
+          //             color: const Color(0xFF1A1A1A),
+          //             borderRadius: BorderRadius.circular(10),
+          //           ),
+          //           alignment: Alignment.center,
+          //           child: const Text(
+          //             'Live Dashboard',
+          //             style: TextStyle(
+          //               color: Colors.white,
+          //               fontSize: 15,
+          //               fontWeight: FontWeight.w400,
+          //               fontFamily: 'DMSans',
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 20),
+           _buildStatsGrid(),
+          const SizedBox(height: 10),
+          _buildCoinList(),
+          const SizedBox(height: 20),
+          _buildNavCards(),
         ],
       ),
     );
   }
+  Widget _buildStatsGrid() {
+    return Obx(() {
+      final stats = _c.statistics.value;
+      final p = _c.portfolio.value;
+
+      // Staking Value = sum of stakedAmount of all active stakes (coin units, no price conversion)
+      final stakingValue = p == null
+          ? 0.0
+          : p.portfolio.fold(0.0, (s, i) => s + i.stakedAmount);
+
+      // Total Reward = live earning from _StakingLiveHero ticker via controller
+      final totalReward = _c.liveEarningUsdt.value;
+
+      final items = [
+        {
+          'label': 'Staking Value',
+          'value': stakingValue.toStringAsFixed(2),
+          'sub': 'Staked',
+          'color': const Color(0xFFCCFF00),
+          'icon': '💼',
+        },
+        {
+          'label': 'Active Stakes',
+          'value': '${stats?.totalActiveStakes ?? 0}',
+          'sub': 'Positions',
+          'color': const Color(0xFFE946FF),
+          'icon': '📈',
+        },
+        {
+          'label': 'Total Reward',
+          'value': totalReward.toStringAsFixed(4),
+          'sub': 'All time',
+          'color': const Color(0xFF00B052),
+          'icon': '💰',
+        },
+        {
+          'label': 'Referrals',
+          'value': '${stats?.totalReferralCommissions ?? 0}',
+          'sub': 'Commissions',
+          'color': const Color(0xFF00E5FF),
+          'icon': '🔗',
+        },
+      ];
+    return Transform.translate(
+      offset: const Offset(0, -10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: items.map((item) {
+            return Container(
+              width: 160,
+              margin: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item['label'] as String,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'DMSans',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        item['icon'] as String,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    item['value'] as String,
+                    style: TextStyle(
+                      color: item['color'] as Color,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    item['sub'] as String,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+    });
+  }
+
 
   // ── COIN LIST (overview style) ────────────────────────────────────────────
   Widget _buildCoinList() {
@@ -185,7 +341,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Staking',
+            'Products',
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -193,7 +349,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
               fontFamily: 'DMSans',
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           ..._c.coins.map((coin) {
             final isExpanded = _selectedCoin?.id == coin.id;
             return Column(
@@ -214,7 +370,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
                   },
                   child: Container(
                     color: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.only(bottom: 20),
                     child: Row(
                       children: [
                         _coinImg(coin.logo, size: 34, symbol: coin.symbol),
@@ -248,7 +404,6 @@ class _McStakingScreenState extends State<McStakingScreen> {
                         ),
                         Obx(() {
                           final dur = _c.coinDurations[coin.id];
-                          if (dur == null) return const SizedBox.shrink();
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: ShaderMask(
@@ -263,7 +418,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
                                 stops: [0.0, 0.5326, 1.0],
                               ).createShader(bounds),
                               child: Text(
-                                dur,
+                                dur ?? 'Coming Soon',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -472,204 +627,6 @@ class _McStakingScreenState extends State<McStakingScreen> {
     });
   }
 
-  // ── HERO ──────────────────────────────────────────────────────────────────
-  Widget _buildHero() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.25),
-            width: 1,
-          ),
-        ),
-        child: Stack(
-          clipBehavior: Clip.hardEdge,
-          children: [
-            Positioned(
-              right: -140,
-              top: -55,
-              child: Transform.rotate(
-                angle: -0.4,
-                child: Opacity(
-                  opacity: 0.5,
-                  child: Image.asset(
-                    'assets/images/wallet_green_wave.png',
-                    width: 340,
-                    height: 350,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Buttons row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => Get.to(() => const McPortfolioScreen()),
-                          child: Container(
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: _green,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'Live Dashboard',
-                              style: TextStyle(
-                                color: Color(0xFF111111),
-                                fontSize: 16,
-                                height: 26 / 16,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: "DMSans",
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => Get.to(() => const McMyStakesScreen()),
-                          child: Container(
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1A1A1A),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'My Stake',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                height: 26 / 16,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: "DMSans",
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-                  // Step indicator
-                  _buildSteps(),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSteps() {
-    final steps = ['Select Coin', 'Choose Plan', 'Stake Now'];
-    return Column(
-      children: [
-        // Labels row
-        Row(
-          children: List.generate(3, (i) {
-            final isFuture = _step < i + 1;
-            return Expanded(
-              child: Text(
-                steps[i],
-                textAlign: i == 0
-                    ? TextAlign.left
-                    : i == 2
-                    ? TextAlign.right
-                    : TextAlign.center,
-                style: TextStyle(
-                  color: isFuture ? Colors.white : Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: "DMSans",
-                ),
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: 10),
-        // Circles + connecting lines
-        SizedBox(
-          height: 36,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Left line (step 1 → step 2)
-              Positioned(
-                left: 18,
-                right: MediaQuery.of(context).size.width / 2 - 16,
-                child: Container(
-                  height: 2,
-                  color: _step > 1 ? _green : Colors.white.withOpacity(0.5),
-                ),
-              ),
-              // Right line (step 2 → step 3)
-              Positioned(
-                left: MediaQuery.of(context).size.width / 2 - 16,
-                right: 18,
-                child: Container(
-                  height: 2,
-                  color: _step > 2 ? _green : Colors.white.withOpacity(0.5),
-                ),
-              ),
-              // The 3 circles
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(3, (i) {
-                  final n = i + 1;
-                  final isActive = _step == n;
-                  final isDone = _step > n;
-                  return _stepCircle(n, isActive, isDone);
-                }),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _stepCircle(int n, bool isActive, bool isDone) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isDone ? _green : const Color(0xFF111111),
-        border: Border.all(
-          color: (isActive || isDone) ? _green : Colors.white.withOpacity(0.5),
-          width: 2,
-        ),
-      ),
-      child: Center(
-        child: isDone
-            ? const Icon(Icons.check, color: Colors.black, size: 16)
-            : isActive
-            ? Container(
-                width: 18,
-                height: 18,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _green,
-                ),
-              )
-            : null,
-      ),
-    );
-  }
 
   // ── MAIN CARD ─────────────────────────────────────────────────────────────
   Widget _buildMainCard() {

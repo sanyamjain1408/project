@@ -62,6 +62,7 @@ class McStakingController extends GetxController {
   final Rx<McPortfolioData?> portfolio = Rx(null);
   final Rx<McStatistics?> statistics = Rx(null);
   final Rx<McCalcResult?> calcResult = Rx(null);
+  final liveEarningUsdt = 0.0.obs;
 
   final isLoadingCoins = false.obs;
   final isLoadingPlans = false.obs;
