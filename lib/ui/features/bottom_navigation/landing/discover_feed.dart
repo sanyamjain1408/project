@@ -10,12 +10,12 @@ import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/language_util.dart';
 
-const _baseDiscover = 'https://api.trapix.com/api/v1/discover';
+const _discoverBase = 'https://api.trapix.com/api/v1/discover';
 const _green = Color(0xFFCCFF00);
 const _card  = Color(0xFF15181D);
 const _dim   = Color(0xFF6B7280);
 
-Map<String, String> _discoverHeaders() {
+Map<String, String> _headers() {
   final token = GetStorage().read(PreferenceKey.accessToken) ?? '';
   final type  = GetStorage().read(PreferenceKey.accessType)  ?? 'Bearer';
   return {
@@ -46,22 +46,23 @@ String _fmt(int n) {
   return '$n';
 }
 
-Future<Map<String, dynamic>?> _apiGet(String url) async {
+Future<Map<String, dynamic>?> _get(String url) async {
   try {
-    final res = await http.get(Uri.parse(url), headers: _discoverHeaders());
+    final res = await http.get(Uri.parse(url), headers: _headers());
     if (res.statusCode == 200) return jsonDecode(res.body);
   } catch (_) {}
   return null;
 }
 
-Future<Map<String, dynamic>?> _apiPost(String url, Map body) async {
+Future<Map<String, dynamic>?> _post(String url, Map body) async {
   try {
-    final res = await http.post(Uri.parse(url), headers: _discoverHeaders(), body: jsonEncode(body));
+    final res = await http.post(Uri.parse(url), headers: _headers(), body: jsonEncode(body));
     if (res.statusCode == 200) return jsonDecode(res.body);
   } catch (_) {}
   return null;
 }
 
+// ─── Models ──────────────────────────────────────────────────────────────────
 class DiscoverPost {
   final int id;
   final String authorName;
@@ -85,26 +86,83 @@ class DiscoverPost {
   });
 
   factory DiscoverPost.fromJson(Map<String, dynamic> j) => DiscoverPost(
-    id: j['id'] ?? 0,
-    authorName: j['author_name'] ?? '',
-    authorAvatar: j['author_avatar'],
-    isVerified: j['is_verified'] == true,
-    authorType: j['author_type'] ?? '',
-    body: j['body'],
-    image: j['image'],
+    id: j['id'] ?? 0, authorName: j['author_name'] ?? '',
+    authorAvatar: j['author_avatar'], isVerified: j['is_verified'] == true,
+    authorType: j['author_type'] ?? '', body: j['body'], image: j['image'],
     tickers: (j['tickers'] as List? ?? [])
-        .map((t) => {'symbol': '${t['symbol']}', 'change': '${t['change']}'})
-        .toList(),
-    likeCount: j['like_count'] ?? 0,
-    commentCount: j['comment_count'] ?? 0,
-    repostCount: j['repost_count'] ?? 0,
-    viewCount: j['view_count'] ?? 0,
-    liked: j['liked'] == true,
-    createdAt: j['created_at'] ?? '',
-    isMine: j['is_mine'] == true,
+        .map((t) => {'symbol': '${t['symbol']}', 'change': '${t['change']}'}).toList(),
+    likeCount: j['like_count'] ?? 0, commentCount: j['comment_count'] ?? 0,
+    repostCount: j['repost_count'] ?? 0, viewCount: j['view_count'] ?? 0,
+    liked: j['liked'] == true, createdAt: j['created_at'] ?? '', isMine: j['is_mine'] == true,
   );
 }
 
+class ArticleItem {
+  final int id;
+  final String title;
+  final String? excerpt;
+  final String? image;
+  final String author;
+  final String publishedAt;
+  final String slug;
+  ArticleItem({required this.id, required this.title, this.excerpt, this.image, required this.author, required this.publishedAt, required this.slug});
+  factory ArticleItem.fromJson(Map<String, dynamic> j) => ArticleItem(
+    id: j['id'] ?? 0, title: j['title'] ?? '', excerpt: j['excerpt'],
+    image: j['image'], author: j['author'] ?? '', publishedAt: j['published_at'] ?? '', slug: j['slug'] ?? '',
+  );
+}
+
+// ─── Main tabbed widget (replaces MarketEmptyStateWidget) ────────────────────
+class DiscoverTabsWidget extends StatefulWidget {
+  const DiscoverTabsWidget({super.key});
+  @override
+  State<DiscoverTabsWidget> createState() => _DiscoverTabsWidgetState();
+}
+
+class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
+  int _tab = 0;
+  final _tabs = ['Discover', 'Blogs', 'News', 'Announcement'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      // Tab header
+      Container(
+        color: const Color(0xFF111111),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(_tabs.length, (i) {
+            final active = i == _tab;
+            return GestureDetector(
+              onTap: () => setState(() => _tab = i),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(_tabs[i], style: TextStyle(
+                  color: active ? Colors.white : _dim,
+                  fontWeight: active ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 15,
+                )),
+                const SizedBox(height: 4),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 2, width: active ? 24 : 0,
+                  decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(1)),
+                ),
+              ]),
+            );
+          }),
+        ),
+      ),
+      // Tab content
+      if (_tab == 0) const DiscoverFeedWidget()
+      else if (_tab == 1) const _ArticlesWidget(type: 'blog')
+      else if (_tab == 2) const _ArticlesWidget(type: 'news')
+      else const _AnnouncementWidget(),
+    ]);
+  }
+}
+
+// ─── Discover feed ────────────────────────────────────────────────────────────
 class DiscoverFeedWidget extends StatefulWidget {
   const DiscoverFeedWidget({super.key});
   @override
@@ -118,30 +176,17 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
   bool _hasMore = true;
   int _page = 1;
   static const _pageSize = 20;
-  final _scrollCtrl = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _load();
-    _scrollCtrl.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() { _scrollCtrl.dispose(); super.dispose(); }
-
-  void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 400) _loadMore();
-  }
+  void initState() { super.initState(); _load(); }
 
   Future<void> _load() async {
-    final res = await _apiGet('$_baseDiscover/feed?page=1&limit=$_pageSize');
+    final res = await _get('$_discoverBase/feed?page=1&limit=$_pageSize');
     if (mounted) setState(() {
       _loading = false;
       if (res?['success'] == true) {
         _posts = (res!['data'] as List).map((e) => DiscoverPost.fromJson(e)).toList();
         _hasMore = _posts.length >= _pageSize;
-        _page = 1;
       }
     });
   }
@@ -150,7 +195,7 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
     if (_loadingMore || !_hasMore) return;
     setState(() => _loadingMore = true);
     final next = _page + 1;
-    final res = await _apiGet('$_baseDiscover/feed?page=$next&limit=$_pageSize');
+    final res = await _get('$_discoverBase/feed?page=$next&limit=$_pageSize');
     if (mounted) setState(() {
       _loadingMore = false;
       if (res?['success'] == true) {
@@ -167,7 +212,7 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
     final tok = (GetStorage().read(PreferenceKey.accessToken) ?? '').toString();
     if (tok.isEmpty) return;
     setState(() { post.liked = !post.liked; post.likeCount += post.liked ? 1 : -1; });
-    _apiPost('$_baseDiscover/like', {'post_id': post.id});
+    _post('$_discoverBase/like', {'post_id': post.id});
   }
 
   void _openComments(DiscoverPost post) => showModalBottomSheet(
@@ -191,23 +236,26 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
     if (_loading) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
     if (_posts.isEmpty) return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No posts yet.', style: TextStyle(color: _dim, fontSize: 13))));
     return Stack(children: [
-      ListView.builder(
-        controller: _scrollCtrl, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-        itemCount: _posts.length + 1,
-        itemBuilder: (ctx, i) {
-          if (i == _posts.length) return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: _loadingMore
-              ? const CircularProgressIndicator(color: _green, strokeWidth: 2)
-              : Text(_hasMore ? '' : "You're all caught up", style: const TextStyle(color: _dim, fontSize: 12))),
-          );
-          return _PostCard(
-            post: _posts[i],
-            onLike: () => _toggleLike(_posts[i]),
-            onComment: () => _openComments(_posts[i]),
-            onDelete: () { _apiPost('$_baseDiscover/delete', {'post_id': _posts[i].id}); setState(() => _posts.removeAt(i)); },
-          );
-        },
+      NotificationListener<ScrollNotification>(
+        onNotification: (n) { if (n.metrics.pixels >= n.metrics.maxScrollExtent - 400) _loadMore(); return false; },
+        child: ListView.builder(
+          shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+          itemCount: _posts.length + 1,
+          itemBuilder: (ctx, i) {
+            if (i == _posts.length) return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: _loadingMore
+                ? const CircularProgressIndicator(color: _green, strokeWidth: 2)
+                : Text(_hasMore ? '' : "You're all caught up", style: const TextStyle(color: _dim, fontSize: 12))),
+            );
+            return _PostCard(
+              post: _posts[i],
+              onLike: () => _toggleLike(_posts[i]),
+              onComment: () => _openComments(_posts[i]),
+              onDelete: () { _post('$_discoverBase/delete', {'post_id': _posts[i].id}); setState(() => _posts.removeAt(i)); },
+            );
+          },
+        ),
       ),
       Positioned(right: 16, bottom: 16,
         child: GestureDetector(onTap: _openComposer, child: Container(
@@ -220,6 +268,74 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
   }
 }
 
+// ─── Articles (Blogs / News) ──────────────────────────────────────────────────
+class _ArticlesWidget extends StatefulWidget {
+  final String type;
+  const _ArticlesWidget({required this.type});
+  @override
+  State<_ArticlesWidget> createState() => _ArticlesWidgetState();
+}
+
+class _ArticlesWidgetState extends State<_ArticlesWidget> {
+  List<ArticleItem> _items = [];
+  bool _loading = true;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    final res = await _get('$_discoverBase/articles?type=${widget.type}&page=1&limit=20');
+    if (mounted) setState(() {
+      _loading = false;
+      if (res?['success'] == true) _items = (res!['data'] as List).map((e) => ArticleItem.fromJson(e)).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
+    if (_items.isEmpty) return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('Nothing here yet.', style: TextStyle(color: _dim, fontSize: 13))));
+    return ListView.builder(
+      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      itemCount: _items.length,
+      itemBuilder: (_, i) {
+        final a = _items[i];
+        return Container(
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1C1F26)))),
+          padding: const EdgeInsets.all(14),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (a.image != null && a.image!.isNotEmpty)
+              ClipRRect(borderRadius: BorderRadius.circular(10),
+                child: Image.network(a.image!, width: 80, height: 80, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink())),
+            if (a.image != null && a.image!.isNotEmpty) const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(a.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14, height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 6),
+              Row(children: [
+                Text(a.author, style: const TextStyle(color: _dim, fontSize: 12)),
+                const SizedBox(width: 8),
+                Text(_timeAgo(a.publishedAt), style: const TextStyle(color: _dim, fontSize: 12)),
+              ]),
+            ])),
+          ]),
+        );
+      },
+    );
+  }
+}
+
+// ─── Announcement placeholder ─────────────────────────────────────────────────
+class _AnnouncementWidget extends StatelessWidget {
+  const _AnnouncementWidget();
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.all(24),
+    child: Center(child: Text('No Announcements', style: TextStyle(color: _dim, fontSize: 13))),
+  );
+}
+
+// ─── Post card ────────────────────────────────────────────────────────────────
 class _PostCard extends StatefulWidget {
   final DiscoverPost post;
   final VoidCallback onLike, onComment, onDelete;
@@ -299,10 +415,7 @@ class _PostCardState extends State<_PostCard> {
 }
 
 class _EngBtn extends StatelessWidget {
-  final IconData icon;
-  final int count;
-  final Color? color;
-  final VoidCallback onTap;
+  final IconData icon; final int count; final Color? color; final VoidCallback onTap;
   const _EngBtn({required this.icon, required this.count, required this.onTap, this.color});
   @override
   Widget build(BuildContext context) => GestureDetector(onTap: onTap,
@@ -314,9 +427,7 @@ class _EngBtn extends StatelessWidget {
 }
 
 class _AvatarWidget extends StatefulWidget {
-  final String? src;
-  final String name;
-  final bool brand;
+  final String? src; final String name; final bool brand;
   const _AvatarWidget({this.src, required this.name, required this.brand});
   @override
   State<_AvatarWidget> createState() => _AvatarWidgetState();
@@ -327,11 +438,9 @@ class _AvatarWidgetState extends State<_AvatarWidget> {
   @override
   Widget build(BuildContext context) {
     if (widget.brand && (widget.src == null || widget.src!.isEmpty)) {
-      return Container(
-        width: 40, height: 40,
+      return Container(width: 40, height: 40,
         decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF0E1117), border: Border.all(color: const Color(0xFF232A36))),
-        child: const Icon(Icons.account_circle, color: _green, size: 28),
-      );
+        child: const Icon(Icons.account_circle, color: _green, size: 28));
     }
     if (widget.src != null && widget.src!.isNotEmpty && !_err) {
       return ClipOval(child: Image.network(widget.src!, width: 40, height: 40, fit: BoxFit.cover,
@@ -339,14 +448,13 @@ class _AvatarWidgetState extends State<_AvatarWidget> {
     }
     return _fallback();
   }
-  Widget _fallback() => Container(
-    width: 40, height: 40,
+  Widget _fallback() => Container(width: 40, height: 40,
     decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF2A3340), Color(0xFF3A4452)])),
     child: Center(child: Text((widget.name.isEmpty ? 'T' : widget.name[0]).toUpperCase(),
-      style: const TextStyle(color: _green, fontWeight: FontWeight.w800, fontSize: 15))),
-  );
+      style: const TextStyle(color: _green, fontWeight: FontWeight.w800, fontSize: 15))));
 }
 
+// ─── Comments sheet ───────────────────────────────────────────────────────────
 class _CommentsSheet extends StatefulWidget {
   final DiscoverPost post;
   const _CommentsSheet({required this.post});
@@ -360,28 +468,26 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   @override
   void initState() {
     super.initState();
-    _apiGet('$_baseDiscover/comments?post_id=${widget.post.id}').then((res) {
+    _get('$_discoverBase/comments?post_id=${widget.post.id}').then((res) {
       if (res?['success'] == true && mounted) setState(() => _comments = res!['data'] ?? []);
     });
   }
   void _submit() async {
     if (_ctrl.text.trim().isEmpty) return;
-    final res = await _apiPost('$_baseDiscover/comment', {'post_id': widget.post.id, 'body': _ctrl.text.trim()});
+    final res = await _post('$_discoverBase/comment', {'post_id': widget.post.id, 'body': _ctrl.text.trim()});
     if (res?['success'] == true && mounted) { setState(() => _comments.insert(0, res!['data'])); _ctrl.clear(); }
   }
   @override
   Widget build(BuildContext context) => DraggableScrollableSheet(
     initialChildSize: 0.7, maxChildSize: 0.95, minChildSize: 0.4, expand: false,
     builder: (_, sc) => Column(children: [
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF232A36)))),
         child: Row(children: [
           const Text('Comments', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
           const Spacer(),
           GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.close, color: _dim)),
-        ]),
-      ),
+        ])),
       Expanded(child: _comments.isEmpty
         ? const Center(child: Text('Be the first to comment.', style: TextStyle(color: _dim, fontSize: 13)))
         : ListView.builder(controller: sc, itemCount: _comments.length, itemBuilder: (_, i) {
@@ -404,8 +510,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
         padding: EdgeInsets.fromLTRB(12, 10, 12, MediaQuery.of(context).viewInsets.bottom + 12),
         decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF232A36)))),
         child: Row(children: [
-          Expanded(child: TextField(
-            controller: _ctrl,
+          Expanded(child: TextField(controller: _ctrl,
             style: const TextStyle(color: Colors.white, fontSize: 13),
             decoration: InputDecoration(
               hintText: 'Add a comment...', hintStyle: const TextStyle(color: _dim, fontSize: 13),
@@ -414,8 +519,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Color(0xFF232A36))),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: _green)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-            ),
-          )),
+            ))),
           const SizedBox(width: 8),
           GestureDetector(onTap: _submit, child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -428,6 +532,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   );
 }
 
+// ─── Composer sheet ───────────────────────────────────────────────────────────
 class _ComposerSheet extends StatefulWidget {
   final void Function(DiscoverPost) onPosted;
   const _ComposerSheet({required this.onPosted});
@@ -443,10 +548,10 @@ class _ComposerSheetState extends State<_ComposerSheet> {
     if (_ctrl.text.trim().isEmpty && _image == null) return;
     setState(() => _posting = true);
     try {
-      final uri = Uri.parse('$_baseDiscover/post');
+      final uri = Uri.parse('$_discoverBase/post');
       final request = http.MultipartRequest('POST', uri);
-      final headers = _discoverHeaders()..remove('Content-Type');
-      request.headers.addAll(headers);
+      final h = _headers()..remove('Content-Type');
+      request.headers.addAll(h);
       request.fields['body'] = _ctrl.text.trim();
       if (_image != null) request.files.add(await http.MultipartFile.fromPath('image', _image!.path));
       final res = jsonDecode(await (await request.send()).stream.bytesToString());
@@ -479,8 +584,7 @@ class _ComposerSheetState extends State<_ComposerSheet> {
       Row(children: [
         GestureDetector(
           onTap: () async { final p = await ImagePicker().pickImage(source: ImageSource.gallery); if (p != null) setState(() => _image = p); },
-          child: const Row(children: [Icon(Icons.image_outlined, color: _green, size: 22), SizedBox(width: 6), Text('Photo', style: TextStyle(color: _green, fontSize: 13, fontWeight: FontWeight.w600))]),
-        ),
+          child: const Row(children: [Icon(Icons.image_outlined, color: _green, size: 22), SizedBox(width: 6), Text('Photo', style: TextStyle(color: _green, fontSize: 13, fontWeight: FontWeight.w600))])),
         const Spacer(),
         GestureDetector(onTap: _posting ? null : _submit, child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 9),
