@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_market_view.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/discover_feed.dart';
 import 'package:tradexpro_flutter/ui/features/notifications/notifications_page.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/announcement_view.dart';
@@ -735,7 +736,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
 
             const EarnRecommendedSection(),
 
-            const MarketEmptyStateWidget(),
+            DiscoverTabsWidget(),
 
             Container(),
           ],
