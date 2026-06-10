@@ -314,7 +314,10 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      body: Column(children: [
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Column(children: [
         // End chat confirm bar
         if (_showEndConfirm)
           Container(
@@ -386,10 +389,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
 
         // Input bar
         Container(
-          padding: EdgeInsets.only(
-            left: 14, right: 14, top: 10,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 10,
-          ),
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
           decoration: const BoxDecoration(
             color: _bg,
             border: Border(top: BorderSide(color: Color(0xFF1A1A1A))),
@@ -461,7 +461,9 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
               )),
             ),
           ),
-      ]),
+          ]),
+        ),
+      ),
     );
   }
 }
