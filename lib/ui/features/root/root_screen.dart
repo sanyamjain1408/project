@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/addons/ico/ico_ui/ico_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/history_sheet.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/models/settings.dart';
@@ -507,7 +508,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
                     _quickIcon('assets/icons/profilechampion.png', "Champion",
                         () => Get.to(() => const ChampionScreen())),
                     _quickIcon('assets/icons/profilehistory.png', "History",
-                        () => Get.to(() => const ActivityScreen())),
+                        () => showHistorySheet()),
                     _quickIcon('assets/icons/profilesecurity.png', "Security",
                         () => hasUser
                             ? Get.to(() => const ProfileScreen(initialTab: 1))

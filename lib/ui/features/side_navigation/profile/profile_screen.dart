@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/history_sheet.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/price_alerts/price_alerts_screen.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/bank_data.dart';
 import 'package:tradexpro_flutter/data/models/kyc_details.dart';
@@ -843,7 +844,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           title: "Price alerts",
           iconPath: "assets/icons/price.png",
           showArrow: true,
-          onTap: () {},
+          onTap: () => Get.to(() => const PriceAlertsScreen()),
         ),
         const SizedBox(height: 20),
         const Text(
