@@ -123,7 +123,9 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
+    return ColoredBox(
+      color: const Color(0xFF111111),
+      child: Column(children: [
       Container(
         color: const Color(0xFF111111),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -157,7 +159,8 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
         padding: EdgeInsets.all(24),
         child: Center(child: Text('No Announcements', style: TextStyle(color: _dim, fontSize: 13))),
       ),
-    ]);
+    ]),
+    );
   }
 }
 
