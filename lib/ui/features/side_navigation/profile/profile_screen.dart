@@ -53,7 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: _controller.getProfileMenus().length,
+      length: _figmaTabs.length,
       initialIndex: widget.initialTab,
       vsync: this,
     );
@@ -62,7 +62,11 @@ class _ProfileScreenState extends State<ProfileScreen>
         _controller.selectedType.value = _tabController.index;
       }
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _controller.selectedType.value = widget.initialTab;
+    });
   }
+
 
   @override
   void dispose() {
@@ -235,6 +239,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildBody() {
+    // Tabs displayed using _figmaTabs: [Profile(0), Security(1), General(2), KYC(3)]
     switch (_controller.selectedType.value) {
       case 0:
         return _profileTab();

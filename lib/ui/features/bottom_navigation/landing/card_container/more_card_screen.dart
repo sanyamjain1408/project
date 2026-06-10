@@ -38,6 +38,7 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(10),
@@ -76,7 +77,7 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
               _buildGridItem("assets/icons/kyc.png", "KYC"),
               _buildGridItem("assets/icons/price.png", "Price Alert"),
               _buildGridItem("assets/icons/deposit.png", "Deposit Fiat"),
-              _buildGridItem("assets/icons/p2p.png", "P2P"),
+              // _buildGridItem("assets/icons/p2p.png", "P2P"),
               _buildGridItem("assets/icons/referals.png", "Referals"),
               _buildGridItem("assets/icons/history.png", "History"),
             ]),
@@ -87,7 +88,7 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
               _buildGridItem("assets/images/swap.png", "Swap"),
               _buildGridItem("assets/images/spot.png", "Spot"),
               _buildGridItem("assets/images/future.png", "Future"),
-              _buildGridItem("assets/icons/p2p.png", "P2P"),
+              // _buildGridItem("assets/icons/p2p.png", "P2P"),
               _buildGridItem("assets/images/funds.png", "Funds"),
             ]),
 

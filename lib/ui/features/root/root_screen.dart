@@ -43,6 +43,10 @@ import '../side_navigation/official_verification/official_verification_screen.da
 import '../auth/sign_in/sign_in_screen.dart';
 import '../side_navigation/referrals/referral_screen.dart';
 import '../side_navigation/ib_program/ib_screen.dart';
+import '../side_navigation/activity/activity_screen.dart';
+import '../bottom_navigation/champion/champion_screen.dart';
+import '../notifications/notifications_page.dart';
+import '../side_navigation/price_alerts/price_alerts_screen.dart';
 import 'root_controller.dart';
 import 'root_widgets.dart';
 import '../bottom_navigation/landing/banner_popup.dart';
@@ -507,11 +511,20 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _quickIcon('assets/icons/profilechampion.png', "Champion"),
-                    _quickIcon('assets/icons/profilehistory.png', "History"),
-                    _quickIcon('assets/icons/profilesecurity.png', "Security"),
-                    _quickIcon('assets/icons/profilekyc.png', "KYC"),
-                    _quickIcon('assets/icons/profileprice.png', "Price Alert"),
+                    _quickIcon('assets/icons/profilechampion.png', "Champion",
+                        () => Get.to(() => const ChampionScreen())),
+                    _quickIcon('assets/icons/profilehistory.png', "History",
+                        () => Get.to(() => const ActivityScreen())),
+                    _quickIcon('assets/icons/profilesecurity.png', "Security",
+                        () => hasUser
+                            ? Get.to(() => const ProfileScreen(initialTab: 2))
+                            : Get.offAll(() => const SignInPage())),
+                    _quickIcon('assets/icons/profilekyc.png', "KYC",
+                        () => hasUser
+                            ? Get.to(() => const ProfileScreen(initialTab: 3))
+                            : Get.offAll(() => const SignInPage())),
+                    _quickIcon('assets/icons/profileprice.png', "Price Alert",
+                        () => Get.to(() => const PriceAlertsScreen())),
                   ],
                 ),
               ),
@@ -760,9 +773,9 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
   }
 
   // ── QUICK ICON BUTTON ────────────────────────────────────────────────────
-  Widget _quickIcon(String iconPath, String label) {
+  Widget _quickIcon(String iconPath, String label, [VoidCallback? onTap]) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: Column(
         children: [
           Container(width: 50, height: 50, child: Image.asset(iconPath)),
