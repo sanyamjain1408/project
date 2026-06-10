@@ -79,9 +79,13 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
-          // Only show the first banner — no multi-swipe
-        final items = [(body['data'] as List).map((e) => BannerItem.fromJson(e)).first];
+          final items = [(body['data'] as List).map((e) => BannerItem.fromJson(e)).first];
           BannerPopup._cachedBanners = items;
+          // Pre-download image before switching from skeleton to real content
+          final url = items.first.imageUrl;
+          if (url != null && url.isNotEmpty && mounted) {
+            await precacheImage(NetworkImage(url), context);
+          }
           if (mounted) setState(() { _banners = items; _ready = true; });
           return;
         }
