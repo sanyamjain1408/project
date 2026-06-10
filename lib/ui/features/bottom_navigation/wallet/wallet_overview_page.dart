@@ -26,6 +26,7 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/future_tr
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/future_pnl_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transaction_history_screen.dart';
 
 const Color _primary = Color(0xFF111111);
 const Color _green = Color(0xFFCCFF00);
@@ -221,10 +222,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                 ),
               ),
               GestureDetector(
-                onTap: () {
-                  TemporaryData.activityType = HistoryType.deposit;
-                  Get.to(() => const ActivityScreen());
-                },
+                onTap: () => Get.to(() => const TransactionHistoryScreen()),
                 child: Text(
                   "View All",
                   style: TextStyle(
