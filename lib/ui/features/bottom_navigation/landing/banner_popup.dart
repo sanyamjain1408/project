@@ -61,7 +61,7 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
     // Use cached banners if available, otherwise fetch
     if (BannerPopup._cachedBanners != null) {
       if (BannerPopup._cachedBanners!.isNotEmpty) {
-        _banners = [BannerPopup._cachedBanners!.first];
+        _banners = BannerPopup._cachedBanners!;
         _ready = true;
       } else {
         WidgetsBinding.instance.addPostFrameCallback((_) => widget.onClose?.call());
@@ -79,9 +79,9 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
-          final items = [(body['data'] as List).map((e) => BannerItem.fromJson(e)).first];
+          final items = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
           BannerPopup._cachedBanners = items;
-          // Pre-download image before switching from skeleton to real content
+          // Pre-download first image before switching from skeleton to real content
           final url = items.first.imageUrl;
           if (url != null && url.isNotEmpty && mounted) {
             await precacheImage(NetworkImage(url), context);
