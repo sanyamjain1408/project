@@ -127,8 +127,8 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF111111),
       decoration: const BoxDecoration(
+        color: Color(0xFF111111),
         border: Border(top: BorderSide(color: Color(0xFF1A1A1A), width: 1)),
       ),
       child: Column(children: [
