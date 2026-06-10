@@ -30,6 +30,8 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/future_pnl_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transaction_history_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/spot_trade/spot_trade_controller.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/spot_trade/spot_trade_history_views.dart';
 
 const Color _primary = Color(0xFF111111);
 const Color _green = Color(0xFFCCFF00);
@@ -2006,10 +2008,10 @@ class _HistorySheetState extends State<_HistorySheet> {
       _SheetItem('assets/icons/hist-swap.png',     'Swap History',       () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')); }),
     ];
     if (_tab == 1) return [
-      _SheetItem('assets/icons/open_order.png',          'Open Orders',         () { Get.back(); Get.to(() => const ActivityScreen()); }),
-      _SheetItem('assets/icons/order_history.png',       'Order History',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
-      _SheetItem('assets/icons/transaction_history.png', 'Transaction History', () { Get.back(); Get.to(() => const TransactionHistoryScreen()); }),
-      _SheetItem('assets/icons/stop_limit.png',          'Stop Limit History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
+      _SheetItem('assets/icons/open_order.png',          'Open Orders',         () { Get.back(); _goSpot(0); }),
+      _SheetItem('assets/icons/order_history.png',       'Order History',       () { Get.back(); _goSpot(1); }),
+      _SheetItem('assets/icons/transaction_history.png', 'Transaction History', () { Get.back(); _goSpot(2); }),
+      _SheetItem('assets/icons/stop_limit.png',          'Stop Limit History',  () { Get.back(); _goSpot(3); }),
     ];
     return [
       _SheetItem('assets/icons/open_order.png',       'Open Orders',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
@@ -2017,6 +2019,13 @@ class _HistorySheetState extends State<_HistorySheet> {
       _SheetItem('assets/icons/stop_limit.png',       'Stop Limit History',() { Get.back(); Get.to(() => const ActivityScreen()); }),
       _SheetItem('assets/icons/position_history.png', 'Position History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
     ];
+  }
+
+  void _goSpot(int index) {
+    final ctrl = Get.isRegistered<SpotTradeController>()
+        ? Get.find<SpotTradeController>()
+        : Get.put(SpotTradeController());
+    Get.to(() => SpotTradeHistoryFullScreen(controller: ctrl, initialIndex: index));
   }
 
   @override
