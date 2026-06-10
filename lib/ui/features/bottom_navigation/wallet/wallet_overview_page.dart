@@ -155,12 +155,6 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     required List<History> withdrawList,
     required String selectedCoin,
   }) {
-    final hasData = depositList.isNotEmpty || withdrawList.isNotEmpty;
-
-    if (!hasData) {
-      return _buildReport(wOverview.value);
-    }
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
