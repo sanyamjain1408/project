@@ -73,6 +73,7 @@ class RootScreen extends StatefulWidget {
 class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
   final RootController _controller = Get.put(RootController());
   bool _showPopup = true;
+  bool _popupDismissed = false;
   int _popupKey = 0;
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
@@ -87,8 +88,9 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) {
-      setState(() { _showPopup = true; _popupKey++; });
+    // Only re-show banner when app comes back from background AFTER user dismissed it once
+    if (state == AppLifecycleState.resumed && mounted && _popupDismissed) {
+      setState(() { _showPopup = true; _popupDismissed = false; _popupKey++; });
     }
   }
 
@@ -124,7 +126,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
             Positioned.fill(
               child: BannerPopup(
                 key: ValueKey(_popupKey),
-                onClose: () => setState(() => _showPopup = false),
+                onClose: () => setState(() { _showPopup = false; _popupDismissed = true; }),
               ),
             ),
         ],
