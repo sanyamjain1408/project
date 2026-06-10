@@ -1993,24 +1993,48 @@ class _HistorySheetState extends State<_HistorySheet> {
   int _tab = 0;
 
   static const _bg = Color(0xFF111111);
-  static const _surface = Color(0xFF1a1a1a);
-  static const _accent = Color(0xFFCCFF00);
-  static const _font = 'DMSans';
+  static const _font = 'DM Sans';
+
+  // tab definitions
+  static const _tabs = ['Crypto Asset', 'Spot', 'Future'];
+
+  List<_SheetItem> get _items {
+    if (_tab == 0) return [
+      _SheetItem('assets/icons/hist-deposit.png',  'Deposit History',    () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')); }),
+      _SheetItem('assets/icons/hist-withdraw.png', 'Withdraw History',   () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'withdraw')); }),
+      _SheetItem('assets/icons/hist-transfer.png', 'Transfer History',   () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'transfer')); }),
+      _SheetItem('assets/icons/hist-swap.png',     'Swap History',       () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')); }),
+    ];
+    if (_tab == 1) return [
+      _SheetItem('assets/icons/open_order.png',          'Open Orders',         () { Get.back(); Get.to(() => const ActivityScreen()); }),
+      _SheetItem('assets/icons/order_history.png',       'Order History',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
+      _SheetItem('assets/icons/transaction_history.png', 'Transaction History', () { Get.back(); Get.to(() => const TransactionHistoryScreen()); }),
+      _SheetItem('assets/icons/stop_limit.png',          'Stop Limit History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
+    ];
+    return [
+      _SheetItem('assets/icons/open_order.png',       'Open Orders',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
+      _SheetItem('assets/icons/order_history.png',    'Order History',     () { Get.back(); Get.to(() => const ActivityScreen()); }),
+      _SheetItem('assets/icons/stop_limit.png',       'Stop Limit History',() { Get.back(); Get.to(() => const ActivityScreen()); }),
+      _SheetItem('assets/icons/position_history.png', 'Position History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
-    final tabs = ['Crypto Asset', 'Spot', 'Future'];
-
+    final items = _items;
     return Container(
       decoration: const BoxDecoration(
         color: _bg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle
+          // Handle bar
           Center(
             child: Container(
               margin: const EdgeInsets.only(top: 10, bottom: 4),
@@ -2018,133 +2042,92 @@ class _HistorySheetState extends State<_HistorySheet> {
               decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
             ),
           ),
-          // Title + close
+          // "History" title — left: 20, top: 20 from Figma
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 16, 0),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('History', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: _font)),
+                const Text(
+                  'History',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: _font,
+                    fontWeight: FontWeight.w700,
+                    height: 1.50,
+                  ),
+                ),
                 GestureDetector(
                   onTap: () => Get.back(),
-                  child: Container(
-                    width: 28, height: 28,
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), shape: BoxShape.circle),
-                    child: const Icon(Icons.close, color: Colors.white70, size: 16),
-                  ),
+                  child: const Icon(Icons.close, color: Colors.white54, size: 20),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          // Tabs with underline indicator
+          // Tabs row — left: 20/144/199, top: 64 from Figma
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Row(
-              children: List.generate(tabs.length, (i) {
+              children: List.generate(_tabs.length, (i) {
                 final active = _tab == i;
                 return GestureDetector(
                   onTap: () => setState(() => _tab = i),
                   child: Padding(
-                    padding: EdgeInsets.only(right: i < tabs.length - 1 ? 24 : 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tabs[i],
-                          style: TextStyle(
-                            color: active ? Colors.white : Colors.white38,
-                            fontSize: 14,
-                            fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                            fontFamily: _font,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          height: 2,
-                          width: tabs[i].length * 8.2,
-                          color: active ? _accent : Colors.transparent,
-                        ),
-                      ],
+                    padding: EdgeInsets.only(right: i < _tabs.length - 1 ? 24 : 0),
+                    child: Text(
+                      _tabs[i],
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: active ? Colors.white : Colors.white.withOpacity(0.50),
+                        fontSize: 16,
+                        fontFamily: _font,
+                        fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                        height: 1.50,
+                      ),
                     ),
                   ),
                 );
               }),
             ),
           ),
+          const SizedBox(height: 12),
           Divider(color: Colors.white.withOpacity(0.07), height: 1),
-          const SizedBox(height: 4),
-          ..._items(),
+          // Items — icon at left: 20, text at left: 60, top: 108 + i*40 from Figma
+          ...items.map((item) => GestureDetector(
+            onTap: item.onTap,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                children: [
+                  Image.asset(item.icon, width: 20, height: 20),
+                  const SizedBox(width: 20), // 60 - 20 (padding) - 20 (icon) = 20 gap
+                  Text(
+                    item.label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontFamily: _font,
+                      fontWeight: FontWeight.w400,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
         ],
       ),
     );
   }
 
-  List<Widget> _items() {
-    if (_tab == 0) {
-      return [
-        _imgItem('assets/icons/hist-deposit.png',  'Deposit History',  () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')); }),
-        _imgItem('assets/icons/hist-withdraw.png', 'Withdraw History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'withdraw')); }),
-        _imgItem('assets/icons/hist-transfer.png', 'Transfer History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'transfer')); }),
-        _imgItem('assets/icons/hist-swap.png',     'Swap History',     () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')); }),
-      ];
-    } else if (_tab == 1) {
-      return [
-        _imgItem('assets/icons/open_order.png',        'Open Orders',         () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _imgItem('assets/icons/order_history.png',     'Order History',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _imgItem('assets/icons/transaction_history.png', 'Transaction History', () { Get.back(); Get.to(() => const TransactionHistoryScreen()); }),
-        _imgItem('assets/icons/stop_limit.png',        'Stop Limit History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
-      ];
-    } else {
-      return [
-        _imgItem('assets/icons/open_order.png',        'Open Orders',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _imgItem('assets/icons/order_history.png',     'Order History',     () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _imgItem('assets/icons/stop_limit.png',        'Stop Limit History',() { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _imgItem('assets/icons/position_history.png',  'Position History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
-      ];
-    }
-  }
+}
 
-  Widget _imgItem(String assetPath, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-        child: Row(
-          children: [
-            Container(
-              width: 38, height: 38,
-              decoration: BoxDecoration(color: _surface, borderRadius: BorderRadius.circular(10)),
-              child: Center(child: Image.asset(assetPath, width: 22, height: 22)),
-            ),
-            const SizedBox(width: 14),
-            Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500, fontFamily: _font))),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _item(IconData icon, Color iconColor, Color iconBg, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-        child: Row(
-          children: [
-            Container(
-              width: 38, height: 38,
-              decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(10)),
-              child: Icon(icon, color: iconColor, size: 18),
-            ),
-            const SizedBox(width: 14),
-            Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500, fontFamily: _font))),
-          ],
-        ),
-      ),
-    );
-  }
+class _SheetItem {
+  final String icon;
+  final String label;
+  final VoidCallback onTap;
+  const _SheetItem(this.icon, this.label, this.onTap);
 }
