@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'dart:ui';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
@@ -64,43 +67,46 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
       selectedCoin.value = overview.selectedCoin ?? "";
     }
 
-    // ── DEPOSIT HISTORY FETCH ──
-    APIRepository().getActivityList(1, HistoryType.deposit, isFiat: false).then(
-      (resp) {
-        if (resp.success) {
-          try {
-            final historyResponse = HistoryResponse.fromJson(resp.data);
-            final listResponse = historyResponse.histories;
-            if (listResponse?.data != null) {
-              depositList.value = List<History>.from(
-                listResponse!.data!.map((x) => History.fromJson(x)),
-              );
-            }
-          } catch (e) {
-            // print("Deposit fetch error: $e");
-          }
-        }
-      },
-    );
+    // Fetch deposit + withdraw using direct HTTP (same as TransactionHistoryScreen)
+    _fetchRecentTx();
+  }
 
-    // ── WITHDRAW HISTORY FETCH ──
-    APIRepository()
-        .getActivityList(1, HistoryType.withdraw, isFiat: false)
-        .then((resp) {
-          if (resp.success) {
-            try {
-              final historyResponse = HistoryResponse.fromJson(resp.data);
-              final listResponse = historyResponse.histories;
-              if (listResponse?.data != null) {
-                withdrawList.value = List<History>.from(
-                  listResponse!.data!.map((x) => History.fromJson(x)),
-                );
-              }
-            } catch (e) {
-              // print("Withdraw fetch error: $e");
-            }
-          }
-        });
+  Map<String, String> _authHeaders() {
+    final token = GetStorage().read(PreferenceKey.accessToken) ?? '';
+    final type = GetStorage().read(PreferenceKey.accessType) ?? 'Bearer';
+    final secret = dotenv.env[EnvKeyValue.kApiSecret] ?? '';
+    return {
+      'Accept': 'application/json',
+      'userapisecret': secret,
+      if (token.isNotEmpty) 'Authorization': '$type $token',
+    };
+  }
+
+  Future<void> _fetchRecentTx() async {
+    try {
+      const base = 'https://api.trapix.com/api/wallet-history-app';
+      final headers = _authHeaders();
+      final depFuture = http.get(Uri.parse('$base?type=deposit&page=1&per_page=8&column_name=created_at&order_by=desc'), headers: headers);
+      final wdFuture = http.get(Uri.parse('$base?type=withdraw&page=1&per_page=8&column_name=created_at&order_by=desc'), headers: headers);
+      final results = await Future.wait([depFuture, wdFuture]);
+
+      List<History> deps = [];
+      List<History> wds = [];
+
+      if (results[0].statusCode == 200) {
+        final body = jsonDecode(results[0].body);
+        final raw = body['data']?['histories']?['data'];
+        if (raw is List) deps = raw.map((e) => History.fromJson(Map<String, dynamic>.from(e))).toList();
+      }
+      if (results[1].statusCode == 200) {
+        final body = jsonDecode(results[1].body);
+        final raw = body['data']?['histories']?['data'];
+        if (raw is List) wds = raw.map((e) => History.fromJson(Map<String, dynamic>.from(e))).toList();
+      }
+
+      depositList.value = deps;
+      withdrawList.value = wds;
+    } catch (_) {}
   }
 
   @override
