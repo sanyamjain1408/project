@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/history.dart';
+import 'package:tradexpro_flutter/data/models/response.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
@@ -204,26 +205,28 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           itemCount: _rows.length + (_hasMore && _tab != 'swap' ? 1 : 0),
                           itemBuilder: (_, i) {
                             if (i == _rows.length) {
-                              return Center(
+                              return Padding(
                                 padding: const EdgeInsets.all(16),
-                                child: _loadingMore
-                                    ? const CircularProgressIndicator(color: _accent, strokeWidth: 2)
-                                    : GestureDetector(
-                                        onTap: () {
-                                          final np = _page + 1;
-                                          setState(() => _page = np);
-                                          _load(_tab, np, false);
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 9),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF1a1a1a),
-                                            border: Border.all(color: const Color(0xFF2a2a2a)),
-                                            borderRadius: BorderRadius.circular(20),
+                                child: Center(
+                                  child: _loadingMore
+                                      ? const CircularProgressIndicator(color: _accent, strokeWidth: 2)
+                                      : GestureDetector(
+                                          onTap: () {
+                                            final np = _page + 1;
+                                            setState(() => _page = np);
+                                            _load(_tab, np, false);
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 9),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF1a1a1a),
+                                              border: Border.all(color: const Color(0xFF2a2a2a)),
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            child: const Text('Load more', style: TextStyle(color: _green, fontWeight: FontWeight.w700, fontSize: 13, fontFamily: _font)),
                                           ),
-                                          child: const Text('Load more', style: TextStyle(color: _green, fontWeight: FontWeight.w700, fontSize: 13, fontFamily: _font)),
                                         ),
-                                      ),
+                                ),
                               );
                             }
                             return _buildRow(_rows[i]);
