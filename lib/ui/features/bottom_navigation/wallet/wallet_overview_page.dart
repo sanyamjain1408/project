@@ -386,11 +386,19 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     switch (status) {
       case 1:
         statusText = "Success";
-        statusColor = Color(0xFF4ED78E);
+        statusColor = const Color(0xFF4ED78E);
+        break;
+      case 0:
+        statusText = "Pending";
+        statusColor = const Color(0xFFE0B341);
+        break;
+      case 3:
+        statusText = "Processing";
+        statusColor = const Color(0xFF00B7FF);
         break;
       default:
         statusText = "Failed";
-        statusColor = Color(0xFFD73C3C);
+        statusColor = const Color(0xFFD73C3C);
         break;
     }
 
