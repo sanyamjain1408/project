@@ -9,6 +9,7 @@ import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
+import 'tx_detail_screen.dart';
 
 const Color _bg = Color(0xFF111111);
 const Color _green = Color(0xFF4ED78E);
@@ -285,7 +286,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final statusColor = _statusColor(statusLabel);
     final date = _formatDate(tx['created_at']);
 
-    return Padding(
+    return GestureDetector(
+      onTap: (isDep || type == 'withdraw')
+          ? () => Get.to(() => TxDetailScreen(tx: tx))
+          : null,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: [
@@ -318,6 +324,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }
