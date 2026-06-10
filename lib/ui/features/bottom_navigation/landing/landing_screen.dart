@@ -53,18 +53,15 @@ class LandingScreen extends StatefulWidget {
 
 class _LandingScreenState extends State<LandingScreen> {
   final _controller = Get.put(LandingController());
-  bool _showPopup = false;
   static bool _popupShownThisSession = false;
+  bool _showPopup = !_popupShownThisSession;
 
   @override
   void initState() {
     super.initState();
     _controller.getLandingSettings();
     if (getSettingsLocal()?.blogNewsModule == 1) _controller.getLatestBlogList();
-    if (!_popupShownThisSession) {
-      _showPopup = true;
-      _popupShownThisSession = true;
-    }
+    _popupShownThisSession = true;
   }
 
   @override
