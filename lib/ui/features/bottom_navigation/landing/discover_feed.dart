@@ -158,10 +158,7 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
       if (_tab == 0) DiscoverFeedWidget(key: const ValueKey('discover'))
       else if (_tab == 1) _ArticlesWidget(key: const ValueKey('blogs'), type: 'blog')
       else if (_tab == 2) _ArticlesWidget(key: const ValueKey('news'), type: 'news')
-      else const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: Text('No Announcements', style: TextStyle(color: _dim, fontSize: 13))),
-      ),
+      else const _AnnouncementsWidget(key: ValueKey('announcements')),
     ]),
     );
   }
@@ -339,6 +336,72 @@ class _ArticlesWidgetState extends State<_ArticlesWidget> {
   }
 }
 
+// ─── Announcements ────────────────────────────────────────────────────────────
+class _AnnouncementsWidget extends StatefulWidget {
+  const _AnnouncementsWidget({super.key});
+  @override
+  State<_AnnouncementsWidget> createState() => _AnnouncementsWidgetState();
+}
+
+class _AnnouncementsWidgetState extends State<_AnnouncementsWidget> {
+  List<dynamic> _items = [];
+  bool _loading = true;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.trapix.com/api/announcement-list'),
+        headers: _headers(),
+      );
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['success'] == true && mounted) {
+          setState(() { _items = body['data'] ?? []; _loading = false; });
+          return;
+        }
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
+    if (_items.isEmpty) return const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: Text('No announcements yet.', style: TextStyle(color: _dim, fontSize: 13))));
+    return ListView.builder(
+      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      itemCount: _items.length,
+      itemBuilder: (_, i) {
+        final a = _items[i];
+        final img = a['image'] as String?;
+        return Container(
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1C1F26)))),
+          padding: const EdgeInsets.all(14),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (img != null && img.isNotEmpty) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(img, width: double.infinity, height: 180, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Text(a['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14, height: 1.4)),
+            if ((a['description'] ?? '').toString().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(a['description'] ?? '', style: const TextStyle(color: Color(0xFFCBD0D8), fontSize: 13, height: 1.5), maxLines: 4, overflow: TextOverflow.ellipsis),
+            ],
+          ]),
+        );
+      },
+    );
+  }
+}
+
 // ─── Post card ────────────────────────────────────────────────────────────────
 class _PostCard extends StatefulWidget {
   final DiscoverPost post;
@@ -357,55 +420,59 @@ class _PostCardState extends State<_PostCard> {
     final body = p.body ?? '';
     final long = body.length > 180;
     final shown = _expanded || !long ? body : '${body.substring(0, 180)}...';
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
+    return Container(
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1C1F26)))),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _AvatarWidget(src: p.authorAvatar, name: p.authorName, brand: p.authorType == 'admin'),
         const SizedBox(width: 10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Flexible(child: Text(p.authorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14), overflow: TextOverflow.ellipsis)),
-            if (p.isVerified) Container(
-              width: 14, height: 14, margin: const EdgeInsets.only(left: 4),
-              decoration: const BoxDecoration(color: Color(0xFF16A34A), shape: BoxShape.circle),
-              child: const Icon(Icons.check, color: Colors.white, size: 9),
-            ),
-            const SizedBox(width: 4),
-            Text('· ${_timeAgo(p.createdAt)}', style: const TextStyle(color: _dim, fontSize: 12)),
-            if (p.isMine) GestureDetector(
-              onTap: widget.onDelete,
-              child: const Padding(padding: EdgeInsets.only(left: 8), child: Icon(Icons.delete_outline, color: Color(0xFFEA3943), size: 16)),
-            ),
-          ]),
-          if (body.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(shown, style: const TextStyle(color: Color(0xFFE6E8EC), fontSize: 13.5, height: 1.5)),
-            if (long && !_expanded) GestureDetector(
-              onTap: () => setState(() => _expanded = true),
-              child: const Text('View More', style: TextStyle(color: _green, fontWeight: FontWeight.w600, fontSize: 13)),
-            ),
-          ],
-          if (p.image != null && p.image!.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.network(p.image!, width: double.infinity, fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink()),
-            ),
-          ],
-          if (p.tickers.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(spacing: 16, children: p.tickers.map((t) {
-              final green = (t['change'] ?? '').startsWith('+');
-              return RichText(text: TextSpan(children: [
-                TextSpan(text: '${t['symbol']} ', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5)),
-                TextSpan(text: t['change'], style: TextStyle(color: green ? const Color(0xFF16C784) : const Color(0xFFEA3943), fontWeight: FontWeight.w700, fontSize: 12.5)),
-              ]));
-            }).toList()),
-          ],
+          // tappable area — opens post detail
+          GestureDetector(
+            onTap: widget.onTap,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Flexible(child: Text(p.authorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14), overflow: TextOverflow.ellipsis)),
+              if (p.isVerified) Container(
+                width: 14, height: 14, margin: const EdgeInsets.only(left: 4),
+                decoration: const BoxDecoration(color: Color(0xFF16A34A), shape: BoxShape.circle),
+                child: const Icon(Icons.check, color: Colors.white, size: 9),
+              ),
+              const SizedBox(width: 4),
+              Text('· ${_timeAgo(p.createdAt)}', style: const TextStyle(color: _dim, fontSize: 12)),
+              if (p.isMine) GestureDetector(
+                onTap: widget.onDelete,
+                child: const Padding(padding: EdgeInsets.only(left: 8), child: Icon(Icons.delete_outline, color: Color(0xFFEA3943), size: 16)),
+              ),
+            ]),
+            if (body.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(shown, style: const TextStyle(color: Color(0xFFE6E8EC), fontSize: 13.5, height: 1.5)),
+              if (long && !_expanded) GestureDetector(
+                onTap: () => setState(() => _expanded = true),
+                child: const Text('View More', style: TextStyle(color: _green, fontWeight: FontWeight.w600, fontSize: 13)),
+              ),
+            ],
+            if (p.image != null && p.image!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.network(p.image!, width: double.infinity, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              ),
+            ],
+            if (p.tickers.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(spacing: 16, children: p.tickers.map((t) {
+                final green = (t['change'] ?? '').startsWith('+');
+                return RichText(text: TextSpan(children: [
+                  TextSpan(text: '${t['symbol']} ', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5)),
+                  TextSpan(text: t['change'], style: TextStyle(color: green ? const Color(0xFF16C784) : const Color(0xFFEA3943), fontWeight: FontWeight.w700, fontSize: 12.5)),
+                ]));
+              }).toList()),
+            ],
+          ])),
+          // engagement bar — separate from tap area so buttons work
           const SizedBox(height: 10),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             _EngBtn(icon: Icons.chat_bubble_outline, count: p.commentCount, onTap: widget.onComment),
@@ -420,7 +487,7 @@ class _PostCardState extends State<_PostCard> {
           ]),
         ])),
       ]),
-    ));
+    );
   }
 }
 
