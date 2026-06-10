@@ -30,6 +30,9 @@ class BannerPopup extends StatefulWidget {
   final VoidCallback? onClose;
   const BannerPopup({super.key, this.onClose});
 
+  // Static cache so banners are only fetched once per app session
+  static List<BannerItem>? _cachedBanners;
+
   @override
   State<BannerPopup> createState() => _BannerPopupState();
 }
@@ -55,9 +58,18 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
     _opacityAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut),
     );
-    // Show popup immediately with skeleton, fetch in parallel
-    setState(() => _ready = false);
-    _fetchBanners();
+    // Use cached banners if available, otherwise fetch
+    if (BannerPopup._cachedBanners != null) {
+      if (BannerPopup._cachedBanners!.isNotEmpty) {
+        _banners = BannerPopup._cachedBanners!;
+        _ready = true;
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) => widget.onClose?.call());
+      }
+    } else {
+      setState(() => _ready = false);
+      _fetchBanners();
+    }
   }
 
   Future<void> _fetchBanners() async {
@@ -67,16 +79,16 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
-          setState(() {
-            _banners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
-            _ready = true;
-          });
+          final items = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
+          BannerPopup._cachedBanners = items;
+          if (mounted) setState(() { _banners = items; _ready = true; });
           return;
         }
       }
-      // No banners — close immediately
-      widget.onClose?.call();
+      BannerPopup._cachedBanners = [];
+      if (mounted) widget.onClose?.call();
     } catch (_) {
+      BannerPopup._cachedBanners = [];
       if (mounted) widget.onClose?.call();
     }
   }

@@ -70,11 +70,9 @@ class RootScreen extends StatefulWidget {
   RootScreenState createState() => RootScreenState();
 }
 
-class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
+class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   final RootController _controller = Get.put(RootController());
-  bool _showPopup = true;
-  bool _popupDismissed = false;
-  bool _wentToBackground = false;
+  bool _showPopup = false;
   int _popupKey = 0;
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
@@ -84,24 +82,19 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
     currentContext = context;
     super.initState();
     _controller.changeBottomNavIndex = changeBottomNavTab;
-    WidgetsBinding.instance.addObserver(this);
+    _checkShowBanner();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      _wentToBackground = true;
-    }
-    // Only re-show banner when truly returning from background (not on initial launch)
-    if (state == AppLifecycleState.resumed && mounted && _wentToBackground && _popupDismissed) {
-      _wentToBackground = false;
-      setState(() { _showPopup = true; _popupDismissed = false; _popupKey++; });
+  void _checkShowBanner() {
+    final today = DateTime.now().toIso8601String().substring(0, 10); // "2026-06-10"
+    final lastShown = GetStorage().read<String>('banner_shown_date') ?? '';
+    if (lastShown != today) {
+      setState(() => _showPopup = true);
     }
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     hideKeyboard();
     super.dispose();
     currentContext = null;
@@ -131,7 +124,11 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
             Positioned.fill(
               child: BannerPopup(
                 key: ValueKey(_popupKey),
-                onClose: () => setState(() { _showPopup = false; _popupDismissed = true; }),
+                onClose: () {
+                  final today = DateTime.now().toIso8601String().substring(0, 10);
+                  GetStorage().write('banner_shown_date', today);
+                  setState(() => _showPopup = false);
+                },
               ),
             ),
         ],
