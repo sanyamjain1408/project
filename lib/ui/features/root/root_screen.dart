@@ -74,6 +74,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
   final RootController _controller = Get.put(RootController());
   bool _showPopup = true;
   bool _popupDismissed = false;
+  bool _wentToBackground = false;
   int _popupKey = 0;
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
@@ -88,8 +89,12 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Only re-show banner when app comes back from background AFTER user dismissed it once
-    if (state == AppLifecycleState.resumed && mounted && _popupDismissed) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _wentToBackground = true;
+    }
+    // Only re-show banner when truly returning from background (not on initial launch)
+    if (state == AppLifecycleState.resumed && mounted && _wentToBackground && _popupDismissed) {
+      _wentToBackground = false;
       setState(() { _showPopup = true; _popupDismissed = false; _popupKey++; });
     }
   }
