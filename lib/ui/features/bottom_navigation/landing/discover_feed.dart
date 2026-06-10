@@ -158,10 +158,7 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
       if (_tab == 0) DiscoverFeedWidget(key: const ValueKey('discover'))
       else if (_tab == 1) _ArticlesWidget(key: const ValueKey('blogs'), type: 'blog')
       else if (_tab == 2) _ArticlesWidget(key: const ValueKey('news'), type: 'news')
-      else const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: Text('No Announcements', style: TextStyle(color: _dim, fontSize: 13))),
-      ),
+      else const _AnnouncementsWidget(key: ValueKey('announcements')),
     ]),
     );
   }
@@ -334,6 +331,72 @@ class _ArticlesWidgetState extends State<_ArticlesWidget> {
             ])),
           ]),
         ));
+      },
+    );
+  }
+}
+
+// ─── Announcements ────────────────────────────────────────────────────────────
+class _AnnouncementsWidget extends StatefulWidget {
+  const _AnnouncementsWidget({super.key});
+  @override
+  State<_AnnouncementsWidget> createState() => _AnnouncementsWidgetState();
+}
+
+class _AnnouncementsWidgetState extends State<_AnnouncementsWidget> {
+  List<dynamic> _items = [];
+  bool _loading = true;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.trapix.com/api/announcement-list'),
+        headers: _headers(),
+      );
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['success'] == true && mounted) {
+          setState(() { _items = body['data'] ?? []; _loading = false; });
+          return;
+        }
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
+    if (_items.isEmpty) return const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: Text('No announcements yet.', style: TextStyle(color: _dim, fontSize: 13))));
+    return ListView.builder(
+      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      itemCount: _items.length,
+      itemBuilder: (_, i) {
+        final a = _items[i];
+        final img = a['image'] as String?;
+        return Container(
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1C1F26)))),
+          padding: const EdgeInsets.all(14),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (img != null && img.isNotEmpty) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(img, width: double.infinity, height: 180, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Text(a['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14, height: 1.4)),
+            if ((a['description'] ?? '').toString().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(a['description'] ?? '', style: const TextStyle(color: Color(0xFFCBD0D8), fontSize: 13, height: 1.5), maxLines: 4, overflow: TextOverflow.ellipsis),
+            ],
+          ]),
+        );
       },
     );
   }
