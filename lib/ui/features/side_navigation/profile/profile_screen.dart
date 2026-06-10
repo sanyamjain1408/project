@@ -1471,7 +1471,7 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSecret();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSecret());
   }
 
   void _loadSecret() {
