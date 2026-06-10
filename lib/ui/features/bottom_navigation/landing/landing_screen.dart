@@ -1,7 +1,7 @@
+import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
-import 'banner_popup.dart';
 import 'discover_feed.dart';
 
 import '../../../../addons/ico/ico_ui/ico_screen.dart';
@@ -51,9 +51,8 @@ class LandingScreen extends StatefulWidget {
   State<LandingScreen> createState() => _LandingScreenState();
 }
 
-class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserver {
+class _LandingScreenState extends State<LandingScreen> {
   final _controller = Get.put(LandingController());
-  bool _showPopup = true;
 
   @override
   void initState() {
@@ -65,7 +64,6 @@ class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserv
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _controller.handleSocketChannels(false);
     super.dispose();
   }
@@ -73,38 +71,24 @@ class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Stack(
+      child: Column(
         children: [
-          Column(
-            children: [
-              const AppBarHomeView(),
-              Expanded(child: Obx(() {
-                final lData = _controller.landingData.value;
-                return _controller.isLoading.value
-                    ? const ShimmerViewLanding()
-                    : ListView(
-                        shrinkWrap: true,
-                        children: [
-                          if (lData.landingSecondSectionStatus == 1) const CryptoTrustBannerView(),
-                          buildViewCard(),
-                          if (lData.announcementList.isValid) AnnouncementView(announcementList: lData.announcementList!),
-                          ///_exploreView(),
-                          if (lData.landingThirdSectionStatus == 1) const LandingMarketView(),
-                          const DiscoverTabsWidget(),
-                          ///_getLandingButtonView(),
-                          ///_featureView(),
-                          ///_latestBlogView()
-                        ],
-                      );
-              })),
-            ],
-          ),
-          if (_showPopup)
-            Positioned.fill(
-              child: BannerPopup(
-                onClose: () => setState(() => _showPopup = false),
-              ),
-            ),
+          const AppBarHomeView(),
+          Expanded(child: Obx(() {
+            final lData = _controller.landingData.value;
+            return _controller.isLoading.value
+                ? const ShimmerViewLanding()
+                : ListView(
+                    shrinkWrap: true,
+                    children: [
+                      if (lData.landingSecondSectionStatus == 1) const CryptoTrustBannerView(),
+                      buildViewCard(),
+                      if (lData.announcementList.isValid) AnnouncementView(announcementList: lData.announcementList!),
+                      if (lData.landingThirdSectionStatus == 1) const LandingMarketView(),
+                      const DiscoverTabsWidget(),
+                    ],
+                  );
+          })),
         ],
       ),
     );

@@ -45,6 +45,7 @@ import '../side_navigation/referrals/referral_screen.dart';
 import '../side_navigation/ib_program/ib_screen.dart';
 import 'root_controller.dart';
 import 'root_widgets.dart';
+import '../bottom_navigation/landing/banner_popup.dart';
 import 'dart:ui';
 
 // ── EXACT FIGMA COLORS ───────────────────────────────────────────────────────
@@ -71,8 +72,10 @@ class RootScreen extends StatefulWidget {
   RootScreenState createState() => RootScreenState();
 }
 
-class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
+class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
   final RootController _controller = Get.put(RootController());
+  bool _showPopup = true;
+  int _popupKey = 0;
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
 
@@ -81,10 +84,19 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     currentContext = context;
     super.initState();
     _controller.changeBottomNavIndex = changeBottomNavTab;
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      setState(() { _showPopup = true; _popupKey++; });
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     hideKeyboard();
     super.dispose();
     currentContext = null;
@@ -100,13 +112,24 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return KeyboardDismissOnTap(
-      child: Scaffold(
-        backgroundColor: context.theme.scaffoldBackgroundColor,
-        extendBody: true,
-        drawerScrimColor: Colors.transparent,
-        drawer: _getDrawerNew(),
-        bottomNavigationBar: _getBottomNavigationBar(),
-        body: SafeArea(top: false, child: Obx(() => _getBody())),
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: context.theme.scaffoldBackgroundColor,
+            extendBody: true,
+            drawerScrimColor: Colors.transparent,
+            drawer: _getDrawerNew(),
+            bottomNavigationBar: _getBottomNavigationBar(),
+            body: SafeArea(top: false, child: Obx(() => _getBody())),
+          ),
+          if (_showPopup)
+            Positioned.fill(
+              child: BannerPopup(
+                key: ValueKey(_popupKey),
+                onClose: () => setState(() => _showPopup = false),
+              ),
+            ),
+        ],
       ),
     );
   }
