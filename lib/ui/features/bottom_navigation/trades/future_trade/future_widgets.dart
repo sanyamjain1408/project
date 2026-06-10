@@ -1574,10 +1574,11 @@ class _PositionCard extends StatelessWidget {
                 label: 'Size (USDT)',
                 value: (pos.quantity * pos.entryPrice).toStringAsFixed(4),
               ),
+              SizedBox(width: 20,),
               _InfoCell(
                 label: 'Margin (USDT)',
                 value: pos.margin.toStringAsFixed(2),
-                align: TextAlign.center,
+                align: TextAlign.right,
               ),
               _InfoCell(
                 label: 'Margin Ratio',
@@ -1595,10 +1596,11 @@ class _PositionCard extends StatelessWidget {
                 label: 'Entry Price (USDT)',
                 value: pos.entryPrice.toStringAsFixed(pp),
               ),
+              SizedBox(width: 20,),
               _InfoCell(
                 label: 'Mark Price (USDT)',
                 value: markPrice.toStringAsFixed(pp),
-                align: TextAlign.center,
+                align: TextAlign.right,
               ),
               _InfoCell(
                 label: 'Liq. Price (USDT)',
@@ -1651,7 +1653,7 @@ class _InfoCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final cross = align == TextAlign.end
         ? CrossAxisAlignment.end
-        : align == TextAlign.center
+        : align == TextAlign.center 
         ? CrossAxisAlignment.center
         : CrossAxisAlignment.start;
     return Expanded(
