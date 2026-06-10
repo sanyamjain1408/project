@@ -45,6 +45,7 @@ import '../side_navigation/referrals/referral_screen.dart';
 import '../side_navigation/ib_program/ib_screen.dart';
 import 'root_controller.dart';
 import 'root_widgets.dart';
+import '../bottom_navigation/landing/banner_popup.dart';
 import 'dart:ui';
 
 // ── EXACT FIGMA COLORS ───────────────────────────────────────────────────────
@@ -73,6 +74,7 @@ class RootScreen extends StatefulWidget {
 
 class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
   final RootController _controller = Get.put(RootController());
+  bool _showPopup = true;
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
 
@@ -82,13 +84,12 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
     super.initState();
     _controller.changeBottomNavIndex = changeBottomNavTab;
     WidgetsBinding.instance.addObserver(this);
-    GetStorage().write('show_banner_popup', true);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      GetStorage().write('show_banner_popup', true);
+    if (state == AppLifecycleState.resumed && mounted) {
+      setState(() => _showPopup = true);
     }
   }
 
@@ -110,13 +111,23 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
   @override
   Widget build(BuildContext context) {
     return KeyboardDismissOnTap(
-      child: Scaffold(
-        backgroundColor: context.theme.scaffoldBackgroundColor,
-        extendBody: true,
-        drawerScrimColor: Colors.transparent,
-        drawer: _getDrawerNew(),
-        bottomNavigationBar: _getBottomNavigationBar(),
-        body: SafeArea(top: false, child: Obx(() => _getBody())),
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: context.theme.scaffoldBackgroundColor,
+            extendBody: true,
+            drawerScrimColor: Colors.transparent,
+            drawer: _getDrawerNew(),
+            bottomNavigationBar: _getBottomNavigationBar(),
+            body: SafeArea(top: false, child: Obx(() => _getBody())),
+          ),
+          if (_showPopup)
+            Positioned.fill(
+              child: BannerPopup(
+                onClose: () => setState(() => _showPopup = false),
+              ),
+            ),
+        ],
       ),
     );
   }
