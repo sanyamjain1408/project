@@ -2,7 +2,11 @@ import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
+<<<<<<< Updated upstream
 import 'discover_feed.dart';
+=======
+import 'banner_popup.dart';
+>>>>>>> Stashed changes
 
 import '../../../../addons/ico/ico_ui/ico_screen.dart';
 import '../../../../data/local/constants.dart';
@@ -53,6 +57,7 @@ class LandingScreen extends StatefulWidget {
 
 class _LandingScreenState extends State<LandingScreen> {
   final _controller = Get.put(LandingController());
+  bool _showPopup = true;
 
   @override
   void initState() {
@@ -71,8 +76,9 @@ class _LandingScreenState extends State<LandingScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Column(
+      child: Stack(
         children: [
+<<<<<<< Updated upstream
           const AppBarHomeView(),
           Expanded(child: Obx(() {
             final lData = _controller.landingData.value;
@@ -89,6 +95,38 @@ class _LandingScreenState extends State<LandingScreen> {
                     ],
                   );
           })),
+=======
+          Column(
+            children: [
+              const AppBarHomeView(),
+              Expanded(child: Obx(() {
+                final lData = _controller.landingData.value;
+                return _controller.isLoading.value
+                    ? const ShimmerViewLanding()
+                    : ListView(
+                        shrinkWrap: true,
+                        children: [
+                          if (lData.landingSecondSectionStatus == 1) const CryptoTrustBannerView(),
+                          buildViewCard(),
+                          if (lData.announcementList.isValid) AnnouncementView(announcementList: lData.announcementList!),
+                          ///_exploreView(),
+                          if (lData.landingThirdSectionStatus == 1) const LandingMarketView(),
+                          const MarketEmptyStateWidget(),
+                          ///_getLandingButtonView(),
+                          ///_featureView(),
+                          ///_latestBlogView()
+                        ],
+                      );
+              })),
+            ],
+          ),
+          if (_showPopup)
+            Positioned.fill(
+              child: BannerPopup(
+                onClose: () => setState(() => _showPopup = false),
+              ),
+            ),
+>>>>>>> Stashed changes
         ],
       ),
     );

@@ -38,6 +38,10 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
   List<BannerItem> _banners = [];
   int _index = 0;
   bool _ready = false;
+<<<<<<< Updated upstream
+=======
+  bool _animating = false;
+>>>>>>> Stashed changes
   late final AnimationController _animCtrl;
   late final Animation<double> _scaleAnim;
   late final Animation<double> _opacityAnim;
@@ -45,7 +49,11 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
+<<<<<<< Updated upstream
     _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 180))
+=======
+    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 220))
+>>>>>>> Stashed changes
       ..forward();
     _scaleAnim = Tween<double>(begin: 0.9, end: 1.0).animate(
       CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut),
@@ -62,15 +70,25 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
+<<<<<<< Updated upstream
           final banners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
           // preload all images before showing popup
           await _preloadAll(banners);
           if (mounted) setState(() { _banners = banners; _ready = true; });
+=======
+          if (mounted) {
+            setState(() {
+              _banners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
+              _ready = true;
+            });
+          }
+>>>>>>> Stashed changes
         }
       }
     } catch (_) {}
   }
 
+<<<<<<< Updated upstream
   Future<void> _preloadAll(List<BannerItem> banners) async {
     for (final b in banners) {
       if (b.imageUrl != null && b.imageUrl!.isNotEmpty) {
@@ -86,6 +104,18 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
       _animCtrl.reverse().then((_) {
         if (mounted) {
           setState(() => _index++);
+=======
+  void _handleClose() {
+    if (_animating) return;
+    if (_index < _banners.length - 1) {
+      setState(() => _animating = true);
+      _animCtrl.reverse().then((_) {
+        if (mounted) {
+          setState(() {
+            _index++;
+            _animating = false;
+          });
+>>>>>>> Stashed changes
           _animCtrl.forward();
         }
       });
@@ -107,8 +137,12 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
     final banner = _banners[_index];
     final remaining = _banners.length - _index - 1;
     final screenW = MediaQuery.of(context).size.width;
+<<<<<<< Updated upstream
     final cardW = (screenW - 32).clamp(0.0, 340.0);
     final btnW = cardW - 48;
+=======
+    final cardW = (screenW - 32).clamp(0.0, 502.0);
+>>>>>>> Stashed changes
 
     return GestureDetector(
       onTap: _handleClose,
@@ -116,15 +150,25 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
         color: Colors.black.withOpacity(0.72),
         child: Center(
           child: GestureDetector(
+<<<<<<< Updated upstream
             onTap: () {},
+=======
+            onTap: () {}, // prevent backdrop dismiss when tapping card
+>>>>>>> Stashed changes
             child: SizedBox(
               width: cardW,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Stack(
+<<<<<<< Updated upstream
                     alignment: Alignment.topCenter,
                     children: [
+=======
+                    alignment: Alignment.center,
+                    children: [
+                      // stacked card shadows
+>>>>>>> Stashed changes
                       if (remaining >= 2)
                         Positioned(
                           top: 12,
@@ -149,6 +193,10 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                             ),
                           ),
                         ),
+<<<<<<< Updated upstream
+=======
+                      // main card
+>>>>>>> Stashed changes
                       AnimatedBuilder(
                         animation: _animCtrl,
                         builder: (_, child) => Opacity(
@@ -166,16 +214,30 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                             ),
                             child: Stack(
                               children: [
+<<<<<<< Updated upstream
                                 if (banner.imageUrl != null && banner.imageUrl!.isNotEmpty)
                                   Image(
                                     image: NetworkImage(banner.imageUrl!),
                                     width: cardW,
                                     fit: BoxFit.fitWidth,
                                     frameBuilder: (ctx, child, frame, _) => child,
+=======
+                                // banner image
+                                if (banner.imageUrl != null && banner.imageUrl!.isNotEmpty)
+                                  Image.network(
+                                    banner.imageUrl!,
+                                    width: cardW,
+                                    fit: BoxFit.fitWidth,
+>>>>>>> Stashed changes
                                     errorBuilder: (_, __, ___) => Container(height: 300, color: const Color(0xFF1a1a1a)),
                                   )
                                 else
                                   Container(height: 300, color: const Color(0xFF1a1a1a)),
+<<<<<<< Updated upstream
+=======
+
+                                // close button
+>>>>>>> Stashed changes
                                 Positioned(
                                   top: 12,
                                   right: 12,
@@ -192,15 +254,30 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                                     ),
                                   ),
                                 ),
+<<<<<<< Updated upstream
+=======
+
+                                // CTA button
+>>>>>>> Stashed changes
                                 Positioned(
                                   bottom: 18,
                                   left: 0,
                                   right: 0,
                                   child: Center(
                                     child: GestureDetector(
+<<<<<<< Updated upstream
                                       onTap: () => widget.onClose?.call(),
                                       child: Container(
                                         width: btnW,
+=======
+                                      onTap: () {
+                                        // open link via url_launcher if available
+                                        // For now close the popup
+                                        widget.onClose?.call();
+                                      },
+                                      child: Container(
+                                        width: cardW - 48,
+>>>>>>> Stashed changes
                                         height: 44,
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
@@ -231,6 +308,11 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                       ),
                     ],
                   ),
+<<<<<<< Updated upstream
+=======
+
+                  // dot indicators
+>>>>>>> Stashed changes
                   if (_banners.length > 1) ...[
                     const SizedBox(height: 14),
                     Row(

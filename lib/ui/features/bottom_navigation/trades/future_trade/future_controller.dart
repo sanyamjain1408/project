@@ -20,7 +20,6 @@ class NewFutureController extends GetxController {
   final unrealizedPnl = 0.0.obs;   // data['unrealized_pnl']
   final futurePnlToday = 0.0.obs;   // from /api/future/pnl
   final futurePnlPct = 0.0.obs;
-  Timer? _balanceTimer;
   final isLoggedIn = false.obs;
   final orderLoading = false.obs;
   final priceGoingUp = true.obs;
@@ -237,12 +236,6 @@ class NewFutureController extends GetxController {
     } catch (_) {}
   }
 
-  void refreshAll() {
-    fetchBalance();
-    fetchPositions();
-    fetchOrders();
-    fetchFuturePnl();
-  }
 
   Future<void> fetchBalance() async {
     try {
