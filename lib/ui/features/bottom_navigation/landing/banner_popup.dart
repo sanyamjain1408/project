@@ -41,7 +41,17 @@ class BannerPopup extends StatefulWidget {
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
-          _cachedBanners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
+          final banners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
+          _cachedBanners = banners;
+          // Pre-download all banner images into Flutter's image cache
+          for (final b in banners) {
+            if (b.imageUrl != null && b.imageUrl!.isNotEmpty) {
+              final imageProvider = NetworkImage(b.imageUrl!);
+              imageProvider.resolve(const ImageConfiguration()).addListener(
+                ImageStreamListener((_, __) {}),
+              );
+            }
+          }
           return;
         }
       }
@@ -208,6 +218,13 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                                     banner.imageUrl!,
                                     width: cardW,
                                     fit: BoxFit.fitWidth,
+                                    frameBuilder: (ctx, child, frame, _) {
+                                      if (frame == null) {
+                                        // Image not yet loaded — show shimmer placeholder
+                                        return _Shimmer(width: cardW, height: 300);
+                                      }
+                                      return child;
+                                    },
                                     errorBuilder: (_, __, ___) => Container(height: 300, color: const Color(0xFF1a1a1a)),
                                   )
                                 else
