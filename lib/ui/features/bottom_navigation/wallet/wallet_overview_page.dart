@@ -93,17 +93,23 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
       List<History> deps = [];
       List<History> wds = [];
 
-      if (results[0].statusCode == 200) {
-        final body = jsonDecode(results[0].body);
-        debugPrint('DEP BODY: ${results[0].body.substring(0, results[0].body.length.clamp(0, 300))}');
-        final raw = body['data']?['histories']?['data'] ?? body['data']?['data'] ?? body['data'];
-        if (raw is List) deps = raw.map((e) => History.fromJson(Map<String, dynamic>.from(e))).toList();
-      }
-      if (results[1].statusCode == 200) {
-        final body = jsonDecode(results[1].body);
-        debugPrint('WD BODY: ${results[1].body.substring(0, results[1].body.length.clamp(0, 300))}');
-        final raw = body['data']?['histories']?['data'] ?? body['data']?['data'] ?? body['data'];
-        if (raw is List) wds = raw.map((e) => History.fromJson(Map<String, dynamic>.from(e))).toList();
+      for (int i = 0; i < 2; i++) {
+        if (results[i].statusCode != 200) continue;
+        try {
+          final body = jsonDecode(results[i].body);
+          final raw = body['data']?['histories']?['data'];
+          if (raw is List) {
+            final list = <History>[];
+            for (final e in raw) {
+              try {
+                list.add(History.fromJson(Map<String, dynamic>.from(e)));
+              } catch (ex) {
+                debugPrint('History.fromJson failed for item: $ex');
+              }
+            }
+            if (i == 0) deps = list; else wds = list;
+          }
+        } catch (_) {}
       }
 
       depositList.value = deps;
