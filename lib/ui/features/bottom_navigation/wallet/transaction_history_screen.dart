@@ -115,17 +115,19 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   String _statusLabel(dynamic status) {
-    final raw = status?.toString() ?? '';
-    if (raw == '1') return 'Success';
-    if (raw == '0') return 'Pending';
-    if (raw == '3') return 'Processing';
-    if (raw == '2') return 'Failed';
-    return 'Failed';
+    switch (status?.toString()) {
+      case '1': return 'Success';
+      case '0': case '4': return 'Pending';
+      case '5': return 'Processing';
+      case '2': return 'Rejected';
+      case '99': return 'Expired';
+      default: return 'Failed'; // 3
+    }
   }
 
   Color _statusColor(String label) {
     if (label == 'Success') return _green;
-    if (label == 'Pending') return _yellow;
+    if (label == 'Pending' || label == 'Processing') return _yellow;
     if (label == 'Processing') return const Color(0xFF00B7FF);
     return _red;
   }
