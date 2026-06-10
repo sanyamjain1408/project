@@ -71,7 +71,7 @@ class RootScreen extends StatefulWidget {
   RootScreenState createState() => RootScreenState();
 }
 
-class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
+class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
   final RootController _controller = Get.put(RootController());
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
@@ -81,10 +81,20 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     currentContext = context;
     super.initState();
     _controller.changeBottomNavIndex = changeBottomNavTab;
+    WidgetsBinding.instance.addObserver(this);
+    GetStorage().write('show_banner_popup', true);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      GetStorage().write('show_banner_popup', true);
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     hideKeyboard();
     super.dispose();
     currentContext = null;

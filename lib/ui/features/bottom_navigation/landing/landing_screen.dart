@@ -1,3 +1,4 @@
+import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
@@ -51,9 +52,9 @@ class LandingScreen extends StatefulWidget {
   State<LandingScreen> createState() => _LandingScreenState();
 }
 
-class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserver {
+class _LandingScreenState extends State<LandingScreen> {
   final _controller = Get.put(LandingController());
-  bool _showPopup = true;
+  bool _showPopup = GetStorage().read('show_banner_popup') == true;
 
   @override
   void initState() {
@@ -65,7 +66,6 @@ class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserv
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _controller.handleSocketChannels(false);
     super.dispose();
   }
@@ -102,7 +102,7 @@ class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserv
           if (_showPopup)
             Positioned.fill(
               child: BannerPopup(
-                onClose: () => setState(() => _showPopup = false),
+                onClose: () { GetStorage().write('show_banner_popup', false); setState(() => _showPopup = false); },
               ),
             ),
         ],
