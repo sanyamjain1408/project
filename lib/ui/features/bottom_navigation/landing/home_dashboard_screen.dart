@@ -1,3 +1,4 @@
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/support_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -240,10 +241,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                   ),
                                 ),
                                 const SizedBox(width: 5),
-                                const Icon(
-                                  Icons.headphones,
-                                  color: Colors.white,
-                                  size: 22,
+                                GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const SupportScreen()),
+                                  ),
+                                  child: const Icon(
+                                    Icons.headphones,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 GestureDetector(
