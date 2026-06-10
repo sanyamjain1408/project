@@ -194,8 +194,8 @@ class _McStakingScreenState extends State<McStakingScreen> {
           _buildStatsGrid(),
           const SizedBox(height: 10),
           _buildCoinList(),
-          const SizedBox(height: 20),
-          _buildNavCards(),
+          // const SizedBox(height: 20),
+          // _buildNavCards(),
         ],
       ),
     );
@@ -206,10 +206,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
       final stats = _c.statistics.value;
       final p = _c.portfolio.value;
 
-      // Staking Value = sum of stakedAmount of all active stakes (coin units, no price conversion)
-      final stakingValue = p == null
-          ? 0.0
-          : p.portfolio.fold(0.0, (s, i) => s + i.stakedAmount);
+      final stakingValue = p?.totalUsdtValue ?? 0.0;
 
       // Total Reward = live earning from _StakingLiveHero ticker via controller
       final totalReward = _c.liveEarningUsdt.value;
@@ -320,8 +317,9 @@ class _McStakingScreenState extends State<McStakingScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
                         value,
@@ -334,6 +332,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(width: 5),
                       Text(
                         sub,
                         style: TextStyle(

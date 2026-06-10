@@ -273,7 +273,7 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
 // ─── Articles ─────────────────────────────────────────────────────────────────
 class _ArticlesWidget extends StatefulWidget {
   final String type;
-  const _ArticlesWidget({required this.type});
+  const _ArticlesWidget({super.key, required this.type});
   @override
   State<_ArticlesWidget> createState() => _ArticlesWidgetState();
 }
