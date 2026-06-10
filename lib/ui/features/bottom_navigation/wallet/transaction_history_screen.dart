@@ -6,8 +6,6 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
-import 'package:tradexpro_flutter/data/models/history.dart';
-import 'package:tradexpro_flutter/data/models/response.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
@@ -61,23 +59,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       List<Map<String, dynamic>> list = [];
 
       if (tab == 'deposit' || tab == 'withdraw') {
-        // Use APIRepository which handles all auth headers correctly
-        final histType = tab == 'withdraw' ? HistoryType.withdraw : HistoryType.deposit;
-        final resp = await APIRepository().getActivityList(pg, histType, isFiat: false);
-        if (resp.success) {
-          try {
-            final hResp = HistoryResponse.fromJson(resp.data);
-            final data = hResp.histories?.data;
-            if (data != null) {
-              list = data.map<Map<String, dynamic>>((h) => {
-                '_type': tab,
-                'coin_type': h.coinType ?? 'USDT',
-                'amount': h.amount?.toString() ?? '0',
-                'status': h.status?.toString() ?? '0',
-                'created_at': h.createdAt?.toIso8601String() ?? '',
-              }).toList();
-            }
-          } catch (_) {}
+        final resp = await http.get(
+          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=$tab&page=$pg&per_page=25&column_name=created_at&order_by=desc'),
+          headers: _authHeaders(),
+        );
+        if (resp.statusCode == 200) {
+          final body = jsonDecode(resp.body);
+          // response: { success: true, data: { histories: { data: [...] } } }
+          final raw = body['data']?['histories']?['data'];
+          if (raw is List) {
+            list = raw.map<Map<String, dynamic>>((e) => {
+              ...Map<String, dynamic>.from(e),
+              '_type': tab,
+            }).toList();
+          }
         }
         _hasMore = list.length >= 25;
       } else if (tab == 'swap') {
