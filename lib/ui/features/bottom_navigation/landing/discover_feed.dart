@@ -221,7 +221,7 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
   Widget build(BuildContext context) {
     if (_loading) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
     if (_posts.isEmpty) return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No posts yet.', style: TextStyle(color: _dim, fontSize: 13))));
-    return Stack(children: [
+    return Column(children: [
       ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -236,17 +236,20 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
           },
         ),
       ),
-      Positioned(
-        right: 16, bottom: 16,
-        child: GestureDetector(
-          onTap: _openComposer,
-          child: Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: _green, shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: _green.withOpacity(0.4), blurRadius: 16, spreadRadius: 2)],
+      Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 16, top: 8, bottom: 16),
+          child: GestureDetector(
+            onTap: _openComposer,
+            child: Container(
+              width: 52, height: 52,
+              decoration: BoxDecoration(
+                color: _green, shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: _green.withOpacity(0.4), blurRadius: 16, spreadRadius: 2)],
+              ),
+              child: const Icon(Icons.add, color: Color(0xFF0A0C0F), size: 28),
             ),
-            child: const Icon(Icons.add, color: Color(0xFF0A0C0F), size: 28),
           ),
         ),
       ),
