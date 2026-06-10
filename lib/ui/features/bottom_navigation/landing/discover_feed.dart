@@ -134,7 +134,7 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(0, 12, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: List.generate(_tabs.length, (i) {
