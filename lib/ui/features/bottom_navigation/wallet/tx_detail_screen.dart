@@ -231,12 +231,16 @@ class TxDetailScreen extends StatelessWidget {
   }
 
   Widget _copyRow(BuildContext context, String label, String value, {bool underline = false}) {
-    // Show truncated: first 4 bold + middle normal + last 4 bold (matching Figma address style)
     final isDash = value == '---';
+    // Truncate long values: show first 6 ... last 6
+    String display = value;
+    if (!isDash && value.length > 16) {
+      display = '${value.substring(0, 6)}...${value.substring(value.length - 6)}';
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(label,
             style: TextStyle(color: Colors.white.withOpacity(0.50), fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33)),
@@ -245,45 +249,27 @@ class TxDetailScreen extends StatelessWidget {
             onTap: isDash ? null : () => _copy(context, value),
             child: Row(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (!isDash && value.length > 12)
-                  SizedBox(
-                    width: 160,
-                    child: _buildAddress(value, underline: underline),
-                  )
-                else
-                  Text(value,
-                    textAlign: TextAlign.right,
-                    style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33,
-                      decoration: underline ? TextDecoration.underline : null)),
-                const SizedBox(width: 4),
+                Text(
+                  display,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontFamily: _font,
+                    fontWeight: FontWeight.w400,
+                    height: 1.33,
+                    decoration: underline && !isDash ? TextDecoration.underline : null,
+                  ),
+                ),
+                const SizedBox(width: 5),
                 if (!isDash) const Icon(Icons.copy_outlined, size: 13, color: Colors.white54),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAddress(String value, {bool underline = false}) {
-    // First 4 chars bold, middle normal, last 4 bold — matches Figma Address style
-    if (value.length <= 8) {
-      return Text(value, textAlign: TextAlign.right,
-        style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33,
-          decoration: underline ? TextDecoration.underline : null));
-    }
-    final pre = value.substring(0, 4);
-    final mid = value.substring(4, value.length - 4);
-    final suf = value.substring(value.length - 4);
-    return Text.rich(
-      TextSpan(children: [
-        TextSpan(text: pre, style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w700, height: 1.33, decoration: underline ? TextDecoration.underline : null)),
-        TextSpan(text: mid, style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33, decoration: underline ? TextDecoration.underline : null)),
-        TextSpan(text: suf, style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w700, height: 1.33, decoration: underline ? TextDecoration.underline : null)),
-      ]),
-      textAlign: TextAlign.right,
-      overflow: TextOverflow.ellipsis,
     );
   }
 }
