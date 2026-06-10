@@ -116,31 +116,35 @@ class LandingController extends GetxController implements SocketListener {
   }
 
   void _loadNewListings() {
-    APIRepository().getMarketOverviewTopCoinList(1, 'USD', 4).then((resp) {
+    // Use spot pairs sorted by ID descending (highest id = newest listed)
+    APIRepository().getSpotMarketPairs().then((resp) {
       if (!resp.success) return;
-      List rawList = [];
+      List rawPairs = [];
       if (resp.data is List) {
-        rawList = resp.data as List;
+        rawPairs = resp.data as List;
       } else if (resp.data is Map) {
-        rawList = (resp.data['data'] as List?) ?? [];
+        rawPairs = (resp.data['data'] as List?) ??
+            (resp.data['pairs'] as List?) ?? [];
       }
-      final newCoins = rawList.map<CoinPair>((p) {
+      if (rawPairs.isEmpty) return;
+      // Sort by id descending — highest id = most recently added pair
+      rawPairs.sort((a, b) => (int.tryParse(b['id']?.toString() ?? '0') ?? 0)
+          .compareTo(int.tryParse(a['id']?.toString() ?? '0') ?? 0));
+      final newCoins = rawPairs.take(8).map<CoinPair>((p) {
         final coin = CoinPair();
-        coin.childCoinName  = p['coin_type']  ?? p['base_currency']  ?? p['child_coin_name'] ?? '';
-        coin.parentCoinName = p['base_coin_type'] ?? p['quote_currency'] ?? p['parent_coin_name'] ?? 'USDT';
+        coin.childCoinName  = p['base_currency']  ?? p['base']  ?? '';
+        coin.parentCoinName = p['quote_currency'] ?? p['quote'] ?? 'USDT';
         coin.lastPrice      = double.tryParse(p['current_price']?.toString() ?? p['last_price']?.toString() ?? '0') ?? 0;
-        coin.priceChange    = double.tryParse(p['price_change']?.toString() ?? p['change']?.toString() ?? '0') ?? 0;
-        coin.volume         = double.tryParse(p['volume']?.toString() ?? '0') ?? 0;
-        coin.icon           = p['coin_icon'] ?? p['icon'] ?? p['logo'] ?? '';
+        coin.priceChange    = double.tryParse(p['price_change_24h']?.toString() ?? p['change']?.toString() ?? '0') ?? 0;
+        coin.volume         = double.tryParse(p['volume_24h']?.toString() ?? p['volume']?.toString() ?? '0') ?? 0;
+        coin.icon           = p['icon'] ?? p['logo'] ?? '';
         coin.coinPair       = '${coin.childCoinName}_${coin.parentCoinName}';
         coin.coinPairName   = '${coin.childCoinName}/${coin.parentCoinName}';
         return coin;
-      }).take(8).toList();
-      final updated = landingList.value;
-      updated.latestCoinPairs = newCoins;
+      }).toList();
       landingList.value = LandingList(
-        assetCoinPairs: updated.assetCoinPairs,
-        hourlyCoinPairs: updated.hourlyCoinPairs,
+        assetCoinPairs: landingList.value.assetCoinPairs,
+        hourlyCoinPairs: landingList.value.hourlyCoinPairs,
         latestCoinPairs: newCoins,
       );
     }, onError: (_) {});
