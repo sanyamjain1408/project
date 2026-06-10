@@ -84,38 +84,35 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     };
   }
 
+  History _parseHistory(dynamic e) {
+    final h = History(id: (e['id'] ?? 0) is int ? e['id'] : int.tryParse(e['id']?.toString() ?? '0') ?? 0);
+    h.amount = double.tryParse(e['amount']?.toString() ?? '0') ?? 0;
+    h.status = int.tryParse(e['status']?.toString() ?? '0') ?? 0;
+    h.coinType = e['coin_type']?.toString() ?? '';
+    final rawDate = e['created_at']?.toString() ?? '';
+    if (rawDate.isNotEmpty) try { h.createdAt = DateTime.parse(rawDate); } catch (_) {}
+    return h;
+  }
+
+  List<History> _parseHistoryList(http.Response res) {
+    if (res.statusCode != 200) return [];
+    try {
+      final raw = jsonDecode(res.body)['data']?['histories']?['data'];
+      if (raw is List) return raw.map(_parseHistory).toList();
+    } catch (_) {}
+    return [];
+  }
+
   Future<void> _fetchRecentTx() async {
     try {
       const base = 'https://api.trapix.com/api/wallet-history-app';
       final headers = _authHeaders();
-      final depFuture = http.get(Uri.parse('$base?type=deposit&page=1&per_page=8'), headers: headers);
-      final wdFuture = http.get(Uri.parse('$base?type=withdraw&page=1&per_page=8'), headers: headers);
-      final results = await Future.wait([depFuture, wdFuture]);
-
-      List<History> deps = [];
-      List<History> wds = [];
-
-      for (int i = 0; i < 2; i++) {
-        if (results[i].statusCode != 200) continue;
-        try {
-          final body = jsonDecode(results[i].body);
-          final raw = body['data']?['histories']?['data'];
-          if (raw is List) {
-            final list = <History>[];
-            for (final e in raw) {
-              try {
-                list.add(History.fromJson(Map<String, dynamic>.from(e)));
-              } catch (ex) {
-                debugPrint('History.fromJson failed for item: $ex');
-              }
-            }
-            if (i == 0) deps = list; else wds = list;
-          }
-        } catch (_) {}
-      }
-
-      depositList.value = deps;
-      withdrawList.value = wds;
+      final results = await Future.wait([
+        http.get(Uri.parse('$base?type=deposit&page=1&per_page=8'), headers: headers),
+        http.get(Uri.parse('$base?type=withdraw&page=1&per_page=8'), headers: headers),
+      ]);
+      depositList.value = _parseHistoryList(results[0]);
+      withdrawList.value = _parseHistoryList(results[1]);
     } catch (e) { debugPrint('fetchRecentTx error: $e'); }
   }
 
