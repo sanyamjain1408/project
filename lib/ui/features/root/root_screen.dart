@@ -1,5 +1,4 @@
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
@@ -13,7 +12,6 @@ import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/home_dashboard_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_screen.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
-import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/decorations.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
@@ -41,14 +39,9 @@ import '../side_navigation/spin_win/spin_win_screen.dart';
 import '../side_navigation/listing/listing_screen.dart';
 import '../side_navigation/official_verification/official_verification_screen.dart';
 import '../auth/sign_in/sign_in_screen.dart';
-import '../side_navigation/referrals/referral_screen.dart';
-import '../side_navigation/ib_program/ib_screen.dart';
-import '../side_navigation/activity/activity_screen.dart';
 import '../bottom_navigation/champion/champion_screen.dart';
-import '../notifications/notifications_page.dart';
 import '../side_navigation/price_alerts/price_alerts_screen.dart';
 import 'root_controller.dart';
-import 'root_widgets.dart';
 import '../bottom_navigation/landing/banner_popup.dart';
 import 'dart:ui';
 
