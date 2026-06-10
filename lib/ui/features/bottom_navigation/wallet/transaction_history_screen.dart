@@ -60,7 +60,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
       if (tab == 'deposit' || tab == 'withdraw') {
         final resp = await http.get(
-          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=$tab&page=$pg&per_page=25&column_name=created_at&order_by=desc'),
+          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=$tab&page=$pg&per_page=25'),
           headers: _authHeaders(),
         );
         if (resp.statusCode == 200) {

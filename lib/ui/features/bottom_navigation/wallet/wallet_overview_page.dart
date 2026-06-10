@@ -86,8 +86,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     try {
       const base = 'https://api.trapix.com/api/wallet-history-app';
       final headers = _authHeaders();
-      final depFuture = http.get(Uri.parse('$base?type=deposit&page=1&per_page=8&column_name=created_at&order_by=desc'), headers: headers);
-      final wdFuture = http.get(Uri.parse('$base?type=withdraw&page=1&per_page=8&column_name=created_at&order_by=desc'), headers: headers);
+      final depFuture = http.get(Uri.parse('$base?type=deposit&page=1&per_page=8'), headers: headers);
+      final wdFuture = http.get(Uri.parse('$base?type=withdraw&page=1&per_page=8'), headers: headers);
       final results = await Future.wait([depFuture, wdFuture]);
 
       List<History> deps = [];
@@ -95,18 +95,20 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
 
       if (results[0].statusCode == 200) {
         final body = jsonDecode(results[0].body);
-        final raw = body['data']?['histories']?['data'];
+        debugPrint('DEP BODY: ${results[0].body.substring(0, results[0].body.length.clamp(0, 300))}');
+        final raw = body['data']?['histories']?['data'] ?? body['data']?['data'] ?? body['data'];
         if (raw is List) deps = raw.map((e) => History.fromJson(Map<String, dynamic>.from(e))).toList();
       }
       if (results[1].statusCode == 200) {
         final body = jsonDecode(results[1].body);
-        final raw = body['data']?['histories']?['data'];
+        debugPrint('WD BODY: ${results[1].body.substring(0, results[1].body.length.clamp(0, 300))}');
+        final raw = body['data']?['histories']?['data'] ?? body['data']?['data'] ?? body['data'];
         if (raw is List) wds = raw.map((e) => History.fromJson(Map<String, dynamic>.from(e))).toList();
       }
 
       depositList.value = deps;
       withdrawList.value = wds;
-    } catch (_) {}
+    } catch (e) { debugPrint('fetchRecentTx error: $e'); }
   }
 
   @override
