@@ -336,6 +336,20 @@ class _ArticlesWidgetState extends State<_ArticlesWidget> {
   }
 }
 
+Widget _announcementPlaceholder() => Container(
+  width: 72, height: 72,
+  decoration: BoxDecoration(color: const Color(0xFF1A1A2E), borderRadius: BorderRadius.circular(8)),
+  child: const Icon(Icons.campaign_outlined, color: _green, size: 30),
+);
+
+String _fmtDate(String s) {
+  try {
+    final d = DateTime.parse(s.contains('T') ? s : s.replaceFirst(' ', 'T'));
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${months[d.month - 1]} ${d.day}, ${d.year}';
+  } catch (_) { return s; }
+}
+
 // ─── Announcements ────────────────────────────────────────────────────────────
 class _AnnouncementsWidget extends StatefulWidget {
   const _AnnouncementsWidget({super.key});
@@ -378,23 +392,26 @@ class _AnnouncementsWidgetState extends State<_AnnouncementsWidget> {
       itemBuilder: (_, i) {
         final a = _items[i];
         final img = a['image'] as String?;
+        final date = _fmtDate(a['created_at'] ?? '');
         return Container(
           decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1C1F26)))),
-          padding: const EdgeInsets.all(14),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            if (img != null && img.isNotEmpty) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(img, width: double.infinity, height: 180, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
-              ),
-              const SizedBox(height: 10),
-            ],
-            Text(a['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14, height: 1.4)),
-            if ((a['description'] ?? '').toString().isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(a['description'] ?? '', style: const TextStyle(color: Color(0xFFCBD0D8), fontSize: 13, height: 1.5), maxLines: 4, overflow: TextOverflow.ellipsis),
-            ],
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            // thumbnail
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: (img != null && img.isNotEmpty)
+                ? Image.network(img, width: 72, height: 72, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _announcementPlaceholder())
+                : _announcementPlaceholder(),
+            ),
+            const SizedBox(width: 12),
+            // title + date
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(a['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13.5, height: 1.35)),
+              const SizedBox(height: 5),
+              Text(date, style: const TextStyle(color: _dim, fontSize: 12)),
+            ])),
           ]),
         );
       },
