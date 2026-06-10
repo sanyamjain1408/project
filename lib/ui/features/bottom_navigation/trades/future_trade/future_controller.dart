@@ -268,30 +268,23 @@ class NewFutureController extends GetxController {
   }
 
   Future<void> fetchFuturePnl() async {
+    // Today's PnL = unrealized_pnl (matches web app display)
+    // Already set in fetchBalance — nothing extra needed here
     try {
       final token = getFutureToken();
       if (token.isEmpty) return;
-      // Use today's closed trades to compute realized PnL — same as web app
       final res = await http.get(
-        Uri.parse('$_base/trades'),
+        Uri.parse('$_base/balance'),
         headers: {'Authorization': 'Bearer $token'},
       );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true) {
-          final trades = (data['data'] as List?) ?? [];
-          final today = DateTime.now().toIso8601String().substring(0, 10);
-          final todayTrades = trades.where((t) {
-            final created = t['created_at']?.toString() ?? '';
-            return created.startsWith(today);
-          }).toList();
-          final pnlVal = todayTrades.fold<double>(
-            0.0,
-            (sum, t) => sum + (double.tryParse(t['pnl']?.toString() ?? t['realized_pnl']?.toString() ?? '0') ?? 0),
-          );
-          final wb = walletBalance.value > 0 ? walletBalance.value : (availableBalance.value + marginUsed.value);
-          futurePnlToday.value = pnlVal;
-          futurePnlPct.value = wb > 0 ? (pnlVal / wb) * 100 : 0;
+          final d = data['data'] ?? {};
+          final upnl = double.tryParse(d['unrealized_pnl']?.toString() ?? '0') ?? 0;
+          final wb = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
+          futurePnlToday.value = upnl;
+          futurePnlPct.value = wb > 0 ? (upnl / wb) * 100 : 0;
         }
       }
     } catch (_) {}
