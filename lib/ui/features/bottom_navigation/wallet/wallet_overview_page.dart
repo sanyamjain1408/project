@@ -245,8 +245,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
             final deps = depositList.map((d) => _TxItem(isDeposit: true, amount: d.amount ?? 0, date: d.createdAt, status: d.status ?? 0)).toList();
             final wds = withdrawList.map((w) => _TxItem(isDeposit: false, amount: w.amount ?? 0, date: w.createdAt, status: w.status ?? 0)).toList();
             final merged = [...deps, ...wds]..sort((a, b) {
-              final da = DateTime.tryParse(a.date ?? '') ?? DateTime(0);
-              final db = DateTime.tryParse(b.date ?? '') ?? DateTime(0);
+              final da = a.date ?? DateTime(0);
+              final db = b.date ?? DateTime(0);
               return db.compareTo(da);
             });
             final recent = merged.take(8).toList();
@@ -1938,7 +1938,7 @@ class _EarnProductCard extends StatelessWidget {
 class _TxItem {
   final bool isDeposit;
   final double amount;
-  final String? date;
+  final DateTime? date;
   final int status;
   _TxItem({required this.isDeposit, required this.amount, required this.date, required this.status});
 }
