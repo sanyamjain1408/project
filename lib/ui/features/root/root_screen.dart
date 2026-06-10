@@ -72,7 +72,8 @@ class RootScreen extends StatefulWidget {
 
 class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   final RootController _controller = Get.put(RootController());
-  bool _showPopup = false;
+  // Show popup once per app launch (in-memory flag, not persisted)
+  bool _showPopup = true;
   int _popupKey = 0;
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
@@ -82,15 +83,8 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     currentContext = context;
     super.initState();
     _controller.changeBottomNavIndex = changeBottomNavTab;
-    _checkShowBanner();
-  }
-
-  void _checkShowBanner() {
-    final today = DateTime.now().toIso8601String().substring(0, 10); // "2026-06-10"
-    final lastShown = GetStorage().read<String>('banner_shown_date') ?? '';
-    if (lastShown != today) {
-      setState(() => _showPopup = true);
-    }
+    // Pre-fetch banners immediately so popup is fast when it mounts
+    BannerPopup.prefetch();
   }
 
   @override
@@ -124,11 +118,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
             Positioned.fill(
               child: BannerPopup(
                 key: ValueKey(_popupKey),
-                onClose: () {
-                  final today = DateTime.now().toIso8601String().substring(0, 10);
-                  GetStorage().write('banner_shown_date', today);
-                  setState(() => _showPopup = false);
-                },
+                onClose: () => setState(() => _showPopup = false),
               ),
             ),
         ],

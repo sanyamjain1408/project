@@ -30,8 +30,26 @@ class BannerPopup extends StatefulWidget {
   final VoidCallback? onClose;
   const BannerPopup({super.key, this.onClose});
 
-  // Static cache so banners are only fetched once per app session
+  // Static cache — fetched once at app start, reused instantly when popup mounts
   static List<BannerItem>? _cachedBanners;
+
+  // Call this from root_screen initState to pre-load banners before popup mounts
+  static Future<void> prefetch() async {
+    if (_cachedBanners != null) return; // already fetched
+    try {
+      final res = await http.get(Uri.parse('https://api.trapix.com/api/banners/active'));
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
+          _cachedBanners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
+          return;
+        }
+      }
+      _cachedBanners = [];
+    } catch (_) {
+      _cachedBanners = [];
+    }
+  }
 
   @override
   State<BannerPopup> createState() => _BannerPopupState();
@@ -58,16 +76,16 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
     _opacityAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut),
     );
-    // Use cached banners if available, otherwise fetch
-    if (BannerPopup._cachedBanners != null) {
-      if (BannerPopup._cachedBanners!.isNotEmpty) {
-        _banners = BannerPopup._cachedBanners!;
-        _ready = true;
-      } else {
-        WidgetsBinding.instance.addPostFrameCallback((_) => widget.onClose?.call());
-      }
+    if (BannerPopup._cachedBanners != null && BannerPopup._cachedBanners!.isNotEmpty) {
+      // Already pre-fetched — show instantly, no skeleton
+      _banners = BannerPopup._cachedBanners!;
+      _ready = true;
+    } else if (BannerPopup._cachedBanners != null && BannerPopup._cachedBanners!.isEmpty) {
+      // Pre-fetch ran but no banners — close
+      WidgetsBinding.instance.addPostFrameCallback((_) => widget.onClose?.call());
     } else {
-      setState(() => _ready = false);
+      // Pre-fetch still running — show skeleton and wait
+      _ready = false;
       _fetchBanners();
     }
   }
@@ -81,11 +99,6 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
           final items = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
           BannerPopup._cachedBanners = items;
-          // Pre-download first image before switching from skeleton to real content
-          final url = items.first.imageUrl;
-          if (url != null && url.isNotEmpty && mounted) {
-            await precacheImage(NetworkImage(url), context);
-          }
           if (mounted) setState(() { _banners = items; _ready = true; });
           return;
         }
