@@ -2,11 +2,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
-<<<<<<< Updated upstream
 import 'discover_feed.dart';
-=======
 import 'banner_popup.dart';
->>>>>>> Stashed changes
 
 import '../../../../addons/ico/ico_ui/ico_screen.dart';
 import '../../../../data/local/constants.dart';
@@ -78,24 +75,6 @@ class _LandingScreenState extends State<LandingScreen> {
     return SafeArea(
       child: Stack(
         children: [
-<<<<<<< Updated upstream
-          const AppBarHomeView(),
-          Expanded(child: Obx(() {
-            final lData = _controller.landingData.value;
-            return _controller.isLoading.value
-                ? const ShimmerViewLanding()
-                : ListView(
-                    shrinkWrap: true,
-                    children: [
-                      if (lData.landingSecondSectionStatus == 1) const CryptoTrustBannerView(),
-                      buildViewCard(),
-                      if (lData.announcementList.isValid) AnnouncementView(announcementList: lData.announcementList!),
-                      if (lData.landingThirdSectionStatus == 1) const LandingMarketView(),
-                      const DiscoverTabsWidget(),
-                    ],
-                  );
-          })),
-=======
           Column(
             children: [
               const AppBarHomeView(),
@@ -109,12 +88,8 @@ class _LandingScreenState extends State<LandingScreen> {
                           if (lData.landingSecondSectionStatus == 1) const CryptoTrustBannerView(),
                           buildViewCard(),
                           if (lData.announcementList.isValid) AnnouncementView(announcementList: lData.announcementList!),
-                          ///_exploreView(),
                           if (lData.landingThirdSectionStatus == 1) const LandingMarketView(),
-                          const MarketEmptyStateWidget(),
-                          ///_getLandingButtonView(),
-                          ///_featureView(),
-                          ///_latestBlogView()
+                          const DiscoverTabsWidget(),
                         ],
                       );
               })),
@@ -126,7 +101,6 @@ class _LandingScreenState extends State<LandingScreen> {
                 onClose: () => setState(() => _showPopup = false),
               ),
             ),
->>>>>>> Stashed changes
         ],
       ),
     );
