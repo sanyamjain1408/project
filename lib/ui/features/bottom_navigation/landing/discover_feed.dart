@@ -131,28 +131,34 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
       child: Column(children: [
       Container(
         color: const Color(0xFF111111),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_tabs.length, (i) {
-            final active = i == _tab;
-            return GestureDetector(
-              onTap: () => setState(() => _tab = i),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(_tabs[i], style: TextStyle(
-                  color: active ? Colors.white : _dim,
-                  fontWeight: active ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 15,
-                )),
-                const SizedBox(height: 4),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: 2, width: active ? 24 : 0,
-                  decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(1)),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(_tabs.length, (i) {
+              final active = i == _tab;
+              return GestureDetector(
+                onTap: () => setState(() => _tab = i),
+                child: Container(
+                  margin: EdgeInsets.only(right: i < _tabs.length - 1 ? 20 : 0),
+                  padding: const EdgeInsets.only(bottom: 12, top: 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: active ? const Color(0xFFB5F000) : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  child: Text(_tabs[i], style: TextStyle(
+                    color: active ? const Color(0xFFB5F000) : const Color(0xFF777777),
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    fontSize: 14,
+                  )),
                 ),
-              ]),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
       if (_tab == 0) DiscoverFeedWidget(key: const ValueKey('discover'))
