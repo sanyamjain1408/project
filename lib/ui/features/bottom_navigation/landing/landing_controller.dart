@@ -92,27 +92,58 @@ class LandingController extends GetxController implements SocketListener {
         return coin;
       }).toList();
 
-      // Core Assets: volume ke hisaab se top 10
+      // Core Assets: sorted by price descending (matches web app)
       final coreAssets = List<CoinPair>.from(allCoins)
-        ..sort((a, b) => (b.volume ?? 0).compareTo(a.volume ?? 0));
+        ..sort((a, b) => (b.lastPrice ?? 0).compareTo(a.lastPrice ?? 0));
       final top10CoreAssets = coreAssets.take(8).toList();
 
-      // 24H Gainer: priceChange ke hisaab se descending sort
+      // 24H Gainer: sorted by priceChange descending
       final gainers = List<CoinPair>.from(allCoins)
         ..sort((a, b) => (b.priceChange ?? 0).compareTo(a.priceChange ?? 0));
       final top10Gainers = gainers.take(8).toList();
 
-      // New Listing: API se jo order aaya uske hisaab se last 10 (latest added)
-      final latest = allCoins.reversed.take(8).toList();
-
       landingList.value = LandingList(
         assetCoinPairs: top10CoreAssets,
         hourlyCoinPairs: top10Gainers,
-        latestCoinPairs: latest,
+        latestCoinPairs: [],
       );
+
+      // New Listing: fetch from API with type=4 (same as web app)
+      _loadNewListings();
     }, onError: (err) {
       isLoading.value = false;
     });
+  }
+
+  void _loadNewListings() {
+    APIRepository().getMarketOverviewTopCoinList(1, 'USD', 4).then((resp) {
+      if (!resp.success) return;
+      List rawList = [];
+      if (resp.data is List) {
+        rawList = resp.data as List;
+      } else if (resp.data is Map) {
+        rawList = (resp.data['data'] as List?) ?? [];
+      }
+      final newCoins = rawList.map<CoinPair>((p) {
+        final coin = CoinPair();
+        coin.childCoinName  = p['coin_type']  ?? p['base_currency']  ?? p['child_coin_name'] ?? '';
+        coin.parentCoinName = p['base_coin_type'] ?? p['quote_currency'] ?? p['parent_coin_name'] ?? 'USDT';
+        coin.lastPrice      = double.tryParse(p['current_price']?.toString() ?? p['last_price']?.toString() ?? '0') ?? 0;
+        coin.priceChange    = double.tryParse(p['price_change']?.toString() ?? p['change']?.toString() ?? '0') ?? 0;
+        coin.volume         = double.tryParse(p['volume']?.toString() ?? '0') ?? 0;
+        coin.icon           = p['coin_icon'] ?? p['icon'] ?? p['logo'] ?? '';
+        coin.coinPair       = '${coin.childCoinName}_${coin.parentCoinName}';
+        coin.coinPairName   = '${coin.childCoinName}/${coin.parentCoinName}';
+        return coin;
+      }).take(8).toList();
+      final updated = landingList.value;
+      updated.latestCoinPairs = newCoins;
+      landingList.value = LandingList(
+        assetCoinPairs: updated.assetCoinPairs,
+        hourlyCoinPairs: updated.hourlyCoinPairs,
+        latestCoinPairs: newCoins,
+      );
+    }, onError: (_) {});
   }
 
   void getLatestBlogList() async {
