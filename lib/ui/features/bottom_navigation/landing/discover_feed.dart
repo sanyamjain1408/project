@@ -132,10 +132,9 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
         border: Border(top: BorderSide(color: Color(0xFF1A1A1A), width: 1)),
       ),
       child: Column(children: [
-      const SizedBox(height: 16),
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+        padding: const EdgeInsets.fromLTRB(0, 12, 16, 12),
         child: Row(
           children: List.generate(_tabs.length, (i) {
             final active = i == _tab;
