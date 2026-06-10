@@ -363,8 +363,8 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
           ),
         ),
 
-        // Quick replies
-        if (!_userSentMsg && !_closing && _started)
+        // Quick replies — hide when keyboard open
+        if (!_userSentMsg && !_closing && _started && MediaQuery.of(context).viewInsets.bottom == 0)
           Container(
             color: _bg,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -386,10 +386,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
 
         // Input bar
         Container(
-          padding: EdgeInsets.only(
-            left: 14, right: 14, top: 10,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 10,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: const BoxDecoration(
             color: _bg,
             border: Border(top: BorderSide(color: Color(0xFF1A1A1A))),
