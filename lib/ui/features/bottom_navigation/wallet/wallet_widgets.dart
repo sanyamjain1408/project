@@ -675,18 +675,6 @@ class TotalBalanceView extends StatelessWidget {
           ],
         ),
 
-        // 🔥 spacing before bottom button
-
-        // 🔻 BOTTOM RIGHT BUTTON
-        if (onHistoryTap != null)
-          Align(
-            alignment: Alignment.bottomRight,
-            child: buttonOnlyIcon(
-              iconData: Icons.history,
-              visualDensity: minimumVisualDensity,
-              onPress: onHistoryTap,
-            ),
-          ),
       ],
       );
     });
