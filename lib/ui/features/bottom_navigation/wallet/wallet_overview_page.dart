@@ -2084,26 +2084,47 @@ class _HistorySheetState extends State<_HistorySheet> {
   List<Widget> _items() {
     if (_tab == 0) {
       return [
-        _item(Icons.arrow_downward_rounded,   const Color(0xFF3dffc0), const Color(0xFF0d3326), 'Deposit History',  () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')); }),
-        _item(Icons.arrow_upward_rounded,     const Color(0xFFff4d6a), const Color(0xFF330d13), 'Withdraw History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'withdraw')); }),
-        _item(Icons.swap_horiz_rounded,       const Color(0xFF60a5fa), const Color(0xFF0d1a33), 'Transfer History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'transfer')); }),
-        _item(Icons.currency_exchange_rounded,const Color(0xFFfbbf24), const Color(0xFF332a0d), 'Swap History',     () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')); }),
+        _imgItem('assets/icons/hist-deposit.png',  'Deposit History',  () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')); }),
+        _imgItem('assets/icons/hist-withdraw.png', 'Withdraw History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'withdraw')); }),
+        _imgItem('assets/icons/hist-transfer.png', 'Transfer History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'transfer')); }),
+        _imgItem('assets/icons/hist-swap.png',     'Swap History',     () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')); }),
       ];
     } else if (_tab == 1) {
       return [
-        _item(Icons.list_alt_rounded,     const Color(0xFF60a5fa), const Color(0xFF0d1a33), 'Open Orders',         () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.receipt_long_rounded, const Color(0xFF3dffc0), const Color(0xFF0d3326), 'Order History',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.sync_alt_rounded,     const Color(0xFFfbbf24), const Color(0xFF332a0d), 'Transaction History', () { Get.back(); Get.to(() => const TransactionHistoryScreen()); }),
-        _item(Icons.stop_circle_outlined, const Color(0xFFff4d6a), const Color(0xFF330d13), 'Stop Limit History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _imgItem('assets/icons/open_order.png',        'Open Orders',         () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _imgItem('assets/icons/order_history.png',     'Order History',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _imgItem('assets/icons/transaction_history.png', 'Transaction History', () { Get.back(); Get.to(() => const TransactionHistoryScreen()); }),
+        _imgItem('assets/icons/stop_limit.png',        'Stop Limit History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
       ];
     } else {
       return [
-        _item(Icons.list_alt_rounded,    const Color(0xFF60a5fa), const Color(0xFF0d1a33), 'Open Orders',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.receipt_long_rounded,const Color(0xFF3dffc0), const Color(0xFF0d3326), 'Order History',     () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.stop_circle_outlined,const Color(0xFFff4d6a), const Color(0xFF330d13), 'Stop Limit History',() { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.analytics_outlined,  const Color(0xFFfbbf24), const Color(0xFF332a0d), 'Position History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _imgItem('assets/icons/open_order.png',        'Open Orders',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _imgItem('assets/icons/order_history.png',     'Order History',     () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _imgItem('assets/icons/stop_limit.png',        'Stop Limit History',() { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _imgItem('assets/icons/position_history.png',  'Position History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
       ];
     }
+  }
+
+  Widget _imgItem(String assetPath, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+        child: Row(
+          children: [
+            Container(
+              width: 38, height: 38,
+              decoration: BoxDecoration(color: _surface, borderRadius: BorderRadius.circular(10)),
+              child: Center(child: Image.asset(assetPath, width: 22, height: 22)),
+            ),
+            const SizedBox(width: 14),
+            Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500, fontFamily: _font))),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _item(IconData icon, Color iconColor, Color iconBg, String label, VoidCallback onTap) {
