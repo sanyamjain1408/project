@@ -1990,80 +1990,93 @@ class _HistorySheet extends StatefulWidget {
 }
 
 class _HistorySheetState extends State<_HistorySheet> {
-  int _tab = 0; // 0=Crypto Asset, 1=Spot, 2=Future
+  int _tab = 0;
 
-  static const _bg = Color(0xFF1a1a1a);
+  static const _bg = Color(0xFF111111);
+  static const _surface = Color(0xFF1a1a1a);
   static const _accent = Color(0xFFCCFF00);
-  static const _white = Colors.white;
   static const _font = 'DMSans';
 
   @override
   Widget build(BuildContext context) {
     final tabs = ['Crypto Asset', 'Spot', 'Future'];
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: _bg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 6),
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
-              ),
+    return Container(
+      decoration: const BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 4),
+              width: 36, height: 4,
+              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
             ),
-            // Title + close
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 16, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('History', style: TextStyle(color: _white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: _font)),
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: const Icon(Icons.close, color: Colors.white54, size: 22),
+          ),
+          // Title + close
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('History', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: _font)),
+                GestureDetector(
+                  onTap: () => Get.back(),
+                  child: Container(
+                    width: 28, height: 28,
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), shape: BoxShape.circle),
+                    child: const Icon(Icons.close, color: Colors.white70, size: 16),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
-            // Tab row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: List.generate(tabs.length, (i) => GestureDetector(
+          ),
+          const SizedBox(height: 16),
+          // Tabs with underline indicator
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: List.generate(tabs.length, (i) {
+                final active = _tab == i;
+                return GestureDetector(
                   onTap: () => setState(() => _tab = i),
                   child: Padding(
-                    padding: EdgeInsets.only(right: i < tabs.length - 1 ? 20 : 0),
-                    child: Text(
-                      tabs[i],
-                      style: TextStyle(
-                        color: _tab == i ? _white : Colors.white38,
-                        fontSize: 15,
-                        fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
-                        fontFamily: _font,
-                      ),
+                    padding: EdgeInsets.only(right: i < tabs.length - 1 ? 24 : 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tabs[i],
+                          style: TextStyle(
+                            color: active ? Colors.white : Colors.white38,
+                            fontSize: 14,
+                            fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                            fontFamily: _font,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 2,
+                          width: tabs[i].length * 8.2,
+                          color: active ? _accent : Colors.transparent,
+                        ),
+                      ],
                     ),
                   ),
-                )),
-              ),
+                );
+              }),
             ),
-            const SizedBox(height: 6),
-            Divider(color: Colors.white.withOpacity(0.08), height: 1),
-            const SizedBox(height: 8),
-            // Items
-            ..._items(),
-            const SizedBox(height: 24),
-          ],
-        ),
+          ),
+          Divider(color: Colors.white.withOpacity(0.07), height: 1),
+          const SizedBox(height: 4),
+          ..._items(),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+        ],
       ),
     );
   }
@@ -2071,47 +2084,43 @@ class _HistorySheetState extends State<_HistorySheet> {
   List<Widget> _items() {
     if (_tab == 0) {
       return [
-        _item(Icons.arrow_downward_rounded, 'Deposit History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')); }),
-        _item(Icons.arrow_upward_rounded, 'Withdraw History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'withdraw')); }),
-        _item(Icons.swap_horiz_rounded, 'Transfer History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'transfer')); }),
-        _item(Icons.currency_exchange_rounded, 'Swap History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')); }),
+        _item(Icons.arrow_downward_rounded,   const Color(0xFF3dffc0), const Color(0xFF0d3326), 'Deposit History',  () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')); }),
+        _item(Icons.arrow_upward_rounded,     const Color(0xFFff4d6a), const Color(0xFF330d13), 'Withdraw History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'withdraw')); }),
+        _item(Icons.swap_horiz_rounded,       const Color(0xFF60a5fa), const Color(0xFF0d1a33), 'Transfer History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'transfer')); }),
+        _item(Icons.currency_exchange_rounded,const Color(0xFFfbbf24), const Color(0xFF332a0d), 'Swap History',     () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')); }),
       ];
     } else if (_tab == 1) {
       return [
-        _item(Icons.list_alt_rounded, 'Open Orders', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.receipt_long_rounded, 'Order History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.sync_alt_rounded, 'Transaction History', () { Get.back(); Get.to(() => const TransactionHistoryScreen()); }),
-        _item(Icons.stop_circle_outlined, 'Stop Limit History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _item(Icons.list_alt_rounded,     const Color(0xFF60a5fa), const Color(0xFF0d1a33), 'Open Orders',         () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _item(Icons.receipt_long_rounded, const Color(0xFF3dffc0), const Color(0xFF0d3326), 'Order History',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _item(Icons.sync_alt_rounded,     const Color(0xFFfbbf24), const Color(0xFF332a0d), 'Transaction History', () { Get.back(); Get.to(() => const TransactionHistoryScreen()); }),
+        _item(Icons.stop_circle_outlined, const Color(0xFFff4d6a), const Color(0xFF330d13), 'Stop Limit History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
       ];
     } else {
       return [
-        _item(Icons.list_alt_rounded, 'Open Orders', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.receipt_long_rounded, 'Order History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.stop_circle_outlined, 'Stop Limit History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.analytics_outlined, 'Position History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _item(Icons.list_alt_rounded,    const Color(0xFF60a5fa), const Color(0xFF0d1a33), 'Open Orders',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _item(Icons.receipt_long_rounded,const Color(0xFF3dffc0), const Color(0xFF0d3326), 'Order History',     () { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _item(Icons.stop_circle_outlined,const Color(0xFFff4d6a), const Color(0xFF330d13), 'Stop Limit History',() { Get.back(); Get.to(() => const ActivityScreen()); }),
+        _item(Icons.analytics_outlined,  const Color(0xFFfbbf24), const Color(0xFF332a0d), 'Position History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
       ];
     }
   }
 
-  Widget _item(IconData icon, String label, VoidCallback onTap) {
+  Widget _item(IconData icon, Color iconColor, Color iconBg, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
         child: Row(
           children: [
             Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.07),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: Colors.white70, size: 18),
+              width: 38, height: 38,
+              decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, color: iconColor, size: 18),
             ),
             const SizedBox(width: 14),
-            Expanded(child: Text(label, style: const TextStyle(color: _white, fontSize: 15, fontWeight: FontWeight.w500, fontFamily: _font))),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 14),
+            Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500, fontFamily: _font))),
           ],
         ),
       ),
