@@ -269,17 +269,29 @@ class NewFutureController extends GetxController {
 
   Future<void> fetchFuturePnl() async {
     try {
-      final userId = gUserRx.value.id;
-      if (userId <= 0) return;
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      // Use today's closed trades to compute realized PnL — same as web app
       final res = await http.get(
-        Uri.parse('https://api.trapix.com/api/future/pnl?user_id=$userId'),
+        Uri.parse('$_base/trades'),
+        headers: {'Authorization': 'Bearer $token'},
       );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true) {
-          final d = data['data'] ?? {};
-          futurePnlToday.value = double.tryParse(d['today_pnl']?.toString() ?? '0') ?? 0;
-          futurePnlPct.value = double.tryParse(d['today_pct']?.toString() ?? '0') ?? 0;
+          final trades = (data['data'] as List?) ?? [];
+          final today = DateTime.now().toIso8601String().substring(0, 10);
+          final todayTrades = trades.where((t) {
+            final created = t['created_at']?.toString() ?? '';
+            return created.startsWith(today);
+          }).toList();
+          final pnlVal = todayTrades.fold<double>(
+            0.0,
+            (sum, t) => sum + (double.tryParse(t['pnl']?.toString() ?? t['realized_pnl']?.toString() ?? '0') ?? 0),
+          );
+          final wb = walletBalance.value > 0 ? walletBalance.value : (availableBalance.value + marginUsed.value);
+          futurePnlToday.value = pnlVal;
+          futurePnlPct.value = wb > 0 ? (pnlVal / wb) * 100 : 0;
         }
       }
     } catch (_) {}
