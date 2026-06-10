@@ -87,6 +87,7 @@ class McStake {
   final double amount;
   final double dailyRate;
   final double totalRewardEarned;
+  final double totalWithdrawn;
   final McStakingCoin? coin;
   final McStakingPlan? plan;
 
@@ -98,9 +99,35 @@ class McStake {
     required this.amount,
     required this.dailyRate,
     required this.totalRewardEarned,
+    required this.totalWithdrawn,
     this.coin,
     this.plan,
   });
+
+  /// Live earned = total earned minus what was already withdrawn
+  double get liveEarned => (totalRewardEarned - totalWithdrawn).clamp(0.0, double.infinity);
+
+  /// Days elapsed since start
+  int get daysElapsed {
+    if (startDate == null) return 0;
+    final start = DateTime.tryParse(startDate!) ?? DateTime.now();
+    return DateTime.now().difference(start).inDays;
+  }
+
+  /// Days remaining until end (0 if flexible/no end)
+  int get daysRemaining {
+    if (endDate == null) return 0;
+    final end = DateTime.tryParse(endDate!) ?? DateTime.now();
+    final diff = end.difference(DateTime.now()).inDays;
+    return diff < 0 ? 0 : diff;
+  }
+
+  /// Progress 0.0–1.0
+  double get progressFraction {
+    final total = plan?.durationDays ?? 0;
+    if (total <= 0) return 0;
+    return (daysElapsed / total).clamp(0.0, 1.0);
+  }
 
   factory McStake.fromJson(Map<String, dynamic> j) {
     McStakingCoin? coin;
@@ -122,6 +149,7 @@ class McStake {
       amount: double.tryParse(j['amount'].toString()) ?? 0,
       dailyRate: double.tryParse(j['daily_rate'].toString()) ?? 0,
       totalRewardEarned: double.tryParse(j['total_reward_earned'].toString()) ?? 0,
+      totalWithdrawn: double.tryParse(j['total_withdrawn'].toString()) ?? 0,
       coin: coin,
       plan: j['plan'] != null ? McStakingPlan.fromJson(j['plan']) : null,
     );

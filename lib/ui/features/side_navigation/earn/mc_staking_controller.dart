@@ -67,6 +67,7 @@ class McStakingController extends GetxController {
   final isLoadingCoins = false.obs;
   final isLoadingPlans = false.obs;
   final coinDurations = <int, String>{}.obs;
+  final coinPlansMap = <int, List<McStakingPlan>>{}.obs;
   final isLoadingStakes = false.obs;
   final isLoadingPortfolio = false.obs;
   final isLoadingRewards = false.obs;
@@ -119,6 +120,8 @@ class McStakingController extends GetxController {
         if (j['success'] == true) {
           final coinPlans = (j['data'] as List).map((e) => McStakingPlan.fromJson(e)).toList();
           if (coinPlans.isNotEmpty) {
+            print('MC_PLANS[${coin.symbol}]: ${coinPlans.map((p) => '${p.planName}(${p.durationDays}d)').toList()}');
+            coinPlansMap[coin.id] = coinPlans;
             // Collect all daily rates from all rate rules across all plans
             final rates = <double>[];
             for (final p in coinPlans) {
@@ -199,7 +202,8 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
       final j = _decode(await _get(path));
       if (j['success'] == true) {
         final data = j['data'] as Map<String, dynamic>;
-        stakes.assignAll((data['data'] as List).map((e) => McStake.fromJson(e)));
+        final list = data['data'] as List;
+        stakes.assignAll(list.map((e) => McStake.fromJson(e)));
         stakesMeta.value = data;
       }
     } catch (e) {
