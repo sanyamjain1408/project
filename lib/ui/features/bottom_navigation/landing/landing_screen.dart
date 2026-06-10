@@ -51,21 +51,21 @@ class LandingScreen extends StatefulWidget {
   State<LandingScreen> createState() => _LandingScreenState();
 }
 
-class _LandingScreenState extends State<LandingScreen> {
+class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserver {
   final _controller = Get.put(LandingController());
-  static bool _popupShownThisSession = false;
-  bool _showPopup = !_popupShownThisSession;
+  bool _showPopup = true;
 
   @override
   void initState() {
     super.initState();
     _controller.getLandingSettings();
     if (getSettingsLocal()?.blogNewsModule == 1) _controller.getLatestBlogList();
-    _popupShownThisSession = true;
+
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.handleSocketChannels(false);
     super.dispose();
   }
