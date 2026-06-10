@@ -132,11 +132,11 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
         color: Color(0xFF111111),
         border: Border(top: BorderSide(color: Color(0xFF1A1A1A), width: 1)),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Padding(
         padding: const EdgeInsets.fromLTRB(0, 12, 16, 12),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
           children: List.generate(_tabs.length, (i) {
             final active = i == _tab;
             return GestureDetector(
