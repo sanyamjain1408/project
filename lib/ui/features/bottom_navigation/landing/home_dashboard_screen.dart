@@ -1,4 +1,4 @@
-import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/support_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/live_chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -244,7 +244,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                 GestureDetector(
                                   onTap: () => Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (_) => const SupportScreen()),
+                                    MaterialPageRoute(builder: (_) => const LiveChatScreen()),
                                   ),
                                   child: const Icon(
                                     Icons.headphones,
