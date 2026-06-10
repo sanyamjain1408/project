@@ -470,12 +470,10 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
 
 List<InlineSpan> _parseMarkdown(String text, Color textColor) {
   final spans = <InlineSpan>[];
-  final lines = text.split('
-');
+  final lines = text.split('\n');
   for (int li = 0; li < lines.length; li++) {
     final line = lines[li];
-    if (li > 0) spans.add(const TextSpan(text: '
-'));
+    if (li > 0) spans.add(const TextSpan(text: '\n'));
     // Parse inline **bold**
     final regex = RegExp(r'\*\*(.*?)\*\*');
     int last = 0;
