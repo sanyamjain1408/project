@@ -1176,12 +1176,12 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
         elevation: 0,
         scrolledUnderElevation: 0,
 
-        leadingWidth: 30, // default 56 hota hai
+        leadingWidth: 48,
 
-        titleSpacing: 0, // gap remove
+        titleSpacing: 0,
 
         leading: IconButton(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.only(left: 12),
           icon: const Icon(Icons.arrow_back, color: _white),
           onPressed: () => Navigator.of(context).pop(),
         ),
