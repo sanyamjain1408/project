@@ -3,6 +3,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/history_sheet.dart';
 import 'package:tradexpro_flutter/addons/ico/ico_ui/ico_screen.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
@@ -508,7 +509,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _quickIcon('assets/icons/profilechampion.png', "Champion"),
-                    _quickIcon('assets/icons/profilehistory.png', "History"),
+                    _quickIcon('assets/icons/profilehistory.png', "History", onTap: () => showHistorySheet(context)),
                     _quickIcon('assets/icons/profilesecurity.png', "Security"),
                     _quickIcon('assets/icons/profilekyc.png', "KYC"),
                     _quickIcon('assets/icons/profileprice.png', "Price Alert"),
@@ -760,9 +761,9 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
   }
 
   // ── QUICK ICON BUTTON ────────────────────────────────────────────────────
-  Widget _quickIcon(String iconPath, String label) {
+  Widget _quickIcon(String iconPath, String label, {VoidCallback? onTap}) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: Column(
         children: [
           Container(width: 50, height: 50, child: Image.asset(iconPath)),
