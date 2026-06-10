@@ -61,7 +61,7 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
     // Use cached banners if available, otherwise fetch
     if (BannerPopup._cachedBanners != null) {
       if (BannerPopup._cachedBanners!.isNotEmpty) {
-        _banners = BannerPopup._cachedBanners!;
+        _banners = [BannerPopup._cachedBanners!.first];
         _ready = true;
       } else {
         WidgetsBinding.instance.addPostFrameCallback((_) => widget.onClose?.call());
@@ -79,7 +79,8 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
-          final items = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
+          // Only show the first banner — no multi-swipe
+        final items = [(body['data'] as List).map((e) => BannerItem.fromJson(e)).first];
           BannerPopup._cachedBanners = items;
           if (mounted) setState(() { _banners = items; _ready = true; });
           return;
