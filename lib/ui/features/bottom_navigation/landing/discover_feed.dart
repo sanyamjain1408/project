@@ -225,6 +225,7 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
       ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
         itemCount: _posts.length,
         itemBuilder: (ctx, i) => _PostCard(
           post: _posts[i],
@@ -292,6 +293,7 @@ class _ArticlesWidgetState extends State<_ArticlesWidget> {
     if (_items.isEmpty) return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: Text('Nothing here yet.', style: TextStyle(color: _dim, fontSize: 13))));
     return ListView.builder(
       shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       itemCount: _items.length,
       itemBuilder: (_, i) {
         final a = _items[i];
