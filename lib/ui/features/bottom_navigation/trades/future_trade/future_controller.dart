@@ -13,9 +13,11 @@ class NewFutureController extends GetxController {
   final orders = <FutureOrder>[].obs;
   final trades = <FutureTrade>[].obs;
   final positionHistory = <FuturePositionHistory>[].obs;
-  final balance = 0.0.obs;       // total (available + margin_used)
-  final availableBalance = 0.0.obs; // data['available']
-  final marginUsed = 0.0.obs;       // data['margin_used']
+  final balance = 0.0.obs;         // total equity (wallet_balance + unrealized_pnl)
+  final availableBalance = 0.0.obs; // free balance
+  final marginUsed = 0.0.obs;       // locked in margin
+  final walletBalance = 0.0.obs;    // wallet balance (available + margin_used)
+  final unrealizedPnl = 0.0.obs;   // live unrealized PNL from open positions
   final futurePnlToday = 0.0.obs;   // from /api/future/pnl
   final futurePnlPct = 0.0.obs;
   final isLoggedIn = false.obs;
@@ -37,6 +39,7 @@ class NewFutureController extends GetxController {
 
   final _ws = FutureWebSocket();
   Timer? _fallbackTimer;
+  Timer? _balanceTimer;
   String lastError = '';
 
   static const _base = 'https://api.trapix.com/api/v1/future';
@@ -52,6 +55,7 @@ class NewFutureController extends GetxController {
   void onClose() {
     _ws.dispose();
     _fallbackTimer?.cancel();
+    _balanceTimer?.cancel();
     super.onClose();
   }
 
@@ -63,6 +67,12 @@ class NewFutureController extends GetxController {
       fetchPositions();
       fetchOrders();
       fetchFuturePnl();
+      // Auto-refresh balance + PnL every 10s
+      _balanceTimer?.cancel();
+      _balanceTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+        fetchBalance();
+        fetchFuturePnl();
+      });
     }
   }
 
@@ -220,6 +230,13 @@ class NewFutureController extends GetxController {
     } catch (_) {}
   }
 
+  void refreshAll() {
+    fetchBalance();
+    fetchPositions();
+    fetchOrders();
+    fetchFuturePnl();
+  }
+
   Future<void> fetchBalance() async {
     try {
       final token = getFutureToken();
@@ -241,7 +258,9 @@ class NewFutureController extends GetxController {
           // available = whichever field is the free/liquid balance (not total)
           availableBalance.value = avail > 0 ? avail : legacyBalance;
           marginUsed.value = margin;
-          // grand total for hero big number
+          walletBalance.value = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
+          unrealizedPnl.value = double.tryParse(d['unrealized_pnl']?.toString() ?? '0') ?? 0;
+          // grand total for hero big number (margin balance = wallet + unrealized)
           balance.value = total > 0 ? total : (availableBalance.value + margin);
         }
       }
