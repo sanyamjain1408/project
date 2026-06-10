@@ -18,8 +18,6 @@ class TxDetailScreen extends StatelessWidget {
 
   bool get _isDeposit => tx['_type'] == 'deposit';
 
-  String get _title => _isDeposit ? 'Deposit Details' : 'Withdrawal Details';
-
   String _fmt(dynamic v) {
     final d = double.tryParse(v?.toString() ?? '0') ?? 0;
     if (d == d.truncateToDouble()) return d.toStringAsFixed(2);
@@ -56,6 +54,7 @@ class TxDetailScreen extends StatelessWidget {
   String _pad(int n) => n.toString().padLeft(2, '0');
 
   void _copy(BuildContext context, String text) {
+    if (text == '---') return;
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Copied'), duration: Duration(seconds: 1), backgroundColor: Color(0xFF222222)),
@@ -70,36 +69,46 @@ class TxDetailScreen extends StatelessWidget {
     final statusLabel = _statusLabel(tx['status']);
     final statusColor = _statusColor(statusLabel);
     final time = _formatDate(tx['created_at']);
-    final network = tx['network']?.toString() ?? tx['coin_type']?.toString() ?? '---';
+    final network = tx['network']?.toString().isNotEmpty == true
+        ? tx['network'].toString()
+        : coin;
     final account = tx['wallet_type']?.toString().isNotEmpty == true
         ? tx['wallet_type'].toString()
         : 'Funding Account';
     final remarks = tx['remarks']?.toString().isNotEmpty == true ? tx['remarks'].toString() : '---';
-    final orderNo = tx['order_number']?.toString() ?? tx['trx']?.toString() ?? '---';
-    final address = tx['address']?.toString() ?? tx['wallet_address']?.toString() ?? '---';
-    final txHash = tx['transaction_id']?.toString() ?? tx['tx_hash']?.toString() ?? tx['trx']?.toString() ?? '---';
-
-    final prefix = _isDeposit ? '+' : '-';
+    final orderNo = tx['order_number']?.toString().isNotEmpty == true
+        ? tx['order_number'].toString()
+        : (tx['trx']?.toString().isNotEmpty == true ? tx['trx'].toString() : '---');
+    final address = tx['address']?.toString().isNotEmpty == true
+        ? tx['address'].toString()
+        : (tx['wallet_address']?.toString().isNotEmpty == true ? tx['wallet_address'].toString() : '---');
+    final txHash = tx['transaction_id']?.toString().isNotEmpty == true
+        ? tx['transaction_id'].toString()
+        : (tx['tx_hash']?.toString().isNotEmpty == true ? tx['tx_hash'].toString() : (tx['trx']?.toString() ?? '---'));
 
     return Scaffold(
       backgroundColor: _bg,
       body: SafeArea(
         child: Column(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+            // ── HEADER (top: 64 in Figma, SafeArea handles status bar) ───────
+            SizedBox(
+              height: 44,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
+                  Positioned(
+                    left: 20,
                     child: GestureDetector(
                       onTap: () => Get.back(),
                       child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18),
                     ),
                   ),
-                  Text(_title, style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _font, fontWeight: FontWeight.w700, height: 1.50)),
+                  Text(
+                    _isDeposit ? 'Deposit Details' : 'Withdrawal Details',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _font, fontWeight: FontWeight.w700, height: 1.50),
+                  ),
                 ],
               ),
             ),
@@ -107,63 +116,80 @@ class TxDetailScreen extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 28),
-                    // Big amount
-                    Text(
-                      '$prefix $amount $coin',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 30, fontFamily: _font, fontWeight: FontWeight.w700, height: 1.33),
-                    ),
-                    const SizedBox(height: 8),
-                    // Status badge
-                    Text(statusLabel, style: TextStyle(color: statusColor, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33)),
-                    const SizedBox(height: 24),
-                    // Description
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                    // ── AMOUNT (top: 108) ──────────────────────────────────
+                    const SizedBox(height: 20),
+                    Center(
                       child: Text(
-                        _isDeposit
-                            ? 'crypto received into Trapix. Check your wallet for confirmation.'
-                            : 'crypto transferred out of Trapix. Please contact the recipient platform for your transaction receipt',
+                        '- $amount $coin',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white.withOpacity(0.50), fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33),
+                        style: const TextStyle(color: Colors.white, fontSize: 30, fontFamily: _font, fontWeight: FontWeight.w700, height: 1.33),
                       ),
                     ),
-                    if (!_isDeposit) ...[
-                      const SizedBox(height: 12),
-                      Text(
+                    // ── STATUS (top: 153) ──────────────────────────────────
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle, color: statusColor, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            statusLabel,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: statusColor, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // ── DESCRIPTION (top: 189) ─────────────────────────────
+                    const SizedBox(height: 22),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Center(
+                        child: Text(
+                          'crypto transferred out of Trapix. Please contact the recipient platform for your transaction receipt',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white.withOpacity(0.50), fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33),
+                        ),
+                      ),
+                    ),
+                    // ── WHY LINK (top: 231) ────────────────────────────────
+                    const SizedBox(height: 18),
+                    Center(
+                      child: Text(
                         "Why hasn't my withdrawal arrived?",
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: _accent, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33),
                       ),
-                    ],
-                    const SizedBox(height: 24),
-                    // Divider
+                    ),
+                    // ── DIVIDER (top: 267) ─────────────────────────────────
+                    const SizedBox(height: 18),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Divider(color: Colors.white.withOpacity(0.10), height: 1),
+                      child: Divider(color: Colors.white.withOpacity(0.10), height: 1, thickness: 1),
                     ),
-                    const SizedBox(height: 16),
-                    // Detail rows
-                    _row(context, _isDeposit ? 'Deposit Amount' : 'Withdrawal Amount', '$amount $coin'),
+                    // ── DETAIL ROWS ────────────────────────────────────────
+                    const SizedBox(height: 20),
+                    _row(context, 'Withdrawal Amount', '$amount $coin'),
                     _row(context, 'Fee', '$fee $coin'),
                     _row(context, 'Time', time),
                     _row(context, 'Network', network),
-                    _row(context, _isDeposit ? 'Deposit Account' : 'Withdrawal Account', account),
-                    _row(context, 'Remarks', remarks),
+                    _row(context, 'Withdrawal Account', account),
+                    _row(context, 'Remarks', remarks, bold: remarks != '---'),
                     _copyRow(context, 'Order Number', orderNo),
                     _copyRow(context, 'Address', address),
                     _copyRow(context, 'TxHash', txHash, underline: true),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
 
-            // Bottom button
+            // ── BOTTOM BUTTON (top: 804) ───────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: GestureDetector(
                 onTap: () => Get.back(),
                 child: Container(
@@ -172,7 +198,8 @@ class TxDetailScreen extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
                   child: Text(
-                    _isDeposit ? 'Deposit More' : 'Withdraw More',
+                    _isDeposit ? 'Deposit Stats' : 'Withdraw Stats',
+                    textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.50),
                   ),
                 ),
@@ -184,16 +211,19 @@ class TxDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(BuildContext context, String label, String value) {
+  Widget _row(BuildContext context, String label, String value, {bool bold = false}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.50), fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33)),
+          Text(label,
+            style: TextStyle(color: Colors.white.withOpacity(0.50), fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33)),
           const Spacer(),
           Flexible(
-            child: Text(value, textAlign: TextAlign.right, style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33)),
+            child: Text(value,
+              textAlign: TextAlign.right,
+              style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: bold ? FontWeight.w700 : FontWeight.w400, height: 1.33)),
           ),
         ],
       ),
@@ -201,40 +231,59 @@ class TxDetailScreen extends StatelessWidget {
   }
 
   Widget _copyRow(BuildContext context, String label, String value, {bool underline = false}) {
-    final display = value.length > 20 ? '${value.substring(0, 8)}...${value.substring(value.length - 6)}' : value;
+    // Show truncated: first 4 bold + middle normal + last 4 bold (matching Figma address style)
+    final isDash = value == '---';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.50), fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33)),
+          Text(label,
+            style: TextStyle(color: Colors.white.withOpacity(0.50), fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33)),
           const Spacer(),
           GestureDetector(
-            onTap: () => _copy(context, value),
+            onTap: isDash ? null : () => _copy(context, value),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Flexible(
-                  child: Text(
-                    display,
+                if (!isDash && value.length > 12)
+                  SizedBox(
+                    width: 160,
+                    child: _buildAddress(value, underline: underline),
+                  )
+                else
+                  Text(value,
                     textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontFamily: _font,
-                      fontWeight: FontWeight.w400,
-                      height: 1.33,
-                      decoration: underline ? TextDecoration.underline : null,
-                    ),
-                  ),
-                ),
+                    style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33,
+                      decoration: underline ? TextDecoration.underline : null)),
                 const SizedBox(width: 4),
-                const Icon(Icons.copy, size: 12, color: Colors.white54),
+                if (!isDash) const Icon(Icons.copy_outlined, size: 13, color: Colors.white54),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAddress(String value, {bool underline = false}) {
+    // First 4 chars bold, middle normal, last 4 bold — matches Figma Address style
+    if (value.length <= 8) {
+      return Text(value, textAlign: TextAlign.right,
+        style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33,
+          decoration: underline ? TextDecoration.underline : null));
+    }
+    final pre = value.substring(0, 4);
+    final mid = value.substring(4, value.length - 4);
+    final suf = value.substring(value.length - 4);
+    return Text.rich(
+      TextSpan(children: [
+        TextSpan(text: pre, style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w700, height: 1.33, decoration: underline ? TextDecoration.underline : null)),
+        TextSpan(text: mid, style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w400, height: 1.33, decoration: underline ? TextDecoration.underline : null)),
+        TextSpan(text: suf, style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: _font, fontWeight: FontWeight.w700, height: 1.33, decoration: underline ? TextDecoration.underline : null)),
+      ]),
+      textAlign: TextAlign.right,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
