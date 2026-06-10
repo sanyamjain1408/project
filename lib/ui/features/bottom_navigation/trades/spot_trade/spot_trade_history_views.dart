@@ -515,8 +515,9 @@ class _TabChip extends StatelessWidget {
 //  HISTORY FULL SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
 class SpotTradeHistoryFullScreen extends StatefulWidget {
-  const SpotTradeHistoryFullScreen({super.key, required this.controller});
+  const SpotTradeHistoryFullScreen({super.key, required this.controller, this.initialIndex = 0});
   final SpotTradeController controller;
+  final int initialIndex;
 
   @override
   State<SpotTradeHistoryFullScreen> createState() =>
@@ -531,7 +532,7 @@ class _SpotTradeHistoryFullScreenState
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 4, vsync: this);
+    _tab = TabController(length: 4, vsync: this, initialIndex: widget.initialIndex);
     // Load all pairs orders when modal opens (website: fetchOpenOrders() without symbol)
     widget.controller.loadAllMyOrders();
   }

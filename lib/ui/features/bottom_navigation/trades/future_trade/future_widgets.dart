@@ -1958,11 +1958,14 @@ class FutureHistoryFullScreen extends StatefulWidget {
   final FuturePair? pair;
   final int pp;
 
+  final int initialIndex;
+
   const FutureHistoryFullScreen({
     super.key,
     required this.ctrl,
     required this.pair,
     required this.pp,
+    this.initialIndex = 0,
   });
 
   @override
@@ -1977,7 +1980,7 @@ class _FutureHistoryFullScreenState extends State<FutureHistoryFullScreen>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 6, vsync: this);
+    _tab = TabController(length: 6, vsync: this, initialIndex: widget.initialIndex);
   }
 
   @override

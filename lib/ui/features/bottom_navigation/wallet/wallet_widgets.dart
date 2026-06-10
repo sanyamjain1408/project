@@ -579,14 +579,14 @@ class TotalBalanceView extends StatelessWidget {
                       ),
 
                       GestureDetector(
-                        onTap: () => Get.to(() => const ActivityScreen()),
+                        onTap: onHistoryTap ?? () => Get.to(() => const ActivityScreen()),
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.5),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: RotatingIcon(), //  bas yaha replace karo
+                          child: RotatingIcon(),
                         ),
                       ),
                     ],
@@ -675,18 +675,6 @@ class TotalBalanceView extends StatelessWidget {
           ],
         ),
 
-        // 🔥 spacing before bottom button
-
-        // 🔻 BOTTOM RIGHT BUTTON
-        if (onHistoryTap != null)
-          Align(
-            alignment: Alignment.bottomRight,
-            child: buttonOnlyIcon(
-              iconData: Icons.history,
-              visualDensity: minimumVisualDensity,
-              onPress: onHistoryTap,
-            ),
-          ),
       ],
       );
     });

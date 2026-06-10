@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/history_sheet.dart';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,8 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/future_pnl_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transaction_history_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/spot_trade/spot_trade_controller.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/spot_trade/spot_trade_history_views.dart';
 
 const Color _primary = Color(0xFF111111);
 const Color _green = Color(0xFFCCFF00);
@@ -82,38 +85,35 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     };
   }
 
+  History _parseHistory(dynamic e) {
+    final h = History(id: (e['id'] ?? 0) is int ? e['id'] : int.tryParse(e['id']?.toString() ?? '0') ?? 0);
+    h.amount = double.tryParse(e['amount']?.toString() ?? '0') ?? 0;
+    h.status = int.tryParse(e['status']?.toString() ?? '0') ?? 0;
+    h.coinType = e['coin_type']?.toString() ?? '';
+    final rawDate = e['created_at']?.toString() ?? '';
+    if (rawDate.isNotEmpty) try { h.createdAt = DateTime.parse(rawDate); } catch (_) {}
+    return h;
+  }
+
+  List<History> _parseHistoryList(http.Response res) {
+    if (res.statusCode != 200) return [];
+    try {
+      final raw = jsonDecode(res.body)['data']?['histories']?['data'];
+      if (raw is List) return raw.map(_parseHistory).toList();
+    } catch (_) {}
+    return [];
+  }
+
   Future<void> _fetchRecentTx() async {
     try {
       const base = 'https://api.trapix.com/api/wallet-history-app';
       final headers = _authHeaders();
-      final depFuture = http.get(Uri.parse('$base?type=deposit&page=1&per_page=8'), headers: headers);
-      final wdFuture = http.get(Uri.parse('$base?type=withdraw&page=1&per_page=8'), headers: headers);
-      final results = await Future.wait([depFuture, wdFuture]);
-
-      List<History> deps = [];
-      List<History> wds = [];
-
-      for (int i = 0; i < 2; i++) {
-        if (results[i].statusCode != 200) continue;
-        try {
-          final body = jsonDecode(results[i].body);
-          final raw = body['data']?['histories']?['data'];
-          if (raw is List) {
-            final list = <History>[];
-            for (final e in raw) {
-              try {
-                list.add(History.fromJson(Map<String, dynamic>.from(e)));
-              } catch (ex) {
-                debugPrint('History.fromJson failed for item: $ex');
-              }
-            }
-            if (i == 0) deps = list; else wds = list;
-          }
-        } catch (_) {}
-      }
-
-      depositList.value = deps;
-      withdrawList.value = wds;
+      final results = await Future.wait([
+        http.get(Uri.parse('$base?type=deposit&page=1&per_page=8'), headers: headers),
+        http.get(Uri.parse('$base?type=withdraw&page=1&per_page=8'), headers: headers),
+      ]);
+      depositList.value = _parseHistoryList(results[0]);
+      withdrawList.value = _parseHistoryList(results[1]);
     } catch (e) { debugPrint('fetchRecentTx error: $e'); }
   }
 
@@ -559,19 +559,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                               selectedCoin.value = selected;
                               _getOverviewData();
                             },
+                            onHistoryTap: () => _showHistorySheet(context),
                           ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => _showHistorySheet(context),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.history, color: Colors.white, size: 20),
                         ),
                       ),
                     ],
@@ -595,17 +584,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
   }
 
   // ── HISTORY BOTTOM SHEET ─────────────────────────────────────────────────
-  void _showHistorySheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1a1a1a),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      isScrollControlled: true,
-      builder: (_) => _HistorySheet(),
-    );
-  }
+  void _showHistorySheet(BuildContext context) => showHistorySheet();
 
   // ── STACKED CARDS ─────────────────────────────────────────────────────────
   Widget _buildStackedCards(WalletOverview data, settings) {
@@ -1994,138 +1973,3 @@ class _TxItem {
   _TxItem({required this.isDeposit, required this.amount, required this.date, required this.status});
 }
 
-// ── HISTORY BOTTOM SHEET ──────────────────────────────────────────────────────
-class _HistorySheet extends StatefulWidget {
-  @override
-  State<_HistorySheet> createState() => _HistorySheetState();
-}
-
-class _HistorySheetState extends State<_HistorySheet> {
-  int _tab = 0; // 0=Crypto Asset, 1=Spot, 2=Future
-
-  static const _bg = Color(0xFF1a1a1a);
-  static const _accent = Color(0xFFCCFF00);
-  static const _white = Colors.white;
-  static const _font = 'DMSans';
-
-  @override
-  Widget build(BuildContext context) {
-    final tabs = ['Crypto Asset', 'Spot', 'Future'];
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: _bg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 6),
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            // Title + close
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 16, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('History', style: TextStyle(color: _white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: _font)),
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: const Icon(Icons.close, color: Colors.white54, size: 22),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            // Tab row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: List.generate(tabs.length, (i) => GestureDetector(
-                  onTap: () => setState(() => _tab = i),
-                  child: Padding(
-                    padding: EdgeInsets.only(right: i < tabs.length - 1 ? 20 : 0),
-                    child: Text(
-                      tabs[i],
-                      style: TextStyle(
-                        color: _tab == i ? _white : Colors.white38,
-                        fontSize: 15,
-                        fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
-                        fontFamily: _font,
-                      ),
-                    ),
-                  ),
-                )),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Divider(color: Colors.white.withOpacity(0.08), height: 1),
-            const SizedBox(height: 8),
-            // Items
-            ..._items(),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _items() {
-    if (_tab == 0) {
-      return [
-        _item(Icons.arrow_downward_rounded, 'Deposit History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')); }),
-        _item(Icons.arrow_upward_rounded, 'Withdraw History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'withdraw')); }),
-        _item(Icons.swap_horiz_rounded, 'Transfer History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'transfer')); }),
-        _item(Icons.currency_exchange_rounded, 'Swap History', () { Get.back(); Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')); }),
-      ];
-    } else if (_tab == 1) {
-      return [
-        _item(Icons.list_alt_rounded, 'Open Orders', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.receipt_long_rounded, 'Order History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.sync_alt_rounded, 'Transaction History', () { Get.back(); Get.to(() => const TransactionHistoryScreen()); }),
-        _item(Icons.stop_circle_outlined, 'Stop Limit History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-      ];
-    } else {
-      return [
-        _item(Icons.list_alt_rounded, 'Open Orders', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.receipt_long_rounded, 'Order History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.stop_circle_outlined, 'Stop Limit History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-        _item(Icons.analytics_outlined, 'Position History', () { Get.back(); Get.to(() => const ActivityScreen()); }),
-      ];
-    }
-  }
-
-  Widget _item(IconData icon, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.07),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: Colors.white70, size: 18),
-            ),
-            const SizedBox(width: 14),
-            Expanded(child: Text(label, style: const TextStyle(color: _white, fontSize: 15, fontWeight: FontWeight.w500, fontFamily: _font))),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 14),
-          ],
-        ),
-      ),
-    );
-  }
-}
