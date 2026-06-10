@@ -273,7 +273,7 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
 // ─── Articles ─────────────────────────────────────────────────────────────────
 class _ArticlesWidget extends StatefulWidget {
   final String type;
-  const _ArticlesWidget({required this.type});
+  const _ArticlesWidget({super.key, required this.type});
   @override
   State<_ArticlesWidget> createState() => _ArticlesWidgetState();
 }
@@ -357,55 +357,59 @@ class _PostCardState extends State<_PostCard> {
     final body = p.body ?? '';
     final long = body.length > 180;
     final shown = _expanded || !long ? body : '${body.substring(0, 180)}...';
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
+    return Container(
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1C1F26)))),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _AvatarWidget(src: p.authorAvatar, name: p.authorName, brand: p.authorType == 'admin'),
         const SizedBox(width: 10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Flexible(child: Text(p.authorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14), overflow: TextOverflow.ellipsis)),
-            if (p.isVerified) Container(
-              width: 14, height: 14, margin: const EdgeInsets.only(left: 4),
-              decoration: const BoxDecoration(color: Color(0xFF16A34A), shape: BoxShape.circle),
-              child: const Icon(Icons.check, color: Colors.white, size: 9),
-            ),
-            const SizedBox(width: 4),
-            Text('· ${_timeAgo(p.createdAt)}', style: const TextStyle(color: _dim, fontSize: 12)),
-            if (p.isMine) GestureDetector(
-              onTap: widget.onDelete,
-              child: const Padding(padding: EdgeInsets.only(left: 8), child: Icon(Icons.delete_outline, color: Color(0xFFEA3943), size: 16)),
-            ),
-          ]),
-          if (body.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(shown, style: const TextStyle(color: Color(0xFFE6E8EC), fontSize: 13.5, height: 1.5)),
-            if (long && !_expanded) GestureDetector(
-              onTap: () => setState(() => _expanded = true),
-              child: const Text('View More', style: TextStyle(color: _green, fontWeight: FontWeight.w600, fontSize: 13)),
-            ),
-          ],
-          if (p.image != null && p.image!.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.network(p.image!, width: double.infinity, fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink()),
-            ),
-          ],
-          if (p.tickers.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(spacing: 16, children: p.tickers.map((t) {
-              final green = (t['change'] ?? '').startsWith('+');
-              return RichText(text: TextSpan(children: [
-                TextSpan(text: '${t['symbol']} ', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5)),
-                TextSpan(text: t['change'], style: TextStyle(color: green ? const Color(0xFF16C784) : const Color(0xFFEA3943), fontWeight: FontWeight.w700, fontSize: 12.5)),
-              ]));
-            }).toList()),
-          ],
+          // tappable area — opens post detail
+          GestureDetector(
+            onTap: widget.onTap,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Flexible(child: Text(p.authorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14), overflow: TextOverflow.ellipsis)),
+              if (p.isVerified) Container(
+                width: 14, height: 14, margin: const EdgeInsets.only(left: 4),
+                decoration: const BoxDecoration(color: Color(0xFF16A34A), shape: BoxShape.circle),
+                child: const Icon(Icons.check, color: Colors.white, size: 9),
+              ),
+              const SizedBox(width: 4),
+              Text('· ${_timeAgo(p.createdAt)}', style: const TextStyle(color: _dim, fontSize: 12)),
+              if (p.isMine) GestureDetector(
+                onTap: widget.onDelete,
+                child: const Padding(padding: EdgeInsets.only(left: 8), child: Icon(Icons.delete_outline, color: Color(0xFFEA3943), size: 16)),
+              ),
+            ]),
+            if (body.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(shown, style: const TextStyle(color: Color(0xFFE6E8EC), fontSize: 13.5, height: 1.5)),
+              if (long && !_expanded) GestureDetector(
+                onTap: () => setState(() => _expanded = true),
+                child: const Text('View More', style: TextStyle(color: _green, fontWeight: FontWeight.w600, fontSize: 13)),
+              ),
+            ],
+            if (p.image != null && p.image!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.network(p.image!, width: double.infinity, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              ),
+            ],
+            if (p.tickers.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(spacing: 16, children: p.tickers.map((t) {
+                final green = (t['change'] ?? '').startsWith('+');
+                return RichText(text: TextSpan(children: [
+                  TextSpan(text: '${t['symbol']} ', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5)),
+                  TextSpan(text: t['change'], style: TextStyle(color: green ? const Color(0xFF16C784) : const Color(0xFFEA3943), fontWeight: FontWeight.w700, fontSize: 12.5)),
+                ]));
+              }).toList()),
+            ],
+          ])),
+          // engagement bar — separate from tap area so buttons work
           const SizedBox(height: 10),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             _EngBtn(icon: Icons.chat_bubble_outline, count: p.commentCount, onTap: widget.onComment),
@@ -420,7 +424,7 @@ class _PostCardState extends State<_PostCard> {
           ]),
         ])),
       ]),
-    ));
+    );
   }
 }
 
