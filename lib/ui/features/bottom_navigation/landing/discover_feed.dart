@@ -126,39 +126,40 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
+    return Container(
       color: const Color(0xFF111111),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFF1A1A1A), width: 1)),
+      ),
       child: Column(children: [
-      Container(
-        color: const Color(0xFF111111),
+      const SizedBox(height: 16),
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(_tabs.length, (i) {
-              final active = i == _tab;
-              return GestureDetector(
-                onTap: () => setState(() => _tab = i),
-                child: Container(
-                  margin: EdgeInsets.only(right: i < _tabs.length - 1 ? 20 : 0),
-                  padding: const EdgeInsets.only(bottom: 12, top: 12),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: active ? const Color(0xFFB5F000) : Colors.transparent,
-                        width: 2,
-                      ),
+        child: Row(
+          children: List.generate(_tabs.length, (i) {
+            final active = i == _tab;
+            return GestureDetector(
+              onTap: () => setState(() => _tab = i),
+              child: Container(
+                margin: EdgeInsets.only(right: i < _tabs.length - 1 ? 20 : 0),
+                padding: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: active ? const Color(0xFFB5F000) : Colors.transparent,
+                      width: 2,
                     ),
                   ),
-                  child: Text(_tabs[i], style: TextStyle(
-                    color: active ? const Color(0xFFB5F000) : const Color(0xFF777777),
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 14,
-                  )),
                 ),
-              );
-            }),
-          ),
+                child: Text(_tabs[i], style: TextStyle(
+                  color: active ? const Color(0xFFB5F000) : const Color(0xFF777777),
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 14,
+                )),
+              ),
+            );
+          }),
         ),
       ),
       if (_tab == 0) DiscoverFeedWidget(key: const ValueKey('discover'))
@@ -170,7 +171,7 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
   }
 }
 
-// ─── Discover feed ────────────────────────────────────────────────────────────
+// ─── Discover feed ─────────────────────────────────────────────────────────
 class DiscoverFeedWidget extends StatefulWidget {
   const DiscoverFeedWidget({super.key});
   @override
