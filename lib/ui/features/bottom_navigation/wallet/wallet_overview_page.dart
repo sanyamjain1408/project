@@ -584,7 +584,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
   }
 
   // ── HISTORY BOTTOM SHEET ─────────────────────────────────────────────────
-  void _showHistorySheet(BuildContext context) => showHistorySheet(context);
+  void _showHistorySheet(BuildContext context) => showHistorySheet();
 
   // ── STACKED CARDS ─────────────────────────────────────────────────────────
   Widget _buildStackedCards(WalletOverview data, settings) {

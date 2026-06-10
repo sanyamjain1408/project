@@ -509,7 +509,10 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _quickIcon('assets/icons/profilechampion.png', "Champion"),
-                    _quickIcon('assets/icons/profilehistory.png', "History", onTap: () => showHistorySheet(context)),
+                    _quickIcon('assets/icons/profilehistory.png', "History", onTap: () {
+                      Navigator.of(context).pop(); // close drawer first
+                      Future.delayed(const Duration(milliseconds: 300), showHistorySheet);
+                    }),
                     _quickIcon('assets/icons/profilesecurity.png', "Security"),
                     _quickIcon('assets/icons/profilekyc.png', "KYC"),
                     _quickIcon('assets/icons/profileprice.png', "Price Alert"),

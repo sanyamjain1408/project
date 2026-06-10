@@ -704,7 +704,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           title: "History",
           iconPath: "assets/icons/history.png",
           showArrow: true,
-          onTap: () => showHistorySheet(context),
+          onTap: () => showHistorySheet(),
         ),
         _generalItem(
           title: "Price alerts",

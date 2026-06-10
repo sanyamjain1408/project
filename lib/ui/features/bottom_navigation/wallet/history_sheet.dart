@@ -138,13 +138,13 @@ class _HistorySheetState extends State<HistorySheet> {
   }
 }
 
-void showHistorySheet(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
+void showHistorySheet([BuildContext? context]) {
+  Get.bottomSheet(
+    const HistorySheet(),
     backgroundColor: const Color(0xFF111111),
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
     isScrollControlled: true,
-    builder: (_) => const HistorySheet(),
+    ignoreSafeArea: false,
   );
 }
 
