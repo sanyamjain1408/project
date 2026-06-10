@@ -273,7 +273,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: _bg,
         elevation: 0,
@@ -314,10 +314,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Column(children: [
+      body: Column(children: [
         // End chat confirm bar
         if (_showEndConfirm)
           Container(
@@ -387,6 +384,28 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
             }).toList()),
           ),
 
+      ]),
+      bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
+        // Quick replies — above input
+        if (!_userSentMsg && !_closing && _started)
+          Container(
+            color: _bg,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Wrap(spacing: 6, runSpacing: 6, children: _quickReplies.map((q) {
+              return GestureDetector(
+                onTap: () => _send(q),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _bg,
+                    border: Border.all(color: _green),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(q, style: const TextStyle(color: _green, fontSize: 12)),
+                ),
+              );
+            }).toList()),
+          ),
         // Input bar
         Container(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
@@ -444,26 +463,21 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
             ),
           ]),
         ),
-
-        // Footer - hide when keyboard open to avoid overflow
-        if (MediaQuery.of(context).viewInsets.bottom == 0)
-          Container(
-            color: _bg,
-            padding: const EdgeInsets.only(bottom: 6, top: 4),
-            child: const Center(
-              child: Text.rich(TextSpan(
-                style: TextStyle(color: Color(0xFF555555), fontSize: 10),
-                children: [
-                  TextSpan(text: 'Powered by '),
-                  TextSpan(text: 'Trapix AI', style: TextStyle(color: _green)),
-                  TextSpan(text: ' · Secure & Encrypted'),
-                ],
-              )),
-            ),
+        Container(
+          color: _bg,
+          padding: const EdgeInsets.only(bottom: 8, top: 2),
+          child: const Center(
+            child: Text.rich(TextSpan(
+              style: TextStyle(color: Color(0xFF555555), fontSize: 10),
+              children: [
+                TextSpan(text: 'Powered by '),
+                TextSpan(text: 'Trapix AI', style: TextStyle(color: _green)),
+                TextSpan(text: ' · Secure & Encrypted'),
+              ],
+            )),
           ),
-          ]),
         ),
-      ),
+      ]),
     );
   }
 }
