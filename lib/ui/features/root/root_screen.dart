@@ -75,6 +75,7 @@ class RootScreen extends StatefulWidget {
 class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
   final RootController _controller = Get.put(RootController());
   bool _showPopup = true;
+  int _popupKey = 0;
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
 
@@ -89,7 +90,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
-      setState(() => _showPopup = true);
+      setState(() { _showPopup = true; _popupKey++; });
     }
   }
 
@@ -124,6 +125,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
           if (_showPopup)
             Positioned.fill(
               child: BannerPopup(
+                key: ValueKey(_popupKey),
                 onClose: () => setState(() => _showPopup = false),
               ),
             ),
