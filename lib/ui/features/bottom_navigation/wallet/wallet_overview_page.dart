@@ -1224,7 +1224,6 @@ class _FutureWalletBody extends StatelessWidget {
     } catch (_) {
       fc = Get.put(NewFutureController());
     }
-    // Refresh on every build of the Future wallet tab
     WidgetsBinding.instance.addPostFrameCallback((_) => fc.refreshAll());
 
     return Obx(() {
@@ -1349,18 +1348,45 @@ class _FutureWalletBody extends StatelessWidget {
                                       ),
                                 if (!isHide) const SizedBox(height: 4),
                                 if (!isHide)
+                                  GestureDetector(
+                                    onTap: () => Get.to(() => const FuturePnlScreen()),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        RichText(
+                                          text: TextSpan(children: [
+                                            TextSpan(text: "Today's PnL  ", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: _dmSans)),
+                                            TextSpan(
+                                              text: pnlText,
+                                              style: TextStyle(
+                                                color: todayPnl >= 0 ? const Color(0xFF4ED78E) : Colors.redAccent,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: _dmSans,
+                                              ),
+                                            ),
+                                          ]),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (!isHide) const SizedBox(height: 8),
+                                if (!isHide)
                                   Row(children: [
                                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                       Text('Wallet Balance (USDT)', style: TextStyle(color: Colors.white38, fontSize: 10, fontFamily: _dmSans)),
+                                      const SizedBox(height: 2),
                                       Text(walletBal.toStringAsFixed(2), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: _dmSans)),
                                     ])),
                                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                       Text('Unrealized PNL (USDT)', style: TextStyle(color: Colors.white38, fontSize: 10, fontFamily: _dmSans)),
-                                      Text(unrealizedPnl.toStringAsFixed(2),
-                                        style: TextStyle(color: unrealizedPnl >= 0 ? const Color(0xFF4ED78E) : Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: _dmSans)),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toStringAsFixed(2)}',
+                                        style: TextStyle(color: unrealizedPnl >= 0 ? const Color(0xFF4ED78E) : Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: _dmSans),
+                                      ),
                                     ])),
                                   ]),
-
                               ],
                             ),
                             // 3 Buttons: Trade | Swap | Transfer
