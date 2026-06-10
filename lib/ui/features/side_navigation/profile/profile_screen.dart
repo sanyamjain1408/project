@@ -43,7 +43,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen>
     with SingleTickerProviderStateMixin {
-  final _controller = Get.put(MyProfileController());
+  late final MyProfileController _controller;
   late final TabController _tabController;
   List<UserActivity> userActivities = <UserActivity>[];
 
@@ -52,6 +52,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   void initState() {
     super.initState();
+    Get.delete<MyProfileController>(force: true);
+    _controller = Get.put(MyProfileController());
+    _controller.selectedType.value = widget.initialTab;
     _tabController = TabController(
       length: _figmaTabs.length,
       initialIndex: widget.initialTab,
@@ -60,13 +63,10 @@ class _ProfileScreenState extends State<ProfileScreen>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         _controller.selectedType.value = _tabController.index;
+        setState(() {});
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _controller.selectedType.value = widget.initialTab;
-    });
   }
-
 
   @override
   void dispose() {
@@ -76,171 +76,162 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: true,
-      child: Scaffold(
-        backgroundColor: _primary,
-        body: Obx(() {
-          final user = gUserRx.value;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                color: Colors.transparent,
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Get.back(),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: _white,
-                        size: 25,
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    const Text(
-                      "Settings",
-                      style: TextStyle(
-                        color: _white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: _dmSans,
-                      ),
-                    ),
-                  ],
-                ),
+    final user = gUserRx.value;
+    final selectedIndex = _tabController.index;
+    return Scaffold(
+      backgroundColor: _primary,
+      body: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 50),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
               ),
-              Container(
-                color: Colors.transparent,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: ClipOval(child: showCircleAvatar(user.photo)),
+              color: Colors.transparent,
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: _white,
+                      size: 25,
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF015629).withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        "Verified",
-                        style: TextStyle(
-                          color: Color(0xFF00FF4D),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: _dmSans,
-                        ),
-                      ),
+                  ),
+                  const SizedBox(width: 20),
+                  const Text(
+                    "Settings",
+                    style: TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      getName(user.firstName, user.lastName),
-                      style: const TextStyle(
-                        color: _white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: _dmSans,
-                      ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              color: Colors.transparent,
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: ClipOval(child: showCircleAvatar(user.photo)),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      _maskEmail(user.email ?? ""),
-                      style: const TextStyle(
-                        color: _white,
-                        fontSize: 12,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF015629).withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      "Verified",
+                      style: TextStyle(
+                        color: Color(0xFF00FF4D),
+                        fontSize: 10,
                         fontWeight: FontWeight.w400,
                         fontFamily: _dmSans,
                       ),
                     ),
-                    // ── TABS ──
-                    Container(
-                      color: Colors.transparent,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: List.generate(
-                          _controller.getProfileMenus().length,
-                          (i) {
-                            final isSelected =
-                                _controller.selectedType.value == i;
-                            final title = i < _figmaTabs.length
-                                ? _figmaTabs[i]
-                                : _controller.getProfileMenus()[i];
-                            return GestureDetector(
-                              onTap: () {
-                                _controller.selectedType.value = i;
-                                _tabController.animateTo(i);
-                                setState(() {});
-                              },
-                              child: Container(
-                                alignment: Alignment.centerLeft,
-                                color: Colors.transparent,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5,
-                                  vertical: 6,
-                                ),
-                                margin: const EdgeInsets.only(right: 5),
-                                child: Text(
-                                  title,
-                                  style: TextStyle(
-                                    color: isSelected
-                                        ? _white
-                                        : const Color(0x80FFFFFF),
-                                    fontSize: 16,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w400,
-                                    fontFamily: _dmSans,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: _secondary,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    getName(user.firstName, user.lastName),
+                    style: const TextStyle(
+                      color: _white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: _dmSans,
                     ),
                   ),
-                  child: _buildBody(),
-                ),
+                  const SizedBox(height: 5),
+                  Text(
+                    _maskEmail(user.email ?? ""),
+                    style: const TextStyle(
+                      color: _white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
+                  // ── TABS ──
+                  Container(
+                    color: Colors.transparent,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: List.generate(
+                        _figmaTabs.length,
+                        (i) {
+                          final isSelected = selectedIndex == i;
+                          return GestureDetector(
+                            onTap: () {
+                              _tabController.animateTo(i);
+                              setState(() {});
+                            },
+                            child: Container(
+                              alignment: Alignment.centerLeft,
+                              color: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 6,
+                              ),
+                              margin: const EdgeInsets.only(right: 5),
+                              child: Text(
+                                _figmaTabs[i],
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? _white
+                                      : const Color(0x80FFFFFF),
+                                  fontSize: 16,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w400,
+                                  fontFamily: _dmSans,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          );
-        }),
-      ),
+            ),
+            Expanded(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: _secondary,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: _buildBody(),
+              ),
+            ),
+          ],
+        ),
     );
   }
 
+
   Widget _buildBody() {
-    // Tabs displayed using _figmaTabs: [Profile(0), Security(1), General(2), KYC(3)]
-    switch (_controller.selectedType.value) {
+    switch (_tabController.index) {
       case 0:
         return _profileTab();
       case 1:

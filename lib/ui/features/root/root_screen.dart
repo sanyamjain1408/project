@@ -261,7 +261,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
                       ),
                       const SizedBox(width: 4),
                       GestureDetector(
-                        onTap: () => Get.to(() => const SettingsScreen()),
+                        onTap: () => Get.to(() => const ProfileScreen(initialTab: 2)),
                         child: Padding(
                           padding: const EdgeInsets.all(10),
                           child: Image.asset(
@@ -517,7 +517,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin, W
                         () => Get.to(() => const ActivityScreen())),
                     _quickIcon('assets/icons/profilesecurity.png', "Security",
                         () => hasUser
-                            ? Get.to(() => const ProfileScreen(initialTab: 2))
+                            ? Get.to(() => const ProfileScreen(initialTab: 1))
                             : Get.offAll(() => const SignInPage())),
                     _quickIcon('assets/icons/profilekyc.png', "KYC",
                         () => hasUser
