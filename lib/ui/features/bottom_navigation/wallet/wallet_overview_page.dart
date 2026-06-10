@@ -240,32 +240,32 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
 
           const SizedBox(height: 12),
 
-          // ── DEPOSIT LIST ──
-          // ── DEPOSIT LIST ──
-          for (final d in depositList)
-            _transactionRow(
-              isDeposit: true,
-              amount: d.amount ?? 0,
-              date: formatDate(
-                d.createdAt,
-                format: dateTimeFormatDdMMMYyyyHhMm,
-              ),
-              status: d.status ?? 0,
-              coinType: selectedCoin,
-            ),
-
-          // ── WITHDRAW LIST ──
-          for (final w in withdrawList)
-            _transactionRow(
-              isDeposit: false,
-              amount: w.amount ?? 0,
-              date: formatDate(
-                w.createdAt,
-                format: dateTimeFormatDdMMMMYyyyHhMm,
-              ),
-              status: w.status ?? 0,
-              coinType: selectedCoin,
-            ),
+          // ── MERGED + SORTED RECENT TRANSACTIONS (same as web) ──
+          Builder(builder: (_) {
+            final deps = depositList.map((d) => _TxItem(isDeposit: true, amount: d.amount ?? 0, date: d.createdAt, status: d.status ?? 0)).toList();
+            final wds = withdrawList.map((w) => _TxItem(isDeposit: false, amount: w.amount ?? 0, date: w.createdAt, status: w.status ?? 0)).toList();
+            final merged = [...deps, ...wds]..sort((a, b) {
+              final da = DateTime.tryParse(a.date ?? '') ?? DateTime(0);
+              final db = DateTime.tryParse(b.date ?? '') ?? DateTime(0);
+              return db.compareTo(da);
+            });
+            final recent = merged.take(8).toList();
+            if (recent.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(child: Text('No transactions yet', style: TextStyle(color: Colors.white.withOpacity(0.4), fontFamily: _dmSans))),
+              );
+            }
+            return Column(
+              children: recent.map((tx) => _transactionRow(
+                isDeposit: tx.isDeposit,
+                amount: tx.amount,
+                date: formatDate(tx.date, format: dateTimeFormatDdMMMYyyyHhMm),
+                status: tx.status,
+                coinType: selectedCoin,
+              )).toList(),
+            );
+          }),
         ],
       ),
     );
@@ -1933,4 +1933,12 @@ class _EarnProductCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TxItem {
+  final bool isDeposit;
+  final double amount;
+  final String? date;
+  final int status;
+  _TxItem({required this.isDeposit, required this.amount, required this.date, required this.status});
 }
