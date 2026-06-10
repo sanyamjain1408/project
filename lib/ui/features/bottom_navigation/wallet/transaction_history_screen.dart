@@ -60,7 +60,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
       if (tab == 'deposit' || tab == 'withdraw') {
         final resp = await http.get(
-          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=$tab&page=$pg&per_page=25&column_name=created_at&order_by=desc'),
+          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=$tab&page=$pg&per_page=25'),
           headers: _authHeaders(),
         );
         if (resp.statusCode == 200) {
@@ -115,15 +115,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   String _statusLabel(dynamic status) {
-    final raw = status?.toString().toLowerCase() ?? '';
-    if (['success', 'completed', '1', 'approved', 'confirmed'].contains(raw)) return 'Success';
-    if (['pending', '0', 'processing', '2', 'in_progress'].contains(raw)) return 'Pending';
+    final raw = status?.toString() ?? '';
+    if (raw == '1') return 'Success';
+    if (raw == '0') return 'Pending';
+    if (raw == '3') return 'Processing';
+    if (raw == '2') return 'Failed';
     return 'Failed';
   }
 
   Color _statusColor(String label) {
     if (label == 'Success') return _green;
     if (label == 'Pending') return _yellow;
+    if (label == 'Processing') return const Color(0xFF00B7FF);
     return _red;
   }
 

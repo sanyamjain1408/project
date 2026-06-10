@@ -86,27 +86,35 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     try {
       const base = 'https://api.trapix.com/api/wallet-history-app';
       final headers = _authHeaders();
-      final depFuture = http.get(Uri.parse('$base?type=deposit&page=1&per_page=8&column_name=created_at&order_by=desc'), headers: headers);
-      final wdFuture = http.get(Uri.parse('$base?type=withdraw&page=1&per_page=8&column_name=created_at&order_by=desc'), headers: headers);
+      final depFuture = http.get(Uri.parse('$base?type=deposit&page=1&per_page=8'), headers: headers);
+      final wdFuture = http.get(Uri.parse('$base?type=withdraw&page=1&per_page=8'), headers: headers);
       final results = await Future.wait([depFuture, wdFuture]);
 
       List<History> deps = [];
       List<History> wds = [];
 
-      if (results[0].statusCode == 200) {
-        final body = jsonDecode(results[0].body);
-        final raw = body['data']?['histories']?['data'];
-        if (raw is List) deps = raw.map((e) => History.fromJson(Map<String, dynamic>.from(e))).toList();
-      }
-      if (results[1].statusCode == 200) {
-        final body = jsonDecode(results[1].body);
-        final raw = body['data']?['histories']?['data'];
-        if (raw is List) wds = raw.map((e) => History.fromJson(Map<String, dynamic>.from(e))).toList();
+      for (int i = 0; i < 2; i++) {
+        if (results[i].statusCode != 200) continue;
+        try {
+          final body = jsonDecode(results[i].body);
+          final raw = body['data']?['histories']?['data'];
+          if (raw is List) {
+            final list = <History>[];
+            for (final e in raw) {
+              try {
+                list.add(History.fromJson(Map<String, dynamic>.from(e)));
+              } catch (ex) {
+                debugPrint('History.fromJson failed for item: $ex');
+              }
+            }
+            if (i == 0) deps = list; else wds = list;
+          }
+        } catch (_) {}
       }
 
       depositList.value = deps;
       withdrawList.value = wds;
-    } catch (_) {}
+    } catch (e) { debugPrint('fetchRecentTx error: $e'); }
   }
 
   @override
@@ -378,11 +386,19 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
     switch (status) {
       case 1:
         statusText = "Success";
-        statusColor = Color(0xFF4ED78E);
+        statusColor = const Color(0xFF4ED78E);
+        break;
+      case 0:
+        statusText = "Pending";
+        statusColor = const Color(0xFFE0B341);
+        break;
+      case 3:
+        statusText = "Processing";
+        statusColor = const Color(0xFF00B7FF);
         break;
       default:
         statusText = "Failed";
-        statusColor = Color(0xFFD73C3C);
+        statusColor = const Color(0xFFD73C3C);
         break;
     }
 
