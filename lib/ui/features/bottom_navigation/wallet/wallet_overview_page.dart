@@ -559,19 +559,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
                               selectedCoin.value = selected;
                               _getOverviewData();
                             },
+                            onHistoryTap: () => _showHistorySheet(context),
                           ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => _showHistorySheet(context),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.history, color: Colors.white, size: 20),
                         ),
                       ),
                     ],
