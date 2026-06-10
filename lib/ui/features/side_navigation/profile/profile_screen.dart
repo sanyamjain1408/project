@@ -1,34 +1,28 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/data/models/bank_data.dart';
 import 'package:tradexpro_flutter/data/models/kyc_details.dart';
-import 'package:tradexpro_flutter/utils/date_util.dart';
+import 'package:tradexpro_flutter/data/models/settings.dart';
+import 'package:tradexpro_flutter/data/models/user.dart';
+import 'package:tradexpro_flutter/data/remote/api_repository.dart';
+import 'package:tradexpro_flutter/helper/app_helper.dart';
+import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/extensions.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
-import 'package:tradexpro_flutter/utils/common_utils.dart';
-import 'package:tradexpro_flutter/data/models/user.dart';
-import 'package:tradexpro_flutter/helper/app_helper.dart';
-import '../../../../helper/app_checker.dart';
+import 'package:tradexpro_flutter/ui/features/auth/change_password/change_password_screen.dart';
 import 'kyc_screen.dart';
 import 'my_profile_controller.dart';
 import 'my_profile_edit_screen.dart';
-import 'security_screen.dart';
-import 'user_banks/user_bank_screen.dart';
 import 'user_banks/user_bank_controller.dart';
 import 'user_banks/bank_input_page.dart';
-import 'package:tradexpro_flutter/ui/features/auth/change_password/change_password_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:get/get.dart'; // GetX import assume kiya hai
-import 'package:qr_flutter/qr_flutter.dart'; // QR Package import kiya
+import 'package:qr_flutter/qr_flutter.dart';
 
-const _bg = Color(0xFF121212);
-const _cardBg = Color(0xFF1E1E1E);
 const _green = Color(0xFFCCFF00);
 const _white = Color(0xFFFFFFFF);
-const _grey = Color(0xFF8A8A8A);
-const _divider = Color(0xFF2A2A2A);
 const _dmSans = 'DMSans';
 
 const Color _primary = Color(0xFF111111);
@@ -45,9 +39,23 @@ class _ProfileScreenState extends State<ProfileScreen>
     with SingleTickerProviderStateMixin {
   late final MyProfileController _controller;
   late final TabController _tabController;
-  List<UserActivity> userActivities = <UserActivity>[];
 
   static const _figmaTabs = ['Profile', 'Security', 'General', 'KYC'];
+
+  DynamicBank? _firstBank;
+  bool _bankLoaded = false;
+
+  void _loadBankIfNeeded() {
+    if (_bankLoaded) return;
+    _bankLoaded = true;
+    final bankController = Get.put(UserBankController());
+    bankController.getUserBankList();
+    bankController.userBanks.listen((list) {
+      if (list.isNotEmpty && mounted) {
+        setState(() => _firstBank = list.first);
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -63,6 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         _controller.selectedType.value = _tabController.index;
+        if (_tabController.index == 1) updateGlobalUser();
         setState(() {});
       }
     });
@@ -248,11 +257,15 @@ class _ProfileScreenState extends State<ProfileScreen>
   // ─────────────────────────── PROFILE TAB ──────────────────────────────────
   Widget _profileTab() {
     final user = gUserRx.value;
-    if (userActivities.isEmpty) {
-      _controller.getUserActivities(
-        (list) => setState(() => userActivities = list),
-      );
-    }
+    _loadBankIfNeeded();
+
+    final uid = 'TRPX${user.id.toString().padLeft(6, '0')}';
+    final bank = _firstBank?.bank;
+    final bankName = bank?['bank_name']?.value ?? '';
+    final accountHolder = bank?['account_holder']?.value ?? '';
+    final accountNumber = bank?['account_number']?.value ?? '';
+    final ifscCode = bank?['ifsc_code']?.value ?? '';
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       children: [
@@ -276,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               user.phone ?? "No Phone",
             ),
             const SizedBox(height: 16),
-            _infoSingle("UID Number", user.id.toString()),
+            _infoSingle("UID Number", uid),
           ],
         ),
         const SizedBox(height: 16),
@@ -297,13 +310,18 @@ class _ProfileScreenState extends State<ProfileScreen>
             }
           },
           children: [
-            _infoRow("Bank Name", "Axis Bank", "Account Holder", "Patel Vyom"),
+            _infoRow(
+              "Bank Name",
+              bankName.isNotEmpty ? bankName : "Not Added",
+              "Account Holder",
+              accountHolder.isNotEmpty ? accountHolder : "Not Added",
+            ),
             const SizedBox(height: 16),
             _infoRow(
               "Bank account number",
-              "10000100012121",
+              accountNumber.isNotEmpty ? accountNumber : "Not Added",
               "IFSC Code",
-              "BARBOHUHDAS",
+              ifscCode.isNotEmpty ? ifscCode : "Not Added",
             ),
           ],
         ),
@@ -314,6 +332,16 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   // ─────────────────────────── SECURITY TAB ─────────────────────────────────
   Widget _securityTab() {
+    return Obx(() {
+      final user = gUserRx.value;
+      final bool google2faActive = (user.google2Fa == 1);
+      final bool emailVerified = (user.isVerified == 1);
+      final bool phoneVerified = (user.phoneVerified == 1);
+      return _buildSecurityTabContent(google2faActive, emailVerified, phoneVerified);
+    });
+  }
+
+  Widget _buildSecurityTabContent(bool google2faActive, bool emailVerified, bool phoneVerified) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(15, 15, 15, 20),
       children: [
@@ -321,9 +349,13 @@ class _ProfileScreenState extends State<ProfileScreen>
         _securityItem(
           title: "Google Authenticator",
           iconPath: "assets/icons/security_google.png",
-          status: "ACTIVE",
-          statusBgColor: const Color(0x66015629),
-          statusTextColor: const Color(0xFF00FF4D),
+          status: google2faActive ? "ACTIVE" : "INACTIVE",
+          statusBgColor: google2faActive
+              ? const Color(0x66015629)
+              : const Color(0x80920000),
+          statusTextColor: google2faActive
+              ? const Color(0xFF00FF4D)
+              : const Color(0xFFFF0A00),
           onTap: () => Get.to(() => const GoogleAuthScreen()),
         ),
 
@@ -331,9 +363,13 @@ class _ProfileScreenState extends State<ProfileScreen>
         _securityItem(
           title: "Verify E-Mail",
           iconPath: "assets/icons/security_verify.png",
-          status: "Not Verified",
-          statusBgColor: const Color(0x80920000),
-          statusTextColor: const Color(0xFFFF0A00),
+          status: emailVerified ? "Verified" : "Not Verified",
+          statusBgColor: emailVerified
+              ? const Color(0x66015629)
+              : const Color(0x80920000),
+          statusTextColor: emailVerified
+              ? const Color(0xFF00FF4D)
+              : const Color(0xFFFF0A00),
           onTap: () => Get.to(() => const VerifyEmailScreen()),
         ),
 
@@ -341,9 +377,13 @@ class _ProfileScreenState extends State<ProfileScreen>
         _securityItem(
           title: "Verify Phone number",
           iconPath: "assets/icons/security_verify_phone.png",
-          status: "Not Verified",
-          statusBgColor: const Color(0x80920000),
-          statusTextColor: const Color(0xFFFF0A00),
+          status: phoneVerified ? "Verified" : "Not Verified",
+          statusBgColor: phoneVerified
+              ? const Color(0x66015629)
+              : const Color(0x80920000),
+          statusTextColor: phoneVerified
+              ? const Color(0xFF00FF4D)
+              : const Color(0xFFFF0A00),
           onTap: () => Get.to(() => const VerifyMobileScreen()),
         ),
 
@@ -494,7 +534,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             GestureDetector(
               onTap: () {
                 Navigator.pop(ctx);
-                // TODO: handle delete/disable API call based on selected.value
+                _showAccountActionConfirmDialog(selected.value);
               },
               child: Container(
                 width: double.infinity,
@@ -517,6 +557,103 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showAccountActionConfirmDialog(int actionType) {
+    // actionType: 0 = delete, 1 = disable
+    final label = actionType == 0 ? "Delete Account" : "Disable Account";
+    final reasonCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: _primary,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Text(label, style: const TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                  const Spacer(),
+                  GestureDetector(onTap: () => Navigator.pop(ctx), child: const Icon(Icons.close, color: _white, size: 20)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text("Reason", style: TextStyle(color: Color(0xFF8A8A8A), fontSize: 12, fontFamily: _dmSans)),
+              const SizedBox(height: 8),
+              Container(
+                height: 50,
+                decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
+                child: TextField(
+                  controller: reasonCtrl,
+                  style: const TextStyle(color: _white, fontSize: 14, fontFamily: _dmSans),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: "Enter reason",
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text("Password", style: TextStyle(color: Color(0xFF8A8A8A), fontSize: 12, fontFamily: _dmSans)),
+              const SizedBox(height: 8),
+              Container(
+                height: 50,
+                decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
+                child: TextField(
+                  controller: passwordCtrl,
+                  obscureText: true,
+                  style: const TextStyle(color: _white, fontSize: 14, fontFamily: _dmSans),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: "Enter password",
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              GestureDetector(
+                onTap: () {
+                  final reason = reasonCtrl.text.trim();
+                  final password = passwordCtrl.text.trim();
+                  if (reason.isEmpty) { showToast("Please enter a reason"); return; }
+                  if (password.isEmpty) { showToast("Please enter your password"); return; }
+                  Navigator.pop(ctx);
+                  _controller.deleteAccountRequest(reason, password, () {
+                    showToast("Request submitted successfully");
+                  });
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(color: const Color(0xFFD73C3C), borderRadius: BorderRadius.circular(10)),
+                  child: Center(
+                    child: Text(label, style: const TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w600, fontFamily: _dmSans)),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1306,10 +1443,9 @@ class _ProfileEditPage extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GOOGLE AUTHENTICATOR SCREEN  (Image 1)
+// GOOGLE AUTHENTICATOR SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Class ko StatefulWidget banaya
 class GoogleAuthScreen extends StatefulWidget {
   const GoogleAuthScreen({super.key});
 
@@ -1317,223 +1453,200 @@ class GoogleAuthScreen extends StatefulWidget {
   State<GoogleAuthScreen> createState() => _GoogleAuthScreenState();
 }
 
-// State class banayi
 class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
-  // Colors aur Fonts (Apne project ke hisab se adjust kar sakte hain)
-
-  static const _bg = Color(0xFF121212);
-  static const _cardBg = Color(0xFF1E1E1E);
-  static const _green = Color(0xFFCCFF00);
-  static const _white = Color(0xFFFFFFFF);
-  static const _grey = Color(0xFF8A8A8A);
-  static const _divider = Color(0xFF2A2A2A);
   static const _dmSans = 'DMSans';
-
   static const Color _primary = Color(0xFF111111);
   static const Color _secondary = Color(0xFF1A1A1A);
+  static const _green = Color(0xFFCCFF00);
+  static const _white = Color(0xFFFFFFFF);
 
-  // Ab 'const' hata diya, bas 'final' rakha hai. Error solve ho jayega.
-  final String secretKey = "wetyruykngbvsfbl25434wergfbdn";
-
+  String secretKey = "";
+  String qrData = "";
+  bool _isLoading = true;
+  bool _isSubmitting = false;
   final codeCtrl = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _loadSecret();
+  }
+
+  void _loadSecret() {
+    showLoadingDialog();
+    APIRepository().getUserSetting().then((resp) {
+      hideLoadingDialog();
+      if (resp.success) {
+        final uSettings = UserSettings.fromJson(resp.data);
+        if (mounted) {
+          setState(() {
+            secretKey = uSettings.google2faSecret ?? gUserRx.value.google2FaSecret ?? "";
+            qrData = uSettings.qrcode ?? secretKey;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }, onError: (_) {
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
+
+  void _verify() {
+    final code = codeCtrl.text.trim();
+    if (code.length != 6) {
+      showToast("Please enter 6-digit code");
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    final isCurrentlyActive = gUserRx.value.google2Fa == 1;
+    APIRepository().setupGoogleSecret(code, secretKey, !isCurrentlyActive).then((resp) {
+      setState(() => _isSubmitting = false);
+      showToast(resp.message, isError: !resp.success);
+      if (resp.success) {
+        updateGlobalUser();
+        Get.back();
+      }
+    }, onError: (err) {
+      setState(() => _isSubmitting = false);
+      showToast(err.toString(), isError: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    codeCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = gUserRx.value;
+    final isActive = user.google2Fa == 1;
+
     return Scaffold(
       backgroundColor: _primary,
       body: SafeArea(
         child: Column(
           children: [
             const SizedBox(height: 10),
-            // AppBar row
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Get.back(),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: _white,
-                      size: 22,
-                    ),
+                    child: const Icon(Icons.arrow_back, color: _white, size: 22),
                   ),
                   const SizedBox(width: 16),
                   const Text(
                     "Google Authenticator",
-                    style: TextStyle(
-                      color: _white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: _dmSans,
-                    ),
+                    style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans),
                   ),
                 ],
               ),
             ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                children: [
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Open Google Authenticator, Scan the QR code\nor enter the key, then come\nback here to continue",
-                    style: TextStyle(
-                      color: _white,
-                      fontSize: 16,
-                      fontFamily: _dmSans,
-                      height: 1.6,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // --- QR CODE CONTAINER START ---
-                  Center(
-                    child: Container(
-                      width: 180,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: QrImageView(
-                          data: secretKey,
-                          version: QrVersions.auto,
-                          size: 160.0,
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // --- QR CODE CONTAINER END ---
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      secretKey,
-                      style: const TextStyle(
-                        color: _white,
-                        fontSize: 16,
-                        fontFamily: _dmSans,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Copy button
-                  Center(
-                    child: GestureDetector(
-                      onTap: () {
-                        Clipboard.setData(
-                          ClipboardData(text: secretKey),
-                        ); // 'const' hata diya
-                        // Agar aapke paas custom showToast function hai to use use karein, nahi to SnackBar
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Copied to clipboard"),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        width: 180,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: _green,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            "Copy",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: _dmSans,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  const Text(
-                    "Enter the 6 digit verification code from your authenticator app.",
-                    style: TextStyle(
-                      color: _white,
-                      fontSize: 12,
-                      fontFamily: _dmSans,
-                      height: 1.5,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Code input
-                  Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: _secondary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFCCFF00)))
+                  : ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: codeCtrl,
-                            keyboardType: TextInputType.number,
-                            style: const TextStyle(
-                              color: _white,
-                              fontSize: 16,
-                              fontFamily: _dmSans,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: "Google 2FA Code",
-                              hintStyle: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
-                                fontSize: 16,
-                                fontFamily: _dmSans,
-                                fontWeight: FontWeight.w400,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
+                        const SizedBox(height: 16),
+                        Text(
+                          isActive
+                              ? "Google Authenticator is currently ACTIVE.\nEnter your 6-digit code to disable it."
+                              : "Open Google Authenticator, Scan the QR code\nor enter the key, then come\nback here to continue",
+                          style: const TextStyle(color: _white, fontSize: 16, fontFamily: _dmSans, height: 1.6, fontWeight: FontWeight.w400),
+                        ),
+                        const SizedBox(height: 32),
+                        if (!isActive && secretKey.isNotEmpty) ...[
+                          Center(
+                            child: Container(
+                              width: 180,
+                              height: 180,
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: QrImageView(
+                                  data: qrData.isNotEmpty ? qrData : secretKey,
+                                  version: QrVersions.auto,
+                                  size: 160.0,
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: GestureDetector(
-                            onTap: () async {
-                              final data = await Clipboard.getData(
-                                'text/plain',
-                              );
-                              codeCtrl.text = data?.text ?? '';
-                            },
-                            child: const Text(
-                              "Paste",
-                              style: TextStyle(
-                                color: Color(0xFF00B052),
-                                fontSize: 13,
-                                fontFamily: _dmSans,
-                                fontWeight: FontWeight.w600,
+                          const SizedBox(height: 20),
+                          Center(
+                            child: SelectableText(
+                              secretKey,
+                              style: const TextStyle(color: _white, fontSize: 14, fontFamily: _dmSans, fontWeight: FontWeight.w400),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Center(
+                            child: GestureDetector(
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(text: secretKey));
+                                showToast("Copied to clipboard");
+                              },
+                              child: Container(
+                                width: 180,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(10)),
+                                child: const Center(
+                                  child: Text("Copy", style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
+                                ),
                               ),
                             ),
+                          ),
+                          const SizedBox(height: 28),
+                        ],
+                        const Text(
+                          "Enter the 6 digit verification code from your authenticator app.",
+                          style: TextStyle(color: _white, fontSize: 12, fontFamily: _dmSans, height: 1.5, fontWeight: FontWeight.w400),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          height: 50,
+                          decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: codeCtrl,
+                                  keyboardType: TextInputType.number,
+                                  maxLength: 6,
+                                  style: const TextStyle(color: _white, fontSize: 16, fontFamily: _dmSans),
+                                  decoration: InputDecoration(
+                                    counterText: "",
+                                    border: InputBorder.none,
+                                    hintText: "Google 2FA Code",
+                                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 16, fontFamily: _dmSans),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final data = await Clipboard.getData('text/plain');
+                                    codeCtrl.text = data?.text ?? '';
+                                  },
+                                  child: const Text("Paste", style: TextStyle(color: Color(0xFF00B052), fontSize: 13, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
             ),
-            // Bottom buttons
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
               child: Row(
@@ -1543,49 +1656,22 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
                       onTap: () => Get.back(),
                       child: Container(
                         height: 50,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            "Close",
-                            style: TextStyle(
-                              color: _white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: _dmSans,
-                            ),
-                          ),
-                        ),
+                        decoration: BoxDecoration(color: Colors.transparent, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white)),
+                        child: const Center(child: Text("Close", style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans))),
                       ),
                     ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        // TODO: verify 2FA
-                      },
+                      onTap: _isSubmitting ? null : _verify,
                       child: Container(
                         height: 50,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: _green,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            "Verify",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: _dmSans,
-                            ),
-                          ),
+                        decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(10)),
+                        child: Center(
+                          child: _isSubmitting
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+                              : Text(isActive ? "Disable" : "Verify", style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
                         ),
                       ),
                     ),
@@ -1601,15 +1687,54 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VERIFY EMAIL SCREEN  (Image 2)
+// VERIFY EMAIL SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class VerifyEmailScreen extends StatelessWidget {
+class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final emailCtrl = TextEditingController(text: "Ab123@df");
+  State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
+}
 
+class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
+  static const _dmSans = 'DMSans';
+  static const Color _primary = Color(0xFF111111);
+  static const Color _secondary = Color(0xFF1A1A1A);
+  static const _green = Color(0xFFCCFF00);
+  static const _white = Color(0xFFFFFFFF);
+
+  bool _verifying = false;
+  final otpCtrl = TextEditingController();
+
+  String get _userEmail => gUserRx.value.email ?? "";
+
+  void _verify() {
+    final code = otpCtrl.text.trim();
+    if (code.isEmpty) { showToast("Please enter verification code"); return; }
+    setState(() => _verifying = true);
+    APIRepository().verifyEmail(_userEmail, code).then((resp) {
+      setState(() => _verifying = false);
+      if (resp.success) {
+        showToast(resp.message);
+        updateGlobalUser();
+        Get.back();
+      } else {
+        showToast(resp.message, isError: true);
+      }
+    }, onError: (err) {
+      setState(() => _verifying = false);
+      showToast(err.toString(), isError: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    otpCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _primary,
       body: SafeArea(
@@ -1620,91 +1745,46 @@ class VerifyEmailScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: _white,
-                      size: 22,
-                    ),
-                  ),
+                  GestureDetector(onTap: () => Get.back(), child: const Icon(Icons.arrow_back, color: _white, size: 22)),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Verify E-mail",
-                    style: TextStyle(
-                      color: _white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: _dmSans,
-                    ),
-                  ),
+                  const Text("Verify E-mail", style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
                 ],
               ),
             ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    Text(
-                      "Email Verification",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: 12,
-                        fontFamily: _dmSans,
-                      ),
-                    ),
+                    Text("Your Email", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
                     const SizedBox(height: 8),
                     Container(
                       height: 52,
-                      decoration: BoxDecoration(
-                        color: _secondary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: emailCtrl,
-                              style: const TextStyle(
-                                color: _white,
-                                fontSize: 16,
-                                fontFamily: _dmSans,
-                                fontWeight: FontWeight.w400,
-                              ),
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.only(right: 16),
-                            child: Text(
-                              "Sent OTP",
-                              style: TextStyle(
-                                color: Color(0xFF00B052),
-                                fontSize: 13,
-                                fontFamily: _dmSans,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
+                      decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(_userEmail, style: const TextStyle(color: _white, fontSize: 15, fontFamily: _dmSans)),
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    Text("Verification Code", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
                     const SizedBox(height: 8),
-                    const Text(
-                      "Sent to Ab123@df",
-                      style: TextStyle(
-                        color: _green,
-                        fontSize: 12,
-                        fontFamily: _dmSans,
+                    Container(
+                      height: 52,
+                      decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
+                      child: TextField(
+                        controller: otpCtrl,
+                        keyboardType: TextInputType.text,
+                        style: const TextStyle(color: _white, fontSize: 15, fontFamily: _dmSans),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: "Enter verification code",
+                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
                       ),
                     ),
                   ],
@@ -1717,25 +1797,11 @@ class VerifyEmailScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    // TODO: confirm email OTP
-                  },
-                  child: const Text(
-                    "Confirm",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: _dmSans,
-                    ),
-                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: _green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
+                  onPressed: _verifying ? null : _verify,
+                  child: _verifying
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+                      : const Text("Verify Email", style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
                 ),
               ),
             ),
@@ -1747,15 +1813,109 @@ class VerifyEmailScreen extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VERIFY MOBILE SCREEN  (Image 3)
+// VERIFY MOBILE SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class VerifyMobileScreen extends StatelessWidget {
+class VerifyMobileScreen extends StatefulWidget {
   const VerifyMobileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final mobileCtrl = TextEditingController(text: "1234567890");
+  State<VerifyMobileScreen> createState() => _VerifyMobileScreenState();
+}
 
+class _VerifyMobileScreenState extends State<VerifyMobileScreen> {
+  static const _dmSans = 'DMSans';
+  static const Color _primary = Color(0xFF111111);
+  static const Color _secondary = Color(0xFF1A1A1A);
+  static const _green = Color(0xFFCCFF00);
+  static const _white = Color(0xFFFFFFFF);
+
+  bool _sending = false;
+  bool _otpSent = false;
+  bool _verifying = false;
+  final otpCtrl = TextEditingController();
+  late final TextEditingController _phoneCtrl;
+  int _resendSeconds = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneCtrl = TextEditingController(text: gUserRx.value.phone ?? "");
+  }
+
+  String _maskPhone(String phone) {
+    if (phone.isEmpty) return "";
+    final v = phone.replaceAll(RegExp(r'\s+'), '');
+    if (v.length <= 6) return v;
+    return "${v.substring(0, 3)}*****${v.substring(v.length - 3)}";
+  }
+
+  Future<void> _sendOtp() async {
+    final phone = _phoneCtrl.text.trim().replaceAll(RegExp(r'\D'), '');
+    if (phone.isEmpty || phone.length < 6) {
+      showToast("Please enter a valid mobile number");
+      return;
+    }
+    setState(() => _sending = true);
+
+    // If phone changed, update profile first (same as website UpdateUserInfoByToken)
+    final currentPhone = (gUserRx.value.phone ?? "").replaceAll(RegExp(r'\D'), '');
+    if (phone != currentPhone) {
+      final userWithPhone = gUserRx.value;
+      userWithPhone.phone = phone;
+      final updateResp = await APIRepository().updateProfile(userWithPhone, File(''));
+      if (!updateResp.success) {
+        setState(() => _sending = false);
+        showToast(updateResp.message, isError: true);
+        return;
+      }
+      updateGlobalUser();
+    }
+
+    APIRepository().sendPhoneSMS().then((resp) {
+      setState(() => _sending = false);
+      showToast(resp.message, isError: !resp.success);
+      if (resp.success) {
+        setState(() { _otpSent = true; _resendSeconds = 60; });
+        _startResendTimer();
+      }
+    }, onError: (err) {
+      setState(() => _sending = false);
+      showToast(err.toString(), isError: true);
+    });
+  }
+
+  void _startResendTimer() {
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      setState(() => _resendSeconds = (_resendSeconds - 1).clamp(0, 60));
+      return _resendSeconds > 0;
+    });
+  }
+
+  void _verify() {
+    final code = otpCtrl.text.trim();
+    if (code.isEmpty) { showToast("Please enter OTP"); return; }
+    setState(() => _verifying = true);
+    APIRepository().verifyPhone(code).then((resp) {
+      setState(() => _verifying = false);
+      showToast(resp.message, isError: !resp.success);
+      if (resp.success) { updateGlobalUser(); Get.back(); }
+    }, onError: (err) {
+      setState(() => _verifying = false);
+      showToast(err.toString(), isError: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    otpCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _primary,
       body: SafeArea(
@@ -1766,24 +1926,9 @@ class VerifyMobileScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: _white,
-                      size: 22,
-                    ),
-                  ),
+                  GestureDetector(onTap: () => Get.back(), child: const Icon(Icons.arrow_back, color: _white, size: 22)),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Verify Mobile",
-                    style: TextStyle(
-                      color: _white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: _dmSans,
-                    ),
-                  ),
+                  const Text("Verify Mobile", style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
                 ],
               ),
             ),
@@ -1794,66 +1939,68 @@ class VerifyMobileScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    Text(
-                      "Mobile Verification",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: 12,
-                        fontFamily: _dmSans,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
+                    Text("Mobile Verification", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
                     const SizedBox(height: 8),
                     Container(
                       height: 52,
-                      decoration: BoxDecoration(
-                        color: _secondary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
                       child: Row(
                         children: [
                           Expanded(
                             child: TextField(
-                              controller: mobileCtrl,
+                              controller: _phoneCtrl,
                               keyboardType: TextInputType.phone,
-                              style: const TextStyle(
-                                color: _white,
-                                fontSize: 15,
-                                fontFamily: _dmSans,
-                              ),
-                              decoration: const InputDecoration(
+                              style: const TextStyle(color: _white, fontSize: 15, fontFamily: _dmSans),
+                              decoration: InputDecoration(
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 16,
-                                ),
+                                hintText: "Mobile phone number",
+                                hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               ),
                             ),
                           ),
-                          const Padding(
-                            padding: EdgeInsets.only(right: 16),
-                            child: Text(
-                              "Sent OTP",
-                              style: TextStyle(
-                                color: Color(0xFF00B052),
-                                fontSize: 12,
-                                fontFamily: _dmSans,
-                                fontWeight: FontWeight.w400,
+                          GestureDetector(
+                            onTap: (_sending || _resendSeconds > 0) ? null : _sendOtp,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: Text(
+                                _sending ? "Sending..." : (_resendSeconds > 0 ? "Resend (${_resendSeconds}s)" : "Send OTP"),
+                                style: TextStyle(
+                                  color: (_resendSeconds > 0 && !_sending) ? Colors.white38 : const Color(0xFF00B052),
+                                  fontSize: 12,
+                                  fontFamily: _dmSans,
+                                  fontWeight: FontWeight.w400,
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Sent to 99******12",
-                      style: TextStyle(
-                        color: _green,
-                        fontSize: 12,
-                        fontFamily: _dmSans,
+                    if (_otpSent) ...[
+                      const SizedBox(height: 8),
+                      Text("Sent to ${_maskPhone(_phoneCtrl.text)}", style: const TextStyle(color: _green, fontSize: 12, fontFamily: _dmSans)),
+                      const SizedBox(height: 20),
+                      Text("Verify Code", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 52,
+                        decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(10)),
+                        child: TextField(
+                          controller: otpCtrl,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          style: const TextStyle(color: _white, fontSize: 15, fontFamily: _dmSans),
+                          decoration: InputDecoration(
+                            counterText: "",
+                            border: InputBorder.none,
+                            hintText: "Enter OTP",
+                            hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -1866,22 +2013,13 @@ class VerifyMobileScreen extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     elevation: 0,
                   ),
-                  onPressed: () {
-                    // TODO: confirm mobile OTP
-                  },
-                  child: const Text(
-                    "Confirm",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: _dmSans,
-                    ),
+                  onPressed: (_sending || _verifying) ? null : (_otpSent ? _verify : _sendOtp),
+                  child: Text(
+                    _verifying ? "Verifying..." : (_sending ? "Sending..." : (_otpSent ? "Confirm" : "Send OTP")),
+                    style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans),
                   ),
                 ),
               ),
@@ -1894,23 +2032,48 @@ class VerifyMobileScreen extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ACCOUNT ACTIVITY SCREEN  (Image 5)
+// ACCOUNT ACTIVITY SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class AccountActivityScreen extends StatelessWidget {
+class AccountActivityScreen extends StatefulWidget {
   const AccountActivityScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Dummy data — replace with real API
-    final items = List.generate(
-      3,
-      (_) => {
-        "device": "Mobile Safari – Apple iphone\niOS 26.2",
-        "time": "11 Days Ago | Surat – GJ – In",
-        "ip": "IP : 152.59.40.245",
-      },
-    );
+  State<AccountActivityScreen> createState() => _AccountActivityScreenState();
+}
 
+class _AccountActivityScreenState extends State<AccountActivityScreen> {
+  static const _dmSans = 'DMSans';
+  static const Color _primary = Color(0xFF111111);
+  static const Color _secondary = Color(0xFF1A1A1A);
+  static const _white = Color(0xFFFFFFFF);
+
+  List<UserActivity> _activities = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActivities();
+  }
+
+  void _loadActivities() {
+    APIRepository().getSelfProfile().then((resp) {
+      if (mounted) {
+        if (resp.success) {
+          final listMap = resp.data[APIKeyConstants.activityLog] as List? ?? [];
+          final list = List<UserActivity>.from(listMap.map((x) => UserActivity.fromJson(x)));
+          setState(() { _activities = list; _isLoading = false; });
+        } else {
+          setState(() => _isLoading = false);
+        }
+      }
+    }, onError: (_) {
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _primary,
       body: SafeArea(
@@ -1921,99 +2084,54 @@ class AccountActivityScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: _white,
-                      size: 22,
-                    ),
-                  ),
+                  GestureDetector(onTap: () => Get.back(), child: const Icon(Icons.arrow_back, color: _white, size: 22)),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Account Activity",
-                    style: TextStyle(
-                      color: _white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: _dmSans,
-                    ),
-                  ),
+                  const Text("Account Activity", style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans)),
                 ],
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: items.length,
-                itemBuilder: (ctx, i) {
-                  final item = items[i];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    height: 127,
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _secondary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.center, // 👈 ye add karo
-                      children: [
-                        Image.asset(
-                          'assets/icons/phone.png',
-                          height: 54,
-                          width: 54,
-                          fit: BoxFit.contain,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFCCFF00)))
+                  : _activities.isEmpty
+                      ? const Center(child: Text("No activity found", style: TextStyle(color: Colors.white54, fontSize: 15)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _activities.length,
+                          itemBuilder: (ctx, i) {
+                            final item = _activities[i];
+                            final device = item.source ?? 'Unknown';
+                            final time = item.createdAt != null
+                                ? "${item.createdAt!.day}/${item.createdAt!.month}/${item.createdAt!.year} | ${item.location ?? ''}"
+                                : (item.location ?? "");
+                            final ip = "IP : ${item.ipAddress ?? 'N/A'}";
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                              decoration: BoxDecoration(color: _secondary, borderRadius: BorderRadius.circular(20)),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Image.asset('assets/icons/phone.png', height: 54, width: 54, fit: BoxFit.contain,
+                                    errorBuilder: (ctx, err, st) => const Icon(Icons.phone_android, color: Colors.white54, size: 40)),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(device, style: const TextStyle(color: _white, fontSize: 14, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.4)),
+                                        const SizedBox(height: 5),
+                                        if (time.isNotEmpty)
+                                          Text(time, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
+                                        Text(ip, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment
-                                .center, // 👈 optional but better
-                            children: [
-                              Text(
-                                item["device"]!,
-                                style: const TextStyle(
-                                  color: _white,
-                                  fontSize: 16,
-                                  fontFamily: _dmSans,
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.4,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                item["time"]!,
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 12,
-                                  fontFamily: _dmSans,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              Text(
-                                item["ip"]!,
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 12,
-                                  fontFamily: _dmSans,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
             ),
           ],
         ),
