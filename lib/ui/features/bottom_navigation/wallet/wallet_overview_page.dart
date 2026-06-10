@@ -2014,11 +2014,18 @@ class _HistorySheetState extends State<_HistorySheet> {
       _SheetItem('assets/icons/stop_limit.png',          'Stop Limit History',  () { Get.back(); _goSpot(3); }),
     ];
     return [
-      _SheetItem('assets/icons/open_order.png',       'Open Orders',       () { Get.back(); Get.to(() => const ActivityScreen()); }),
-      _SheetItem('assets/icons/order_history.png',    'Order History',     () { Get.back(); Get.to(() => const ActivityScreen()); }),
-      _SheetItem('assets/icons/stop_limit.png',       'Stop Limit History',() { Get.back(); Get.to(() => const ActivityScreen()); }),
-      _SheetItem('assets/icons/position_history.png', 'Position History',  () { Get.back(); Get.to(() => const ActivityScreen()); }),
+      _SheetItem('assets/icons/open_order.png',       'Open Orders',       () { Get.back(); _goFuture(0); }),
+      _SheetItem('assets/icons/order_history.png',    'Order History',     () { Get.back(); _goFuture(1); }),
+      _SheetItem('assets/icons/stop_limit.png',       'Stop Limit History',() { Get.back(); _goFuture(2); }),
+      _SheetItem('assets/icons/position_history.png', 'Position History',  () { Get.back(); _goFuture(3); }),
     ];
+  }
+
+  void _goFuture(int index) {
+    final ctrl = Get.isRegistered<NewFutureController>()
+        ? Get.find<NewFutureController>()
+        : Get.put(NewFutureController());
+    Get.to(() => FutureHistoryFullScreen(ctrl: ctrl, pair: null, pp: 2, initialIndex: index));
   }
 
   void _goSpot(int index) {
