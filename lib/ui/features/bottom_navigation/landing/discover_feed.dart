@@ -219,8 +219,8 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
-    if (_posts.isEmpty) return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No posts yet.', style: TextStyle(color: _dim, fontSize: 13))));
+    if (_loading) return const SizedBox.shrink();
+    if (_posts.isEmpty) return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: Text('No posts yet.', style: TextStyle(color: _dim, fontSize: 13))));
     return Column(children: [
       ListView.builder(
         shrinkWrap: true,
@@ -288,8 +288,8 @@ class _ArticlesWidgetState extends State<_ArticlesWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
-    if (_items.isEmpty) return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('Nothing here yet.', style: TextStyle(color: _dim, fontSize: 13))));
+    if (_loading) return const SizedBox.shrink();
+    if (_items.isEmpty) return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: Text('Nothing here yet.', style: TextStyle(color: _dim, fontSize: 13))));
     return ListView.builder(
       shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
       itemCount: _items.length,
