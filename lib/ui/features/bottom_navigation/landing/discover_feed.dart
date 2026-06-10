@@ -127,11 +127,12 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       decoration: const BoxDecoration(
         color: Color(0xFF111111),
         border: Border(top: BorderSide(color: Color(0xFF1A1A1A), width: 1)),
       ),
-      child: Column(children: [
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(0, 12, 16, 12),
