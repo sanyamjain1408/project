@@ -445,41 +445,68 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
           ]),
         ),
 
-        // Footer
-        Container(
-          color: _bg,
-          padding: const EdgeInsets.only(bottom: 6, top: 4),
-          child: const Center(
-            child: Text.rich(TextSpan(
-              style: TextStyle(color: Color(0xFF555555), fontSize: 10),
-              children: [
-                TextSpan(text: 'Powered by '),
-                TextSpan(text: 'Trapix AI', style: TextStyle(color: _green)),
-                TextSpan(text: ' · Secure & Encrypted'),
-              ],
-            )),
+        // Footer - hide when keyboard open to avoid overflow
+        if (MediaQuery.of(context).viewInsets.bottom == 0)
+          Container(
+            color: _bg,
+            padding: const EdgeInsets.only(bottom: 6, top: 4),
+            child: const Center(
+              child: Text.rich(TextSpan(
+                style: TextStyle(color: Color(0xFF555555), fontSize: 10),
+                children: [
+                  TextSpan(text: 'Powered by '),
+                  TextSpan(text: 'Trapix AI', style: TextStyle(color: _green)),
+                  TextSpan(text: ' · Secure & Encrypted'),
+                ],
+              )),
+            ),
           ),
-        ),
       ]),
     );
   }
 }
 
+// ─── Markdown parser (bold + bullet) ────────────────────────────────────────
+
+List<InlineSpan> _parseMarkdown(String text, Color textColor) {
+  final spans = <InlineSpan>[];
+  final lines = text.split('
+');
+  for (int li = 0; li < lines.length; li++) {
+    final line = lines[li];
+    if (li > 0) spans.add(const TextSpan(text: '
+'));
+    // Parse inline **bold**
+    final regex = RegExp(r'\*\*(.*?)\*\*');
+    int last = 0;
+    for (final m in regex.allMatches(line)) {
+      if (m.start > last) {
+        spans.add(TextSpan(text: line.substring(last, m.start), style: TextStyle(color: textColor)));
+      }
+      spans.add(TextSpan(
+        text: m.group(1),
+        style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
+      ));
+      last = m.end;
+    }
+    if (last < line.length) {
+      spans.add(TextSpan(text: line.substring(last), style: TextStyle(color: textColor)));
+    }
+  }
+  return spans;
+}
+
 // ─── Bubble widget ──────────────────────────────────────────────────────────
 
-class _BubbleWidget extends StatefulWidget {
+class _BubbleWidget extends StatelessWidget {
   final _Msg msg;
   const _BubbleWidget({required this.msg});
 
   @override
-  State<_BubbleWidget> createState() => _BubbleWidgetState();
-}
-
-class _BubbleWidgetState extends State<_BubbleWidget> {
-  @override
   Widget build(BuildContext context) {
-    final isUser = widget.msg.sender == 'user';
-    final isAdmin = widget.msg.sender == 'admin';
+    final isUser = msg.sender == 'user';
+    final isAdmin = msg.sender == 'admin';
+    final textColor = isUser ? Colors.black : const Color(0xFFDDDDDD);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -510,13 +537,11 @@ class _BubbleWidgetState extends State<_BubbleWidget> {
                     ),
                     border: isUser ? null : Border.all(color: const Color(0xFF222222)),
                   ),
-                  child: Text(
-                    widget.msg.message,
-                    style: TextStyle(
-                      color: isUser ? Colors.black : const Color(0xFFDDDDDD),
-                      fontSize: 13.5,
-                      height: 1.55,
-                      fontWeight: isUser ? FontWeight.w600 : FontWeight.w400,
+                  child: RichText(
+                    text: TextSpan(
+                      style: TextStyle(fontSize: 13.5, height: 1.55, color: textColor,
+                          fontWeight: isUser ? FontWeight.w600 : FontWeight.w400),
+                      children: _parseMarkdown(msg.message, textColor),
                     ),
                   ),
                 ),
