@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/history_sheet.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/kyc_details.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
@@ -703,7 +704,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           title: "History",
           iconPath: "assets/icons/history.png",
           showArrow: true,
-          onTap: () {},
+          onTap: () => showHistorySheet(context),
         ),
         _generalItem(
           title: "Price alerts",
