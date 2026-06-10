@@ -155,9 +155,9 @@ class _DiscoverTabsWidgetState extends State<DiscoverTabsWidget> {
           }),
         ),
       ),
-      if (_tab == 0) const DiscoverFeedWidget()
-      else if (_tab == 1) const _ArticlesWidget(type: 'blog')
-      else if (_tab == 2) const _ArticlesWidget(type: 'news')
+      if (_tab == 0) DiscoverFeedWidget(key: const ValueKey('discover'))
+      else if (_tab == 1) _ArticlesWidget(key: const ValueKey('blogs'), type: 'blog')
+      else if (_tab == 2) _ArticlesWidget(key: const ValueKey('news'), type: 'news')
       else const Padding(
         padding: EdgeInsets.all(24),
         child: Center(child: Text('No Announcements', style: TextStyle(color: _dim, fontSize: 13))),
@@ -180,6 +180,11 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
 
   @override
   void initState() { super.initState(); _loadAll(); }
+
+  Future<void> _refresh() async {
+    if (mounted) setState(() { _posts = []; _loading = true; });
+    await _loadAll();
+  }
 
   Future<void> _loadAll() async {
     int page = 1;
@@ -222,8 +227,11 @@ class _DiscoverFeedWidgetState extends State<DiscoverFeedWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SizedBox.shrink();
-    if (_posts.isEmpty) return const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: Text('No posts yet.', style: TextStyle(color: _dim, fontSize: 13))));
+    if (_loading) return const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)));
+    if (_posts.isEmpty) return GestureDetector(
+      onTap: _refresh,
+      child: const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: Text('No posts yet. Tap to refresh.', style: TextStyle(color: _dim, fontSize: 13)))),
+    );
     return Column(children: [
       ListView.builder(
         shrinkWrap: true,
@@ -601,12 +609,18 @@ class _DiscoverPostScreenState extends State<DiscoverPostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0C0F),
-      body: SafeArea(
-        child: Column(children: [
-          // header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1C1F26)))),
+      resizeToAvoidBottomInset: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(48),
+        child: SafeArea(
+          bottom: false,
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0A0C0F),
+              border: Border(bottom: BorderSide(color: Color(0xFF1C1F26))),
+            ),
             child: Row(children: [
               GestureDetector(onTap: () => Navigator.pop(context),
                 child: const Row(children: [
@@ -615,36 +629,40 @@ class _DiscoverPostScreenState extends State<DiscoverPostScreen> {
                 ])),
             ]),
           ),
-          Expanded(child: _loading
-            ? const Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2))
-            : _post == null
-              ? const Center(child: Text('Post not found.', style: TextStyle(color: _dim)))
-              : _buildContent()),
-          // comment composer
-          Container(
-            padding: EdgeInsets.fromLTRB(12, 10, 12, MediaQuery.of(context).viewInsets.bottom + 12),
-            decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF232A36)))),
-            child: Row(children: [
-              Expanded(child: TextField(controller: _ctrl,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'Add a comment...', hintStyle: const TextStyle(color: _dim, fontSize: 13),
-                  filled: true, fillColor: const Color(0xFF161B22),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Color(0xFF232A36))),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Color(0xFF232A36))),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: _green)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                ))),
-              const SizedBox(width: 8),
-              GestureDetector(onTap: _submit, child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(20)),
-                child: const Text('Send', style: TextStyle(color: Color(0xFF111111), fontWeight: FontWeight.w700, fontSize: 13)),
-              )),
-            ]),
-          ),
-        ]),
+        ),
       ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0A0C0F),
+            border: Border(top: BorderSide(color: Color(0xFF232A36))),
+          ),
+          child: Row(children: [
+            Expanded(child: TextField(controller: _ctrl,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'Add a comment...', hintStyle: const TextStyle(color: _dim, fontSize: 13),
+                filled: true, fillColor: const Color(0xFF161B22),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Color(0xFF232A36))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Color(0xFF232A36))),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: _green)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              ))),
+            const SizedBox(width: 8),
+            GestureDetector(onTap: _submit, child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(20)),
+              child: const Text('Send', style: TextStyle(color: Color(0xFF111111), fontWeight: FontWeight.w700, fontSize: 13)),
+            )),
+          ]),
+        ),
+      ),
+      body: _loading
+        ? const Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2))
+        : _post == null
+          ? const Center(child: Text('Post not found.', style: TextStyle(color: _dim)))
+          : _buildContent(),
     );
   }
 
@@ -774,25 +792,32 @@ class _ArticleScreenState extends State<ArticleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0C0F),
-      body: SafeArea(child: Column(children: [
-        // back header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: const BoxDecoration(color: Color(0xFF0A0C0F), border: Border(bottom: BorderSide(color: Color(0xFF1C1F26)))),
-          child: Row(children: [
-            GestureDetector(onTap: () => Navigator.pop(context),
-              child: const Row(children: [
-                Icon(Icons.chevron_left, color: Color(0xFFCFD4DC), size: 24),
-                Text('Back', style: TextStyle(color: Color(0xFFCFD4DC), fontSize: 15, fontWeight: FontWeight.w600)),
-              ])),
-          ]),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(48),
+        child: SafeArea(
+          bottom: false,
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0A0C0F),
+              border: Border(bottom: BorderSide(color: Color(0xFF1C1F26))),
+            ),
+            child: Row(children: [
+              GestureDetector(onTap: () => Navigator.pop(context),
+                child: const Row(children: [
+                  Icon(Icons.chevron_left, color: Color(0xFFCFD4DC), size: 24),
+                  Text('Back', style: TextStyle(color: Color(0xFFCFD4DC), fontSize: 15, fontWeight: FontWeight.w600)),
+                ])),
+            ]),
+          ),
         ),
-        Expanded(child: _loading
-          ? const Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2))
-          : _notFound || _article == null
-            ? const Center(child: Text('Article not found.', style: TextStyle(color: _dim)))
-            : _buildArticle()),
-      ])),
+      ),
+      body: _loading
+        ? const Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2))
+        : _notFound || _article == null
+          ? const Center(child: Text('Article not found.', style: TextStyle(color: _dim)))
+          : _buildArticle(),
     );
   }
 
