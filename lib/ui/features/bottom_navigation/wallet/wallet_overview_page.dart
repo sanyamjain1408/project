@@ -132,13 +132,16 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
               const SizedBox(height: 20),
               Obx(() => _buildStackedCards(data, settings)),
               const SizedBox(height: 20),
-              Obx(
-                () => _buildReportWithLists(
-                  depositList: depositList,
-                  withdrawList: withdrawList,
-                  selectedCoin: wOverview.value.selectedCoin ?? "",
-                ),
-              ), // ← condition hata di
+              Obx(() {
+                final deps = depositList.toList();
+                final wds = withdrawList.toList();
+                final coin = wOverview.value.selectedCoin ?? "";
+                return _buildReportWithLists(
+                  depositList: deps,
+                  withdrawList: wds,
+                  selectedCoin: coin,
+                );
+              }),
               const SizedBox(height: 40),
             ],
           ),
@@ -148,8 +151,8 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
   }
 
   Widget _buildReportWithLists({
-    required RxList<History> depositList,
-    required RxList<History> withdrawList,
+    required List<History> depositList,
+    required List<History> withdrawList,
     required String selectedCoin,
   }) {
     final hasData = depositList.isNotEmpty || withdrawList.isNotEmpty;
@@ -248,6 +251,7 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
           Builder(builder: (_) {
             final deps = depositList.map((d) => _TxItem(isDeposit: true, amount: d.amount ?? 0, date: d.createdAt, status: d.status ?? 0)).toList();
             final wds = withdrawList.map((w) => _TxItem(isDeposit: false, amount: w.amount ?? 0, date: w.createdAt, status: w.status ?? 0)).toList();
+
             final merged = [...deps, ...wds]..sort((a, b) {
               final da = a.date ?? DateTime(0);
               final db = b.date ?? DateTime(0);
