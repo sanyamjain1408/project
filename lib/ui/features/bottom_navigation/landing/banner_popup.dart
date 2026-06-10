@@ -37,7 +37,8 @@ class BannerPopup extends StatefulWidget {
 class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStateMixin {
   List<BannerItem> _banners = [];
   int _index = 0;
-  bool _ready = false;
+  // _ready = false means loading skeleton, true = real content, null = no banners → close
+  bool? _ready;
   bool _animating = false;
   late final AnimationController _animCtrl;
   late final Animation<double> _scaleAnim;
@@ -54,24 +55,30 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
     _opacityAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut),
     );
+    // Show popup immediately with skeleton, fetch in parallel
+    setState(() => _ready = false);
     _fetchBanners();
   }
 
   Future<void> _fetchBanners() async {
     try {
       final res = await http.get(Uri.parse('https://api.trapix.com/api/banners/active'));
+      if (!mounted) return;
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List && (body['data'] as List).isNotEmpty) {
-          if (mounted) {
-            setState(() {
-              _banners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
-              _ready = true;
-            });
-          }
+          setState(() {
+            _banners = (body['data'] as List).map((e) => BannerItem.fromJson(e)).toList();
+            _ready = true;
+          });
+          return;
         }
       }
-    } catch (_) {}
+      // No banners — close immediately
+      widget.onClose?.call();
+    } catch (_) {
+      if (mounted) widget.onClose?.call();
+    }
   }
 
   void _handleClose() {
@@ -100,7 +107,10 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    if (!_ready || _banners.isEmpty) return const SizedBox.shrink();
+    // Still loading → show skeleton popup immediately
+    if (_ready == false) return _buildSkeleton(context);
+    // No banners or null → nothing
+    if (_ready == null || _banners.isEmpty) return const SizedBox.shrink();
 
     final banner = _banners[_index];
     final remaining = _banners.length - _index - 1;
@@ -178,26 +188,19 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                                   child: GestureDetector(
                                     onTap: _handleClose,
                                     child: Container(
-                                      width: 34,
-                                      height: 34,
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.45),
-                                        shape: BoxShape.circle,
-                                      ),
+                                      width: 34, height: 34,
+                                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.45), shape: BoxShape.circle),
                                       child: const Icon(Icons.close, color: Colors.white, size: 16),
                                     ),
                                   ),
                                 ),
                                 Positioned(
-                                  bottom: 18,
-                                  left: 0,
-                                  right: 0,
+                                  bottom: 18, left: 0, right: 0,
                                   child: Center(
                                     child: GestureDetector(
                                       onTap: () => widget.onClose?.call(),
                                       child: Container(
-                                        width: cardW - 48,
-                                        height: 44,
+                                        width: cardW - 48, height: 44,
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
                                             colors: [Colors.white, Color(0xFFCCFF00)],
@@ -207,14 +210,8 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                                           borderRadius: BorderRadius.circular(40),
                                         ),
                                         child: Center(
-                                          child: Text(
-                                            banner.buttonText,
-                                            style: const TextStyle(
-                                              color: Color(0xFF111111),
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 15,
-                                            ),
-                                          ),
+                                          child: Text(banner.buttonText,
+                                            style: const TextStyle(color: Color(0xFF111111), fontWeight: FontWeight.w700, fontSize: 15)),
                                         ),
                                       ),
                                     ),
@@ -236,8 +233,7 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: isActive ? 18 : 6,
-                          height: 6,
+                          width: isActive ? 18 : 6, height: 6,
                           decoration: BoxDecoration(
                             color: isActive ? const Color(0xFFCCFF00) : Colors.white30,
                             borderRadius: BorderRadius.circular(3),
@@ -249,6 +245,109 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    final cardW = (screenW - 32).clamp(0.0, 502.0);
+
+    return GestureDetector(
+      onTap: _handleClose,
+      child: Container(
+        color: Colors.black.withOpacity(0.72),
+        child: Center(
+          child: GestureDetector(
+            onTap: () {},
+            child: AnimatedBuilder(
+              animation: _animCtrl,
+              builder: (_, child) => Opacity(
+                opacity: _opacityAnim.value,
+                child: Transform.scale(scale: _scaleAnim.value, child: child),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: cardW,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF111111),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 40, spreadRadius: 4)],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Skeleton image area
+                      _Shimmer(width: cardW, height: 300),
+                      // Close button
+                      Positioned(
+                        top: 12, right: 12,
+                        child: GestureDetector(
+                          onTap: () => widget.onClose?.call(),
+                          child: Container(
+                            width: 34, height: 34,
+                            decoration: BoxDecoration(color: Colors.black.withOpacity(0.45), shape: BoxShape.circle),
+                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                          ),
+                        ),
+                      ),
+                      // Skeleton button
+                      Positioned(
+                        bottom: 18, left: 0, right: 0,
+                        child: Center(
+                          child: _Shimmer(width: cardW - 48, height: 44, radius: 40),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Shimmer extends StatefulWidget {
+  final double width, height;
+  final double radius;
+  const _Shimmer({required this.width, required this.height, this.radius = 0});
+
+  @override
+  State<_Shimmer> createState() => _ShimmerState();
+}
+
+class _ShimmerState extends State<_Shimmer> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat();
+    _anim = Tween<double>(begin: -1, end: 2).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.radius),
+          gradient: LinearGradient(
+            begin: Alignment(_anim.value - 1, 0),
+            end: Alignment(_anim.value, 0),
+            colors: const [Color(0xFF1a1a1a), Color(0xFF2a2a2a), Color(0xFF1a1a1a)],
           ),
         ),
       ),
