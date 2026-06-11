@@ -22,13 +22,13 @@ const _dm     = 'DMSans';
 
 // ─── Model ───────────────────────────────────────────────────────────────────
 class _FuturePair {
-  final String symbol, baseAsset, quoteAsset;
-  final double lastPrice, priceChange, priceChangePct, volume;
+  final String symbol, baseAsset, quoteAsset, category;
+  final double lastPrice, priceChangePct, volume;
   final String? icon;
 
   _FuturePair({
     required this.symbol, required this.baseAsset, required this.quoteAsset,
-    required this.lastPrice, required this.priceChange,
+    required this.category, required this.lastPrice,
     required this.priceChangePct, required this.volume,
     this.icon,
   });
@@ -39,14 +39,24 @@ class _FuturePair {
       symbol:         j['symbol'] as String? ?? '',
       baseAsset:      j['base_currency'] as String? ?? '',
       quoteAsset:     j['quote_currency'] as String? ?? 'USDT',
+      category:       (j['category'] as String? ?? 'crypto').toLowerCase(),
       lastPrice:      toD('current_price'),
-      priceChange:    toD('price_change_24h'),
       priceChangePct: toD('price_change_24h'),
       volume:         toD('volume_24h'),
       icon:           j['icon'] as String?,
     );
   }
 }
+
+// Maps category tab label → API category value(s)
+const _kCatMap = {
+  'ALL':       <String>[],
+  'AI':        ['crypto'],  // crypto = AI on web
+  'TradFi':    ['commodity', 'index'],
+  'Stocks':    ['stock'],
+  'Indices':   ['index'],
+  'Commodity': ['commodity'],
+};
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 class MarketFutureScreen extends StatefulWidget {
@@ -64,9 +74,9 @@ class MarketFutureState extends State<MarketFutureScreen> {
   final _searchCtrl = TextEditingController();
   Timer? _timer;
 
-  static const _apiUrl     = 'https://api.trapix.com/api/v1/future/pairs';
-  static const _filters    = ['ALL', 'USDT', 'USDC', 'BTC'];
-  static const _categories = ['All', '🔥 Top', 'BTC', 'ETH', 'SOL'];
+  static const _apiUrl  = 'https://api.trapix.com/api/v1/future/pairs';
+  static const _filters = ['ALL', 'USDT', 'USDC', 'BTC'];
+  static const _categories = ['ALL', 'AI', 'TradFi', 'Stocks', 'Indices', 'Commodity'];
 
   @override
   void initState() {
@@ -78,12 +88,34 @@ class MarketFutureState extends State<MarketFutureScreen> {
   }
 
   void _buildIconMap() {
+    // From spot controller cache (fast path)
     try {
       final sc = Get.find<MarketSpotController>();
       for (final coin in sc.marketFullList) {
         final type = coin.coinType?.toUpperCase() ?? '';
         final icon = coin.coinIcon ?? '';
         if (type.isNotEmpty && icon.isNotEmpty) _iconMap[type] = icon;
+      }
+    } catch (_) {}
+    // If spot controller not loaded, fetch from spot pairs API
+    if (_iconMap.isEmpty) _fetchIconsFromSpotApi();
+  }
+
+  Future<void> _fetchIconsFromSpotApi() async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.trapix.com/api/v1/spot/pairs'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        final pairs = (body['data'] as List? ?? []).whereType<Map<String, dynamic>>();
+        for (final p in pairs) {
+          final sym = (p['base_currency'] as String? ?? '').toUpperCase();
+          final icon = p['base_icon'] as String? ?? p['icon'] as String? ?? p['coin_icon'] as String? ?? '';
+          if (sym.isNotEmpty && icon.isNotEmpty) _iconMap[sym] = icon;
+        }
+        if (mounted) setState(() {});
       }
     } catch (_) {}
   }
@@ -124,12 +156,13 @@ class MarketFutureState extends State<MarketFutureScreen> {
       list = list.where((p) => p.quoteAsset == quote).toList();
     }
 
-    // Category filter
-    if (_catIndex == 1) {
-      list = list.take(20).toList();
-    } else if (_catIndex >= 2) {
-      final cat = _categories[_catIndex].replaceAll('🔥 ', '').toUpperCase();
-      list = list.where((p) => p.baseAsset.toUpperCase().contains(cat)).toList();
+    // Category filter — match API category field
+    final catLabel = _categories[_catIndex];
+    if (catLabel != 'ALL') {
+      final allowed = _kCatMap[catLabel] ?? [];
+      if (allowed.isNotEmpty) {
+        list = list.where((p) => allowed.contains(p.category)).toList();
+      }
     }
 
     // Search filter
@@ -228,29 +261,48 @@ class MarketFutureState extends State<MarketFutureScreen> {
   }
 
   Widget _buildCategoryList() {
+    const hotCats = ['TradFi', 'Stocks', 'Indices', 'Commodity'];
     return Container(
-      height: 20,
+      height: 24,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       margin: const EdgeInsets.only(top: 10, bottom: 10),
       color: Colors.transparent,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _categories.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 10),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
           final on = _catIndex == i;
+          final label = _categories[i];
+          final isHot = hotCats.contains(label);
+          final isAI  = label == 'AI';
           return GestureDetector(
             onTap: () { setState(() => _catIndex = i); _applyFilter(); },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
                 color: on ? _green : _dim,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text(_categories[i],
-                  style: TextStyle(
-                    color: on ? Colors.black : Colors.white,
-                    fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isHot) ...[
+                    const Text('🔥', style: TextStyle(fontSize: 13)),
+                    const SizedBox(width: 3),
+                  ] else if (isAI) ...[
+                    Container(
+                      width: 7, height: 7,
+                      decoration: const BoxDecoration(color: Color(0xFFFF8A00), shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 3),
+                  ],
+                  Text(label,
+                    style: TextStyle(
+                      color: on ? Colors.black : Colors.white,
+                      fontSize: 13, fontWeight: on ? FontWeight.w700 : FontWeight.w500, fontFamily: _dm)),
+                ],
+              ),
             ),
           );
         },
@@ -321,18 +373,28 @@ class _FuturePairItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        AutoSizeText.rich(
-                          TextSpan(
-                            text: pair.baseAsset,
-                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
-                            children: [
-                              TextSpan(
-                                text: '/${pair.quoteAsset}',
-                                style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: AutoSizeText.rich(
+                                TextSpan(
+                                  text: pair.baseAsset,
+                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                  children: [
+                                    TextSpan(
+                                      text: '/${pair.quoteAsset}',
+                                      style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
+                                    ),
+                                  ],
+                                ),
+                                maxLines: 1,
                               ),
+                            ),
+                            if (_categoryTag(pair.category) != null) ...[
+                              const SizedBox(width: 4),
+                              _categoryTag(pair.category)!,
                             ],
-                          ),
-                          maxLines: 1,
+                          ],
                         ),
                         Text(volStr,
                             style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
@@ -398,6 +460,22 @@ class _FuturePairItem extends StatelessWidget {
       symbol: pair.baseAsset.toLowerCase(),
       fallback: pair.baseAsset,
       spotUrl: spotUrl,
+    );
+  }
+
+  Widget? _categoryTag(String category) {
+    String? label;
+    Color? color;
+    switch (category) {
+      case 'stock':     label = 'Stocks';    color = const Color(0xFF2ecc8f); break;
+      case 'index':     label = 'Indices';   color = const Color(0xFF3498db); break;
+      case 'commodity': label = 'Commodity'; color = const Color(0xFFE0B341); break;
+      default: return null;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(color: color!.withOpacity(0.18), borderRadius: BorderRadius.circular(4)),
+      child: Text(label!, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600, fontFamily: _dm)),
     );
   }
 
