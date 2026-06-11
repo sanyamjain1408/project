@@ -419,11 +419,11 @@ class _FuturePairItem extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           text: TextSpan(
                             text: pair.baseAsset,
-                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500, fontFamily: _dm),
                             children: [
                               TextSpan(
                                 text: '/${pair.quoteAsset}',
-                                style: const TextStyle(color: Colors.white54, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
                               ),
                             ],
                           ),
@@ -545,13 +545,16 @@ class _CoinIcon extends StatefulWidget {
 class _CoinIconState extends State<_CoinIcon> {
   int _attempt = 0;
 
-  // If spotUrl provided: try spotUrl only (no CDN fallback — spot URLs are authoritative)
-  // Otherwise: atomiclabs CDN → coincap
+  // Priority: spotUrl → atomiclabs CDN → coincap → fallback letters
   String _url(int attempt) {
     final s = widget.symbol.toLowerCase();
-    if (widget.spotUrl != null && widget.spotUrl!.isNotEmpty) {
-      if (attempt == 0) return widget.spotUrl!;
-      return '';
+    final hasSpot = widget.spotUrl != null && widget.spotUrl!.isNotEmpty;
+    if (hasSpot) {
+      switch (attempt) {
+        case 0: return widget.spotUrl!;
+        case 1: return 'https://assets.coincap.io/assets/icons/$s@2x.png';
+        default: return '';
+      }
     }
     switch (attempt) {
       case 0: return 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa/128/color/$s.png';
@@ -560,14 +563,14 @@ class _CoinIconState extends State<_CoinIcon> {
     }
   }
 
-  int get _maxAttempts => (widget.spotUrl != null && widget.spotUrl!.isNotEmpty) ? 1 : 2;
+  int get _maxAttempts => 2;
 
   @override
   Widget build(BuildContext context) {
     if (_attempt >= _maxAttempts) return _fallback();
     return Image.network(
       _url(_attempt),
-      width: 30, height: 30, fit: BoxFit.cover,
+      width: 28, height: 28, fit: BoxFit.cover,
       errorBuilder: (context, error, stack) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) setState(() => _attempt++);
@@ -578,7 +581,7 @@ class _CoinIconState extends State<_CoinIcon> {
   }
 
   Widget _fallback() => Container(
-    width: 30, height: 30,
+    width: 28, height: 28,
     decoration: const BoxDecoration(color: _dim, shape: BoxShape.circle),
     alignment: Alignment.center,
     child: Text(
