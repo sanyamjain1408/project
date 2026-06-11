@@ -404,22 +404,13 @@ class _FuturePairItem extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Line 2: tag + volume
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (_categoryTag(pair.category) != null) ...[
-                              _categoryTag(pair.category)!,
-                              const SizedBox(width: 4),
-                            ],
-                            Flexible(
-                              child: Text(volStr,
-                                  style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
-                            ),
-                          ],
-                        ),
+                        // Line 2: tag (if any), then volume — each on own line to avoid overflow
+                        if (_categoryTag(pair.category) != null)
+                          _categoryTag(pair.category)!,
+                        Text(volStr,
+                            style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
@@ -519,16 +510,13 @@ class _CoinIcon extends StatefulWidget {
 class _CoinIconState extends State<_CoinIcon> {
   int _attempt = 0;
 
-  // attempt 0 = spotUrl (if available), 1 = atomiclabs, 2 = coincap, 3 = fallback
+  // If spotUrl provided: try spotUrl only (no CDN fallback — spot URLs are authoritative)
+  // Otherwise: atomiclabs CDN → coincap
   String _url(int attempt) {
     final s = widget.symbol.toLowerCase();
     if (widget.spotUrl != null && widget.spotUrl!.isNotEmpty) {
-      switch (attempt) {
-        case 0: return widget.spotUrl!;
-        case 1: return 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa/128/color/$s.png';
-        case 2: return 'https://assets.coincap.io/assets/icons/$s@2x.png';
-        default: return '';
-      }
+      if (attempt == 0) return widget.spotUrl!;
+      return '';
     }
     switch (attempt) {
       case 0: return 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa/128/color/$s.png';
@@ -537,7 +525,7 @@ class _CoinIconState extends State<_CoinIcon> {
     }
   }
 
-  int get _maxAttempts => (widget.spotUrl != null && widget.spotUrl!.isNotEmpty) ? 3 : 2;
+  int get _maxAttempts => (widget.spotUrl != null && widget.spotUrl!.isNotEmpty) ? 1 : 2;
 
   @override
   Widget build(BuildContext context) {
