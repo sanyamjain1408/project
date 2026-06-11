@@ -152,16 +152,14 @@ class SwapController extends GetxController {
 
       final rawCoins = coinsBody['data'] as List;
       final coins = rawCoins.map((e) => SwapCoin.fromJson(e)).toList();
-      // print("[SWAP] Parsed ${coins.length} coins.");
 
-      // 2. Try wallet API for balance (may 403, handled gracefully)
-      await _enrichFromWalletApi(coins);
-
-      // 3. Fallback from WalletController cache or direct wallet API
+      // 2+3+4. Fetch balances + CoinGecko in parallel for speed
+      await Future.wait([
+        _enrichFromWalletApi(coins),
+        _enrichFromCoinGecko(coins),
+      ]);
+      // Fallback balance from WalletController cache (sync fast path, only if above missed)
       await _enrichFromWalletController(coins);
-
-      // 4. Fetch icons + prices from CoinGecko
-      await _enrichFromCoinGecko(coins);
 
       coinList.value = coins;
 
@@ -421,6 +419,22 @@ class SwapController extends GetxController {
     }
   }
 
+  // ── Refresh balances after swap ──────────────────────────────────
+  Future<void> _refreshBalances() async {
+    final coins = coinList.toList();
+    await _enrichFromWalletApi(coins);
+    coinList.value = coins;
+    // Update selected coin references so the UI rebuilds
+    final from = selectedFromCoin.value;
+    final to = selectedToCoin.value;
+    if (from != null) {
+      selectedFromCoin.value = coins.firstWhereOrNull((c) => c.id == from.id);
+    }
+    if (to != null) {
+      selectedToCoin.value = coins.firstWhereOrNull((c) => c.id == to.id);
+    }
+  }
+
   // ── Swap selected coins ──────────────────────────────────────────
   void swapSelectedCoins() {
     final tmp = selectedFromCoin.value;
@@ -452,6 +466,9 @@ class SwapController extends GetxController {
       showToast(message, isError: !success);
       if (success) {
         Get.back();
+        // Refresh balances in swap cards immediately
+        _refreshBalances();
+        // Also refresh WalletController cache if loaded
         if (Get.isRegistered<WalletController>()) {
           Future.delayed(
             const Duration(seconds: 2),
