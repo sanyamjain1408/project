@@ -413,38 +413,38 @@ class _FuturePairItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Line 1: full symbol — full width, never cut
-                        RichText(
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          text: TextSpan(
-                            text: pair.baseAsset,
-                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500, fontFamily: _dm),
-                            children: [
-                              TextSpan(
-                                text: '/${pair.quoteAsset}',
-                                style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Line 2: tag + volume (tag is intrinsic, volume fills rest)
+                        // Line 1: symbol + tag inline (matches web)
                         Row(
                           mainAxisSize: MainAxisSize.max,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            if (_categoryTag(pair.category) != null) ...[
-                              _categoryTag(pair.category)!,
-                              const SizedBox(width: 4),
-                            ],
                             Flexible(
-                              child: Text(volStr,
-                                  style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
+                              child: RichText(
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                  text: pair.baseAsset,
+                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500, fontFamily: _dm),
+                                  children: [
+                                    TextSpan(
+                                      text: '/${pair.quoteAsset}',
+                                      style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
+                            if (_categoryTag(pair.category) != null) ...[
+                              const SizedBox(width: 4),
+                              _categoryTag(pair.category)!,
+                            ],
                           ],
                         ),
+                        // Line 2: volume only
+                        Text(volStr,
+                            style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
