@@ -7,7 +7,9 @@ plugins {
 
 def keyPropertiesFile = rootProject.file("key.properties")
 def keyProperties = new Properties()
-keyProperties.load(new FileInputStream(keyPropertiesFile))
+if (keyPropertiesFile.exists()) {
+    keyProperties.load(new FileInputStream(keyPropertiesFile))
+}
 
 android {
     namespace = "com.trapix.app"
