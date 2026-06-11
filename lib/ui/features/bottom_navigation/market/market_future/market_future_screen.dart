@@ -152,7 +152,7 @@ class MarketFutureState extends State<MarketFutureScreen> {
         final raw  = (body['data'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
         if (raw.isNotEmpty) {
           final pairs = raw.map((e) => _FuturePair.fromJson(e)).toList()
-            ..sort((a, b) => b.volume.compareTo(a.volume));
+            ..sort((a, b) => b.lastPrice.compareTo(a.lastPrice));
           _buildIconMap(); // refresh icon map after spot data loads
           if (mounted) setState(() { _allPairs = pairs; _loading = false; _applyFilter(); });
           return;
@@ -390,37 +390,35 @@ class _FuturePairItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Line 1: symbol + tag inline (tag shrinks, symbol truncates)
+                        // Line 1: symbol only — never cut
+                        RichText(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                            text: pair.baseAsset,
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            children: [
+                              TextSpan(
+                                text: '/${pair.quoteAsset}',
+                                style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Line 2: full name + tag
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Flexible(
-                              child: RichText(
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                text: TextSpan(
-                                  text: pair.baseAsset,
-                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
-                                  children: [
-                                    TextSpan(
-                                      text: '/${pair.quoteAsset}',
-                                      style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            if (_categoryTag(pair.category) != null) ...[
+                            if (fullName != null) ...[
+                              Text(fullName,
+                                style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                maxLines: 1),
                               const SizedBox(width: 4),
-                              _categoryTag(pair.category)!,
                             ],
+                            if (_categoryTag(pair.category) != null)
+                              _categoryTag(pair.category)!,
                           ],
                         ),
-                        // Line 2: full name (if exists)
-                        if (fullName != null)
-                          Text(fullName,
-                            style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
-                            maxLines: 1),
                         // Line 3: volume
                         Text(volStr,
                             style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
