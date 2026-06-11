@@ -367,42 +367,44 @@ class _McNetworkScreenState extends State<McNetworkScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 40),
+
 
                   // ── Bottom Nav Cards (same as staking home) ───────────────
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 2.4,
-                    children: [
-                      _navCard(
-                        'assets/images/live.png',
-                        'Live Dashboard',
-                        'Real-time earnings',
-                        () => Get.to(() => const McPortfolioScreen()),
-                      ),
-                      _navCard(
-                        'assets/images/my.png',
-                        'My Stakes',
-                        'Manage positions',
-                        () => Get.to(() => const McMyStakesScreen()),
-                      ),
-                      _navCard(
-                        'assets/images/referral.png',
-                        'Referral Earnings',
-                        'Commission history',
-                        () => Get.to(() => const McReferralRewardsScreen()),
-                      ),
-                      _navCard(
-                        'assets/images/reward.png',
-                        'Reward History',
-                        'Daily logs',
-                        () => Get.to(() => const McRewardsScreen()),
-                      ),
-                    ],
-                  ),
+                  // GridView.count(
+                  //   crossAxisCount: 2,
+                  //   shrinkWrap: true,
+                  //   physics: const NeverScrollableScrollPhysics(),
+                  //   crossAxisSpacing: 10,
+                  //   mainAxisSpacing: 10,
+                  //   childAspectRatio: 2.4,
+                  //   children: [
+                  //     _navCard(
+                  //       'assets/images/live.png',
+                  //       'Live Dashboard',
+                  //       'Real-time earnings',
+                  //       () => Get.to(() => const McPortfolioScreen()),
+                  //     ),
+                  //     _navCard(
+                  //       'assets/images/my.png',
+                  //       'My Stakes',
+                  //       'Manage positions',
+                  //       () => Get.to(() => const McMyStakesScreen()),
+                  //     ),
+                  //     _navCard(
+                  //       'assets/images/referral.png',
+                  //       'Referral Earnings',
+                  //       'Commission history',
+                  //       () => Get.to(() => const McReferralRewardsScreen()),
+                  //     ),
+                  //     _navCard(
+                  //       'assets/images/reward.png',
+                  //       'Reward History',
+                  //       'Daily logs',
+                  //       () => Get.to(() => const McRewardsScreen()),
+                  //     ),
+                  //   ],
+                  // ),
                 ],
               ),
             ),
