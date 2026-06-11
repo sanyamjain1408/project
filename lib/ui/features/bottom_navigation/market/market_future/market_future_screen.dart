@@ -48,6 +48,22 @@ class _FuturePair {
   }
 }
 
+// Full display names for commodities, indices, and stocks (symbol → name)
+const _kFullNames = {
+  // Commodities
+  'XAU': 'Gold', 'XAG': 'Silver', 'XPT': 'Platinum', 'XPD': 'Palladium',
+  'CL': 'Crude Oil', 'WTI': 'WTI Oil', 'NATGAS': 'Natural Gas', 'HG': 'Copper', 'COPPER': 'Copper',
+  // Indices
+  'US30': 'Dow Jones', 'US500': 'S&P 500', 'US100': 'Nasdaq 100', 'UK100': 'FTSE 100',
+  'DE40': 'DAX 40', 'JP225': 'Nikkei 225', 'HK50': 'Hang Seng',
+  // Stocks
+  'TSLA': 'Tesla', 'AAPL': 'Apple', 'MSFT': 'Microsoft', 'GOOGL': 'Alphabet',
+  'AMZN': 'Amazon', 'NVDA': 'Nvidia', 'META': 'Meta', 'NFLX': 'Netflix',
+  'SNDK': 'SanDisk', 'COST': 'Costco', 'LLY': 'Eli Lilly', 'BABA': 'Alibaba',
+  'PYPL': 'PayPal', 'INTC': 'Intel', 'AMD': 'AMD', 'UBER': 'Uber',
+  'SPOT': 'Spotify', 'COIN': 'Coinbase', 'SHOP': 'Shopify', 'SQ': 'Block',
+};
+
 // Maps category tab label → API category value(s)
 const _kCatMap = {
   'ALL':       <String>[],
@@ -346,6 +362,7 @@ class _FuturePairItem extends StatelessWidget {
     final priceStr6  = '\$${coinFormat(pair.lastPrice, fixed: 6)}';
     final volStr     = '\$${numberFormatCompact(pair.volume, decimals: 2)}';
     final cColor     = isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+    final fullName   = _kFullNames[pair.baseAsset.toUpperCase()];
 
     return GestureDetector(
       onTap: () {
@@ -396,6 +413,10 @@ class _FuturePairItem extends StatelessWidget {
                             ],
                           ],
                         ),
+                        if (fullName != null)
+                          Text(fullName,
+                              style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500, fontFamily: _dm),
+                              maxLines: 1),
                         Text(volStr,
                             style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
                             maxLines: 1),
@@ -469,9 +490,12 @@ class _FuturePairItem extends StatelessWidget {
     String? label;
     Color? color;
     switch (category) {
-      case 'stock':     label = 'Stocks';    color = const Color(0xFF2ecc8f); break;
-      case 'index':     label = 'Indices';   color = const Color(0xFF3498db); break;
-      case 'commodity': label = 'Commodity'; color = const Color(0xFFE0B341); break;
+      case 'stock':     label = 'Stocks';  color = const Color(0xFF2ecc8f); break;
+      case 'index':     label = 'Index';   color = const Color(0xFF5aa9ff); break;
+      case 'commodity':
+        label = _kFullNames[pair.baseAsset.toUpperCase()] ?? 'Commodity';
+        color = const Color(0xFFE0B341);
+        break;
       default: return null;
     }
     return Container(
