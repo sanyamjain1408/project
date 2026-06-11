@@ -362,7 +362,6 @@ class _FuturePairItem extends StatelessWidget {
     final priceStr6  = '\$${coinFormat(pair.lastPrice, fixed: 6)}';
     final volStr     = '\$${numberFormatCompact(pair.volume, decimals: 2)}';
     final cColor     = isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
-    final fullName   = _kFullNames[pair.baseAsset.toUpperCase()];
 
     return GestureDetector(
       onTap: () {
@@ -405,20 +404,9 @@ class _FuturePairItem extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Line 2: full name + tag
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (fullName != null) ...[
-                              Text(fullName,
-                                style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
-                                maxLines: 1),
-                              const SizedBox(width: 4),
-                            ],
-                            if (_categoryTag(pair.category) != null)
-                              _categoryTag(pair.category)!,
-                          ],
-                        ),
+                        // Line 2: tag only (no full name)
+                        if (_categoryTag(pair.category) != null)
+                          _categoryTag(pair.category)!,
                         // Line 3: volume
                         Text(volStr,
                             style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
