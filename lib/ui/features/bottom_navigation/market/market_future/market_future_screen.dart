@@ -389,37 +389,34 @@ class _FuturePairItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Line 1: symbol + tag inline (tag shrinks, symbol gets remaining space)
+                        // Line 1: full symbol — never cut
+                        RichText(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                            text: pair.baseAsset,
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            children: [
+                              TextSpan(
+                                text: '/${pair.quoteAsset}',
+                                style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Line 2: tag + volume
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.max,
                           children: [
-                            Flexible(
-                              child: RichText(
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                text: TextSpan(
-                                  text: pair.baseAsset,
-                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
-                                  children: [
-                                    TextSpan(
-                                      text: '/${pair.quoteAsset}',
-                                      style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
                             if (_categoryTag(pair.category) != null) ...[
-                              const SizedBox(width: 4),
                               _categoryTag(pair.category)!,
+                              const SizedBox(width: 4),
                             ],
+                            Text(volStr,
+                                style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                maxLines: 1),
                           ],
                         ),
-                        // Line 2: volume only
-                        Text(volStr,
-                            style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
-                            maxLines: 1),
                       ],
                     ),
                   ),
