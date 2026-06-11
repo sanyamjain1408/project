@@ -16,6 +16,7 @@ import 'mc_staking_screen.dart';
 import 'mc_staking_controller.dart' show McStakingController; // ignore: unused_import
 import 'mc_my_stakes_screen.dart';
 import 'mc_portfolio_screen.dart';
+import 'mc_withdraw_history_screen.dart';
 import 'earn_history_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_widgets.dart' show RotatingIcon;
 
@@ -3561,7 +3562,7 @@ class _StakingLiveHeroState extends State<_StakingLiveHero> {
   @override
   Widget build(BuildContext context) {
     return _EarnHeroShell(
-      onHistoryTap: () => Get.to(() => McRewardsScreen()),
+      onHistoryTap: () => Get.to(() => const McWithdrawHistoryScreen(initialTab: 0)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
         child: Column(
