@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
-import 'package:tradexpro_flutter/ui/features/side_navigation/activity/activity_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transaction_history_screen.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
@@ -200,10 +200,7 @@ class _SwapScreenState extends State<SwapScreen>
           ),
           const Spacer(),
           GestureDetector(
-            onTap: () {
-              TemporaryData.activityType = HistoryType.swap;
-              Get.to(() => const ActivityScreen());
-            },
+            onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')),
             child: Container(
               width: 20,
               height: 20,
