@@ -390,35 +390,36 @@ class _FuturePairItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // Pair symbol — full width, no tag competing
+                        RichText(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                            text: pair.baseAsset,
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            children: [
+                              TextSpan(
+                                text: '/${pair.quoteAsset}',
+                                style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Full name + tag on same line below
                         Row(
                           children: [
-                            Flexible(
-                              child: AutoSizeText.rich(
-                                TextSpan(
-                                  text: pair.baseAsset,
-                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
-                                  children: [
-                                    TextSpan(
-                                      text: '/${pair.quoteAsset}',
-                                      style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
-                                    ),
-                                  ],
-                                ),
-                                maxLines: 1,
-                              ),
-                            ),
-                            if (_categoryTag(pair.category) != null) ...[
+                            if (fullName != null) ...[
+                              Text(fullName,
+                                style: const TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.w500, fontFamily: _dm),
+                                maxLines: 1),
                               const SizedBox(width: 4),
-                              _categoryTag(pair.category)!,
                             ],
+                            if (_categoryTag(pair.category) != null)
+                              _categoryTag(pair.category)!,
                           ],
                         ),
-                        if (fullName != null)
-                          Text(fullName,
-                              style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500, fontFamily: _dm),
-                              maxLines: 1),
                         Text(volStr,
-                            style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
                             maxLines: 1),
                       ],
                     ),
