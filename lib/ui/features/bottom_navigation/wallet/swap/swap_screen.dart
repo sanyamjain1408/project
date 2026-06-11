@@ -495,7 +495,7 @@ class _SwapScreenState extends State<SwapScreen>
                                 "\$${_fmtPrice(fCoin?.usdPrice ?? 0)}",
                                 style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, height: 20/15, fontFamily: _dmSans),
                               ),
-                              if (fCoin != null && fCoin.availableBalance > 0)
+                              if (fCoin != null)
                                 Text(
                                   "${_fmtNum(fCoin.availableBalance)} ${fCoin.symbol}",
                                   style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, height: 20/15, fontFamily: _dmSans),
@@ -599,7 +599,7 @@ class _SwapScreenState extends State<SwapScreen>
                                 "\$${_fmtPrice(tCoin?.usdPrice ?? 0)}",
                                 style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, height: 20/15, fontFamily: _dmSans),
                               ),
-                              if (tCoin != null && tCoin.availableBalance > 0)
+                              if (tCoin != null)
                                 Text(
                                   "${_fmtNum(tCoin.availableBalance)} ${tCoin.symbol}",
                                   style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, height: 20/15, fontFamily: _dmSans),
