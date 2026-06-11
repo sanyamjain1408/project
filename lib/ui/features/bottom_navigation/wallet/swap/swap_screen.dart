@@ -235,7 +235,11 @@ class _SwapScreenState extends State<SwapScreen>
           fontFamily: _dmSans,
           height: 24/16,
         ),
-        indicatorColor: Colors.transparent,
+        indicator: const UnderlineTabIndicator(
+          borderSide: BorderSide(color: Colors.white, width: 2),
+          insets: EdgeInsets.symmetric(horizontal: 0),
+        ),
+        indicatorSize: TabBarIndicatorSize.label,
         dividerColor: Colors.transparent,
         tabs: const [
           Tab(text: "Market"),
@@ -269,7 +273,30 @@ class _SwapScreenState extends State<SwapScreen>
               );
             }),
 
-            const SizedBox(height: 20),
+            // ── Rate line: 1 BTC = X ETH ──
+            Obx(() {
+              final from = _controller.selectedFromCoin.value;
+              final to = _controller.selectedToCoin.value;
+              final rate = _controller.rate.value;
+              final rateStr = rate > 0
+                  ? '1 ${from?.symbol ?? ''} = ${rate.toStringAsFixed(5)} ${to?.symbol ?? ''}'
+                  : '1 ${from?.symbol ?? ''} = - ${to?.symbol ?? ''}';
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: Text(
+                    rateStr,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontFamily: _dmSans,
+                      fontWeight: FontWeight.w400,
+                      height: 1.33,
+                    ),
+                  ),
+                ),
+              );
+            }),
 
             // ── Convert / Confirm button ──
             _buildConvertButton(),
@@ -428,8 +455,8 @@ class _SwapScreenState extends State<SwapScreen>
                                     border: InputBorder.none,
                                     hintText: "0",
                                     hintStyle: TextStyle(
-                                      color: Colors.white.withOpacity(0.5),
-                                      fontSize: 36,
+                                      color: Colors.white.withOpacity(0.3),
+                                      fontSize: 34,
                                       fontWeight: FontWeight.w700,
                                     ),
                                     isDense: true,
@@ -453,19 +480,6 @@ class _SwapScreenState extends State<SwapScreen>
                                       _controller.getAndSetCoinRate();
                                     },
                                   ),
-                                  if (fCoin != null &&
-                                      fCoin.availableBalance > 0) ...[
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      "${_fmtNum(fCoin.availableBalance)} ${fCoin.symbol}",
-                                      style:  TextStyle(
-                                        color:Colors.white.withOpacity(0.5) ,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w400,
-                                        fontFamily: _dmSans,
-                                      ),
-                                    ),
-                                  ],
                                 ],
                               ),
                             ],
@@ -473,16 +487,20 @@ class _SwapScreenState extends State<SwapScreen>
 
                           const SizedBox(height: 10),
 
-                          // USD price
-                          Text(
-                            "\$${_fmtPrice(fCoin?.usdPrice ?? 0)}",
-                            style:  TextStyle(
-                              color: Colors.white.withOpacity(0.5) ,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w400,
-                              height: 20/15,
-                              fontFamily: _dmSans,
-                            ),
+                          // Bottom row: USD price left, balance right
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "\$${_fmtPrice(fCoin?.usdPrice ?? 0)}",
+                                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, height: 20/15, fontFamily: _dmSans),
+                              ),
+                              if (fCoin != null)
+                                Text(
+                                  "${_fmtNum(fCoin.availableBalance)} ${fCoin.symbol}",
+                                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, height: 20/15, fontFamily: _dmSans),
+                                ),
+                            ],
                           ),
                         ],
                       ),
@@ -566,20 +584,6 @@ class _SwapScreenState extends State<SwapScreen>
                                       _controller.getAndSetCoinRate();
                                     },
                                   ),
-                                  if (tCoin != null &&
-                                      tCoin.availableBalance > 0) ...[
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      "${_fmtNum(tCoin.availableBalance)} ${tCoin.symbol}",
-                                      style:  TextStyle(
-                                        color: Colors.white.withOpacity(0.5) ,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w400,
-                                        height: 16/12,
-                                        fontFamily: _dmSans,
-                                      ),
-                                    ),
-                                  ],
                                 ],
                               ),
                             ],
@@ -587,16 +591,20 @@ class _SwapScreenState extends State<SwapScreen>
 
                           const SizedBox(height: 10),
 
-                          // USD price
-                          Text(
-                            "\$${_fmtPrice(tCoin?.usdPrice ?? 0)}",
-                            style:  TextStyle(
-                              color: Colors.white.withOpacity(0.5) ,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w400,
-                              height: 20/15,
-                              fontFamily: _dmSans,
-                            ),
+                          // Bottom row: USD price left, balance right
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "\$${_fmtPrice(tCoin?.usdPrice ?? 0)}",
+                                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, height: 20/15, fontFamily: _dmSans),
+                              ),
+                              if (tCoin != null)
+                                Text(
+                                  "${_fmtNum(tCoin.availableBalance)} ${tCoin.symbol}",
+                                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, height: 20/15, fontFamily: _dmSans),
+                                ),
+                            ],
                           ),
                         ],
                       ),
