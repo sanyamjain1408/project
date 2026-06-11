@@ -395,11 +395,11 @@ class _FuturePairItem extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           text: TextSpan(
                             text: pair.baseAsset,
-                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
                             children: [
                               TextSpan(
                                 text: '/${pair.quoteAsset}',
-                                style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w300, fontFamily: _dm),
+                                style: const TextStyle(color: Colors.white54, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
                               ),
                             ],
                           ),
@@ -413,7 +413,7 @@ class _FuturePairItem extends StatelessWidget {
                               const SizedBox(width: 4),
                             ],
                             Text(volStr,
-                                style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm),
                                 maxLines: 1),
                           ],
                         ),
