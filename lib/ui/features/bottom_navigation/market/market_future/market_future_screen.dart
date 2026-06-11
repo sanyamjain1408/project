@@ -402,7 +402,7 @@ class _FuturePairItem extends StatelessWidget {
 
             // ── Coin icon + name + volume ──
             Expanded(
-              flex: 4,
+              flex: 5,
               child: Row(
                 children: [
                   // Coin icon — from spot market cache, else jsdelivr, else fallback
@@ -456,7 +456,7 @@ class _FuturePairItem extends StatelessWidget {
 
             // ── Price ──
             Expanded(
-              flex: 3,
+              flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.center,
