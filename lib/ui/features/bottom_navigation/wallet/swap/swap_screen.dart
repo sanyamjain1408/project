@@ -269,7 +269,30 @@ class _SwapScreenState extends State<SwapScreen>
               );
             }),
 
-            const SizedBox(height: 20),
+            // ── Rate line: 1 BTC = X ETH ──
+            Obx(() {
+              final from = _controller.selectedFromCoin.value;
+              final to = _controller.selectedToCoin.value;
+              final rate = _controller.rate.value;
+              final rateStr = rate > 0
+                  ? '1 ${from?.symbol ?? ''} = ${rate.toStringAsFixed(5)} ${to?.symbol ?? ''}'
+                  : '1 ${from?.symbol ?? ''} = - ${to?.symbol ?? ''}';
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: Text(
+                    rateStr,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontFamily: _dmSans,
+                      fontWeight: FontWeight.w400,
+                      height: 1.33,
+                    ),
+                  ),
+                ),
+              );
+            }),
 
             // ── Convert / Confirm button ──
             _buildConvertButton(),
@@ -418,7 +441,7 @@ class _SwapScreenState extends State<SwapScreen>
                                         decimal: true,
                                       ),
                                   style:  TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
+                                    color: Colors.white,
                                     fontSize: 34,
                                     fontWeight: FontWeight.w700,
                                     fontFamily: _dmSans,
@@ -428,8 +451,8 @@ class _SwapScreenState extends State<SwapScreen>
                                     border: InputBorder.none,
                                     hintText: "0",
                                     hintStyle: TextStyle(
-                                      color: Colors.white.withOpacity(0.5),
-                                      fontSize: 36,
+                                      color: Colors.white.withOpacity(0.3),
+                                      fontSize: 34,
                                       fontWeight: FontWeight.w700,
                                     ),
                                     isDense: true,
@@ -540,7 +563,7 @@ class _SwapScreenState extends State<SwapScreen>
                                             _controller.convertRate.value,
                                           ),
                                     style:  TextStyle(
-                                      color: Colors.white.withOpacity(0.5),
+                                      color: Colors.white,
                                       fontSize: 34,
                                       height: 40/34,
                                       fontWeight: FontWeight.w700,
