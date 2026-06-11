@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
-import 'package:tradexpro_flutter/ui/features/side_navigation/activity/activity_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transaction_history_screen.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
@@ -26,12 +26,12 @@ const String _dmSans = 'DMSans';
 // border sirf top+sides pe hai, bottom (notch wali side) pe nahi
 // ─────────────────────────────────────────────────────────────────
 const String _kSvgPay = '''
-<svg xmlns="http://www.w3.org/2000/svg" width="362" height="160" viewBox="0 0 362 160" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="362" height="180" viewBox="0 0 362 180" fill="none">
   <!-- fill shape -->
-  <path d="M0 10C0 4.47715 4.47715 0 10 0H352C357.523 0 362 4.47715 362 10V150C362 155.523 357.523 160 352 160H229.353C227.177 160 225.061 159.29 223.325 157.979L193.057 135.109C185.923 129.719 176.077 129.719 168.943 135.109L138.675 157.979C136.939 159.29 134.823 160 132.647 160H10C4.47715 160 0 155.523 0 150V10Z"
+  <path d="M0 10C0 4.47715 4.47715 0 10 0H352C357.523 0 362 4.47715 362 10V170C362 175.523 357.523 180 352 180H229.353C227.177 180 225.061 179.29 223.325 177.979L193.057 155.109C185.923 149.719 176.077 149.719 168.943 155.109L138.675 177.979C136.939 179.29 134.823 180 132.647 180H10C4.47715 180 0 175.523 0 170V10Z"
     fill="#1A1A1A"/>
   <!-- border — only top + left + right, NOT the notch bottom edge -->
-  <path d="M1 10C1 5.02944 5.02944 1 10 1H352C356.971 1 361 5.02944 361 10V150C361 154.971 356.971 159 352 159H229.353C226.959 159 224.629 158.222 222.72 156.776L192.452 133.906C184.876 128.181 174.124 128.181 166.548 133.906L136.28 156.776C134.371 158.222 132.041 159 129.647 159H10C5.02944 159 1 154.971 1 150V10Z"
+  <path d="M1 10C1 5.02944 5.02944 1 10 1H352C356.971 1 361 5.02944 361 10V170C361 174.971 356.971 179 352 179H229.353C226.959 179 224.629 178.222 222.72 176.776L192.452 153.906C184.876 148.181 174.124 148.181 166.548 153.906L136.28 176.776C134.371 178.222 132.041 179 129.647 179H10C5.02944 179 1 174.971 1 170V10Z"
     stroke="white" stroke-opacity="0.10" stroke-width="1"
     fill="none"
     stroke-dasharray=""
@@ -44,12 +44,12 @@ const String _kSvgPay = '''
 // border sirf bottom+sides pe hai, top (notch wali side) pe nahi
 // ─────────────────────────────────────────────────────────────────
 const String _kSvgReceive = '''
-<svg xmlns="http://www.w3.org/2000/svg" width="362" height="160" viewBox="0 0 362 160" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="362" height="180" viewBox="0 0 362 180" fill="none">
   <!-- fill shape -->
-  <path d="M0 10C0 4.47715 4.47715 0 10 0H132.647C134.823 0 136.939 0.709661 138.675 2.02133L168.943 24.8905C176.077 30.2807 185.923 30.2807 193.057 24.8905L223.325 2.02133C225.061 0.70966 227.177 0 229.353 0H352C357.523 0 362 4.47715 362 10V150C362 155.523 357.523 160 352 160H10C4.47715 160 0 155.523 0 150V10Z"
+  <path d="M0 10C0 4.47715 4.47715 0 10 0H132.647C134.823 0 136.939 0.709661 138.675 2.02133L168.943 24.8905C176.077 30.2807 185.923 30.2807 193.057 24.8905L223.325 2.02133C225.061 0.70966 227.177 0 229.353 0H352C357.523 0 362 4.47715 362 10V170C362 175.523 357.523 180 352 180H10C4.47715 180 0 175.523 0 170V10Z"
     fill="#1A1A1A"/>
   <!-- border — only bottom + left + right, NOT the notch top edge -->
-  <path d="M1 10C1 5.02944 5.02944 1 10 1H132.647C135.041 1 137.371 1.778 139.28 3.224L169.548 26.094C177.124 31.819 187.876 31.819 195.452 26.094L225.72 3.224C227.629 1.778 229.959 1 232.353 1H352C356.971 1 361 5.02944 361 10V150C361 154.971 356.971 159 352 159H10C5.02944 159 1 154.971 1 150V10Z"
+  <path d="M1 10C1 5.02944 5.02944 1 10 1H132.647C135.041 1 137.371 1.778 139.28 3.224L169.548 26.094C177.124 31.819 187.876 31.819 195.452 26.094L225.72 3.224C227.629 1.778 229.959 1 232.353 1H352C356.971 1 361 5.02944 361 10V170C361 174.971 356.971 179 352 179H10C5.02944 179 1 174.971 1 170V10Z"
     stroke="white" stroke-opacity="0.10" stroke-width="1"
     fill="none"
     clip-path="inset(28px 0 0 0)"/>
@@ -200,10 +200,7 @@ class _SwapScreenState extends State<SwapScreen>
           ),
           const Spacer(),
           GestureDetector(
-            onTap: () {
-              TemporaryData.activityType = HistoryType.swap;
-              Get.to(() => const ActivityScreen());
-            },
+            onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'swap')),
             child: Container(
               width: 20,
               height: 20,
@@ -221,6 +218,8 @@ class _SwapScreenState extends State<SwapScreen>
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: TabBar(
         controller: _tabController,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
         labelColor: Colors.white,
         unselectedLabelColor: Colors.white.withOpacity(0.5),
         labelStyle: const TextStyle(
@@ -388,7 +387,7 @@ class _SwapScreenState extends State<SwapScreen>
       final tCoin = _controller.selectedToCoin.value;
 
       // Card height matches SVG viewBox height
-      const double cardH = 160.0;
+      const double cardH = 180.0;
       // Vertical gap between the two cards (swap button fills this)
       const double gap = 10.0;
       const double totalH = cardH * 2 + gap;
