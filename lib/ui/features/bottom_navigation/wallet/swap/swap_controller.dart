@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -113,10 +114,12 @@ class SwapController extends GetxController {
   Map<String, String> _authHeaders() {
     final token = GetStorage().read(PreferenceKey.accessToken) ?? '';
     final type = GetStorage().read(PreferenceKey.accessType) ?? 'Bearer';
+    final secret = dotenv.env[EnvKeyValue.kApiSecret] ?? '';
     return {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'Authorization': '$type $token',
+      'userapisecret': secret,
     };
   }
 
