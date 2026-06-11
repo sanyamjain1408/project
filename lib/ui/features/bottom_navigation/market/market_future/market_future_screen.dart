@@ -112,7 +112,7 @@ class MarketFutureState extends State<MarketFutureScreen> {
         final pairs = (body['data'] as List? ?? []).whereType<Map<String, dynamic>>();
         for (final p in pairs) {
           final sym = (p['base_currency'] as String? ?? '').toUpperCase();
-          final icon = p['base_icon'] as String? ?? p['icon'] as String? ?? p['coin_icon'] as String? ?? '';
+          final icon = p['icon'] as String? ?? p['base_icon'] as String? ?? p['coin_icon'] as String? ?? '';
           if (sym.isNotEmpty && icon.isNotEmpty) _iconMap[sym] = icon;
         }
         if (mounted) setState(() {});
@@ -455,7 +455,9 @@ class _FuturePairItem extends StatelessWidget {
   }
 
   Widget _buildIcon() {
-    final spotUrl = iconMap[pair.baseAsset.toUpperCase()];
+    // Priority: pair's own icon (from future API) → spot map → CDN fallback
+    final ownIcon = pair.icon != null && pair.icon!.isNotEmpty ? pair.icon : null;
+    final spotUrl = ownIcon ?? iconMap[pair.baseAsset.toUpperCase()];
     return _CoinIcon(
       symbol: pair.baseAsset.toLowerCase(),
       fallback: pair.baseAsset,
