@@ -378,7 +378,7 @@ class _FuturePairItem extends StatelessWidget {
 
             // ── Coin icon + name + volume ──
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Row(
                 children: [
                   // Coin icon — from spot market cache, else jsdelivr, else fallback
@@ -499,8 +499,8 @@ class _FuturePairItem extends StatelessWidget {
       default: return null;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-      decoration: BoxDecoration(color: color!.withOpacity(0.18), borderRadius: BorderRadius.circular(4)),
+      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+      decoration: BoxDecoration(color: color!.withOpacity(0.18), borderRadius: BorderRadius.circular(3)),
       child: Text(label!, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w600, fontFamily: _dm)),
     );
   }
