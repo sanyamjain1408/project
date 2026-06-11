@@ -154,8 +154,8 @@ class SwapController extends GetxController {
       // 2. Try wallet API for balance (may 403, handled gracefully)
       await _enrichFromWalletApi(coins);
 
-      // 3. Fallback from WalletController cache
-      _enrichFromWalletController(coins);
+      // 3. Fallback from WalletController cache or direct wallet API
+      await _enrichFromWalletController(coins);
 
       // 4. Fetch icons + prices from CoinGecko
       await _enrichFromCoinGecko(coins);
@@ -306,27 +306,49 @@ class SwapController extends GetxController {
     }
   }
 
-  // ── Enrich from WalletController cache ───────────────────────────
-  void _enrichFromWalletController(List<SwapCoin> coins) {
-    if (!Get.isRegistered<WalletController>()) return;
-    final walletCtrl = Get.find<WalletController>();
+  // ── Enrich from WalletController cache OR direct wallet API ─────
+  Future<void> _enrichFromWalletController(List<SwapCoin> coins) async {
+    // Try in-memory WalletController first (fast path — already loaded)
+    if (Get.isRegistered<WalletController>()) {
+      final walletCtrl = Get.find<WalletController>();
+      if (walletCtrl.walletList.isNotEmpty) {
+        for (final coin in coins) {
+          final w = walletCtrl.walletList.firstWhereOrNull(
+              (w) => (w.coinType ?? '').toUpperCase() == coin.symbol.toUpperCase());
+          if (w != null) {
+            if (coin.iconUrl == null || coin.iconUrl!.isEmpty) coin.iconUrl = w.coinIcon;
+            if (coin.availableBalance == 0) coin.availableBalance = makeDouble(w.balance ?? w.availableBalance);
+            if (coin.usdPrice == 0) {
+              final usd = makeDouble(w.availableBalanceUsd ?? 0);
+              if (coin.availableBalance > 0) coin.usdPrice = usd / coin.availableBalance;
+            }
+          }
+        }
+        return;
+      }
+    }
 
-    for (final coin in coins) {
-      final w = walletCtrl.walletList.firstWhereOrNull(
-          (w) => (w.coinType ?? '').toUpperCase() == coin.symbol.toUpperCase());
-      if (w != null) {
-        if (coin.iconUrl == null || coin.iconUrl!.isEmpty) {
-          coin.iconUrl = w.coinIcon;
-        }
-        if (coin.availableBalance == 0) {
-          coin.availableBalance = makeDouble(w.balance ?? w.availableBalance);
-        }
+    // Fallback: fetch wallet list directly so balance shows even without visiting Wallet tab first
+    try {
+      final resp = await http
+          .get(Uri.parse('$_kBase/api/wallet-list?page=1&per_page=200'), headers: _authHeaders())
+          .timeout(const Duration(seconds: 10));
+      if (resp.statusCode != 200) return;
+      final body = jsonDecode(resp.body);
+      final List wallets = body['data']?['wallets']?['data'] ?? body['data']?['data'] ?? body['data'] ?? [];
+      for (final coin in coins) {
+        final match = (wallets as List).firstWhereOrNull(
+          (w) => (w['coin_type'] ?? '').toString().toUpperCase() == coin.symbol.toUpperCase(),
+        );
+        if (match == null) continue;
+        if (coin.iconUrl == null || coin.iconUrl!.isEmpty) coin.iconUrl = match['coin_icon'] as String?;
+        if (coin.availableBalance == 0) coin.availableBalance = makeDouble(match['balance'] ?? match['available_balance']);
         if (coin.usdPrice == 0) {
-          final usd = makeDouble(w.availableBalanceUsd ?? 0);
+          final usd = makeDouble(match['available_balance_usd'] ?? 0);
           if (coin.availableBalance > 0) coin.usdPrice = usd / coin.availableBalance;
         }
       }
-    }
+    } catch (_) {}
   }
 
   // ── Amount changed ───────────────────────────────────────────────
