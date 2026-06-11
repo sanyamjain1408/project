@@ -64,6 +64,14 @@ const _kFullNames = {
   'SPOT': 'Spotify', 'COIN': 'Coinbase', 'SHOP': 'Shopify', 'SQ': 'Block',
 };
 
+// Hardcoded icon URLs for commodities/stocks not on CDN
+const _kStaticIcons = <String, String>{
+  'XAU':   'https://trapix.com/gold-bars.png',
+  'XAG':   'https://trapix.com/silver.png',
+  'XPT':   'https://trapix.com/platinum.png',
+  'XPD':   'https://trapix.com/palladium.png',
+};
+
 // Maps category tab label → API category value(s)
 const _kCatMap = {
   'ALL':       <String>[],
@@ -389,24 +397,33 @@ class _FuturePairItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Line 1: full symbol — never cut
-                        RichText(
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          text: TextSpan(
-                            text: pair.baseAsset,
-                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
-                            children: [
-                              TextSpan(
-                                text: '/${pair.quoteAsset}',
-                                style: const TextStyle(color: Colors.white54, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
+                        // Line 1: symbol + tag inline
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: RichText(
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                  text: pair.baseAsset,
+                                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                  children: [
+                                    TextSpan(
+                                      text: '/${pair.quoteAsset}',
+                                      style: const TextStyle(color: Colors.white54, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                    ),
+                                  ],
+                                ),
                               ),
+                            ),
+                            if (_categoryTag(pair.category) != null) ...[
+                              const SizedBox(width: 4),
+                              _categoryTag(pair.category)!,
                             ],
-                          ),
+                          ],
                         ),
-                        // Line 2: tag (if any), then volume — each on own line to avoid overflow
-                        if (_categoryTag(pair.category) != null)
-                          _categoryTag(pair.category)!,
+                        // Line 2: volume
                         Text(volStr,
                             style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm),
                             maxLines: 1,
@@ -467,9 +484,10 @@ class _FuturePairItem extends StatelessWidget {
   }
 
   Widget _buildIcon() {
-    // Priority: pair's own icon (from future API) → spot map → CDN fallback
+    // Priority: pair's own icon → static hardcoded → spot map → CDN fallback
+    final sym = pair.baseAsset.toUpperCase();
     final ownIcon = pair.icon != null && pair.icon!.isNotEmpty ? pair.icon : null;
-    final spotUrl = ownIcon ?? iconMap[pair.baseAsset.toUpperCase()];
+    final spotUrl = ownIcon ?? _kStaticIcons[sym] ?? iconMap[sym];
     return _CoinIcon(
       symbol: pair.baseAsset.toLowerCase(),
       fallback: pair.baseAsset,
