@@ -50,6 +50,9 @@ class SwapCoin {
   }
 }
 
+// File-level cache — survives controller recreation (Get.delete doesn't clear this)
+List<SwapCoin>? _globalCachedCoins;
+
 // ── Controller ────────────────────────────────────────────────────
 class SwapController extends GetxController {
   RxList<SwapCoin> coinList = <SwapCoin>[].obs;
@@ -65,9 +68,6 @@ class SwapController extends GetxController {
 
   Timer? _rateDebounce;
   bool _fetchingCoins = false;
-
-  // Session-level cache so reopening swap is instant
-  static List<SwapCoin>? _cachedCoins;
 
   final RxDouble rate = 0.0.obs;
   final RxDouble convertRate = 0.0.obs;
@@ -113,16 +113,14 @@ class SwapController extends GetxController {
     _fetchingCoins = true;
 
     try {
-      List<SwapCoin> coins;
-
-      if (_cachedCoins != null && _cachedCoins!.isNotEmpty) {
-        // Instant load from cache — show UI immediately
-        coins = _cachedCoins!;
+      // ── INSTANT PATH: cached coins available ──────────────────────
+      if (_globalCachedCoins != null && _globalCachedCoins!.isNotEmpty) {
+        final coins = _globalCachedCoins!;
         coinList.value = coins;
         isLoading.value = false;
         _setSelections(coins, preWallet, pair);
         getAndSetCoinRate();
-        // Refresh balances in background silently
+        // Silently refresh balances in background
         _enrichBalances(coins).then((_) {
           coinList.refresh();
           final from = selectedFromCoin.value;
@@ -130,15 +128,16 @@ class SwapController extends GetxController {
           if (from != null) selectedFromCoin.value = coins.firstWhereOrNull((c) => c.id == from.id);
           if (to != null) selectedToCoin.value = coins.firstWhereOrNull((c) => c.id == to.id);
         });
+        _fetchingCoins = false;
         return;
       }
 
+      // ── FIRST LOAD: fetch coins + balances in parallel ────────────
       isLoading.value = true;
 
-      // Fetch coins list + balances in parallel
       final results = await Future.wait([
         http.get(Uri.parse('$_kBase/api/v1/swap/coins'), headers: _publicHeaders()).timeout(const Duration(seconds: 15)),
-        _fetchBalanceMap(),
+        _fetchWalletBalances(), // only balances — skip spot prices (wallet API has USD already)
       ]);
 
       final coinsResp = results[0] as http.Response;
@@ -150,26 +149,27 @@ class SwapController extends GetxController {
         return;
       }
 
-      coins = (coinsBody['data'] as List).map((e) => SwapCoin.fromJson(e)).toList();
+      final coins = (coinsBody['data'] as List).map((e) => SwapCoin.fromJson(e)).toList();
 
-      // Apply balances from parallel fetch
+      // Apply balances
       for (final coin in coins) {
         final data = balanceMap[coin.symbol.toUpperCase()];
         if (data != null) {
           if (coin.iconUrl == null || coin.iconUrl!.isEmpty) coin.iconUrl = data['icon'] as String?;
           coin.availableBalance = makeDouble(data['balance']);
-          if (coin.usdPrice == 0) coin.usdPrice = makeDouble(data['price']);
+          coin.usdPrice = makeDouble(data['price']);
         }
       }
 
-      _cachedCoins = coins;
+      _globalCachedCoins = coins;
       coinList.value = coins;
+      isLoading.value = false; // hide spinner before rate fetch
       _setSelections(coins, preWallet, pair);
-      getAndSetCoinRate();
+      getAndSetCoinRate(); // runs after UI is shown — doesn't block
     } catch (e) {
       showToast('Please check your internet connection'.tr);
-    } finally {
       isLoading.value = false;
+    } finally {
       _fetchingCoins = false;
     }
   }
@@ -186,10 +186,9 @@ class SwapController extends GetxController {
     if (selectedToCoin.value == null && coins.length > 1) selectedToCoin.value = coins[1];
   }
 
-  // Fetch balance/price/icon map keyed by symbol
-  // Runs wallet API + spot pairs price API in parallel for max speed
-  Future<Map<String, Map<String, dynamic>>> _fetchBalanceMap() async {
-    // Fast path: WalletController already in memory
+
+  Future<Map<String, Map<String, dynamic>>> _fetchWalletBalances() async {
+    // Fast path: use in-memory WalletController — zero network calls
     if (Get.isRegistered<WalletController>()) {
       final wc = Get.find<WalletController>();
       if (wc.walletList.isNotEmpty) {
@@ -204,28 +203,6 @@ class SwapController extends GetxController {
       }
     }
 
-    // Fetch wallet balances + spot prices in parallel
-    final results = await Future.wait([
-      _fetchWalletBalances(),
-      _fetchSpotPrices(),
-    ]);
-
-    final map = results[0] as Map<String, Map<String, dynamic>>;
-    final prices = results[1] as Map<String, double>;
-
-    // Merge prices into map (overwrite with accurate spot price)
-    for (final sym in prices.keys) {
-      if (map.containsKey(sym)) {
-        map[sym]!['price'] = prices[sym]!;
-      } else {
-        map[sym] = {'balance': 0.0, 'price': prices[sym]!, 'icon': null};
-      }
-    }
-
-    return map;
-  }
-
-  Future<Map<String, Map<String, dynamic>>> _fetchWalletBalances() async {
     // Try coin-swap-app first
     try {
       final r = await http.get(Uri.parse('$_kBase/api/coin-swap-app'), headers: _authHeaders()).timeout(const Duration(seconds: 10));
@@ -265,35 +242,15 @@ class SwapController extends GetxController {
     return {};
   }
 
-  // Fetch USD prices from our own spot pairs API
-  Future<Map<String, double>> _fetchSpotPrices() async {
-    try {
-      final r = await http.get(Uri.parse('$_kBase/api/v1/spot/pairs'), headers: _publicHeaders()).timeout(const Duration(seconds: 10));
-      if (r.statusCode != 200) return {};
-      final body = jsonDecode(r.body);
-      final pairs = (body['data'] ?? body['pairs'] ?? []) as List;
-      final prices = <String, double>{};
-      for (final p in pairs) {
-        // e.g. BTC/USDT → base_currency price in USD
-        final base = (p['base_currency'] ?? p['parent_coin'] ?? '').toString().toUpperCase();
-        final price = makeDouble(p['current_price'] ?? p['last_price'] ?? p['price'] ?? 0);
-        if (base.isNotEmpty && price > 0) prices[base] = price;
-      }
-      return prices;
-    } catch (_) {
-      return {};
-    }
-  }
 
-  // ── Enrich balances — tries coin-swap-app first, then wallet-list ─
   Future<void> _enrichBalances(List<SwapCoin> coins) async {
-    final map = await _fetchBalanceMap();
+    final map = await _fetchWalletBalances();
     for (final coin in coins) {
       final data = map[coin.symbol.toUpperCase()];
       if (data == null) continue;
       if (coin.iconUrl == null || coin.iconUrl!.isEmpty) coin.iconUrl = data['icon'] as String?;
       coin.availableBalance = makeDouble(data['balance']);
-      if (coin.usdPrice == 0) coin.usdPrice = makeDouble(data['price']);
+      if (data['price'] != null && makeDouble(data['price']) > 0) coin.usdPrice = makeDouble(data['price']);
     }
   }
 
@@ -366,18 +323,14 @@ class SwapController extends GetxController {
 
   // ── Refresh balances after swap ──────────────────────────────────
   Future<void> _refreshBalances() async {
-    final coins = coinList.toList();
+    final coins = _globalCachedCoins ?? coinList.toList();
     await _enrichBalances(coins);
+    _globalCachedCoins = coins;
     coinList.value = coins;
-    // Update selected coin references so the UI rebuilds
     final from = selectedFromCoin.value;
     final to = selectedToCoin.value;
-    if (from != null) {
-      selectedFromCoin.value = coins.firstWhereOrNull((c) => c.id == from.id);
-    }
-    if (to != null) {
-      selectedToCoin.value = coins.firstWhereOrNull((c) => c.id == to.id);
-    }
+    if (from != null) selectedFromCoin.value = coins.firstWhereOrNull((c) => c.id == from.id);
+    if (to != null) selectedToCoin.value = coins.firstWhereOrNull((c) => c.id == to.id);
   }
 
   // ── Swap selected coins ──────────────────────────────────────────
