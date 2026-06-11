@@ -91,6 +91,8 @@ class CoinPair {
     "parent_coin_name": parentCoinName,
     "is_favorite": isFavorite,
     "coin_pair": coinPair,
+    "coin_pair_name": coinPairName,
     "coin_icon": icon,
+    "parent_icon": parentIcon,
   };
 }

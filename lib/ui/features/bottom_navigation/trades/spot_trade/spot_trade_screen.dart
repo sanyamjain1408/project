@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/data/models/coin_pair.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
-import 'package:tradexpro_flutter/utils/decorations.dart';
-import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/side_sheet_component.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
+import '../future_trade/future_controller.dart';
 import '../trade_order_book_widgets.dart';
 import '../trade_widgets.dart';
 import 'spot_buy_sell_view.dart';
@@ -151,6 +151,18 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
 
   void _chooseCoinPairModal() {
     _controller.getCoinPairList("");
+    // Future pairs — convert FuturePair → CoinPair for the shared drawer
+    final futureCtrl = Get.find<NewFutureController>();
+    final futurePairs = futureCtrl.pairs.map((fp) => CoinPair(
+          coinPairId: fp.id,
+          coinPairName: fp.symbol,
+          parentCoinName: fp.baseCurrency,
+          childCoinName: fp.quoteCurrency,
+          lastPrice: fp.currentPrice,
+          priceChange: fp.priceChange24h,
+          volume: fp.volume24h,
+        )).toList();
+
     SideSheet.left(
       context: context,
       barrierColor: context.theme.secondaryHeaderColor.withValues(alpha: 0.5),
@@ -161,6 +173,7 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
             searchEditController: _controller.searchEditController,
             onTextChange: _controller.getCoinPairList,
             coinPairs: _controller.coinPairs.toList(),
+            futurePairs: futurePairs,
             onSelect: (pair) {
               _controller.selectedCoinPair.value = pair;
               _controller.getDashBoardData();

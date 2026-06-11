@@ -843,7 +843,7 @@ class _CoinPairHeader extends StatelessWidget {
   }
 }
 
-class TradeCurrencyPairSelectionView extends StatelessWidget {
+class TradeCurrencyPairSelectionView extends StatefulWidget {
   const TradeCurrencyPairSelectionView({
     super.key,
     required this.searchEditController,
@@ -851,6 +851,9 @@ class TradeCurrencyPairSelectionView extends StatelessWidget {
     required this.coinPairs,
     required this.onSelect,
     required this.title,
+    this.futurePairs = const [],
+    this.onSelectFuture,
+    this.initialTab = 0, // 0 = Spot, 1 = Future
   });
 
   final String title;
@@ -858,9 +861,71 @@ class TradeCurrencyPairSelectionView extends StatelessWidget {
   final Function(String) onTextChange;
   final List<CoinPair> coinPairs;
   final Function(CoinPair) onSelect;
+  final List<CoinPair> futurePairs;
+  final Function(CoinPair)? onSelectFuture;
+  final int initialTab;
+
+  @override
+  State<TradeCurrencyPairSelectionView> createState() =>
+      _TradeCurrencyPairSelectionViewState();
+}
+
+class _TradeCurrencyPairSelectionViewState
+    extends State<TradeCurrencyPairSelectionView> {
+  static const _green = Color(0xFFB5F000);
+
+  int _tabIndex = 0; // 0 = Spot, 1 = Future
+  int _filterIndex = 0;
+  int _categoryIndex = 0;
+
+  static const _filterList = ["ALL", "USDT", "USDC", "BTC"];
+  static const _categories = ["All", "🔥 AI", "Meme", "RWA", "DeFi", "NFT", "L1", "L2"];
+
+  static const _categoryCoins = <String, List<String>>{
+    "🔥 AI": ["FET", "AGIX", "OCEAN", "GRT", "TAO", "RNDR", "WLD", "NEAR", "ICP", "AKT"],
+    "Meme": ["DOGE", "SHIB", "PEPE", "FLOKI", "BONK", "WIF", "MEME", "BOME", "NEIRO", "COQ"],
+    "RWA": ["ONDO", "MKR", "SNX", "RIO", "CPOOL", "MPL", "TRU", "POLYX"],
+    "DeFi": ["UNI", "AAVE", "COMP", "CRV", "SUSHI", "YFI", "BAL", "1INCH", "SNX", "LDO"],
+    "NFT": ["APE", "SAND", "MANA", "AXS", "GALA", "ILV", "CHZ", "SUPER", "ALICE"],
+    "L1": ["BTC", "ETH", "SOL", "AVAX", "ADA", "DOT", "ATOM", "NEAR", "FTM", "SUI"],
+    "L2": ["MATIC", "ARB", "OP", "IMX", "ZK", "METIS", "BOBA", "SKL", "STRK", "MANTA"],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _tabIndex = widget.initialTab;
+  }
+
+  List<CoinPair> get _activePairs =>
+      _tabIndex == 0 ? widget.coinPairs : widget.futurePairs;
+
+  List<CoinPair> get _filteredPairs {
+    List<CoinPair> list = _activePairs;
+
+    // Filter by base currency
+    if (_filterIndex > 0) {
+      final currency = _filterList[_filterIndex];
+      list = list.where((p) => (p.childCoinName ?? '').toUpperCase() == currency).toList();
+    }
+
+    // Filter by category
+    if (_categoryIndex > 0) {
+      final cat = _categories[_categoryIndex];
+      final coins = _categoryCoins[cat];
+      if (coins != null && coins.isNotEmpty) {
+        list = list.where((p) => coins.contains((p.parentCoinName ?? '').toUpperCase())).toList();
+      }
+    }
+
+    return list;
+  }
+
+  bool get _hasFuture => widget.futurePairs.isNotEmpty || widget.onSelectFuture != null;
 
   @override
   Widget build(BuildContext context) {
+    final pairs = _filteredPairs;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingLarge),
@@ -869,48 +934,195 @@ class TradeCurrencyPairSelectionView extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            vSpacer20(),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          vSpacer20(),
+          // ── Search + close ──
+          Row(
+            children: [
+              Expanded(
+                child: textFieldSearch(
+                  controller: widget.searchEditController,
+                  height: Dimens.btnHeightMid,
+                  margin: 0,
+                  onTextChange: widget.onTextChange,
+                  bgColor: const Color(0xFF1A1A1A),
+                  iconColor: _green,
+                ),
+              ),
+              const SizedBox(width: 8),
+              buttonOnlyIcon(
+                iconData: Icons.close,
+                visualDensity: minimumVisualDensity,
+                onPress: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          vSpacer10(),
+          // ── Spot / Future tabs (only show if future pairs available) ──
+          if (_hasFuture) ...[
             Row(
               children: [
-                TextRobotoAutoBold(title),
-                const Spacer(),
-                buttonOnlyIcon(
-                  iconData: Icons.cancel_outlined,
-                  visualDensity: minimumVisualDensity,
-                  onPress: () => Navigator.pop(context),
+                _SpotFutureTab(
+                  label: "Spot",
+                  selected: _tabIndex == 0,
+                  onTap: () => setState(() {
+                    _tabIndex = 0;
+                    _filterIndex = 0;
+                    _categoryIndex = 0;
+                  }),
+                ),
+                const SizedBox(width: 20),
+                _SpotFutureTab(
+                  label: "Future",
+                  selected: _tabIndex == 1,
+                  onTap: () => setState(() {
+                    _tabIndex = 1;
+                    _filterIndex = 0;
+                    _categoryIndex = 0;
+                  }),
                 ),
               ],
             ),
-            vSpacer10(),
-            textFieldSearch(
-              controller: searchEditController,
-              height: Dimens.btnHeightMid,
-              margin: 0,
-              onTextChange: onTextChange,
-              bgColor: const Color(0xFF111111),
-              iconColor: const Color(0xFFCCFF00),
+            const SizedBox(height: 10),
+          ],
+          // ── Filter tabs: ALL / USDT / USDC / BTC ──
+          SizedBox(
+            height: 32,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _filterList.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 16),
+              itemBuilder: (_, i) {
+                final selected = _filterIndex == i;
+                return GestureDetector(
+                  onTap: () => setState(() => _filterIndex = i),
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: Text(
+                      _filterList[i],
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: "DMSans",
+                        fontWeight: selected ? FontWeight.w600 : FontWeight.w300,
+                        color: selected ? Colors.white : Colors.white54,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-            vSpacer10(),
-            _CoinPairHeader(),
-            Expanded(
-              child: ListView(
-                shrinkWrap: true,
-                children: List.generate(coinPairs.length, (index) {
-                  return CoinPairItemView(
-                    coinPair: coinPairs[index],
-                    onTap: () {
-                      Get.back();
-                      onSelect(coinPairs[index]);
-                    },
-                  );
-                }),
+          ),
+          const SizedBox(height: 8),
+          // ── Category pills: All / AI / Meme / … ──
+          SizedBox(
+            height: 26,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final selected = _categoryIndex == i;
+                return GestureDetector(
+                  onTap: () => setState(() => _categoryIndex = i),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: selected ? _green : const Color(0xFF1A1A1A),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      _categories[i],
+                      style: TextStyle(
+                        color: selected ? Colors.black : Colors.white,
+                        fontSize: 12,
+                        fontFamily: "DMSans",
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+          // ── Header row ──
+          _CoinPairHeader(),
+          // ── Coin list ──
+          Expanded(
+            child: ListView.builder(
+              itemCount: pairs.length,
+              itemBuilder: (_, index) => CoinPairItemView(
+                coinPair: pairs[index],
+                onTap: () {
+                  Get.back();
+                  if (_tabIndex == 1 && widget.onSelectFuture != null) {
+                    widget.onSelectFuture!(pairs[index]);
+                  } else {
+                    widget.onSelect(pairs[index]);
+                  }
+                },
               ),
             ),
-          ],
+          ),
+          // ── Add Coin button ──
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _green,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () {},
+                child: const Text(
+                  "Add Coin",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: "DMSans",
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Spot / Future tab label widget
+class _SpotFutureTab extends StatelessWidget {
+  const _SpotFutureTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 16,
+          fontFamily: "DMSans",
+          fontWeight: selected ? FontWeight.w700 : FontWeight.w300,
+          color: selected ? Colors.white : Colors.white54,
         ),
-      );
+      ),
+    );
   }
 }
 
