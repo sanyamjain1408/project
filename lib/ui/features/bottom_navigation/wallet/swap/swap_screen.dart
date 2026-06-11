@@ -221,6 +221,8 @@ class _SwapScreenState extends State<SwapScreen>
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: TabBar(
         controller: _tabController,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
         labelColor: Colors.white,
         unselectedLabelColor: Colors.white.withOpacity(0.5),
         labelStyle: const TextStyle(
