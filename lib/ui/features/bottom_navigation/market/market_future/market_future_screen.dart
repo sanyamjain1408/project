@@ -64,12 +64,28 @@ const _kFullNames = {
   'SPOT': 'Spotify', 'COIN': 'Coinbase', 'SHOP': 'Shopify', 'SQ': 'Block',
 };
 
-// Hardcoded icon URLs for commodities/stocks not on CDN
+// Hardcoded icon URLs for commodities/stocks not on crypto CDN
 const _kStaticIcons = <String, String>{
-  'XAU':   'https://trapix.com/gold-bars.png',
-  'XAG':   'https://trapix.com/silver.png',
-  'XPT':   'https://trapix.com/platinum.png',
-  'XPD':   'https://trapix.com/palladium.png',
+  'XAU':   'https://assets.macrotrends.net/assets/icons/gold.png',
+  'XAG':   'https://assets.macrotrends.net/assets/icons/silver.png',
+  'XPT':   'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Platinum_crystals.jpg/120px-Platinum_crystals.jpg',
+  'XPD':   'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Platinum_crystals.jpg/120px-Platinum_crystals.jpg',
+  'TSLA':  'https://financialmodelingprep.com/image-stock/TSLA.png',
+  'AAPL':  'https://financialmodelingprep.com/image-stock/AAPL.png',
+  'MSFT':  'https://financialmodelingprep.com/image-stock/MSFT.png',
+  'GOOGL': 'https://financialmodelingprep.com/image-stock/GOOGL.png',
+  'AMZN':  'https://financialmodelingprep.com/image-stock/AMZN.png',
+  'NVDA':  'https://financialmodelingprep.com/image-stock/NVDA.png',
+  'META':  'https://financialmodelingprep.com/image-stock/META.png',
+  'NFLX':  'https://financialmodelingprep.com/image-stock/NFLX.png',
+  'SNDK':  'https://financialmodelingprep.com/image-stock/SNDK.png',
+  'COST':  'https://financialmodelingprep.com/image-stock/COST.png',
+  'LLY':   'https://financialmodelingprep.com/image-stock/LLY.png',
+  'BABA':  'https://financialmodelingprep.com/image-stock/BABA.png',
+  'PYPL':  'https://financialmodelingprep.com/image-stock/PYPL.png',
+  'INTC':  'https://financialmodelingprep.com/image-stock/INTC.png',
+  'AMD':   'https://financialmodelingprep.com/image-stock/AMD.png',
+  'UBER':  'https://financialmodelingprep.com/image-stock/UBER.png',
 };
 
 // Maps category tab label → API category value(s)
@@ -397,37 +413,38 @@ class _FuturePairItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Line 1: symbol + tag inline
+                        // Line 1: full symbol — full width, never cut
+                        RichText(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                            text: pair.baseAsset,
+                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
+                            children: [
+                              TextSpan(
+                                text: '/${pair.quoteAsset}',
+                                style: const TextStyle(color: Colors.white54, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Line 2: tag + volume (tag is intrinsic, volume fills rest)
                         Row(
+                          mainAxisSize: MainAxisSize.max,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Flexible(
-                              child: RichText(
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                text: TextSpan(
-                                  text: pair.baseAsset,
-                                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
-                                  children: [
-                                    TextSpan(
-                                      text: '/${pair.quoteAsset}',
-                                      style: const TextStyle(color: Colors.white54, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
                             if (_categoryTag(pair.category) != null) ...[
-                              const SizedBox(width: 4),
                               _categoryTag(pair.category)!,
+                              const SizedBox(width: 4),
                             ],
+                            Flexible(
+                              child: Text(volStr,
+                                  style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
+                            ),
                           ],
                         ),
-                        // Line 2: volume
-                        Text(volStr,
-                            style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
