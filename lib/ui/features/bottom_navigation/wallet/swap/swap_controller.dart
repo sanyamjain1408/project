@@ -66,6 +66,9 @@ class SwapController extends GetxController {
   Timer? _rateDebounce;
   bool _fetchingCoins = false;
 
+  // Session-level cache so reopening swap is instant
+  static List<SwapCoin>? _cachedCoins;
+
   final RxDouble rate = 0.0.obs;
   final RxDouble convertRate = 0.0.obs;
   final RxDouble feeAmount = 0.0.obs;
@@ -108,17 +111,38 @@ class SwapController extends GetxController {
   Future<void> getCoinSwapApp({Wallet? preWallet, CoinPair? pair}) async {
     if (_fetchingCoins) return;
     _fetchingCoins = true;
-    isLoading.value = true;
 
     try {
-      // 1. Fetch swap coins list
-      // print("[SWAP] Fetching swap coins...");
-      final coinsResp = await http
-          .get(Uri.parse('$_kBase/api/v1/swap/coins'), headers: _publicHeaders())
-          .timeout(const Duration(seconds: 15));
+      List<SwapCoin> coins;
 
-      // print("[SWAP] Coins status: ${coinsResp.statusCode}");
-      // print("[SWAP] Coins body: ${coinsResp.body}");
+      if (_cachedCoins != null && _cachedCoins!.isNotEmpty) {
+        // Instant load from cache — show UI immediately
+        coins = _cachedCoins!;
+        coinList.value = coins;
+        isLoading.value = false;
+        _setSelections(coins, preWallet, pair);
+        getAndSetCoinRate();
+        // Refresh balances in background silently
+        _enrichBalances(coins).then((_) {
+          coinList.refresh();
+          final from = selectedFromCoin.value;
+          final to = selectedToCoin.value;
+          if (from != null) selectedFromCoin.value = coins.firstWhereOrNull((c) => c.id == from.id);
+          if (to != null) selectedToCoin.value = coins.firstWhereOrNull((c) => c.id == to.id);
+        });
+        return;
+      }
+
+      isLoading.value = true;
+
+      // Fetch coins list + balances in parallel
+      final results = await Future.wait([
+        http.get(Uri.parse('$_kBase/api/v1/swap/coins'), headers: _publicHeaders()).timeout(const Duration(seconds: 15)),
+        _fetchBalanceMap(),
+      ]);
+
+      final coinsResp = results[0] as http.Response;
+      final balanceMap = results[1] as Map<String, Map<String, dynamic>>;
 
       final coinsBody = jsonDecode(coinsResp.body) as Map<String, dynamic>;
       if (coinsBody['success'] != true) {
@@ -126,41 +150,23 @@ class SwapController extends GetxController {
         return;
       }
 
-      final rawCoins = coinsBody['data'] as List;
-      final coins = rawCoins.map((e) => SwapCoin.fromJson(e)).toList();
+      coins = (coinsBody['data'] as List).map((e) => SwapCoin.fromJson(e)).toList();
 
-      // 2. Fetch balances + icons + prices from our own API
-      await _enrichBalances(coins);
+      // Apply balances from parallel fetch
+      for (final coin in coins) {
+        final data = balanceMap[coin.symbol.toUpperCase()];
+        if (data != null) {
+          if (coin.iconUrl == null || coin.iconUrl!.isEmpty) coin.iconUrl = data['icon'] as String?;
+          coin.availableBalance = makeDouble(data['balance']);
+          if (coin.usdPrice == 0) coin.usdPrice = makeDouble(data['price']);
+        }
+      }
 
+      _cachedCoins = coins;
       coinList.value = coins;
-
-      // print("[SWAP] ── FINAL COIN SUMMARY ──");
-      // for (var c in coins) {
-      //   print("${c.symbol} | Bal: ${c.availableBalance} | USD: ${c.usdPrice} | Icon: ${c.iconUrl}");
-      // }
-
-      // 5. Set initial selections
-      if (preWallet != null) {
-        final match = coins.firstWhereOrNull(
-            (c) => c.symbol.toUpperCase() == preWallet.coinType?.toUpperCase());
-        selectedFromCoin.value = match ?? (coins.isNotEmpty ? coins.first : null);
-      } else if (pair != null) {
-        selectedFromCoin.value = coins.firstWhereOrNull(
-            (c) => c.symbol.toUpperCase() == pair.parentCoinName?.toUpperCase());
-        selectedToCoin.value = coins.firstWhereOrNull(
-            (c) => c.symbol.toUpperCase() == pair.childCoinName?.toUpperCase());
-      }
-
-      if (selectedFromCoin.value == null && coins.isNotEmpty) {
-        selectedFromCoin.value = coins.first;
-      }
-      if (selectedToCoin.value == null && coins.length > 1) {
-        selectedToCoin.value = coins[1];
-      }
-
+      _setSelections(coins, preWallet, pair);
       getAndSetCoinRate();
     } catch (e) {
-      // print("[SWAP] Exception in getCoinSwapApp: $e");
       showToast('Please check your internet connection'.tr);
     } finally {
       isLoading.value = false;
@@ -168,77 +174,127 @@ class SwapController extends GetxController {
     }
   }
 
-  // ── Enrich balances — tries coin-swap-app first, then wallet-list ─
-  Future<void> _enrichBalances(List<SwapCoin> coins) async {
-    // Fast path: WalletController already loaded in memory
+  void _setSelections(List<SwapCoin> coins, Wallet? preWallet, CoinPair? pair) {
+    if (preWallet != null) {
+      final match = coins.firstWhereOrNull((c) => c.symbol.toUpperCase() == preWallet.coinType?.toUpperCase());
+      selectedFromCoin.value = match ?? (coins.isNotEmpty ? coins.first : null);
+    } else if (pair != null) {
+      selectedFromCoin.value = coins.firstWhereOrNull((c) => c.symbol.toUpperCase() == pair.parentCoinName?.toUpperCase());
+      selectedToCoin.value = coins.firstWhereOrNull((c) => c.symbol.toUpperCase() == pair.childCoinName?.toUpperCase());
+    }
+    if (selectedFromCoin.value == null && coins.isNotEmpty) selectedFromCoin.value = coins.first;
+    if (selectedToCoin.value == null && coins.length > 1) selectedToCoin.value = coins[1];
+  }
+
+  // Fetch balance/price/icon map keyed by symbol
+  // Runs wallet API + spot pairs price API in parallel for max speed
+  Future<Map<String, Map<String, dynamic>>> _fetchBalanceMap() async {
+    // Fast path: WalletController already in memory
     if (Get.isRegistered<WalletController>()) {
       final wc = Get.find<WalletController>();
       if (wc.walletList.isNotEmpty) {
-        for (final coin in coins) {
-          final w = wc.walletList.firstWhereOrNull(
-              (w) => (w.coinType ?? '').toUpperCase() == coin.symbol.toUpperCase());
-          if (w != null) {
-            if (coin.iconUrl == null || coin.iconUrl!.isEmpty) coin.iconUrl = w.coinIcon;
-            coin.availableBalance = makeDouble(w.balance ?? w.availableBalance);
-            if (coin.usdPrice == 0) {
-              final usd = makeDouble(w.availableBalanceUsd ?? 0);
-              if (coin.availableBalance > 0) coin.usdPrice = usd / coin.availableBalance;
-            }
-          }
+        final map = <String, Map<String, dynamic>>{};
+        for (final w in wc.walletList) {
+          final sym = (w.coinType ?? '').toUpperCase();
+          final bal = makeDouble(w.balance ?? w.availableBalance);
+          final usd = makeDouble(w.availableBalanceUsd ?? 0);
+          map[sym] = {'balance': bal, 'price': bal > 0 ? usd / bal : 0.0, 'icon': w.coinIcon};
         }
-        return;
+        return map;
       }
     }
 
-    // API path: fetch directly (works even when Wallet tab never opened)
-    // Try /api/coin-swap-app first, fallback to /api/wallet-list
-    bool filled = false;
+    // Fetch wallet balances + spot prices in parallel
+    final results = await Future.wait([
+      _fetchWalletBalances(),
+      _fetchSpotPrices(),
+    ]);
+
+    final map = results[0] as Map<String, Map<String, dynamic>>;
+    final prices = results[1] as Map<String, double>;
+
+    // Merge prices into map (overwrite with accurate spot price)
+    for (final sym in prices.keys) {
+      if (map.containsKey(sym)) {
+        map[sym]!['price'] = prices[sym]!;
+      } else {
+        map[sym] = {'balance': 0.0, 'price': prices[sym]!, 'icon': null};
+      }
+    }
+
+    return map;
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _fetchWalletBalances() async {
+    // Try coin-swap-app first
     try {
-      final r = await http
-          .get(Uri.parse('$_kBase/api/coin-swap-app'), headers: _authHeaders())
-          .timeout(const Duration(seconds: 10));
+      final r = await http.get(Uri.parse('$_kBase/api/coin-swap-app'), headers: _authHeaders()).timeout(const Duration(seconds: 10));
       if (r.statusCode == 200) {
         final body = jsonDecode(r.body);
         final wallets = (body['data'] is Map ? body['data']['wallets'] : null) as List? ?? [];
         if (wallets.isNotEmpty) {
-          for (final coin in coins) {
-            final match = wallets.firstWhereOrNull(
-              (w) => (w['coin_type'] ?? '').toString().toUpperCase() == coin.symbol.toUpperCase());
-            if (match == null) continue;
-            if (coin.iconUrl == null || coin.iconUrl!.isEmpty) coin.iconUrl = match['coin_icon'] as String?;
-            coin.availableBalance = makeDouble(match['balance'] ?? match['available_balance']);
-            if (coin.usdPrice == 0) {
-              final usd = makeDouble(match['available_balance_usd'] ?? 0);
-              if (coin.availableBalance > 0) coin.usdPrice = usd / coin.availableBalance;
-            }
+          final map = <String, Map<String, dynamic>>{};
+          for (final w in wallets) {
+            final sym = (w['coin_type'] ?? '').toString().toUpperCase();
+            final bal = makeDouble(w['balance'] ?? w['available_balance']);
+            final usd = makeDouble(w['available_balance_usd'] ?? 0);
+            map[sym] = {'balance': bal, 'price': bal > 0 ? usd / bal : 0.0, 'icon': w['coin_icon']};
           }
-          filled = true;
+          return map;
         }
       }
     } catch (_) {}
 
-    if (filled) return;
-
-    // Final fallback: wallet-list endpoint
+    // Fallback: wallet-list
     try {
-      final r = await http
-          .get(Uri.parse('$_kBase/api/wallet-list?page=1&per_page=200'), headers: _authHeaders())
-          .timeout(const Duration(seconds: 10));
-      if (r.statusCode != 200) return;
-      final body = jsonDecode(r.body);
-      final wallets = (body['data']?['wallets']?['data'] ?? body['data']?['data'] ?? body['data'] ?? []) as List;
-      for (final coin in coins) {
-        final match = wallets.firstWhereOrNull(
-          (w) => (w['coin_type'] ?? '').toString().toUpperCase() == coin.symbol.toUpperCase());
-        if (match == null) continue;
-        if (coin.iconUrl == null || coin.iconUrl!.isEmpty) coin.iconUrl = match['coin_icon'] as String?;
-        coin.availableBalance = makeDouble(match['balance'] ?? match['available_balance']);
-        if (coin.usdPrice == 0) {
-          final usd = makeDouble(match['available_balance_usd'] ?? 0);
-          if (coin.availableBalance > 0) coin.usdPrice = usd / coin.availableBalance;
+      final r = await http.get(Uri.parse('$_kBase/api/wallet-list?page=1&per_page=200'), headers: _authHeaders()).timeout(const Duration(seconds: 10));
+      if (r.statusCode == 200) {
+        final body = jsonDecode(r.body);
+        final wallets = (body['data']?['wallets']?['data'] ?? body['data']?['data'] ?? body['data'] ?? []) as List;
+        final map = <String, Map<String, dynamic>>{};
+        for (final w in wallets) {
+          final sym = (w['coin_type'] ?? '').toString().toUpperCase();
+          final bal = makeDouble(w['balance'] ?? w['available_balance']);
+          final usd = makeDouble(w['available_balance_usd'] ?? 0);
+          map[sym] = {'balance': bal, 'price': bal > 0 ? usd / bal : 0.0, 'icon': w['coin_icon']};
         }
+        return map;
       }
     } catch (_) {}
+
+    return {};
+  }
+
+  // Fetch USD prices from our own spot pairs API
+  Future<Map<String, double>> _fetchSpotPrices() async {
+    try {
+      final r = await http.get(Uri.parse('$_kBase/api/v1/spot/pairs'), headers: _publicHeaders()).timeout(const Duration(seconds: 10));
+      if (r.statusCode != 200) return {};
+      final body = jsonDecode(r.body);
+      final pairs = (body['data'] ?? body['pairs'] ?? []) as List;
+      final prices = <String, double>{};
+      for (final p in pairs) {
+        // e.g. BTC/USDT → base_currency price in USD
+        final base = (p['base_currency'] ?? p['parent_coin'] ?? '').toString().toUpperCase();
+        final price = makeDouble(p['current_price'] ?? p['last_price'] ?? p['price'] ?? 0);
+        if (base.isNotEmpty && price > 0) prices[base] = price;
+      }
+      return prices;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  // ── Enrich balances — tries coin-swap-app first, then wallet-list ─
+  Future<void> _enrichBalances(List<SwapCoin> coins) async {
+    final map = await _fetchBalanceMap();
+    for (final coin in coins) {
+      final data = map[coin.symbol.toUpperCase()];
+      if (data == null) continue;
+      if (coin.iconUrl == null || coin.iconUrl!.isEmpty) coin.iconUrl = data['icon'] as String?;
+      coin.availableBalance = makeDouble(data['balance']);
+      if (coin.usdPrice == 0) coin.usdPrice = makeDouble(data['price']);
+    }
   }
 
   // ── Amount changed ───────────────────────────────────────────────
