@@ -118,7 +118,12 @@ class _WalletListViewState extends State<WalletListView> {
                         // ── HERO CARD ──
                         _SpotHeroCard(
                           isHide: gIsBalanceHide.value,
-                          total: _controller.totalBalance.value,
+                          total: TotalBalance(
+                            currency: _controller.totalBalance.value.currency,
+                            total: _controller.spotWalletTotal.value,
+                            todayPnl: _controller.totalBalance.value.spotPnl,
+                            todayPnlPercent: _controller.totalBalance.value.spotPnlPercent,
+                          ),
                           onHistoryTap: () {
                             SpotTradeController ctrl;
                             try {

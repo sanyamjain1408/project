@@ -283,8 +283,9 @@ class NewFutureController extends GetxController {
           final d = data['data'] ?? {};
           final upnl = double.tryParse(d['unrealized_pnl']?.toString() ?? '0') ?? 0;
           final wb = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
-          futurePnlToday.value = upnl;
-          futurePnlPct.value = wb > 0 ? (upnl / wb) * 100 : 0;
+          final todayRealized = double.tryParse(d['today_realized_pnl']?.toString() ?? '0') ?? 0;
+          futurePnlToday.value = upnl + todayRealized;
+          futurePnlPct.value = wb > 0 ? ((upnl + todayRealized) / wb) * 100 : 0;
         }
       }
     } catch (_) {}

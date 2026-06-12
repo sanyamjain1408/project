@@ -296,8 +296,10 @@ class TotalBalance {
   double? total;
   double? todayPnl;
   double? todayPnlPercent;
+  double? spotPnl;
+  double? spotPnlPercent;
 
-  TotalBalance({this.currency, this.total, this.todayPnl, this.todayPnlPercent});
+  TotalBalance({this.currency, this.total, this.todayPnl, this.todayPnlPercent, this.spotPnl, this.spotPnlPercent});
 
   factory TotalBalance.fromJson(Map<String, dynamic> json) => TotalBalance(
         currency: json["currency"],

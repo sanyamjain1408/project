@@ -31,6 +31,8 @@ class WalletController extends GetxController
   RxDouble spotWalletTotal = 0.0.obs;
   RxDouble earnWalletTotal = 0.0.obs;
   RxDouble futureWalletBalance = 0.0.obs;
+  RxDouble spotYesterdayValue = 0.0.obs;
+  RxDouble futureCombinedPnl = 0.0.obs;
   int walletListFromType = 0;
   Timer? searchTimer;
 
@@ -162,21 +164,38 @@ class WalletController extends GetxController
     futureWalletBalance.value = futureVal;
 
     final grandTotal = spotVal + futureVal + earnTotal + p2pVal;
-    final pnlResult = await _fetchTodayPnl(userId, grandTotal);
+
+    // Fetch future combined PNL (unrealized + today realized)
+    final futurePnl = await _fetchFutureCombinedPnl();
+    futureCombinedPnl.value = futurePnl;
+
+    // Spot PNL: pass spot-only value to snapshot API
+    final pnlResult = await _fetchTodayPnl(userId, spotVal);
+    final yv = pnlResult[2]; // yesterday_value
+    spotYesterdayValue.value = yv > 0 ? yv : spotVal;
+
+    // Total PNL = spot PNL + future combined PNL
+    final spotPnl = pnlResult[0];
+    final totalPnl = spotPnl + futurePnl;
+    final base = spotYesterdayValue.value + futureVal;
+    final totalPct = base > 0 ? (totalPnl / base) * 100 : 0;
 
     final cur = totalBalance.value;
     totalBalance.value = TotalBalance(
       currency: currency ?? cur.currency,
       total: grandTotal,
-      todayPnl: pnlResult[0],
-      todayPnlPercent: pnlResult[1],
+      todayPnl: totalPnl,
+      todayPnlPercent: totalPct,
+      spotPnl: spotPnl,
+      spotPnlPercent: spotYesterdayValue.value > 0 ? (spotPnl / spotYesterdayValue.value) * 100 : 0,
     );
   }
 
+  // Returns [spotPnl, spotPct, yesterdayValue]
   Future<List<double>> _fetchTodayPnl(int userId, double liveTotal) async {
     try {
       final uri = Uri.parse(
-        '${APIURLConstants.baseUrl}/api/pnl/summary?user_id=$userId&live_total=$liveTotal',
+        '\${APIURLConstants.baseUrl}/api/pnl/summary?user_id=\$userId&live_total=\${liveTotal.toStringAsFixed(2)}',
       );
       final resp = await http.get(uri);
       if (resp.statusCode == 200) {
@@ -185,11 +204,33 @@ class WalletController extends GetxController
           final data = json['data'];
           final pnl = double.tryParse(data['today_pnl']?.toString() ?? '0') ?? 0;
           final pct = double.tryParse(data['today_pct']?.toString() ?? '0') ?? 0;
-          return [pnl, pct];
+          final yv = double.tryParse(data['yesterday_value']?.toString() ?? '0') ?? 0;
+          return [pnl, pct, yv];
         }
       }
     } catch (_) {}
-    return [0, 0];
+    return [0, 0, 0];
+  }
+
+  Future<double> _fetchFutureCombinedPnl() async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return 0;
+      final resp = await http.get(
+        Uri.parse('https://api.trapix.com/api/v1/future/balance'),
+        headers: {'Authorization': 'Bearer \$token'},
+      );
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body);
+        if (json['success'] == true) {
+          final d = json['data'] ?? {};
+          final unreal = double.tryParse(d['unrealized_pnl']?.toString() ?? '0') ?? 0;
+          final realized = double.tryParse(d['today_realized_pnl']?.toString() ?? '0') ?? 0;
+          return unreal + realized;
+        }
+      }
+    } catch (_) {}
+    return 0;
   }
 
   Future<double> _fetchEarnTotal(int userId) async {
