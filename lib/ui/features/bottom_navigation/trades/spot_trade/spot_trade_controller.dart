@@ -401,7 +401,7 @@ class SpotTradeController extends GetxController implements SocketListener {
       low: p.low24h?.toString(),
       volume: p.volume24h,
       icon: coinIconMap[quote.toUpperCase()],
-      parentIcon: coinIconMap[base.toUpperCase()],
+      parentIcon: p.icon ?? coinIconMap[base.toUpperCase()],
     );
   }
 
@@ -412,13 +412,32 @@ class SpotTradeController extends GetxController implements SocketListener {
     }
 
     // Update precision from spot pair metadata
-    final sym = _spotSymbol;
-    final meta = spotPairsMeta.firstWhereOrNull(
-      (p) => '${p.baseCurrency ?? ''}_${p.quoteCurrency ?? ''}' == selectedCoinPair.value.coinPair,
-    );
-    if (meta != null) {
-      pricePrecision.value = meta.pricePrecision;
-      amountPrecision.value = meta.amountPrecision;
+    final _updatePrecision = () {
+      final meta = spotPairsMeta.firstWhereOrNull(
+        (p) => '${p.baseCurrency ?? ''}_${p.quoteCurrency ?? ''}' == selectedCoinPair.value.coinPair,
+      );
+      if (meta != null) {
+        pricePrecision.value = meta.pricePrecision;
+        amountPrecision.value = meta.amountPrecision;
+      }
+    };
+    if (spotPairsMeta.isEmpty) {
+      // Pairs not loaded yet (e.g. navigated from home) — load them first
+      APIRepository().getSpotPairs().then((resp) {
+        if (resp.success) {
+          final raw = _unwrapSpotData(resp.data);
+          List<SpotPair> pairs = [];
+          if (raw is List) {
+            pairs = raw.map((e) => SpotPair.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+          } else if (raw is Map && raw['pairs'] is List) {
+            pairs = (raw['pairs'] as List).map((e) => SpotPair.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+          }
+          spotPairsMeta = pairs;
+          _updatePrecision();
+        }
+      }, onError: (_) {});
+    } else {
+      _updatePrecision();
     }
 
     isLoading.value = true;

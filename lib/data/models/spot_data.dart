@@ -17,13 +17,14 @@ class SpotPair {
   final double? minOrderAmount;
   final int? baseCoinId;
   final int? quoteCoinId;
+  final String? icon;
 
   SpotPair({
     this.id, this.symbol, this.baseCurrency, this.quoteCurrency,
     this.currentPrice, this.priceChange24h, this.high24h, this.low24h,
     this.volume24h, this.pricePrecision = 2, this.amountPrecision = 6,
     this.makerFee, this.takerFee, this.minOrderAmount,
-    this.baseCoinId, this.quoteCoinId,
+    this.baseCoinId, this.quoteCoinId, this.icon,
   });
 
   factory SpotPair.fromJson(Map<String, dynamic> j) => SpotPair(
@@ -43,6 +44,7 @@ class SpotPair {
     minOrderAmount: makeDouble(j['min_order_amount']),
     baseCoinId: makeInt(j['base_coin_id'] ?? j['base_currency_id']),
     quoteCoinId: makeInt(j['quote_coin_id'] ?? j['quote_currency_id']),
+    icon: j['icon'] as String?,
   );
 
   String get coinPairName => '${baseCurrency ?? ""}/${quoteCurrency ?? ""}';
