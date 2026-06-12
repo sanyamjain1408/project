@@ -362,8 +362,8 @@ class _MidPriceBlockState extends State<MidPriceBlock> {
 
   @override
   Widget build(BuildContext context) {
-    final priceStr = _fmt2(widget.lastPData?.price, fixed: 2);
-    final usdStr   = "≈ \$${_fmt2(widget.lastPData?.lastPrice, fixed: 2)}";
+    final priceStr = _fmtPrice(widget.lastPData?.price, fixed: 2);
+    final usdStr   = "≈ \$${_fmtPrice(widget.lastPData?.lastPrice, fixed: 2)}";
 
     return Container(
       width: double.infinity,
