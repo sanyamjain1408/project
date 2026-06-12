@@ -35,6 +35,7 @@ class WalletController extends GetxController
   RxDouble futureCombinedPnl = 0.0.obs;
   int walletListFromType = 0;
   Timer? searchTimer;
+  Timer? _pnlTimer;
 
   Map<int, String> getTypeMap() {
     final settings = getSettingsLocal();
@@ -124,6 +125,20 @@ class WalletController extends GetxController
             showToast(err.toString());
           },
         );
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchGrandTotal();
+    _pnlTimer = Timer.periodic(const Duration(seconds: 10), (_) => fetchGrandTotal());
+  }
+
+  @override
+  void onClose() {
+    _pnlTimer?.cancel();
+    searchTimer?.cancel();
+    super.onClose();
   }
 
   Future<void> fetchGrandTotal() async {
