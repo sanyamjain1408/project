@@ -12,7 +12,7 @@ import 'package:get/get.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
 import '../market_spot/market_spot_controller.dart';
 import '../../../root/root_controller.dart';
-import '../../../../data/local/constants.dart';
+import 'package:tradexpro_flutter/data/local/constants.dart';
 import '../../trades/future_trade/future_controller.dart';
 
 // Global icon cache — coin symbol → icon URL (built from spot market data)
