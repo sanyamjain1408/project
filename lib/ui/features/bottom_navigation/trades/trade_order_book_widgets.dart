@@ -29,8 +29,7 @@ const double _kMinFillPercent = 0.05;
 // If integer part > 7 digits (overflow), show integer only.
 String _fmt2(num? n, {int fixed = _kOrderDecimal}) {
   final val = (n ?? 0).toDouble();
-  final intPart = val.toStringAsFixed(0);
-  if (intPart.length > 7) return intPart;
+  if (val >= 1000) return numberFormatCompact(val, decimals: 2);
   return val.toStringAsFixed(fixed);
 }
 
