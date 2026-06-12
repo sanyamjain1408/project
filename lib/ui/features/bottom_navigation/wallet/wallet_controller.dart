@@ -178,7 +178,7 @@ class WalletController extends GetxController
     final spotPnl = pnlResult[0];
     final totalPnl = spotPnl + futurePnl;
     final base = spotYesterdayValue.value + futureVal;
-    final totalPct = base > 0 ? (totalPnl / base) * 100 : 0;
+    final totalPct = base > 0 ? (totalPnl / base) * 100 : 0.0;
 
     final cur = totalBalance.value;
     totalBalance.value = TotalBalance(
@@ -187,7 +187,7 @@ class WalletController extends GetxController
       todayPnl: totalPnl,
       todayPnlPercent: totalPct,
       spotPnl: spotPnl,
-      spotPnlPercent: spotYesterdayValue.value > 0 ? (spotPnl / spotYesterdayValue.value) * 100 : 0,
+      spotPnlPercent: spotYesterdayValue.value > 0 ? (spotPnl / spotYesterdayValue.value) * 100 : 0.0,
     );
   }
 
