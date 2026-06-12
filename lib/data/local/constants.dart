@@ -25,6 +25,7 @@ class TemporaryData {
   static CoinPair? selectedCurrencyPair;
   static String? activityType;
   static int? changingPageId;
+  static String? pendingFutureSymbol; // set before switching to Futures tab
 }
 
 enum IdVerificationType { none, nid, passport, driving, voter }

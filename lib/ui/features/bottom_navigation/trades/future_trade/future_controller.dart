@@ -90,7 +90,11 @@ class NewFutureController extends GetxController {
         if (data['success'] == true && data['data'] != null) {
           final list = (data['data'] as List).map((e) => FuturePair.fromJson(e)).toList();
           pairs.value = list;
-          if (currentPair.value == null && list.isNotEmpty) {
+          final pending = TemporaryData.pendingFutureSymbol;
+          if (pending != null) {
+            TemporaryData.pendingFutureSymbol = null;
+            selectPair(list.firstWhere((p) => p.symbol == pending, orElse: () => list.first));
+          } else if (currentPair.value == null && list.isNotEmpty) {
             selectPair(list.firstWhere((p) => p.symbol == 'BTCUSDT', orElse: () => list.first));
           }
         }

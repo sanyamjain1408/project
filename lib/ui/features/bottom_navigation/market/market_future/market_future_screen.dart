@@ -393,12 +393,19 @@ class _FuturePairItem extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
         if (Get.isRegistered<NewFutureController>()) {
           final ctrl = Get.find<NewFutureController>();
           final match = ctrl.pairs.firstWhereOrNull((p) => p.symbol == pair.symbol);
-          if (match != null) ctrl.selectPair(match);
+          if (match != null) {
+            ctrl.selectPair(match);
+          } else {
+            // Pairs still loading — store as pending
+            TemporaryData.pendingFutureSymbol = pair.symbol;
+          }
+        } else {
+          TemporaryData.pendingFutureSymbol = pair.symbol;
         }
+        Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 5),
