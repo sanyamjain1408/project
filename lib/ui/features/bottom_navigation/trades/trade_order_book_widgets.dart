@@ -179,6 +179,7 @@ class OderBookFixedView extends StatelessWidget {
             if (selectedOrderSort != FromKey.buy)
               MidPriceBlock(
                 lastPData: lastPData,
+                priceDecimal: priceDecimal,
                 priceColor: selectedOrderSort == FromKey.sell
                     ? const Color(0xFFD05858)
                     : (lastPData?.priceOrderType == FromKey.buy
@@ -213,6 +214,7 @@ class OderBookFixedView extends StatelessWidget {
             if (selectedOrderSort == FromKey.buy)
               MidPriceBlock(
                 lastPData: lastPData,
+                priceDecimal: priceDecimal,
                 priceColor: const Color(0xFF4ED78E),
               ),
             if (selectedOrderSort == FromKey.buy) const SizedBox(height: 0),
@@ -323,10 +325,12 @@ class MidPriceBlock extends StatefulWidget {
     super.key,
     required this.lastPData,
     required this.priceColor,
+    this.priceDecimal = 2,
   });
 
   final PriceData? lastPData;
-  final Color priceColor; // used as initial color before first price change
+  final Color priceColor;
+  final int priceDecimal; // used as initial color before first price change
 
   @override
   State<MidPriceBlock> createState() => _MidPriceBlockState();
@@ -362,8 +366,8 @@ class _MidPriceBlockState extends State<MidPriceBlock> {
 
   @override
   Widget build(BuildContext context) {
-    final priceStr = _fmtPrice(widget.lastPData?.price, fixed: 2);
-    final usdStr   = "≈ \$${_fmtPrice(widget.lastPData?.lastPrice, fixed: 2)}";
+    final priceStr = _fmtPrice(widget.lastPData?.price, fixed: widget.priceDecimal);
+    final usdStr   = "≈ \$${_fmtPrice(widget.lastPData?.lastPrice, fixed: widget.priceDecimal)}";
 
     return Container(
       width: double.infinity,
