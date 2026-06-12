@@ -15,7 +15,7 @@ import 'package:tradexpro_flutter/utils/text_util.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import '../../../root/root_controller.dart';
 import '../../../../../helper/bottom_nav_helper.dart';
-import '../../../trades/spot_trade/spot_trade_controller.dart';
+import '../../trades/spot_trade/spot_trade_controller.dart';
 
 class MarketSort {
   bool? price;
