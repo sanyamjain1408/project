@@ -1139,7 +1139,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${stake.totalRewardEarned.toStringAsFixed(4)} $symbol',
+                            '${(_liveEarned - stake.totalWithdrawn).clamp(0.0, double.infinity).toStringAsFixed(4)} $symbol',
                             style: const TextStyle(
                               color: Color(0xFF1A1A1A),
                               fontSize: 12,
@@ -1223,7 +1223,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
                 ),
                 _statRow(
                   'Total Earned',
-                  '${stake.totalRewardEarned.toStringAsFixed(6)} $symbol',
+                  '${_liveEarned.toStringAsFixed(8)} $symbol',
                   null,
                 ),
                 _statRow(

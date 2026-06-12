@@ -23,10 +23,9 @@ class McPortfolioScreen extends StatefulWidget {
 class _McPortfolioScreenState extends State<McPortfolioScreen> {
   late McStakingController _c;
 
-  double _totalEarned = 0;       // USD, live big number counter
-  double _totalPerSec = 0;      // coin units per-sec (for Per Second display)
-  double _totalPerSecUsdt = 0;  // USD per-sec (big number increment rate)
-  double _totalDailyRewardCoin = 0; // daily reward in coin units (for Daily Total display)
+  double _totalEarned = 0;
+  double _totalPerSec = 0;
+  double _totalDailyRewardCoin = 0;
 
   // Local coin-dashboard data (not shared with controller)
   Map<String, dynamic>? _dashData;
@@ -152,58 +151,59 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   void _initCounter() {
     if (_counterReady || _positions.isEmpty) return;
 
-    // Website formula (MobileLiveDashboard):
-    //   perSec_coin = amount * (daily_rate/100) / 86400           (coin units)
-    //   bigNumber (USD) = (totalRewardEarned + sessionElapsed * perSec_coin) * coinPrice
-    //   Per Second display = perSec_coin (coin units)
-    //   Daily Total display = amount * daily_rate/100 (coin units)
+    // Website formula (MobileStakingHistory):
+    //   perSec = amount * (dailyRate/100) / 86400   (coin units/sec)
+    //   liveEarned = perSec * secondsElapsedFromStartDate
     double initTotalUsdt = 0;
-    double totalPerSecCoin = 0;  // coin units/sec (shown in Per Second)
-    double totalPerSecUsdt = 0;  // USD/sec (big number increment)
-    double totalDailyCoin = 0;   // coin units/day (shown in Daily Total)
+    double totalPerSecCoin = 0;
+    double totalDailyCoin = 0;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     for (final item in _positions) {
       final price = item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1;
       final perSecCoin = item.stakedAmount * (item.dailyRate / 100) / 86400;
-      final perSecUsd = perSecCoin * price;
       final dailyCoin = item.stakedAmount * (item.dailyRate / 100);
 
       totalPerSecCoin += perSecCoin;
-      totalPerSecUsdt += perSecUsd;
       totalDailyCoin += dailyCoin;
 
-      // totalEarned in coin units → USD for big number base
-      final totalEarnedUsdt = item.totalEarned * price;
-      final withdrawnUsdt = item.totalWithdrawn * price;
-      final availBaseUsdt = (totalEarnedUsdt - withdrawnUsdt).clamp(0.0, double.infinity);
-      initTotalUsdt += totalEarnedUsdt;
+      // Compute elapsed seconds from start_date (website formula)
+      final startDt = item.stakedAt != null ? DateTime.tryParse(item.stakedAt!) : null;
+      final startMs = startDt?.millisecondsSinceEpoch ?? nowMs;
+      final elapsedSec = ((nowMs - startMs) / 1000).clamp(0.0, double.infinity);
 
-      // _StakeBase tracks USDT for the withdraw button calculation
+      // liveEarned in coin units = perSecCoin * totalElapsed
+      final liveEarnedCoin = perSecCoin * elapsedSec;
+      initTotalUsdt += liveEarnedCoin * price;
+
+      // _StakeBase now tracks coin units; base seeded at startMs for continuous counting
       _stakeBases[item.stakeUid] = _StakeBase(
-        base: availBaseUsdt,
-        perSec: perSecUsd,
-        baseTime: nowMs,
+        base: 0,
+        perSec: perSecCoin,
+        baseTime: startMs,
+        totalWithdrawn: item.totalWithdrawn,
       );
-
-      print('PORTFOLIO_COUNTER uid=${item.stakeUid} coin=${item.coinSymbol} amount=${item.stakedAmount} rate=${item.dailyRate} price=$price totalEarned=${item.totalEarned} perSecCoin=$perSecCoin perSecUsd=$perSecUsd');
     }
-    print('PORTFOLIO_COUNTER initTotalUsdt=$initTotalUsdt totalPerSecCoin=$totalPerSecCoin totalPerSecUsdt=$totalPerSecUsdt totalDailyCoin=$totalDailyCoin');
 
     _totalEarned = initTotalUsdt;
-    _totalPerSec = totalPerSecCoin;     // coin units — Per Second display
-    _totalPerSecUsdt = totalPerSecUsdt; // USD — big number increment
-    _totalDailyRewardCoin = totalDailyCoin; // coin units — Daily Total display
+    _totalPerSec = totalPerSecCoin;
+    _totalDailyRewardCoin = totalDailyCoin;
     _counterReady = true;
-    final sessionStart = nowMs;
 
     _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
       if (!mounted) return;
-      final sinceSession = (DateTime.now().millisecondsSinceEpoch - sessionStart) / 1000;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      double totalUsdt = 0;
+      for (final item in _positions) {
+        final sb = _stakeBases[item.stakeUid];
+        if (sb == null) continue;
+        final price = item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1;
+        final elapsedSec = ((now - sb.baseTime) / 1000).clamp(0.0, double.infinity);
+        final liveEarnedCoin = sb.perSec * elapsedSec;
+        totalUsdt += liveEarnedCoin * price;
+      }
       setState(() {
-        // Big number = (totalRewardEarned + sessionElapsed * perSec_coin) * coinPrice
-        // = initTotalUsdt + sessionElapsed * perSecUsdt
-        _totalEarned = initTotalUsdt + _totalPerSecUsdt * sinceSession;
+        _totalEarned = totalUsdt;
       });
     });
   }
@@ -214,19 +214,21 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     super.dispose();
   }
 
+  // Returns available coin units = liveEarned - totalWithdrawn
   double _stakeAvailable(String uid) {
     final sb = _stakeBases[uid];
     if (sb == null) return 0;
-    final elapsed = (DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000;
-    return (sb.base + sb.perSec * elapsed).clamp(0.0, double.infinity);
+    final elapsed = ((DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000).clamp(0.0, double.infinity);
+    final liveEarned = sb.perSec * elapsed;
+    return (liveEarned - sb.totalWithdrawn).clamp(0.0, double.infinity);
   }
 
-  // Session-only earned (from when screen opened)
-  double _stakeSessionEarned(String uid) {
+  // Returns total live earned coin units (from start_date)
+  double _stakeLiveEarned(String uid) {
     final sb = _stakeBases[uid];
     if (sb == null) return 0;
-    final elapsed = (DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000;
-    return (sb.perSec * elapsed).clamp(0.0, double.infinity);
+    final elapsed = ((DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000).clamp(0.0, double.infinity);
+    return sb.perSec * elapsed;
   }
 
   // Daily Total in coin units (website: dailyEarning.toFixed(6) — coin units, not USD)
@@ -567,12 +569,8 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     final coinLogoFromList = _c.coins.firstWhereOrNull((c) => c.symbol == symbol)?.logo;
     final resolvedLogo = item.coinLogo ?? coinLogoFromDash ?? coinLogoFromList;
     final logoUrl = mcLogoUrl(resolvedLogo, symbol: symbol);
-    final sessionEarned = _stakeSessionEarned(item.stakeUid);
-    final earnedCoin = item.coinPriceUsdt > 0
-        ? _stakeAvailable(item.stakeUid) / item.coinPriceUsdt
-        : _stakeAvailable(item.stakeUid);
-    final sessionCoin =
-        item.coinPriceUsdt > 0 ? sessionEarned / item.coinPriceUsdt : sessionEarned;
+    final earnedCoin = _stakeAvailable(item.stakeUid);
+    final liveEarnedCoin = _stakeLiveEarned(item.stakeUid);
     final dailyRewardCoin = item.stakedAmount * (item.dailyRate / 100);
     final startFmt = _fmtDate(item.stakedAt);
     final planDays = _parseDays(item.planName);
@@ -746,11 +744,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               children: [
-                _statRow(
-                  'Session Live',
-                  '${sessionCoin.toStringAsFixed(8)} $symbol',
-                  const Color(0xFF00B052),
-                ),
+                _totalEarnedRow(liveEarnedCoin, item.coinPriceUsdt, symbol),
                 _statRow(
                   'Total Stacked',
                   '${item.stakedAmount.toStringAsFixed(0)} $symbol',
@@ -759,11 +753,6 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                 _statRow(
                   'USDT Value',
                   '${item.usdtValue.toStringAsFixed(2)} USDT',
-                  Colors.white,
-                ),
-                _statRow(
-                  'Total Earned',
-                  '${item.totalEarned.toStringAsFixed(6)} $symbol',
                   Colors.white,
                 ),
                 _statRow(
@@ -821,6 +810,54 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
           ),
         ),
       );
+
+  Widget _totalEarnedRow(double liveEarned, double coinPrice, String symbol) {
+    final usdVal = coinPrice > 0 ? liveEarned * coinPrice : 0.0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Total Earned',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontSize: 12,
+              fontFamily: 'DMSans',
+            ),
+          ),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${liveEarned.toStringAsFixed(8)} $symbol',
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    color: Color(0xFF00B052),
+                    fontSize: 12,
+                    fontFamily: 'DMSans',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (usdVal > 0)
+                  Text(
+                    '≈ \$${usdVal.toStringAsFixed(4)} USDT',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontSize: 11,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _statRow(String label, String value, Color valueColor) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1127,7 +1164,8 @@ class _StakeBase {
   double base;
   final double perSec;
   int baseTime;
-  _StakeBase({required this.base, required this.perSec, required this.baseTime});
+  final double totalWithdrawn;
+  _StakeBase({required this.base, required this.perSec, required this.baseTime, this.totalWithdrawn = 0});
 }
 
 class _WithdrawInfo {

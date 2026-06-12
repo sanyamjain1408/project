@@ -83,7 +83,7 @@ class McStake {
   final int id;
   final String uid;
   final int status;
-  final String? startDate;
+  final String? startDate;  // staked_at ?? start_date (matches McPortfolioItem)
   final String? endDate;
   final double amount;
   final double dailyRate;
@@ -149,7 +149,7 @@ class McStake {
       id: j['id'] ?? 0,
       uid: j['uid'] ?? '',
       status: j['status'] ?? 1,
-      startDate: j['start_date'],
+      startDate: j['staked_at'] ?? j['start_date'],
       endDate: j['end_date'],
       amount: double.tryParse(j['amount'].toString()) ?? 0,
       dailyRate: double.tryParse(j['daily_rate'].toString()) ?? 0,
