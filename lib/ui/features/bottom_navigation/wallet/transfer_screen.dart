@@ -497,8 +497,6 @@ class _TransferDirectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenW = widget.screenW;
-
     final cardH = screenW * _svgNH / _svgNW;
     final sx = screenW / _svgNW;
     final sy = cardH / _svgNH;
