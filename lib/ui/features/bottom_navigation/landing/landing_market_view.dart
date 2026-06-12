@@ -15,7 +15,9 @@ import '../../../../utils/image_util.dart';
 import '../../../../utils/number_util.dart';
 import '../../../../utils/spacers.dart';
 import '../../../../utils/text_util.dart';
-import '../../currency_pair_details/currency_pair_details_screen.dart';
+import '../trades/spot_trade/spot_trade_controller.dart';
+import '../../root/root_controller.dart';
+import '../../../../data/local/constants.dart';
 import 'landing_controller.dart';
 
 
@@ -123,7 +125,13 @@ class MarketTrendItemView extends StatelessWidget {
       onTap: () {
         coin.coinPair = coin.getCoinPairKey();
         coin.coinPairName = coin.getCoinPairName();
-        Get.to(() => CurrencyPairDetailsScreen(pair: coin));
+        // Switch to Trade tab and load the selected pair
+        Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.trade);
+        if (Get.isRegistered<SpotTradeController>()) {
+          final ctrl = Get.find<SpotTradeController>();
+          ctrl.selectedCoinPair.value = coin;
+          ctrl.getDashBoardData();
+        }
       },
       child: Row(
         children: [
