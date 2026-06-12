@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
@@ -8,7 +10,6 @@ import 'mc_staking_controller.dart' show McStakingController, mcLogoUrl;
 import 'mc_staking_models.dart';
 import 'mc_portfolio_screen.dart';
 import 'mc_my_stakes_screen.dart';
-import 'mc_network_screen.dart';
 
 const _green = Color(0xFFCCFF00);
 const _card = Color(0xFF1A1A1A);
@@ -53,7 +54,8 @@ class McStakingScreen extends StatefulWidget {
   State<McStakingScreen> createState() => _McStakingScreenState();
 }
 
-class _McStakingScreenState extends State<McStakingScreen> {
+class _McStakingScreenState extends State<McStakingScreen>
+    with SingleTickerProviderStateMixin {
   late McStakingController _c;
   McStakingCoin? _selectedCoin;
   McStakingPlan? _selectedPlan;
@@ -63,6 +65,12 @@ class _McStakingScreenState extends State<McStakingScreen> {
   Timer? _calcTimer;
   double _perSec = 0;
 
+  // Sparkline animation — mirrors website's RAF + lerp approach
+  late final Ticker _sparkTicker;
+  List<double> _displayHistory = []; // smoothly interpolated values
+  List<double> _targetHistory = []; // latest from API
+  final _rng = math.Random();
+
   @override
   void initState() {
     super.initState();
@@ -71,14 +79,46 @@ class _McStakingScreenState extends State<McStakingScreen> {
         : Get.put(McStakingController());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _c.fetchCoins();
+      _c.startTrpxTickerPolling();
       if (gUserRx.value.id > 0) _c.fetchPortfolio();
     });
+
+    // RAF-equivalent: 60fps ticker that lerps _displayHistory → _targetHistory
+    _sparkTicker = createTicker((_) {
+      final target = _c.trpxPriceHistory.toList();
+      if (target.isEmpty) return;
+
+      // Sync list length with target
+      if (_displayHistory.length != target.length) {
+        _displayHistory = List.of(target);
+        _targetHistory = List.of(target);
+      } else {
+        _targetHistory = target;
+        // Lerp each point 8% per frame toward target (matches website)
+        for (int i = 0; i < _displayHistory.length; i++) {
+          _displayHistory[i] += (_targetHistory[i] - _displayHistory[i]) * 0.08;
+        }
+        // Micro-vibrations on last 2 nodes so line looks "live"
+        final len = _displayHistory.length;
+        if (len >= 2) {
+          final range =
+              _targetHistory.reduce(math.max) - _targetHistory.reduce(math.min);
+          final jitter = (range > 0 ? range : 1.0) * 0.003;
+          _displayHistory[len - 1] += (_rng.nextDouble() - 0.5) * jitter;
+          _displayHistory[len - 2] += (_rng.nextDouble() - 0.5) * jitter * 0.5;
+        }
+      }
+      if (mounted) setState(() {});
+    });
+    _sparkTicker.start();
   }
 
   @override
   void dispose() {
+    _sparkTicker.dispose();
     _calcTimer?.cancel();
     _amountCtrl.dispose();
+    _c.stopTrpxTickerPolling();
     super.dispose();
   }
 
@@ -191,7 +231,7 @@ class _McStakingScreenState extends State<McStakingScreen> {
           //   ],
           // ),
           // const SizedBox(height: 20),
-          _buildStatsGrid(),
+          _buildTrpxPriceCard(),
           const SizedBox(height: 10),
           _buildCoinList(),
           // const SizedBox(height: 20),
@@ -201,156 +241,145 @@ class _McStakingScreenState extends State<McStakingScreen> {
     );
   }
 
-  Widget _buildStatsGrid() {
+  // ── TRPX Price Card (replaces stats grid) ────────────────────────────────
+  Widget _buildTrpxPriceCard() {
     return Obx(() {
-      final stats = _c.statistics.value;
-      final p = _c.portfolio.value;
+      final price = _c.trpxPrice.value;
+      final change = _c.trpxChange.value;
+      final volume = _c.trpxVolume.value;
+      final isPositive = change >= 0;
+      final changeColor = isPositive
+          ? const Color(0xFF77D215)
+          : const Color(0xFFFF453A);
 
-      final stakingValue = p?.totalUsdtValue ?? 0.0;
+      // Format price — show enough decimals based on magnitude
+      String fmtPrice(double p) {
+        if (p == 0) return '--';
+        if (p >= 1) return '\$${p.toStringAsFixed(4)}';
+        if (p >= 0.01) return '\$${p.toStringAsFixed(6)}';
+        return '\$${p.toStringAsFixed(8)}';
+      }
 
-      // Total Reward = live earning from _StakingLiveHero ticker via controller
-      final totalReward = _c.liveEarningUsdt.value;
+      // Format volume — e.g. 23190 → $23.19k
+      String fmtVolume(double v) {
+        if (v == 0) return '--';
+        if (v >= 1e9) return '\$${(v / 1e9).toStringAsFixed(2)}B';
+        if (v >= 1e6) return '\$${(v / 1e6).toStringAsFixed(2)}M';
+        if (v >= 1e3) return '\$${(v / 1e3).toStringAsFixed(2)}k';
+        return '\$${v.toStringAsFixed(2)}';
+      }
 
-      return Transform.translate(
-        offset: const Offset(0, -10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 0),
-          child: GridView.count(
-            crossAxisCount: 2,
-            crossAxisSpacing: 20,
-            mainAxisSpacing: 20,
-            childAspectRatio: 1.7,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+      // TRPX coin logo from loaded coins list
+      final trpxCoin = _c.coins.firstWhereOrNull((c) => c.symbol == 'TRPX');
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 0),
+        child: Container(
+          height: 149,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
             children: [
-              _statsCard(
-                label: 'Staking Value',
-                value: stakingValue.toStringAsFixed(2),
-                sub: 'Staked',
-                color: const Color(0xFFCCFF00),
-                imagePath: 'assets/images/stacking.png',
+              // Sparkline area — redraws every frame via Ticker (RAF equivalent)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 80,
+                child: CustomPaint(
+                  painter: _TrpxSparklinePainter(
+                    changePercent: change,
+                    priceHistory: List.of(_displayHistory),
+                  ),
+                ),
               ),
-              _statsCard(
-                label: 'Active Stakes',
-                value: '${stats?.totalActiveStakes ?? 0}',
-                sub: 'Positions',
-                color: const Color(0xFFE946FF),
-                imagePath: 'assets/images/active.png',
-              ),
-              _statsCard(
-                label: 'Total Reward',
-                value: totalReward.toStringAsFixed(4),
-                sub: 'All time',
-                color: const Color(0xFF00B052),
-                imagePath: 'assets/images/total.png',
-              ),
-              _statsCard(
-                label: 'Referrals',
-                value: '${stats?.totalReferralCommissions ?? 0}',
-                sub: 'Commissions',
-                color: const Color(0xFF00E5FF),
-                imagePath: 'assets/images/referrals.png',
-                showArrow: true,
-                onTap: () => Get.to(() => const McNetworkScreen()),
+
+              // Header row: coin icon + name + price + change
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Coin icon
+                    _coinImg(trpxCoin?.logo, size: 30, symbol: 'TRPX'),
+                    const SizedBox(width: 10),
+                    // Symbol + volume
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              const TextSpan(
+                                text: 'TRPX',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontFamily: 'DMSans',
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '/USDT',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontSize: 15,
+                                  fontFamily: 'DMSans',
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          fmtVolume(volume),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 12,
+                            fontFamily: 'DMSans',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    // Price + change
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          fmtPrice(price),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'DMSans',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${isPositive ? '▲' : '▼'} ${change.abs().toStringAsFixed(2)}%',
+                          style: TextStyle(
+                            color: changeColor,
+                            fontSize: 12,
+                            fontFamily: 'DMSans',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
       );
     });
-  }
-
-  Widget _statsCard({
-    required String label,
-    required String value,
-    required String sub,
-    required Color color,
-    required String imagePath,
-    bool showArrow = false,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Stack(
-          children: [
-            Positioned.fill(child: Image.asset(imagePath, fit: BoxFit.cover)),
-            // arrow pinned to top-right, slightly outside padding
-            if (showArrow)
-              Positioned(
-                top: 12,
-                right: 0,
-                child: Container(
-                  width: 15,
-                  height: 15,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF1A1A1A), Color(0xFF00282C)],
-                    ),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.transparent, width: 1),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_forward,
-                    color: Color(0xFF00E5FF),
-                    size: 13,
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'DMSans',
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        value,
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'DMSans',
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        sub,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: 'DMSans',
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   // ── COIN LIST (overview style) ────────────────────────────────────────────
@@ -3153,4 +3182,112 @@ Widget _pagination(Map<String, dynamic>? meta, Function(int) onPage) {
       );
     }),
   );
+}
+
+// ── TRPX Sparkline Painter ────────────────────────────────────────────────────
+// Generates a realistic-looking area chart curve driven by the live % change.
+// Positive change → upward trend on right side; negative → downward.
+class _TrpxSparklinePainter extends CustomPainter {
+  final double changePercent;
+  final List<double> priceHistory;
+
+  const _TrpxSparklinePainter({
+    required this.changePercent,
+    this.priceHistory = const [],
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final isPositive = changePercent >= 0;
+    final lineColor = isPositive
+        ? const Color(0xFF77D215)
+        : const Color(0xFFFF453A);
+
+    List<Offset> points;
+    if (priceHistory.length >= 2) {
+      // Use real price data — normalize to canvas height
+      final minP = priceHistory.reduce((a, b) => a < b ? a : b);
+      final maxP = priceHistory.reduce((a, b) => a > b ? a : b);
+      final range = (maxP - minP).abs();
+      final count = priceHistory.length;
+      points = List.generate(count, (i) {
+        final x = w * i / (count - 1);
+        final normalized = range > 0 ? (priceHistory[i] - minP) / range : 0.5;
+        // flip: high price = low y (top of canvas)
+        final y = h * (1.0 - normalized * 0.8 - 0.1);
+        return Offset(x, y);
+      });
+    } else {
+      // Fallback static curve until enough data accumulates
+      final magnitude = (changePercent.abs() / 20).clamp(0.1, 0.7);
+      final raw = isPositive
+          ? [0.55, 0.65, 0.45, 0.60, 0.40, 0.50, 0.35, 0.30 - magnitude * 0.3]
+          : [0.45, 0.35, 0.55, 0.40, 0.60, 0.50, 0.65, 0.70 + magnitude * 0.3];
+      final count = raw.length;
+      points = List.generate(count, (i) {
+        final x = w * i / (count - 1);
+        final y = h * raw[i].clamp(0.05, 0.95);
+        return Offset(x, y);
+      });
+    }
+
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          lineColor.withValues(alpha: 0.35),
+          lineColor.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, w, h))
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final fillPath = Path();
+    path.moveTo(points.first.dx, points.first.dy);
+    fillPath.moveTo(points.first.dx, h);
+    fillPath.lineTo(points.first.dx, points.first.dy);
+
+    for (int i = 0; i < points.length - 1; i++) {
+      final cp1 = Offset((points[i].dx + points[i + 1].dx) / 2, points[i].dy);
+      final cp2 = Offset(
+        (points[i].dx + points[i + 1].dx) / 2,
+        points[i + 1].dy,
+      );
+      path.cubicTo(
+        cp1.dx,
+        cp1.dy,
+        cp2.dx,
+        cp2.dy,
+        points[i + 1].dx,
+        points[i + 1].dy,
+      );
+      fillPath.cubicTo(
+        cp1.dx,
+        cp1.dy,
+        cp2.dx,
+        cp2.dy,
+        points[i + 1].dx,
+        points[i + 1].dy,
+      );
+    }
+
+    fillPath.lineTo(points.last.dx, h);
+    fillPath.close();
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(path, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(_TrpxSparklinePainter old) =>
+      old.changePercent != changePercent || old.priceHistory != priceHistory;
 }

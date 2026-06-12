@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -44,6 +45,12 @@ String _coinIconBySymbol(String symbol) {
 }
 
 class McStakingController extends GetxController {
+  @override
+  void onClose() {
+    stopTrpxTickerPolling();
+    super.onClose();
+  }
+
   // ── Auth header — same as rest of app (includes userapisecret + Bearer) ──
   Map<String, String> get _headers {
     final h = APIRepository().authHeader();
@@ -236,6 +243,50 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
     } finally {
       isCancelling.value = '';
     }
+  }
+
+  // ── TRPX Ticker (price + % change for sparkline card) ───────────────────
+  final trpxPrice = 0.0.obs;
+  final trpxChange = 0.0.obs;   // percent change e.g. 4.15
+  final trpxVolume = 0.0.obs;   // 24h volume in USDT
+
+  /// Live price history for the animated sparkline — max 40 points
+  final trpxPriceHistory = <double>[].obs;
+  Timer? _trpxTickerTimer;
+
+  Future<void> fetchTrpxTicker() async {
+    try {
+      final res = await _get('/api/v1/spot/ticker/TRPXUSDT');
+      final j = _decode(res);
+      // Handle both success wrapper and direct object
+      final data = j['data'] ?? j;
+      final price = double.tryParse(data['current_price']?.toString() ?? data['last_price']?.toString() ?? data['price']?.toString() ?? '0') ?? 0;
+      trpxPrice.value = price;
+      trpxChange.value = double.tryParse(data['price_change_24h']?.toString() ?? data['price_change_percent']?.toString() ?? data['change']?.toString() ?? '0') ?? 0;
+      trpxVolume.value = double.tryParse(data['volume_24h']?.toString() ?? data['quote_volume']?.toString() ?? data['volume']?.toString() ?? '0') ?? 0;
+
+      // Accumulate price points for animated sparkline
+      if (price > 0) {
+        final history = trpxPriceHistory.toList();
+        history.add(price);
+        if (history.length > 40) history.removeAt(0);
+        trpxPriceHistory.value = history;
+      }
+    } catch (e) {
+      print('TRPX_TICKER error: $e');
+    }
+  }
+
+  /// Start polling ticker every 3 s so sparkline animates with live prices
+  void startTrpxTickerPolling() {
+    _trpxTickerTimer?.cancel();
+    fetchTrpxTicker();
+    _trpxTickerTimer = Timer.periodic(const Duration(seconds: 3), (_) => fetchTrpxTicker());
+  }
+
+  void stopTrpxTickerPolling() {
+    _trpxTickerTimer?.cancel();
+    _trpxTickerTimer = null;
   }
 
   // ── Coin Dashboard (live data per coin) ──────────────────────────────────
