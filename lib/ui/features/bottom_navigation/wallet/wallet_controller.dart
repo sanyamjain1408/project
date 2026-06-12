@@ -271,26 +271,56 @@ class WalletController extends GetxController
   }
 
   Future<double> _fetchFutureBalance() async {
+    final token = getFutureToken();
+    if (token.isEmpty) {
+      print('[FutureBalance] token empty, skipping');
+      return 0;
+    }
+
+    // Primary: wallet-details-balance (same as web asset overview)
     try {
-      final token = getFutureToken();
-      if (token.isEmpty) return 0;
-      // Use wallet-details-balance (same endpoint as web's useFutureWalletDetailsBalance)
-      // Returns total_balance = wallet balance shown on overview
       final resp = await http.get(
         Uri.parse('https://api.trapix.com/api/future/wallet-details-balance'),
         headers: {'Authorization': 'Bearer $token'},
       );
+      print('[FutureBalance] wallet-details-balance status=${resp.statusCode} body=${resp.body.substring(0, resp.body.length.clamp(0, 200))}');
       if (resp.statusCode == 200) {
         final json = jsonDecode(resp.body);
         if (json['success'] == true) {
           final d = json['data'] ?? {};
-          // Web asset overview shows available_balance from this endpoint
           final avail = double.tryParse(d['available_balance']?.toString() ?? '0') ?? 0;
           final tb = double.tryParse(d['total_balance']?.toString() ?? '0') ?? 0;
-          return avail > 0 ? avail : tb;
+          final result = avail > 0 ? avail : tb;
+          print('[FutureBalance] available=$avail total=$tb returning=$result');
+          return result;
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      print('[FutureBalance] wallet-details-balance error: $e');
+    }
+
+    // Fallback: /v1/future/balance
+    try {
+      final resp2 = await http.get(
+        Uri.parse('https://api.trapix.com/api/v1/future/balance'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      print('[FutureBalance] v1/future/balance status=${resp2.statusCode} body=${resp2.body.substring(0, resp2.body.length.clamp(0, 200))}');
+      if (resp2.statusCode == 200) {
+        final json = jsonDecode(resp2.body);
+        if (json['success'] == true) {
+          final d = json['data'] ?? {};
+          final avail = double.tryParse(d['balance']?.toString() ?? '0') ?? 0;
+          final wb = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
+          final result = avail > 0 ? avail : wb;
+          print('[FutureBalance] fallback avail=$avail wb=$wb returning=$result');
+          return result;
+        }
+      }
+    } catch (e) {
+      print('[FutureBalance] v1/future/balance error: $e');
+    }
+
     return 0;
   }
 
