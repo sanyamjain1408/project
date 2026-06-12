@@ -314,7 +314,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
 
                   // ── Live Card ────────────────────────────────────────────────
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 0),
                     child: _buildLiveCard(hasStakes),
                   ),
                   const SizedBox(height: 20),
@@ -354,8 +354,8 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
 
   // ── LIVE CARD ────────────────────────────────────────────────────────────────
   Widget _buildLiveCard(bool hasStakes) {
-    final screenW = MediaQuery.of(context).size.width - 40; // minus horizontal padding
-    const cardH = 200.0;
+    final screenW = MediaQuery.of(context).size.width;
+    const cardH = 220.0;
     return SizedBox(
       width: screenW,
       height: hasStakes ? null : cardH,
@@ -378,7 +378,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
               right: 25,
               top: 20,
               width: screenW * 0.42,
-              height: cardH * 1.4,
+              height: cardH * 1.3,
               child: Transform.rotate(
                 angle: 1.250,
                 alignment: Alignment.center,
@@ -480,21 +480,25 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Buttons: My Stake + Calculator
+                    // Buttons: My Stake + Calculator — full width expanded
                     Row(
                       children: [
-                        _cardBtn(
-                          'My Stake',
-                          _kGreen,
-                          Colors.black,
-                          () => Get.to(() => const McMyStakesScreen()),
+                        Expanded(
+                          child: _cardBtn(
+                            'My Stake',
+                            _kGreen,
+                            Colors.black,
+                            () => Get.to(() => const McMyStakesScreen()),
+                          ),
                         ),
                         const SizedBox(width: 10),
-                        _cardBtn(
-                          'Calculator',
-                          const Color(0xFF222222),
-                          Colors.white,
-                          () => Get.back(),
+                        Expanded(
+                          child: _cardBtn(
+                            'Calculator',
+                            const Color(0xFF222222),
+                            Colors.white,
+                            () => {},
+                          ),
                         ),
                       ],
                     ),
@@ -537,6 +541,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       GestureDetector(
         onTap: onTap,
         child: Container(
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
             color: bg,
@@ -544,6 +549,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
           ),
           child: Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: fg,
               fontSize: 13,
