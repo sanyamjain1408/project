@@ -177,10 +177,9 @@ class _WalletPnlState extends State<WalletPnlScreen> {
         final j = jsonDecode(res.body) as Map<String, dynamic>;
         if (j['success'] == true) {
           final d = j['data'] ?? {};
-          return double.tryParse(
-                d['total_balance']?.toString() ?? d['available_balance']?.toString() ?? '0',
-              ) ??
-              0;
+          final avail = double.tryParse(d['available_balance']?.toString() ?? '0') ?? 0;
+          final tb = double.tryParse(d['total_balance']?.toString() ?? '0') ?? 0;
+          return avail > 0 ? avail : tb;
         }
       }
     } catch (_) {}

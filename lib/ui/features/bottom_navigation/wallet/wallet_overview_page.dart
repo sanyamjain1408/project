@@ -1406,7 +1406,7 @@ class _FutureWalletBody extends StatelessWidget {
                                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                       Text('Wallet Balance (USDT)', style: TextStyle(color: Colors.white38, fontSize: 10, fontFamily: _dmSans)),
                                       const SizedBox(height: 2),
-                                      Text(margin.toStringAsFixed(2), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: _dmSans)),
+                                      Text(available.toStringAsFixed(2), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: _dmSans)),
                                     ])),
                                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                       Text('Unrealized PNL (USDT)', style: TextStyle(color: Colors.white38, fontSize: 10, fontFamily: _dmSans)),
