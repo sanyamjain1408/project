@@ -164,22 +164,21 @@ class _WalletPnlState extends State<WalletPnlScreen> {
     return 0;
   }
 
-  // Fetch futures balance — same API as website's useFutureWalletDetailsBalance()
   Future<double> _fetchFutureTotal() async {
     try {
       final token = getFutureToken();
       if (token.isEmpty) return 0;
       final res = await http.get(
-        Uri.parse('${APIURLConstants.baseUrl}/api/future/wallet-details-balance'),
+        Uri.parse('${APIURLConstants.baseUrl}/api/v1/future/balance'),
         headers: {'Authorization': 'Bearer $token'},
       );
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body) as Map<String, dynamic>;
         if (j['success'] == true) {
           final d = j['data'] ?? {};
-          final avail = double.tryParse(d['available_balance']?.toString() ?? '0') ?? 0;
-          final tb = double.tryParse(d['total_balance']?.toString() ?? '0') ?? 0;
-          return avail > 0 ? avail : tb;
+          final avail = double.tryParse(d['balance']?.toString() ?? '0') ?? 0;
+          final wb = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
+          return avail > 0 ? avail : wb;
         }
       }
     } catch (_) {}
