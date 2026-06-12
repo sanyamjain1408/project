@@ -170,14 +170,15 @@ class _WalletPnlState extends State<WalletPnlScreen> {
       final token = getFutureToken();
       if (token.isEmpty) return 0;
       final res = await http.get(
-        Uri.parse('${APIURLConstants.baseUrl}/api/v1/future/balance'),
+        Uri.parse('${APIURLConstants.baseUrl}/api/future/wallet-details-balance'),
         headers: {'Authorization': 'Bearer $token'},
       );
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body) as Map<String, dynamic>;
         if (j['success'] == true) {
+          final d = j['data'] ?? {};
           return double.tryParse(
-                j['data']?['total_balance']?.toString() ?? j['data']?['balance']?.toString() ?? '0',
+                d['total_balance']?.toString() ?? d['available_balance']?.toString() ?? '0',
               ) ??
               0;
         }
@@ -190,8 +191,8 @@ class _WalletPnlState extends State<WalletPnlScreen> {
     try {
       if (token.isEmpty) return 0;
       final res = await http.get(
-        Uri.parse('\${APIURLConstants.baseUrl}/api/v1/future/balance'),
-        headers: {'Authorization': 'Bearer \$token'},
+        Uri.parse('${APIURLConstants.baseUrl}/api/v1/future/balance'),
+        headers: {'Authorization': 'Bearer $token'},
       );
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body) as Map<String, dynamic>;
@@ -235,7 +236,7 @@ class _WalletPnlState extends State<WalletPnlScreen> {
           ? '&live_total=${_spotTotal.toStringAsFixed(2)}'
           : '';
       final url =
-          '\${APIURLConstants.baseUrl}/api/pnl/summary?user_id=\$uid\$liveTotal';
+          '${APIURLConstants.baseUrl}/api/pnl/summary?user_id=$uid$liveTotal';
       final res = await http.get(
         Uri.parse(url),
         headers: {'Accept': 'application/json'},
