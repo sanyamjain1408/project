@@ -78,24 +78,36 @@ class WalletController extends GetxController
     // 1. Fetch spot total + earn + future balance (initial)
     await _refreshBalances();
 
-    // 2. Fetch yesterday snapshot ONCE — like web's pnlInitDoneRef
+    // 2. If future balance still 0 (token may not have been ready), retry once
+    if (futureWalletBalance.value <= 0) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      final fb = await _fetchFutureBalance();
+      if (fb > 0) futureWalletBalance.value = fb;
+    }
+
+    // 3. Fetch yesterday snapshot ONCE — like web's pnlInitDoneRef
     await _fetchSnapshotOnce();
 
-    // 3. Fetch future combined PNL immediately
+    // 4. Fetch future combined PNL immediately
     await _refreshFuturePnl();
 
-    // 4. Recompute PNL display
+    // 5. Recompute PNL display
     _recomputePnl();
 
-    // 5. Start tickers — spot refreshes every 10s, future PNL every 10s
+    // 6. Start tickers — spot refreshes every 10s, future PNL + balance every 10s
     _spotTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
       await _refreshSpotTotal();
       _recomputePnl();
     });
     _futurePnlTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
-      await _refreshFuturePnl();
+      await Future.wait([_refreshFuturePnl(), _refreshFutureBalance()]);
       _recomputePnl();
     });
+  }
+
+  Future<void> _refreshFutureBalance() async {
+    final fb = await _fetchFutureBalance();
+    if (fb > 0) futureWalletBalance.value = fb;
   }
 
   // Refresh spot total only (for tick)
@@ -233,6 +245,7 @@ class WalletController extends GetxController
   // Called by pages for manual refresh (pull-to-refresh)
   Future<void> fetchGrandTotal() async {
     await _refreshBalances();
+    if (futureWalletBalance.value <= 0) await _refreshFutureBalance();
     if (!_snapshotFetched) await _fetchSnapshotOnce();
     await _refreshFuturePnl();
     _recomputePnl();
