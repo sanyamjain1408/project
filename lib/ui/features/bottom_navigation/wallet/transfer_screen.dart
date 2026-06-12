@@ -89,10 +89,8 @@ class _TransferScreenState extends State<TransferScreen>
           'coin_icon': e['coin_icon']?.toString() ?? '',
         }).toList();
         if (mounted) {
-          setState(() {
-            _coins = list;
-            if (list.isNotEmpty) _selectCoin(list.first);
-          });
+          setState(() => _coins = list);
+          if (list.isNotEmpty) await _selectCoin(list.first);
         }
       }
     } catch (_) {}
@@ -129,7 +127,10 @@ class _TransferScreenState extends State<TransferScreen>
   }
 
   void _openCurrencySheet() {
-    if (_coins.isEmpty) return;
+    if (_coins.isEmpty) {
+      Get.snackbar('Loading', 'Please wait...', backgroundColor: _card, colorText: Colors.white, duration: const Duration(seconds: 1));
+      return;
+    }
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
