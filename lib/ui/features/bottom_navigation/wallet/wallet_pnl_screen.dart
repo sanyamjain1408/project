@@ -142,6 +142,8 @@ class _WalletPnlState extends State<WalletPnlScreen> {
 
   double _spotTotal = 0;
   double _futureTotal = 0;
+  double _futureCombinedPnl = 0;
+  double _spotYesterday = 0;
 
   double get _grandTotal => _spotTotal + _futureTotal;
 
@@ -175,9 +177,29 @@ class _WalletPnlState extends State<WalletPnlScreen> {
         final j = jsonDecode(res.body) as Map<String, dynamic>;
         if (j['success'] == true) {
           return double.tryParse(
-                j['data']?['available_balance']?.toString() ?? '0',
+                j['data']?['total_balance']?.toString() ?? j['data']?['balance']?.toString() ?? '0',
               ) ??
               0;
+        }
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  Future<double> _fetchFutureCombinedPnl(String token) async {
+    try {
+      if (token.isEmpty) return 0;
+      final res = await http.get(
+        Uri.parse('\${APIURLConstants.baseUrl}/api/v1/future/balance'),
+        headers: {'Authorization': 'Bearer \$token'},
+      );
+      if (res.statusCode == 200) {
+        final j = jsonDecode(res.body) as Map<String, dynamic>;
+        if (j['success'] == true) {
+          final d = j['data'] ?? {};
+          final unreal = double.tryParse(d['unrealized_pnl']?.toString() ?? '0') ?? 0;
+          final realized = double.tryParse(d['today_realized_pnl']?.toString() ?? '0') ?? 0;
+          return unreal + realized;
         }
       }
     } catch (_) {}
@@ -193,23 +215,27 @@ class _WalletPnlState extends State<WalletPnlScreen> {
         return;
       }
 
-      // Fetch both totals in parallel — exactly like the website
+      // Fetch spot, future balance, and future combined PNL in parallel
+      final token = getFutureToken();
       final results = await Future.wait([
         _fetchSpotTotal(),
         _fetchFutureTotal(),
+        _fetchFutureCombinedPnl(token),
       ]);
       if (mounted) {
         setState(() {
           _spotTotal = results[0];
           _futureTotal = results[1];
+          _futureCombinedPnl = results[2];
         });
       }
 
-      final liveTotal = _grandTotal > 0
-          ? '&live_total=${_grandTotal.toStringAsFixed(2)}'
+      // Pass spot-only live_total to snapshot API (matches web app)
+      final liveTotal = _spotTotal > 0
+          ? '&live_total=${_spotTotal.toStringAsFixed(2)}'
           : '';
       final url =
-          '${APIURLConstants.baseUrl}/api/pnl/summary?user_id=$uid$liveTotal';
+          '\${APIURLConstants.baseUrl}/api/pnl/summary?user_id=\$uid\$liveTotal';
       final res = await http.get(
         Uri.parse(url),
         headers: {'Accept': 'application/json'},
@@ -217,11 +243,26 @@ class _WalletPnlState extends State<WalletPnlScreen> {
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body) as Map<String, dynamic>;
         if (j['success'] == true && j['data'] != null) {
-          if (mounted) {
-            setState(
-              () => _pnl = _PnlData.fromJson(j['data'] as Map<String, dynamic>),
-            );
-          }
+          final parsed = _PnlData.fromJson(j['data'] as Map<String, dynamic>);
+          // Total PNL = spot PNL + future combined (unrealized + realized)
+          final spotPnl = parsed.todayPnl;
+          final totalPnl = spotPnl + _futureCombinedPnl;
+          final yv = parsed.yesterdayValue > 0 ? parsed.yesterdayValue : _spotTotal;
+          _spotYesterday = yv;
+          final base = yv + _futureTotal;
+          final totalPct = base > 0 ? (totalPnl / base) * 100 : 0.0;
+          // Patch todayPnl/todayPct with combined spot+future
+          final patched = _PnlData(
+            todayValue: parsed.todayValue,
+            yesterdayValue: parsed.yesterdayValue,
+            todayPnl: totalPnl,
+            todayPct: totalPct,
+            periodChanges: parsed.periodChanges,
+            chartData: parsed.chartData,
+            calendarData: parsed.calendarData,
+            tradePnl: parsed.tradePnl,
+          );
+          if (mounted) setState(() => _pnl = patched);
         }
       }
     } catch (_) {}
