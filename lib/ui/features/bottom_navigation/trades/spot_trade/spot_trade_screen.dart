@@ -152,16 +152,17 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
   void _chooseCoinPairModal() {
     _controller.getCoinPairList("");
     // Future pairs — convert FuturePair → CoinPair for the shared drawer
-    final futureCtrl = Get.find<NewFutureController>();
-    final futurePairs = futureCtrl.pairs.map((fp) => CoinPair(
-          coinPairId: fp.id,
-          coinPairName: fp.symbol,
-          parentCoinName: fp.baseCurrency,
-          childCoinName: fp.quoteCurrency,
-          lastPrice: fp.currentPrice,
-          priceChange: fp.priceChange24h,
-          volume: fp.volume24h,
-        )).toList();
+    final futurePairs = Get.isRegistered<NewFutureController>()
+        ? Get.find<NewFutureController>().pairs.map((fp) => CoinPair(
+              coinPairId: fp.id,
+              coinPairName: fp.symbol,
+              parentCoinName: fp.baseCurrency,
+              childCoinName: fp.quoteCurrency,
+              lastPrice: fp.currentPrice,
+              priceChange: fp.priceChange24h,
+              volume: fp.volume24h,
+            )).toList()
+        : <CoinPair>[];
 
     SideSheet.left(
       context: context,
