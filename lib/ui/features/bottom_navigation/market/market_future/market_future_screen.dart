@@ -11,6 +11,9 @@ import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
 import '../market_spot/market_spot_controller.dart';
+import '../../../root/root_controller.dart';
+import '../../../../data/local/constants.dart';
+import '../../trades/future_trade/future_controller.dart';
 
 // Global icon cache — coin symbol → icon URL (built from spot market data)
 final Map<String, String> _iconCache = {};
@@ -390,8 +393,12 @@ class _FuturePairItem extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        // Navigate to future trading page — pair details
-        // Get.to(() => FuturePairDetailsScreen(symbol: pair.symbol));
+        Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
+        if (Get.isRegistered<NewFutureController>()) {
+          final ctrl = Get.find<NewFutureController>();
+          final match = ctrl.pairs.firstWhereOrNull((p) => p.symbol == pair.symbol);
+          if (match != null) ctrl.selectPair(match);
+        }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 5),
