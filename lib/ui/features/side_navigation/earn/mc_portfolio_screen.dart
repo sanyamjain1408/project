@@ -460,22 +460,18 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
 
-                    // Per Second | Daily Total — 2 columns like website
+                    // Per Second | Daily Total — same layout as earn screen hero
                     Row(
                       children: [
-                        _liveStatCol(
-                          'Per Second',
-                          '+${_totalPerSec.toStringAsFixed(8)}',
-                          Colors.white,
+                        Expanded(child: _liveStatCol('Per Second', '+${_totalPerSec.toStringAsFixed(8)}')),
+                        Container(
+                          width: 1,
+                          height: 36,
+                          color: Colors.white.withValues(alpha: 0.10),
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
                         ),
-                        const SizedBox(width: 24),
-                        _liveStatCol(
-                          'Daily Total',
-                          _displayDailyCoin.toStringAsFixed(6),
-                          Colors.white,
-                        ),
+                        Expanded(child: _liveStatCol('Daily Total', _displayDailyCoin.toStringAsFixed(6))),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -512,27 +508,30 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     );
   }
 
-  Widget _liveStatCol(String label, String value, Color valueColor) => Column(
+  Widget _liveStatCol(String label, String value) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
         label,
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.45),
-          fontSize: 11,
+          color: Colors.white.withValues(alpha: 0.5),
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
           fontFamily: 'DMSans',
         ),
       ),
-      const SizedBox(height: 3),
+      const SizedBox(height: 2),
       Text(
         value,
-        style: TextStyle(
-          color: valueColor,
-          fontSize: 13,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
           fontWeight: FontWeight.w700,
           fontFamily: 'DMSans',
-          fontFeatures: const [FontFeature.tabularFigures()],
+          height: 1,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     ],
   );

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/earn/mc_network_screen.dart';
 import 'mc_staking_controller.dart' show McStakingController, mcLogoUrl;
 import 'mc_staking_models.dart';
 import 'mc_portfolio_screen.dart';
@@ -204,7 +205,7 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
                   _buildEmpty()
                 else
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                     child: Column(
                       children: [
                         ...grouped.entries.map(
@@ -234,104 +235,196 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: () => Get.back(),
-            child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'My Stakes',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'DMSans',
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Earn rewards every second · Same coin in, same coin out',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.45),
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'DMSans',
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Filter row: active badge + dropdown + new stake
           Row(
             children: [
-              Obx(() {
-                final cnt = _c.stakes.where((s) => s.status == 1).length;
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00FF04).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '$cnt Active',
-                        style: const TextStyle(
-                          color: Color(0xFF00FF04),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: 'DMSans',
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-              const SizedBox(width: 10),
-              Expanded(child: _buildStatusDropdown()),
-              const SizedBox(width: 10),
               GestureDetector(
                 onTap: () => Get.back(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _kGreen,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.add_rounded,
-                        color: Color(0xFF111111),
-                        size: 15,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'New Stake',
-                        style: TextStyle(
-                          color: Color(0xFF111111),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: 'DMSans',
-                        ),
-                      ),
-                    ],
-                  ),
+                child: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 25,
+                ),
+              ),
+
+              const SizedBox(width: 20),
+
+              const Text(
+                'My Stakes',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'DMSans',
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 20),
+
+          Row(
+            children: [
+              SizedBox(width: 170, height: 36, child: _buildStatusDropdown()),
+            ],
+          ),
+          const SizedBox(height: 30),
+          _buildStatsGrid(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatsGrid() {
+    return Obx(() {
+      final stats = _c.statistics.value;
+      final p = _c.portfolio.value;
+
+      final stakingValue = p?.totalUsdtValue ?? 0.0;
+
+      // Total Reward = live earning from _StakingLiveHero ticker via controller
+      final totalReward = _c.liveEarningUsdt.value;
+
+      return Transform.translate(
+        offset: const Offset(0, -10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 0),
+          child: GridView.count(
+            crossAxisCount: 2,
+            crossAxisSpacing: 20,
+            mainAxisSpacing: 20,
+            childAspectRatio: 1.7,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _statsCard(
+                label: 'Staking Value',
+                value: stakingValue.toStringAsFixed(2),
+                sub: 'Staked',
+                color: const Color(0xFFCCFF00),
+                imagePath: 'assets/images/stacking.png',
+              ),
+              _statsCard(
+                label: 'Active Stakes',
+                value: '${stats?.totalActiveStakes ?? 0}',
+                sub: 'Positions',
+                color: const Color(0xFFE946FF),
+                imagePath: 'assets/images/active.png',
+              ),
+              _statsCard(
+                label: 'Total Reward',
+                value: totalReward.toStringAsFixed(4),
+                sub: 'All time',
+                color: const Color(0xFF00B052),
+                imagePath: 'assets/images/total.png',
+              ),
+              _statsCard(
+                label: 'Referrals',
+                value: '${stats?.totalReferralCommissions ?? 0}',
+                sub: 'Commissions',
+                color: const Color(0xFF00E5FF),
+                imagePath: 'assets/images/referrals.png',
+                showArrow: true,
+                onTap: () => Get.to(() => const McNetworkScreen()),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _statsCard({
+    required String label,
+    required String value,
+    required String sub,
+    required Color color,
+    required String imagePath,
+    bool showArrow = false,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Stack(
+          children: [
+            Positioned.fill(child: Image.asset(imagePath, fit: BoxFit.cover)),
+            // arrow pinned to top-right, slightly outside padding
+            if (showArrow)
+              Positioned(
+                top: 12,
+                right: 0,
+                child: Container(
+                  width: 15,
+                  height: 15,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF1A1A1A), Color(0xFF00282C)],
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.transparent, width: 1),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward,
+                    color: Color(0xFF00E5FF),
+                    size: 13,
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'DMSans',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        value,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'DMSans',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        sub,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -343,11 +436,12 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
       onTap: () =>
           _dropdownOverlay == null ? _showDropdown() : _closeDropdown(),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+         height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
+          color: const Color(0xFF1A1A1A),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+          border: Border.all(color: Colors.transparent),
         ),
         child: Row(
           children: [
@@ -357,9 +451,9 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontFamily: 'DMSans',
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -778,8 +872,8 @@ class _CoinGroupWidgetState extends State<_CoinGroupWidget> {
                             tab.planName,
                             style: TextStyle(
                               color: isSelected ? Colors.white : Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
                               fontFamily: 'DMSans',
                             ),
                             maxLines: 1,
@@ -893,8 +987,12 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
     super.initState();
     _perSec = stake.amount * (stake.dailyRate / 100) / 86400;
     // Use start_date elapsed — matches website: new Date(stake.start_date)
-    final startDt = stake.startDate != null ? DateTime.tryParse(stake.startDate!) : null;
-    _startDateMs = startDt?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch;
+    final startDt = stake.startDate != null
+        ? DateTime.tryParse(stake.startDate!)
+        : null;
+    _startDateMs =
+        startDt?.millisecondsSinceEpoch ??
+        DateTime.now().millisecondsSinceEpoch;
     _computeLive();
     if (stake.status == 1) {
       _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
@@ -1268,9 +1366,11 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
 
   // Live Earned row with optional USD sub-line (matches website ≈ $X.XXXX USDT)
   Widget _liveEarnedRow(String symbol) {
-    final coinPrice = _c.portfolio.value?.portfolio
-        .firstWhereOrNull((p) => p.stakeUid == stake.uid)
-        ?.coinPriceUsdt ?? 0;
+    final coinPrice =
+        _c.portfolio.value?.portfolio
+            .firstWhereOrNull((p) => p.stakeUid == stake.uid)
+            ?.coinPriceUsdt ??
+        0;
     final usdVal = coinPrice > 0 ? _liveEarned * coinPrice : 0.0;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
