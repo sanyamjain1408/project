@@ -31,11 +31,15 @@ class WalletController extends GetxController
   RxDouble spotWalletTotal = 0.0.obs;
   RxDouble earnWalletTotal = 0.0.obs;
   RxDouble futureWalletBalance = 0.0.obs;
-  RxDouble spotYesterdayValue = 0.0.obs;
-  RxDouble futureCombinedPnl = 0.0.obs;
   int walletListFromType = 0;
   Timer? searchTimer;
-  Timer? _pnlTimer;
+  Timer? _spotTimer;
+  Timer? _futurePnlTimer;
+
+  // Stored once — like web's spotYesterday state + pnlInitDoneRef
+  double _spotYesterday = 0;
+  bool _snapshotFetched = false;
+  double _futureCombinedPnl = 0;
 
   Map<int, String> getTypeMap() {
     final settings = getSettingsLocal();
@@ -54,6 +58,224 @@ class WalletController extends GetxController
     final index = getTypeMap().keys.toList().indexOf(type);
     if (index != -1) selectedTypeIndex.value = index;
     tabController?.animateTo(index);
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    _init();
+  }
+
+  @override
+  void onClose() {
+    _spotTimer?.cancel();
+    _futurePnlTimer?.cancel();
+    searchTimer?.cancel();
+    super.onClose();
+  }
+
+  Future<void> _init() async {
+    // 1. Fetch spot total + earn + future balance (initial)
+    await _refreshBalances();
+
+    // 2. Fetch yesterday snapshot ONCE — like web's pnlInitDoneRef
+    await _fetchSnapshotOnce();
+
+    // 3. Fetch future combined PNL immediately
+    await _refreshFuturePnl();
+
+    // 4. Recompute PNL display
+    _recomputePnl();
+
+    // 5. Start tickers — spot refreshes every 10s, future PNL every 10s
+    _spotTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      await _refreshSpotTotal();
+      _recomputePnl();
+    });
+    _futurePnlTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      await _refreshFuturePnl();
+      _recomputePnl();
+    });
+  }
+
+  // Refresh spot total only (for tick)
+  Future<void> _refreshSpotTotal() async {
+    try {
+      final resp = await APIRepository().getWalletTotalValue();
+      if (resp.success) {
+        final bal = TotalBalance.fromJson(resp.data);
+        spotWalletTotal.value = bal.total ?? spotWalletTotal.value;
+      }
+    } catch (_) {}
+  }
+
+  // Refresh all balances (initial load)
+  Future<void> _refreshBalances() async {
+    if (gUserRx.value.id == 0) return;
+    final userId = gUserRx.value.id;
+
+    final results = await Future.wait([
+      APIRepository().getWalletTotalValue(),
+      APIRepository().getWalletBalanceDetails(""),
+      _fetchEarnTotal(userId),
+      _fetchFutureBalance(),
+    ]);
+
+    final spotResp = results[0] as dynamic;
+    final overviewResp = results[1] as dynamic;
+    final earnTotal = results[2] as double;
+    final fetchedFutureVal = results[3] as double;
+
+    double spotVal = 0;
+    double futureVal = 0;
+    double p2pVal = 0;
+    String? currency;
+
+    if (spotResp.success) {
+      final bal = TotalBalance.fromJson(spotResp.data);
+      spotVal = bal.total ?? 0;
+      currency = bal.currency;
+    }
+    if (overviewResp.success) {
+      final ov = WalletOverview.fromJson(overviewResp.data);
+      futureVal = ov.futureWallet ?? 0;
+      p2pVal = ov.p2PWallet ?? 0;
+    }
+    if (fetchedFutureVal > 0) futureVal = fetchedFutureVal;
+
+    spotWalletTotal.value = spotVal;
+    earnWalletTotal.value = earnTotal;
+    futureWalletBalance.value = futureVal;
+
+    final grandTotal = spotVal + futureVal + earnTotal + p2pVal;
+    final cur = totalBalance.value;
+    totalBalance.value = TotalBalance(
+      currency: currency ?? cur.currency,
+      total: grandTotal,
+      todayPnl: cur.todayPnl,
+      todayPnlPercent: cur.todayPnlPercent,
+      spotPnl: cur.spotPnl,
+      spotPnlPercent: cur.spotPnlPercent,
+    );
+  }
+
+  // Fetch snapshot ONCE — stores yesterday_value, never called again (like pnlInitDoneRef)
+  Future<void> _fetchSnapshotOnce() async {
+    if (_snapshotFetched) return;
+    final userId = gUserRx.value.id;
+    if (userId == 0) return;
+    final spotVal = spotWalletTotal.value;
+    if (spotVal <= 0) return;
+    try {
+      final uri = Uri.parse(
+        '${APIURLConstants.baseUrl}/api/pnl/summary?user_id=$userId&live_total=${spotVal.toStringAsFixed(2)}',
+      );
+      final resp = await http.get(uri);
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body);
+        if (json['success'] == true) {
+          final yv = double.tryParse(json['data']?['yesterday_value']?.toString() ?? '0') ?? 0;
+          if (yv > 0) {
+            _spotYesterday = yv;
+            _snapshotFetched = true;
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Fetch future combined PNL (unrealized + today_realized) — called every 10s
+  Future<void> _refreshFuturePnl() async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      final resp = await http.get(
+        Uri.parse('https://api.trapix.com/api/v1/future/balance'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body);
+        if (json['success'] == true) {
+          final d = json['data'] ?? {};
+          final unreal = double.tryParse(d['unrealized_pnl']?.toString() ?? '0') ?? 0;
+          final realized = double.tryParse(d['today_realized_pnl']?.toString() ?? '0') ?? 0;
+          _futureCombinedPnl = unreal + realized;
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Recompute PNL from stored values — pure math, no API call (like web's useEffect)
+  void _recomputePnl() {
+    if (_spotYesterday <= 0) return;
+    final spotVal = spotWalletTotal.value;
+    final yv = _spotYesterday;
+    final futureVal = futureWalletBalance.value;
+
+    final spotPnl = spotVal - yv;
+    final spotPct = yv > 0 ? (spotPnl / yv) * 100 : 0.0;
+
+    final totalPnl = spotPnl + _futureCombinedPnl;
+    final base = yv + futureVal;
+    final totalPct = base > 0 ? (totalPnl / base) * 100 : 0.0;
+
+    final cur = totalBalance.value;
+    totalBalance.value = TotalBalance(
+      currency: cur.currency,
+      total: cur.total,
+      todayPnl: totalPnl,
+      todayPnlPercent: totalPct,
+      spotPnl: spotPnl,
+      spotPnlPercent: spotPct,
+    );
+  }
+
+  // Called by pages for manual refresh (pull-to-refresh)
+  Future<void> fetchGrandTotal() async {
+    await _refreshBalances();
+    if (!_snapshotFetched) await _fetchSnapshotOnce();
+    await _refreshFuturePnl();
+    _recomputePnl();
+  }
+
+  Future<double> _fetchEarnTotal(int userId) async {
+    try {
+      final uri = Uri.parse(
+        '${APIURLConstants.baseUrl}/api/tf/earn/positions?user_id=$userId',
+      );
+      final resp = await http.get(uri);
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body);
+        final data = json['data'] as List? ?? [];
+        double total = 0;
+        for (final p in data) {
+          total += double.tryParse(p['amount']?.toString() ?? '0') ?? 0;
+        }
+        return total;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  Future<double> _fetchFutureBalance() async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return 0;
+      final resp = await http.get(
+        Uri.parse('https://api.trapix.com/api/v1/future/balance'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body);
+        if (json['success'] == true) {
+          final d = json['data'] ?? {};
+          final total = double.tryParse(d['total_balance']?.toString() ?? '0') ?? 0;
+          final avail = double.tryParse(d['available_balance']?.toString() ?? '0') ?? 0;
+          return total > 0 ? total : avail;
+        }
+      }
+    } catch (_) {}
+    return 0;
   }
 
   Future<WalletOverview?> getWalletOverviewData({String? coinType}) async {
@@ -102,9 +324,6 @@ class WalletController extends GetxController
                 listResponse = ListResponse.fromJson(resp.data);
               }
               if (listResponse != null) {
-               
-
-                
                 loadedPage = listResponse.currentPage ?? 0;
                 hasMoreData = listResponse.nextPageUrl != null;
                 if (listResponse.data != null) {
@@ -125,164 +344,6 @@ class WalletController extends GetxController
             showToast(err.toString());
           },
         );
-  }
-
-  @override
-  void onInit() {
-    super.onInit();
-    fetchGrandTotal();
-    _pnlTimer = Timer.periodic(const Duration(seconds: 10), (_) => fetchGrandTotal());
-  }
-
-  @override
-  void onClose() {
-    _pnlTimer?.cancel();
-    searchTimer?.cancel();
-    super.onClose();
-  }
-
-  Future<void> fetchGrandTotal() async {
-    if (gUserRx.value.id == 0) return;
-    final userId = gUserRx.value.id;
-
-    final spotFuture = APIRepository().getWalletTotalValue();
-    final overviewFuture = APIRepository().getWalletBalanceDetails("");
-    final earnFuture = _fetchEarnTotal(userId);
-    final futureFuture = _fetchFutureBalance();
-
-    final spotResp = await spotFuture;
-    final overviewResp = await overviewFuture;
-    final earnTotal = await earnFuture;
-    final fetchedFutureVal = await futureFuture;
-
-    double spotVal = 0;
-    double futureVal = 0;
-    double p2pVal = 0;
-    String? currency;
-
-    if (spotResp.success) {
-      final bal = TotalBalance.fromJson(spotResp.data);
-      spotVal = bal.total ?? 0;
-      currency = bal.currency;
-    }
-    if (overviewResp.success) {
-      final ov = WalletOverview.fromJson(overviewResp.data);
-      futureVal = ov.futureWallet ?? 0;
-      p2pVal = ov.p2PWallet ?? 0;
-    }
-
-    // Use live future balance if fetched successfully
-    if (fetchedFutureVal > 0) futureVal = fetchedFutureVal;
-
-    spotWalletTotal.value = spotVal;
-    earnWalletTotal.value = earnTotal;
-    futureWalletBalance.value = futureVal;
-
-    final grandTotal = spotVal + futureVal + earnTotal + p2pVal;
-
-    // Fetch future combined PNL (unrealized + today realized)
-    final futurePnl = await _fetchFutureCombinedPnl();
-    futureCombinedPnl.value = futurePnl;
-
-    // Spot PNL: pass spot-only value to snapshot API
-    final pnlResult = await _fetchTodayPnl(userId, spotVal);
-    final yv = pnlResult[2]; // yesterday_value
-    spotYesterdayValue.value = yv > 0 ? yv : spotVal;
-
-    // Total PNL = spot PNL + future combined PNL
-    final spotPnl = pnlResult[0];
-    final totalPnl = spotPnl + futurePnl;
-    final base = spotYesterdayValue.value + futureVal;
-    final totalPct = base > 0 ? (totalPnl / base) * 100 : 0.0;
-
-    final cur = totalBalance.value;
-    totalBalance.value = TotalBalance(
-      currency: currency ?? cur.currency,
-      total: grandTotal,
-      todayPnl: totalPnl,
-      todayPnlPercent: totalPct,
-      spotPnl: spotPnl,
-      spotPnlPercent: spotYesterdayValue.value > 0 ? (spotPnl / spotYesterdayValue.value) * 100 : 0.0,
-    );
-  }
-
-  // Returns [spotPnl, spotPct, yesterdayValue]
-  Future<List<double>> _fetchTodayPnl(int userId, double liveTotal) async {
-    try {
-      final uri = Uri.parse(
-        '\${APIURLConstants.baseUrl}/api/pnl/summary?user_id=\$userId&live_total=\${liveTotal.toStringAsFixed(2)}',
-      );
-      final resp = await http.get(uri);
-      if (resp.statusCode == 200) {
-        final json = jsonDecode(resp.body);
-        if (json['success'] == true) {
-          final data = json['data'];
-          final pnl = double.tryParse(data['today_pnl']?.toString() ?? '0') ?? 0;
-          final pct = double.tryParse(data['today_pct']?.toString() ?? '0') ?? 0;
-          final yv = double.tryParse(data['yesterday_value']?.toString() ?? '0') ?? 0;
-          return [pnl, pct, yv];
-        }
-      }
-    } catch (_) {}
-    return [0, 0, 0];
-  }
-
-  Future<double> _fetchFutureCombinedPnl() async {
-    try {
-      final token = getFutureToken();
-      if (token.isEmpty) return 0;
-      final resp = await http.get(
-        Uri.parse('https://api.trapix.com/api/v1/future/balance'),
-        headers: {'Authorization': 'Bearer \$token'},
-      );
-      if (resp.statusCode == 200) {
-        final json = jsonDecode(resp.body);
-        if (json['success'] == true) {
-          final d = json['data'] ?? {};
-          final unreal = double.tryParse(d['unrealized_pnl']?.toString() ?? '0') ?? 0;
-          final realized = double.tryParse(d['today_realized_pnl']?.toString() ?? '0') ?? 0;
-          return unreal + realized;
-        }
-      }
-    } catch (_) {}
-    return 0;
-  }
-
-  Future<double> _fetchEarnTotal(int userId) async {
-    try {
-      final uri = Uri.parse(
-        '${APIURLConstants.baseUrl}/api/tf/earn/positions?user_id=$userId',
-      );
-      final resp = await http.get(uri);
-      if (resp.statusCode == 200) {
-        final json = jsonDecode(resp.body);
-        final data = json['data'] as List? ?? [];
-        double total = 0;
-        for (final p in data) {
-          total += double.tryParse(p['amount']?.toString() ?? '0') ?? 0;
-        }
-        return total;
-      }
-    } catch (_) {}
-    return 0;
-  }
-
-  Future<double> _fetchFutureBalance() async {
-    try {
-      final token = getFutureToken();
-      if (token.isEmpty) return 0;
-      final resp = await http.get(
-        Uri.parse('https://api.trapix.com/api/v1/future/balance'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (resp.statusCode == 200) {
-        final json = jsonDecode(resp.body);
-        if (json['success'] == true) {
-          return double.tryParse(json['data']?['balance']?.toString() ?? '0') ?? 0;
-        }
-      }
-    } catch (_) {}
-    return 0;
   }
 
   Future<TotalBalance?> getWalletTotalValue() async {
@@ -328,7 +389,6 @@ class WalletController extends GetxController
     try {
       ServerResponse? resp;
       if (walletType == WalletViewType.future) {
-        /// spot_wallet =1 or future_wallet =2
         resp = await APIRepository().futureTradeWalletBalanceTransfer(
           isSend ? 2 : 1,
           wallet.coinType ?? "",
