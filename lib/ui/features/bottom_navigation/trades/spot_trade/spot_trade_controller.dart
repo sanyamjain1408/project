@@ -27,6 +27,9 @@ class SpotTradeController extends GetxController implements SocketListener {
   Rx<CoinPair> selectedCoinPair = CoinPair().obs;
   RxList<CoinPair> coinPairs = <CoinPair>[].obs;
   Map<String, String> coinIconMap = {};
+  List<SpotPair> spotPairsMeta = [];
+  RxInt pricePrecision = 2.obs;
+  RxInt amountPrecision = 6.obs;
   RxList<ExchangeOrder> buyExchangeOrder = <ExchangeOrder>[].obs;
   RxList<ExchangeOrder> sellExchangeOrder = <ExchangeOrder>[].obs;
   RxList<ExchangeTrade> exchangeTrades = <ExchangeTrade>[].obs;
@@ -364,6 +367,8 @@ class SpotTradeController extends GetxController implements SocketListener {
         isLoading.value = false;
         return;
       }
+      // Store for precision lookup
+      spotPairsMeta = pairs;
       // Convert SpotPair → CoinPair for UI compatibility
       coinPairs.value = pairs.map(_spotPairToCoinPair).toList();
       dashboardData.value.coinPairs = coinPairs.toList();
@@ -406,8 +411,17 @@ class SpotTradeController extends GetxController implements SocketListener {
       return;
     }
 
-    isLoading.value = true;
+    // Update precision from spot pair metadata
     final sym = _spotSymbol;
+    final meta = spotPairsMeta.firstWhereOrNull(
+      (p) => '${p.baseCurrency ?? ''}_${p.quoteCurrency ?? ''}' == selectedCoinPair.value.coinPair,
+    );
+    if (meta != null) {
+      pricePrecision.value = meta.pricePrecision;
+      amountPrecision.value = meta.amountPrecision;
+    }
+
+    isLoading.value = true;
 
     // Clear orders immediately so previous pair's data doesn't show
     allMyHistories.value = SpotAllMyHistories();

@@ -34,11 +34,11 @@ String _fmt2(num? n, {int fixed = _kOrderDecimal}) {
   return val.toStringAsFixed(fixed);
 }
 
-String _fmtPrice(num? n) {
+String _fmtPrice(num? n, {int fixed = 2}) {
   final val = (n ?? 0).toDouble();
   final intPart = val.toStringAsFixed(0);
   if (intPart.length > 7) return intPart;
-  return val.toStringAsFixed(2);
+  return val.toStringAsFixed(fixed);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,6 +57,8 @@ class OderBookFixedView extends StatelessWidget {
     required this.onHeaderChange,
     this.baseCoin,
     this.tradeCoin,
+    this.priceDecimal = 2,
+    this.amountDecimal = 6,
   });
 
   final String selectedOrderSort;
@@ -69,6 +71,8 @@ class OderBookFixedView extends StatelessWidget {
   final Function(int) onHeaderChange;
   final String? baseCoin;
   final String? tradeCoin;
+  final int priceDecimal;
+  final int amountDecimal;
 
   @override
   Widget build(BuildContext context) {
@@ -166,6 +170,8 @@ class OderBookFixedView extends StatelessWidget {
                       selectedHeaderIndex == 1,
                       priceColor: const Color(0xFFD05858),
                       rowIndex: index,
+                      priceDecimal: priceDecimal,
+                      amountDecimal: amountDecimal,
                     );
                   }),
                 ),
@@ -195,6 +201,8 @@ class OderBookFixedView extends StatelessWidget {
                       selectedHeaderIndex == 1,
                       priceColor: const Color(0xFF4ED78E),
                       rowIndex: index,
+                      priceDecimal: priceDecimal,
+                      amountDecimal: amountDecimal,
                     );
                   }),
                 ),
@@ -537,6 +545,8 @@ class OderBookItemMinView extends StatelessWidget {
     super.key,
     this.priceColor,
     this.rowIndex = 0,
+    this.priceDecimal = 2,
+    this.amountDecimal = 6,
   });
 
   final ExchangeOrder order;
@@ -544,6 +554,8 @@ class OderBookItemMinView extends StatelessWidget {
   final bool isTotal;
   final Color? priceColor;
   final int rowIndex;
+  final int priceDecimal;
+  final int amountDecimal;
 
   @override
   Widget build(BuildContext context) {
@@ -555,8 +567,8 @@ class OderBookItemMinView extends StatelessWidget {
     final pct = getPercentageValue(1, order.percentage).clamp(0.0, 1.0);
 
     final value = isTotal
-        ? numberFormatCompact(order.total, decimals: _kOrderDecimal)
-        : _fmt2(order.amount);
+        ? numberFormatCompact(order.total, decimals: amountDecimal)
+        : _fmt2(order.amount, fixed: amountDecimal);
 
     return SizedBox(
       height: 18,
@@ -581,7 +593,7 @@ class OderBookItemMinView extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          _fmtPrice(order.price),
+                          _fmtPrice(order.price, fixed: priceDecimal),
                           style: TextStyle(
                             color: priceColor,
                             fontSize: 12,
@@ -630,6 +642,8 @@ class DetailsOrderBookView extends StatelessWidget {
     required this.sellExchangeOrder,
     this.tradeCoinOverride,
     this.baseCoinOverride,
+    this.priceDecimal = 2,
+    this.amountDecimal = 6,
   });
 
   final Total? total;
@@ -637,6 +651,8 @@ class DetailsOrderBookView extends StatelessWidget {
   final List<ExchangeOrder> sellExchangeOrder;
   final String? tradeCoinOverride;
   final String? baseCoinOverride;
+  final int priceDecimal;
+  final int amountDecimal;
 
   @override
   Widget build(BuildContext context) {
@@ -727,7 +743,7 @@ class DetailsOrderBookView extends StatelessWidget {
                                   Expanded(
                                     flex: 3,
                                     child: Text(
-                                      buy != null ? _fmt2(buy.amount) : '',
+                                      buy != null ? _fmt2(buy.amount, fixed: amountDecimal) : '',
                                       style: const TextStyle(fontSize: 11, color: Color(0xFFDDDDDD), fontFamily: 'monospace'),
                                     ),
                                   ),
@@ -735,7 +751,7 @@ class DetailsOrderBookView extends StatelessWidget {
                                   Expanded(
                                     flex: 3,
                                     child: Text(
-                                      buy != null ? _fmtPrice(buy.price) : '',
+                                      buy != null ? _fmtPrice(buy.price, fixed: priceDecimal) : '',
                                       textAlign: TextAlign.right,
                                       style: TextStyle(fontSize: 11, color: gBuyColor, fontWeight: FontWeight.w600, fontFamily: 'monospace'),
                                     ),
@@ -750,7 +766,7 @@ class DetailsOrderBookView extends StatelessWidget {
                                   Expanded(
                                     flex: 3,
                                     child: Text(
-                                      sell != null ? _fmtPrice(sell.price) : '',
+                                      sell != null ? _fmtPrice(sell.price, fixed: priceDecimal) : '',
                                       textAlign: TextAlign.left,
                                       style: TextStyle(fontSize: 11, color: gSellColor, fontWeight: FontWeight.w600, fontFamily: 'monospace'),
                                     ),
@@ -758,7 +774,7 @@ class DetailsOrderBookView extends StatelessWidget {
                                   Expanded(
                                     flex: 3,
                                     child: Text(
-                                      sell != null ? _fmt2(sell.amount) : '',
+                                      sell != null ? _fmt2(sell.amount, fixed: amountDecimal) : '',
                                       textAlign: TextAlign.right,
                                       style: const TextStyle(fontSize: 11, color: Color(0xFFDDDDDD), fontFamily: 'monospace'),
                                     ),
