@@ -199,14 +199,23 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
     try {
       var path = '/api/mc-staking/my-stakes?per_page=10&page=$page';
       if (status.isNotEmpty) path += '&status=$status';
-      final j = _decode(await _get(path));
+      final res = await _get(path);
+      final j = _decode(res);
+      print('MC_MY_STAKES raw: ${res.body}');
       if (j['success'] == true) {
         final data = j['data'] as Map<String, dynamic>;
         final list = data['data'] as List;
         stakes.assignAll(list.map((e) => McStake.fromJson(e)));
         stakesMeta.value = data;
+        print('MC_MY_STAKES parsed: ${stakes.length} stakes');
+        for (final s in stakes) {
+          print('  stake uid=${s.uid} coin=${s.coin?.symbol} amount=${s.amount} dailyRate=${s.dailyRate} status=${s.status} plan=${s.plan?.planName} planType=${s.plan?.planType} duration=${s.plan?.durationDays}');
+        }
+      } else {
+        print('MC_MY_STAKES failed: ${j['message']}');
       }
     } catch (e) {
+      print('MC_MY_STAKES error: $e');
       showToast('Error loading stakes');
     } finally {
       isLoadingStakes.value = false;
@@ -229,6 +238,25 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
     }
   }
 
+  // ── Coin Dashboard (live data per coin) ──────────────────────────────────
+  final coinDashboard = Rx<Map<String, dynamic>?>(null);
+  final isLoadingCoinDashboard = false.obs;
+
+  Future<void> fetchCoinDashboard(int coinId) async {
+    isLoadingCoinDashboard.value = true;
+    try {
+      final j = _decode(await _get('/api/mc-staking/coin-dashboard?coin_id=$coinId'));
+      print('MC_COIN_DASHBOARD raw: $j');
+      if (j['success'] == true) {
+        coinDashboard.value = j['data'] as Map<String, dynamic>;
+      }
+    } catch (e) {
+      print('MC_COIN_DASHBOARD error: $e');
+    } finally {
+      isLoadingCoinDashboard.value = false;
+    }
+  }
+
   // ── Portfolio + Statistics ─────────────────────────────────────────────────
   Future<void> fetchPortfolio() async {
     isLoadingPortfolio.value = true;
@@ -237,13 +265,21 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
         _get('/api/mc-staking/portfolio'),
         _get('/api/mc-staking/statistics'),
       ]);
+      print('MC_PORTFOLIO raw: ${pRes.body}');
       final pj = _decode(pRes);
       final sj = _decode(sRes);
       if (pj['success'] == true) {
         portfolio.value = McPortfolioData.fromJson(pj['data']);
+        print('MC_PORTFOLIO items: ${portfolio.value?.portfolio.length}');
+        for (final p in portfolio.value?.portfolio ?? []) {
+          print('  item stakeUid=${p.stakeUid} coin=${p.coinSymbol} staked=${p.stakedAmount} dailyRate=${p.dailyRate} dailyReward=${p.dailyReward} totalEarned=${p.totalEarned} usdtValue=${p.usdtValue} planName=${p.planName} planType=${p.planType} endDate=${p.endDate} stakedAt=${p.stakedAt}');
+        }
+      } else {
+        print('MC_PORTFOLIO failed: ${pj['message']}');
       }
       if (sj['success'] == true) statistics.value = McStatistics.fromJson(sj['data']);
     } catch (e) {
+      print('MC_PORTFOLIO error: $e');
       showToast('Error loading portfolio');
     } finally {
       isLoadingPortfolio.value = false;
@@ -270,12 +306,21 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
   Future<void> fetchRewards({int page = 1}) async {
     isLoadingRewards.value = true;
     try {
-      final j = _decode(await _get('/api/mc-staking/my-rewards?per_page=15&page=$page'));
+      final res = await _get('/api/mc-staking/my-rewards?per_page=15&page=$page');
+      print('MC_REWARDS raw: ${res.body}');
+      final j = _decode(res);
       if (j['success'] == true) {
         rewards.assignAll((j['data']['data'] as List).map((e) => McStakingReward.fromJson(e)));
         rewardsMeta.value = j['data'] as Map<String, dynamic>;
+        print('MC_REWARDS count=${rewards.length}');
+        for (final r in rewards.take(3)) {
+          print('  reward id=${r.id} coin=${r.coin?.symbol} amount=${r.rewardAmount} rate=${r.dailyRate} date=${r.rewardDate}');
+        }
+      } else {
+        print('MC_REWARDS failed: ${j['message']}');
       }
     } catch (e) {
+      print('MC_REWARDS error: $e');
       showToast('Error loading rewards');
     } finally {
       isLoadingRewards.value = false;

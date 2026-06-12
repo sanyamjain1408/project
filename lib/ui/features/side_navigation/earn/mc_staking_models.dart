@@ -80,6 +80,7 @@ class McCalcResult {
 }
 
 class McStake {
+  final int id;
   final String uid;
   final int status;
   final String? startDate;
@@ -92,6 +93,7 @@ class McStake {
   final McStakingPlan? plan;
 
   McStake({
+    required this.id,
     required this.uid,
     required this.status,
     this.startDate,
@@ -142,6 +144,7 @@ class McStake {
       );
     }
     return McStake(
+      id: j['id'] ?? 0,
       uid: j['uid'] ?? '',
       status: j['status'] ?? 1,
       startDate: j['start_date'],
@@ -191,23 +194,34 @@ class McPortfolioItem {
     required this.totalEarned,
   });
 
-  factory McPortfolioItem.fromJson(Map<String, dynamic> j) => McPortfolioItem(
-        stakeUid: j['stake_uid'] ?? '',
-        coinSymbol: j['coin_symbol'] ?? '',
-        coinId: j['coin_id'] ?? 0,
-        coinLogo: j['coin_logo'],
-        stakedAmount: double.tryParse(j['staked_amount'].toString()) ?? 0,
-        dailyRate: double.tryParse(j['daily_rate'].toString()) ?? 0,
-        dailyReward: double.tryParse(j['daily_reward'].toString()) ?? 0,
-        planName: j['plan_name'] ?? '',
-        planType: j['plan_type'] ?? 1,
-        endDate: j['end_date'],
-        stakedAt: j['staked_at'] ?? j['start_date'],
-        totalWithdrawn: double.tryParse(j['total_withdrawn'].toString()) ?? 0,
-        coinPriceUsdt: double.tryParse(j['coin_price_usdt'].toString()) ?? 1,
-        usdtValue: double.tryParse(j['usdt_value'].toString()) ?? 0,
-        totalEarned: double.tryParse(j['total_reward_earned'].toString()) ?? 0,
-      );
+  factory McPortfolioItem.fromJson(Map<String, dynamic> j) {
+    final staked = double.tryParse(j['staked_amount'].toString()) ?? 0;
+    final rate = double.tryParse(j['daily_rate'].toString()) ?? 0;
+    // Backend may send daily_reward or we compute it
+    final dr = double.tryParse(j['daily_reward']?.toString() ?? '0') ?? 0;
+    final dailyReward = dr > 0 ? dr : staked * rate / 100;
+    // Backend sends total_reward (not total_reward_earned) in portfolio
+    final totalEarned = double.tryParse(
+            (j['total_reward_earned'] ?? j['total_reward'])?.toString() ?? '0') ??
+        0;
+    return McPortfolioItem(
+      stakeUid: j['stake_uid'] ?? '',
+      coinSymbol: j['coin_symbol'] ?? '',
+      coinId: j['coin_id'] ?? 0,
+      coinLogo: j['coin_logo'],
+      stakedAmount: staked,
+      dailyRate: rate,
+      dailyReward: dailyReward,
+      planName: j['plan_name'] ?? '',
+      planType: j['plan_type'] ?? 1,
+      endDate: j['end_date'],
+      stakedAt: j['staked_at'] ?? j['start_date'],
+      totalWithdrawn: double.tryParse(j['total_withdrawn'].toString()) ?? 0,
+      coinPriceUsdt: double.tryParse(j['coin_price_usdt'].toString()) ?? 1,
+      usdtValue: double.tryParse(j['usdt_value'].toString()) ?? 0,
+      totalEarned: totalEarned,
+    );
+  }
 
   double get perSecUsdt {
     final price = coinPriceUsdt > 0 ? coinPriceUsdt : 1;
@@ -249,15 +263,19 @@ class McPortfolioData {
 
 class McStakingReward {
   final int id;
+  final int? stakeId;
+  final String? stakeUid;
   final double rewardAmount;
   final double dailyRate;
   final String? rewardDate;
   final McStakingCoin? coin;
 
-  McStakingReward({required this.id, required this.rewardAmount, required this.dailyRate, this.rewardDate, this.coin});
+  McStakingReward({required this.id, this.stakeId, this.stakeUid, required this.rewardAmount, required this.dailyRate, this.rewardDate, this.coin});
 
   factory McStakingReward.fromJson(Map<String, dynamic> j) => McStakingReward(
         id: j['id'] ?? 0,
+        stakeId: j['stake_id'],
+        stakeUid: j['stake_uid'],
         rewardAmount: double.tryParse(j['reward_amount'].toString()) ?? 0,
         dailyRate: double.tryParse(j['daily_rate'].toString()) ?? 0,
         rewardDate: j['reward_date'],
