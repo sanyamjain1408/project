@@ -986,11 +986,8 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
   void initState() {
     super.initState();
     _perSec = stake.amount * (stake.dailyRate / 100) / 86400;
-    // Use staked_at from portfolio (same field Live Dashboard uses) — falls back to start_date
-    final portfolioItem = _c.portfolio.value?.portfolio
-        .firstWhereOrNull((p) => p.stakeUid == stake.uid);
-    final stakedAtStr = portfolioItem?.stakedAt ?? stake.startDate;
-    final startDt = stakedAtStr != null ? DateTime.tryParse(stakedAtStr) : null;
+    // stake.startDate = j['staked_at'] ?? j['start_date'] — backend now returns correct staked_at
+    final startDt = stake.startDate != null ? DateTime.tryParse(stake.startDate!) : null;
     _startDateMs =
         startDt?.millisecondsSinceEpoch ??
         DateTime.now().millisecondsSinceEpoch;

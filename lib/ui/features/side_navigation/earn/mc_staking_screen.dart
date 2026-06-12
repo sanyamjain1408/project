@@ -161,20 +161,30 @@ class _McStakingScreenState extends State<McStakingScreen>
 
   void _lerpHistory(String sym, List<double> target) {
     final cur = _coinDisplayHistories[sym];
-    // Always snap all historical points directly — only lerp the live tail
-    final next = List<double>.from(target);
-    if (cur != null && cur.length == target.length) {
-      // Smoothly lerp only the last 2 points (the "live" edge of the graph)
-      final len = next.length;
-      if (len >= 1) next[len - 1] = cur[len - 1] + (target[len - 1] - cur[len - 1]) * 0.15;
-      if (len >= 2) next[len - 2] = cur[len - 2] + (target[len - 2] - cur[len - 2]) * 0.10;
-      // Micro-jitter on tip so it looks live
-      if (len >= 1) {
-        final range = target.reduce(math.max) - target.reduce(math.min);
-        final jitter = (range > 0 ? range : 1.0) * 0.003;
-        next[len - 1] += (_rng.nextDouble() - 0.5) * jitter;
-      }
+    final len = target.length;
+    if (len == 0) return;
+
+    if (cur == null || cur.length != len) {
+      // First time — seed entire history as flat line at current last price
+      // This prevents the "speed-run" where old stored points animate in
+      _coinDisplayHistories[sym] = List.generate(len, (_) => target.last);
+      return;
     }
+
+    // Already seeded — lerp each point toward target with easeOut feel
+    // Historical points (older) move faster; live tip moves slower = smooth
+    final next = List<double>.generate(len, (i) {
+      // Factor: older points snap faster, newest point is slowest (0.08)
+      final t = i / (len - 1); // 0.0 = oldest, 1.0 = newest
+      final factor = 0.35 - t * 0.27; // oldest=0.35 → newest=0.08
+      return cur[i] + (target[i] - cur[i]) * factor;
+    });
+
+    // Micro-jitter on tip so it looks live
+    final range = target.reduce(math.max) - target.reduce(math.min);
+    final jitter = (range > 0 ? range : 1.0) * 0.002;
+    next[len - 1] += (_rng.nextDouble() - 0.5) * jitter;
+
     _coinDisplayHistories[sym] = next;
   }
 
