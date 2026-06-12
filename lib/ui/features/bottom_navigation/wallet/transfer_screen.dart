@@ -104,10 +104,11 @@ class _TransferScreenState extends State<TransferScreen>
     _amountCtrl.clear();
     try {
       final coinType = coin['coin_type'] as String;
-      final res = await http.get(
-        Uri.parse('$_baseUrl/api/get-fund-transfer-wallet-balance?coin_type=$coinType&to_fund_type=$_fundTo&from_fund_type=$_fundFrom'),
-        headers: _authHeaders(),
-      );
+      final url = '$_baseUrl/api/get-fund-transfer-wallet-balance?coin_type=$coinType&to_fund_type=$_fundTo&from_fund_type=$_fundFrom';
+      final headers = _authHeaders();
+      print('[Transfer] balance url=$url headers=$headers');
+      final res = await http.get(Uri.parse(url), headers: headers);
+      print('[Transfer] balance status=${res.statusCode} body=${res.body.substring(0, res.body.length.clamp(0, 300))}');
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body);
         if (j['success'] == true) {
@@ -115,7 +116,9 @@ class _TransferScreenState extends State<TransferScreen>
           if (mounted) setState(() => _availableBalance = bal);
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      print('[Transfer] balance error: $e');
+    }
   }
 
   void _swap() {
