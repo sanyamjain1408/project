@@ -269,9 +269,10 @@ class WalletController extends GetxController
         final json = jsonDecode(resp.body);
         if (json['success'] == true) {
           final d = json['data'] ?? {};
-          final total = double.tryParse(d['total_balance']?.toString() ?? '0') ?? 0;
-          final avail = double.tryParse(d['available_balance']?.toString() ?? '0') ?? 0;
-          return total > 0 ? total : avail;
+          // wallet_balance = total future balance (margin + available)
+          final wb = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
+          final avail = double.tryParse(d['balance']?.toString() ?? '0') ?? 0;
+          return wb > 0 ? wb : avail;
         }
       }
     } catch (_) {}
