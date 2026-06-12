@@ -80,20 +80,26 @@ class _TransferScreenState extends State<TransferScreen>
         Uri.parse('$_baseUrl/api/get-coin-list?transfer=1&from_fund_type=$_fundFrom&to_fund_type=$_fundTo'),
         headers: _authHeaders(),
       );
+      print('[Transfer] coins status=${res.statusCode} body=${res.body.substring(0, res.body.length.clamp(0, 400))}');
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body);
-        final list = (j['data'] as List? ?? []).map<Map<String, dynamic>>((e) => {
+        // API may return data directly as list or nested under 'data'
+        final raw = j['data'] is List ? j['data'] : (j['data']?['data'] ?? j['coins'] ?? []);
+        final list = (raw as List).map<Map<String, dynamic>>((e) => {
           'coin_type': e['coin_type']?.toString() ?? '',
-          'name': e['name']?.toString() ?? '',
+          'name': e['name']?.toString() ?? e['coin_name']?.toString() ?? '',
           'balance': double.tryParse(e['balance']?.toString() ?? '0') ?? 0,
-          'coin_icon': e['coin_icon']?.toString() ?? '',
+          'coin_icon': e['coin_icon']?.toString() ?? e['icon']?.toString() ?? '',
         }).toList();
+        print('[Transfer] coins parsed count=${list.length}');
         if (mounted) {
           setState(() => _coins = list);
           if (list.isNotEmpty) await _selectCoin(list.first);
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      print('[Transfer] coins error: $e');
+    }
     if (mounted) setState(() => _loadingCoins = false);
   }
 
