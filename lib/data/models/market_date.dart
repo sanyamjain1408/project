@@ -74,7 +74,7 @@ class MarketCoin {
   String getCoinPairKey() =>  "${coinType ?? ""}_${baseCoinType ?? ""}";
 
   CoinPair convertCoinPair() {
-    return CoinPair(coinPair: getCoinPairKey(), childCoinName: coinType, parentCoinName: baseCoinType);
+    return CoinPair(coinPair: getCoinPairKey(), parentCoinName: coinType, childCoinName: baseCoinType);
   }
 }
 
