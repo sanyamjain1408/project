@@ -15,7 +15,6 @@ import 'calc_plan_card.dart';
 import 'mc_staking_screen.dart';
 import 'mc_staking_controller.dart' show McStakingController; // ignore: unused_import
 import 'mc_my_stakes_screen.dart';
-import 'mc_portfolio_screen.dart';
 import 'mc_withdraw_history_screen.dart';
 import 'earn_history_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_widgets.dart' show RotatingIcon;
@@ -3645,12 +3644,12 @@ class _StakingLiveHeroState extends State<_StakingLiveHero> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => Get.to(() => McPortfolioScreen()),
+                    onTap: () {},
                     child: Container(
                       height: 36,
                       decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(10)),
                       alignment: Alignment.center,
-                      child: const Text('Live Dashboard', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w400, fontFamily: 'DMSans')),
+                      child: const Text('Calculator', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w400, fontFamily: 'DMSans')),
                     ),
                   ),
                 ),
