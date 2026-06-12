@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/activity/activity_screen.dart';
@@ -48,9 +49,11 @@ class _TransferScreenState extends State<TransferScreen>
     final box = GetStorage();
     final token = box.read(PreferenceKey.accessToken) ?? '';
     final type = box.read(PreferenceKey.accessType) ?? 'Bearer';
+    final secret = dotenv.env[EnvKeyValue.kApiSecret] ?? '';
     return {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'userapisecret': secret,
       if (token.isNotEmpty) 'Authorization': '$type $token',
     };
   }
