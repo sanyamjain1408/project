@@ -67,9 +67,13 @@ class _McStakingScreenState extends State<McStakingScreen>
 
   // Sparkline animation — mirrors website's RAF + lerp approach
   late final Ticker _sparkTicker;
-  List<double> _displayHistory = []; // smoothly interpolated values
-  List<double> _targetHistory = []; // latest from API
+  final Map<String, List<double>> _coinDisplayHistories = {};
   final _rng = math.Random();
+
+  // Carousel
+  late final PageController _carouselCtrl;
+  Timer? _carouselAutoTimer;
+  int _carouselPage = 0;
 
   @override
   void initState() {
@@ -77,48 +81,112 @@ class _McStakingScreenState extends State<McStakingScreen>
     _c = Get.isRegistered<McStakingController>()
         ? Get.find<McStakingController>()
         : Get.put(McStakingController());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _c.fetchCoins();
+
+    _carouselCtrl = PageController(viewportFraction: 1.0);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Clear any leftover display history from previous screen instance
+      _coinDisplayHistories.clear();
+
       _c.startTrpxTickerPolling();
       if (gUserRx.value.id > 0) _c.fetchPortfolio();
+
+      // Fetch coins, then immediately fetch all tickers before showing carousel
+      await _c.fetchCoins();
+      if (!mounted) return;
+
+      // Poll all non-TRPX coins and wait for first batch of tickers
+      final others = _c.coins.map((c) => c.symbol).where((s) => s != 'TRPX').toList();
+      if (others.isNotEmpty) {
+        _c.startCoinCarouselPolling(others);
+        // Wait for first ticker responses (max 3s)
+        await Future.delayed(const Duration(milliseconds: 2500));
+      }
+      if (!mounted) return;
+
+      // Now carousel shows only coins with confirmed ticker data
+      setState(() => _carouselPage = 0);
+      _carouselCtrl.jumpToPage(0);
+
+      // Auto-advance every 5 seconds
+      _carouselAutoTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+        if (!mounted) return;
+        final symbols = _carouselSymbols();
+        if (symbols.length < 2) return;
+        final next = (_carouselPage + 1) % symbols.length;
+        setState(() => _carouselPage = next);
+        _carouselCtrl.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      });
     });
 
-    // RAF-equivalent: 60fps ticker that lerps _displayHistory → _targetHistory
+    // 60fps ticker — lerps all coin display histories toward controller targets
     _sparkTicker = createTicker((_) {
-      final target = _c.trpxPriceHistory.toList();
-      if (target.isEmpty) return;
+      bool changed = false;
 
-      // Sync list length with target
-      if (_displayHistory.length != target.length) {
-        _displayHistory = List.of(target);
-        _targetHistory = List.of(target);
-      } else {
-        _targetHistory = target;
-        // Lerp each point 8% per frame toward target (matches website)
-        for (int i = 0; i < _displayHistory.length; i++) {
-          _displayHistory[i] += (_targetHistory[i] - _displayHistory[i]) * 0.08;
-        }
-        // Micro-vibrations on last 2 nodes so line looks "live"
-        final len = _displayHistory.length;
-        if (len >= 2) {
-          final range =
-              _targetHistory.reduce(math.max) - _targetHistory.reduce(math.min);
-          final jitter = (range > 0 ? range : 1.0) * 0.003;
-          _displayHistory[len - 1] += (_rng.nextDouble() - 0.5) * jitter;
-          _displayHistory[len - 2] += (_rng.nextDouble() - 0.5) * jitter * 0.5;
+      // TRPX
+      final trpxTarget = _c.trpxPriceHistory.toList();
+      if (trpxTarget.isNotEmpty) {
+        changed = true;
+        _lerpHistory('TRPX', trpxTarget);
+      }
+
+      // All other coins tracked by controller
+      for (final entry in _c.coinHistories.entries) {
+        final sym = entry.key;
+        if (sym == 'TRPX') continue;
+        final t = List<double>.from(entry.value);
+        if (t.isNotEmpty) {
+          changed = true;
+          _lerpHistory(sym, t);
         }
       }
-      if (mounted) setState(() {});
+
+      if (changed && mounted) setState(() {});
     });
     _sparkTicker.start();
+  }
+
+  List<String> _carouselSymbols() {
+    // All staking coins — but only those whose ticker was successfully fetched
+    // (USDT has no USDTUSDT pair so it never appears in coinTickers)
+    final fetched = _c.coinTickers.keys.toSet()..add('TRPX');
+    final coinSymbols = _c.coins.map((c) => c.symbol).where((s) => fetched.contains(s)).toList();
+    return ['TRPX', ...coinSymbols.where((s) => s != 'TRPX')];
+  }
+
+
+  void _lerpHistory(String sym, List<double> target) {
+    final cur = _coinDisplayHistories[sym];
+    // Always snap all historical points directly — only lerp the live tail
+    final next = List<double>.from(target);
+    if (cur != null && cur.length == target.length) {
+      // Smoothly lerp only the last 2 points (the "live" edge of the graph)
+      final len = next.length;
+      if (len >= 1) next[len - 1] = cur[len - 1] + (target[len - 1] - cur[len - 1]) * 0.15;
+      if (len >= 2) next[len - 2] = cur[len - 2] + (target[len - 2] - cur[len - 2]) * 0.10;
+      // Micro-jitter on tip so it looks live
+      if (len >= 1) {
+        final range = target.reduce(math.max) - target.reduce(math.min);
+        final jitter = (range > 0 ? range : 1.0) * 0.003;
+        next[len - 1] += (_rng.nextDouble() - 0.5) * jitter;
+      }
+    }
+    _coinDisplayHistories[sym] = next;
   }
 
   @override
   void dispose() {
     _sparkTicker.dispose();
+    _carouselCtrl.dispose();
+    _carouselAutoTimer?.cancel();
     _calcTimer?.cancel();
     _amountCtrl.dispose();
     _c.stopTrpxTickerPolling();
+    _c.stopCoinCarouselPolling();
     super.dispose();
   }
 
@@ -241,145 +309,152 @@ class _McStakingScreenState extends State<McStakingScreen>
     );
   }
 
-  // ── TRPX Price Card (replaces stats grid) ────────────────────────────────
+  // ── Coin Price Carousel ───────────────────────────────────────────────────
   Widget _buildTrpxPriceCard() {
     return Obx(() {
-      final price = _c.trpxPrice.value;
-      final change = _c.trpxChange.value;
-      final volume = _c.trpxVolume.value;
-      final isPositive = change >= 0;
-      final changeColor = isPositive
-          ? const Color(0xFF77D215)
-          : const Color(0xFFFF453A);
-
-      // Format price — show enough decimals based on magnitude
-      String fmtPrice(double p) {
-        if (p == 0) return '--';
-        if (p >= 1) return '\$${p.toStringAsFixed(4)}';
-        if (p >= 0.01) return '\$${p.toStringAsFixed(6)}';
-        return '\$${p.toStringAsFixed(8)}';
+      _c.coinTickers.length; // observe — rebuilds when tickers arrive
+      _c.coins.length;       // observe — rebuilds when coins load
+      final symbols = _carouselSymbols();
+      if (symbols.isEmpty) return const SizedBox.shrink();
+      if (_carouselPage >= symbols.length) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _carouselPage = 0);
+        });
       }
 
-      // Format volume — e.g. 23190 → $23.19k
-      String fmtVolume(double v) {
-        if (v == 0) return '--';
-        if (v >= 1e9) return '\$${(v / 1e9).toStringAsFixed(2)}B';
-        if (v >= 1e6) return '\$${(v / 1e6).toStringAsFixed(2)}M';
-        if (v >= 1e3) return '\$${(v / 1e3).toStringAsFixed(2)}k';
-        return '\$${v.toStringAsFixed(2)}';
-      }
-
-      // TRPX coin logo from loaded coins list
-      final trpxCoin = _c.coins.firstWhereOrNull((c) => c.symbol == 'TRPX');
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 0),
-        child: Container(
-          height: 149,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(10),
+      return Column(
+        children: [
+          SizedBox(
+            height: 149,
+            child: PageView.builder(
+              controller: _carouselCtrl,
+              itemCount: symbols.length,
+              onPageChanged: (i) => setState(() => _carouselPage = i),
+              itemBuilder: (_, i) => Obx(() => _buildCoinCard(symbols[i])),
+            ),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            children: [
-              // Sparkline area — redraws every frame via Ticker (RAF equivalent)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 80,
-                child: CustomPaint(
-                  painter: _TrpxSparklinePainter(
-                    changePercent: change,
-                    priceHistory: List.of(_displayHistory),
+          if (symbols.length > 1) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(symbols.length, (i) {
+                final active = i == _carouselPage;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: active ? 16 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: active ? _green : Colors.white.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(3),
                   ),
-                ),
-              ),
+                );
+              }),
+            ),
+          ],
+        ],
+      );
+    });
+  }
 
-              // Header row: coin icon + name + price + change
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                child: Row(
+  Widget _buildCoinCard(String symbol) {
+    final isTrpx = symbol == 'TRPX';
+    final ticker = isTrpx
+        ? {'price': _c.trpxPrice.value, 'change': _c.trpxChange.value, 'volume': _c.trpxVolume.value, 'goingUp': _c.trpxGoingUp.value}
+        : (_c.coinTickers[symbol] ?? {});
+    final price = (ticker['price'] as double?) ?? 0;
+    final change = (ticker['change'] as double?) ?? 0;
+    final volume = (ticker['volume'] as double?) ?? 0;
+    final isPositive = (ticker['goingUp'] as bool?) ?? true;
+    final history = List<double>.from(_coinDisplayHistories[symbol] ?? []);
+    final coin = _c.coins.firstWhereOrNull((c) => c.symbol == symbol);
+    final changeColor = isPositive ? const Color(0xFF77D215) : const Color(0xFFFF453A);
+
+    String fmtPrice(double p) {
+      if (p == 0) return '--';
+      if (p >= 1000) return '\$${p.toStringAsFixed(2)}';
+      if (p >= 1) return '\$${p.toStringAsFixed(4)}';
+      return '\$${p.toStringAsFixed(6)}';
+    }
+
+    String fmtVolume(double v) {
+      if (v == 0) return '--';
+      if (v >= 1e9) return '\$${(v / 1e9).toStringAsFixed(2)}B';
+      if (v >= 1e6) return '\$${(v / 1e6).toStringAsFixed(2)}M';
+      if (v >= 1e3) return '\$${(v / 1e3).toStringAsFixed(2)}k';
+      return '\$${v.toStringAsFixed(2)}';
+    }
+
+    return Container(
+      height: 149,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // Sparkline
+          Positioned(
+            left: 0, right: 0, bottom: 0, height: 80,
+            child: history.length >= 2
+                ? CustomPaint(
+                    painter: _TrpxSparklinePainter(
+                      changePercent: change,
+                      priceHistory: history,
+                      isPositiveOverride: isPositive,
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _coinImg(coin?.logo, size: 30, symbol: symbol),
+                const SizedBox(width: 10),
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Coin icon
-                    _coinImg(trpxCoin?.logo, size: 30, symbol: 'TRPX'),
-                    const SizedBox(width: 10),
-                    // Symbol + volume
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              const TextSpan(
-                                text: 'TRPX',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontFamily: 'DMSans',
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              TextSpan(
-                                text: '/USDT',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  fontSize: 15,
-                                  fontFamily: 'DMSans',
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ],
-                          ),
+                    RichText(
+                      text: TextSpan(children: [
+                        TextSpan(
+                          text: symbol,
+                          style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          fmtVolume(volume),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 12,
-                            fontFamily: 'DMSans',
-                            fontWeight: FontWeight.w400,
-                          ),
+                        TextSpan(
+                          text: '/USDT',
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
                         ),
-                      ],
+                      ]),
                     ),
-                    const Spacer(),
-                    // Price + change
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          fmtPrice(price),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontFamily: 'DMSans',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          '${isPositive ? '▲' : '▼'} ${change.abs().toStringAsFixed(2)}%',
-                          style: TextStyle(
-                            color: changeColor,
-                            fontSize: 12,
-                            fontFamily: 'DMSans',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 2),
+                    Text(
+                      fmtVolume(volume),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans'),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const Spacer(),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(fmtPrice(price), style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'DMSans')),
+                    const SizedBox(width: 10),
+                    Text(
+                      '${isPositive ? '▲' : '▼'} ${change.abs().toStringAsFixed(2)}%',
+                      style: TextStyle(color: changeColor, fontSize: 12, fontFamily: 'DMSans'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      );
-    });
+        ],
+      ),
+    );
   }
 
   // ── COIN LIST (overview style) ────────────────────────────────────────────
@@ -3190,17 +3265,19 @@ Widget _pagination(Map<String, dynamic>? meta, Function(int) onPage) {
 class _TrpxSparklinePainter extends CustomPainter {
   final double changePercent;
   final List<double> priceHistory;
+  final bool? isPositiveOverride;
 
   const _TrpxSparklinePainter({
     required this.changePercent,
     this.priceHistory = const [],
+    this.isPositiveOverride,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final isPositive = changePercent >= 0;
+    final isPositive = isPositiveOverride ?? (changePercent >= 0);
     final lineColor = isPositive
         ? const Color(0xFF77D215)
         : const Color(0xFFFF453A);

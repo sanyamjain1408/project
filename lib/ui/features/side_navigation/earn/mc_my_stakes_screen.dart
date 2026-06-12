@@ -1366,11 +1366,16 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
 
   // Live Earned row with optional USD sub-line (matches website ≈ $X.XXXX USDT)
   Widget _liveEarnedRow(String symbol) {
-    final coinPrice =
-        _c.portfolio.value?.portfolio
-            .firstWhereOrNull((p) => p.stakeUid == stake.uid)
-            ?.coinPriceUsdt ??
-        0;
+    final portfolioPrice = _c.portfolio.value?.portfolio
+        .firstWhereOrNull((p) => p.stakeUid == stake.uid)
+        ?.coinPriceUsdt ?? 0;
+    final trpxPrice = _c.trpxPrice.value;
+    final isTrpx = (stake.coin?.symbol ?? '').toUpperCase() == 'TRPX';
+    final coinPrice = portfolioPrice > 0
+        ? portfolioPrice
+        : (stake.coinPriceUsdt > 0
+            ? stake.coinPriceUsdt
+            : (isTrpx && trpxPrice > 0 ? trpxPrice : 0.0));
     final usdVal = coinPrice > 0 ? _liveEarned * coinPrice : 0.0;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),

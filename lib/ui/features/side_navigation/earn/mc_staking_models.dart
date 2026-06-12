@@ -89,6 +89,7 @@ class McStake {
   final double dailyRate;
   final double totalRewardEarned;
   final double totalWithdrawn;
+  final double coinPriceUsdt;
   final McStakingCoin? coin;
   final McStakingPlan? plan;
 
@@ -102,6 +103,7 @@ class McStake {
     required this.dailyRate,
     required this.totalRewardEarned,
     required this.totalWithdrawn,
+    this.coinPriceUsdt = 0,
     this.coin,
     this.plan,
   });
@@ -153,6 +155,7 @@ class McStake {
       dailyRate: double.tryParse(j['daily_rate'].toString()) ?? 0,
       totalRewardEarned: double.tryParse(j['total_reward_earned'].toString()) ?? 0,
       totalWithdrawn: double.tryParse(j['total_withdrawn'].toString()) ?? 0,
+      coinPriceUsdt: double.tryParse(j['coin_price_usdt']?.toString() ?? '0') ?? 0,
       coin: coin,
       plan: j['plan'] != null ? McStakingPlan.fromJson(j['plan']) : null,
     );

@@ -25,20 +25,25 @@ String mcLogoUrl(String? logo, {String? symbol}) {
 
 String _coinIconBySymbol(String symbol) {
   const map = {
-    'BTC':  'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
-    'ETH':  'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
+    'BTC': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
+    'ETH': 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
     'USDT': 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
-    'BNB':  'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
-    'SOL':  'https://assets.coingecko.com/coins/images/4128/large/solana.png',
-    'XRP':  'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
-    'ADA':  'https://assets.coingecko.com/coins/images/975/large/cardano.png',
+    'BNB':
+        'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
+    'SOL': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
+    'XRP':
+        'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
+    'ADA': 'https://assets.coingecko.com/coins/images/975/large/cardano.png',
     'DOGE': 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png',
-    'TRX':  'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png',
-    'LTC':  'https://assets.coingecko.com/coins/images/2/large/litecoin.png',
-    'MATIC':'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png',
-    'DOT':  'https://assets.coingecko.com/coins/images/12171/large/polkadot.png',
-    'AVAX': 'https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
-    'LINK': 'https://assets.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
+    'TRX': 'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png',
+    'LTC': 'https://assets.coingecko.com/coins/images/2/large/litecoin.png',
+    'MATIC':
+        'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png',
+    'DOT': 'https://assets.coingecko.com/coins/images/12171/large/polkadot.png',
+    'AVAX':
+        'https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
+    'LINK':
+        'https://assets.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
     'USDC': 'https://assets.coingecko.com/coins/images/6319/large/usdc.png',
   };
   return map[symbol] ?? '';
@@ -90,17 +95,23 @@ class McStakingController extends GetxController {
   final withdrawMeta = Rx<Map<String, dynamic>?>(null);
 
   // ── Helper ───────────────────────────────────────────────────────────────
-  Future<http.Response> _get(String path) =>
-      http.get(Uri.parse('$kMcBase$path'), headers: _headers)
-          .timeout(const Duration(seconds: 15));
+  Future<http.Response> _get(String path) => http
+      .get(Uri.parse('$kMcBase$path'), headers: _headers)
+      .timeout(const Duration(seconds: 15));
 
-  Future<http.Response> _post(String path, Map<String, dynamic> body) =>
-      http.post(Uri.parse('$kMcBase$path'), headers: _headers, body: jsonEncode(body))
-          .timeout(const Duration(seconds: 15));
+  Future<http.Response> _post(String path, Map<String, dynamic> body) => http
+      .post(
+        Uri.parse('$kMcBase$path'),
+        headers: _headers,
+        body: jsonEncode(body),
+      )
+      .timeout(const Duration(seconds: 15));
 
   Map<String, dynamic> _decode(http.Response res) {
-    if (res.statusCode == 401) return {'success': false, 'message': 'Unauthorized. Please login again.'};
-    if (res.statusCode != 200) return {'success': false, 'message': 'Server error (${res.statusCode})'};
+    if (res.statusCode == 401)
+      return {'success': false, 'message': 'Unauthorized. Please login again.'};
+    if (res.statusCode != 200)
+      return {'success': false, 'message': 'Server error (${res.statusCode})'};
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
 
@@ -110,7 +121,9 @@ class McStakingController extends GetxController {
     try {
       final j = _decode(await _get('/api/mc-staking/coins'));
       if (j['success'] == true) {
-        coins.assignAll((j['data'] as List).map((e) => McStakingCoin.fromJson(e)));
+        coins.assignAll(
+          (j['data'] as List).map((e) => McStakingCoin.fromJson(e)),
+        );
         _prefetchDurations();
       }
     } catch (e) {
@@ -123,11 +136,14 @@ class McStakingController extends GetxController {
   Future<void> _prefetchDurations() async {
     for (final coin in coins) {
       try {
-        final j = _decode(await _get('/api/mc-staking/plans?coin_id=${coin.id}'));
+        final j = _decode(
+          await _get('/api/mc-staking/plans?coin_id=${coin.id}'),
+        );
         if (j['success'] == true) {
-          final coinPlans = (j['data'] as List).map((e) => McStakingPlan.fromJson(e)).toList();
+          final coinPlans = (j['data'] as List)
+              .map((e) => McStakingPlan.fromJson(e))
+              .toList();
           if (coinPlans.isNotEmpty) {
-            print('MC_PLANS[${coin.symbol}]: ${coinPlans.map((p) => '${p.planName}(${p.durationDays}d)').toList()}');
             coinPlansMap[coin.id] = coinPlans;
             // Collect all daily rates from all rate rules across all plans
             final rates = <double>[];
@@ -144,7 +160,8 @@ class McStakingController extends GetxController {
               if (minRate == maxRate) {
                 text = '${minRate.toStringAsFixed(2)}%';
               } else {
-                text = '${minRate.toStringAsFixed(2)}% – ${maxRate.toStringAsFixed(2)}%';
+                text =
+                    '${minRate.toStringAsFixed(2)}% – ${maxRate.toStringAsFixed(2)}%';
               }
             } else {
               text = '';
@@ -164,7 +181,9 @@ class McStakingController extends GetxController {
     try {
       final j = _decode(await _get('/api/mc-staking/plans?coin_id=$coinId'));
       if (j['success'] == true) {
-        plans.assignAll((j['data'] as List).map((e) => McStakingPlan.fromJson(e)));
+        plans.assignAll(
+          (j['data'] as List).map((e) => McStakingPlan.fromJson(e)),
+        );
       }
     } catch (e) {
       showToast('Error loading plans');
@@ -175,10 +194,18 @@ class McStakingController extends GetxController {
 
   // ── Calculate reward ──────────────────────────────────────────────────────
   Future<void> calculateReward(int planId, double amount) async {
-    if (amount <= 0) { calcResult.value = null; return; }
+    if (amount <= 0) {
+      calcResult.value = null;
+      return;
+    }
     try {
-      final j = _decode(await _post('/api/mc-staking/calculate-reward', {'plan_id': planId, 'amount': amount}));
-calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
+      final j = _decode(
+        await _post('/api/mc-staking/calculate-reward', {
+          'plan_id': planId,
+          'amount': amount,
+        }),
+      );
+      calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
     } catch (_) {
       calcResult.value = null;
     }
@@ -188,9 +215,17 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
   Future<bool> submitStake(int planId, double amount) async {
     isStaking.value = true;
     try {
-      final j = _decode(await _post('/api/mc-staking/submit-stake', {'plan_id': planId, 'amount': amount}));
+      final j = _decode(
+        await _post('/api/mc-staking/submit-stake', {
+          'plan_id': planId,
+          'amount': amount,
+        }),
+      );
       final ok = j['success'] == true;
-      showToast(j['message'] ?? (ok ? 'Staking started!' : 'Failed'), isError: !ok);
+      showToast(
+        j['message'] ?? (ok ? 'Staking started!' : 'Failed'),
+        isError: !ok,
+      );
       return ok;
     } catch (e) {
       showToast('Network error. Please try again.');
@@ -208,21 +243,13 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
       if (status.isNotEmpty) path += '&status=$status';
       final res = await _get(path);
       final j = _decode(res);
-      print('MC_MY_STAKES raw: ${res.body}');
       if (j['success'] == true) {
         final data = j['data'] as Map<String, dynamic>;
         final list = data['data'] as List;
         stakes.assignAll(list.map((e) => McStake.fromJson(e)));
         stakesMeta.value = data;
-        print('MC_MY_STAKES parsed: ${stakes.length} stakes');
-        for (final s in stakes) {
-          print('  stake uid=${s.uid} coin=${s.coin?.symbol} amount=${s.amount} dailyRate=${s.dailyRate} status=${s.status} plan=${s.plan?.planName} planType=${s.plan?.planType} duration=${s.plan?.durationDays}');
-        }
-      } else {
-        print('MC_MY_STAKES failed: ${j['message']}');
       }
     } catch (e) {
-      print('MC_MY_STAKES error: $e');
       showToast('Error loading stakes');
     } finally {
       isLoadingStakes.value = false;
@@ -233,9 +260,14 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
   Future<bool> cancelStake(String uid) async {
     isCancelling.value = uid;
     try {
-      final j = _decode(await _post('/api/mc-staking/cancel-stake', {'uid': uid}));
+      final j = _decode(
+        await _post('/api/mc-staking/cancel-stake', {'uid': uid}),
+      );
       final ok = j['success'] == true;
-      showToast(j['message'] ?? (ok ? 'Cancelled!' : 'Cannot cancel'), isError: !ok);
+      showToast(
+        j['message'] ?? (ok ? 'Cancelled!' : 'Cannot cancel'),
+        isError: !ok,
+      );
       return ok;
     } catch (e) {
       showToast('Network error. Please try again.');
@@ -247,8 +279,10 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
 
   // ── TRPX Ticker (price + % change for sparkline card) ───────────────────
   final trpxPrice = 0.0.obs;
-  final trpxChange = 0.0.obs;   // percent change e.g. 4.15
-  final trpxVolume = 0.0.obs;   // 24h volume in USDT
+  final trpxChange = 0.0.obs; // percent change e.g. 4.15
+  final trpxVolume = 0.0.obs;
+  final trpxGoingUp = true.obs;
+  double _previousTrpxChange = 0.0; // 24h volume in USDT
 
   /// Live price history for the animated sparkline — max 40 points
   final trpxPriceHistory = <double>[].obs;
@@ -260,10 +294,42 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
       final j = _decode(res);
       // Handle both success wrapper and direct object
       final data = j['data'] ?? j;
-      final price = double.tryParse(data['current_price']?.toString() ?? data['last_price']?.toString() ?? data['price']?.toString() ?? '0') ?? 0;
+      final price =
+          double.tryParse(
+            data['current_price']?.toString() ??
+                data['last_price']?.toString() ??
+                data['price']?.toString() ??
+                '0',
+          ) ??
+          0;
       trpxPrice.value = price;
-      trpxChange.value = double.tryParse(data['price_change_24h']?.toString() ?? data['price_change_percent']?.toString() ?? data['change']?.toString() ?? '0') ?? 0;
-      trpxVolume.value = double.tryParse(data['volume_24h']?.toString() ?? data['quote_volume']?.toString() ?? data['volume']?.toString() ?? '0') ?? 0;
+
+      final newChange =
+          double.tryParse(
+            data['price_change_24h']?.toString() ??
+                data['price_change_percent']?.toString() ??
+                data['change']?.toString() ??
+                '0',
+          ) ??
+          0;
+
+      if (newChange > _previousTrpxChange) {
+        trpxGoingUp.value = true;
+      } else if (newChange < _previousTrpxChange) {
+        trpxGoingUp.value = false;
+      }
+
+      _previousTrpxChange = newChange;
+      trpxChange.value = newChange;
+
+      trpxVolume.value =
+          double.tryParse(
+            data['volume_24h']?.toString() ??
+                data['quote_volume']?.toString() ??
+                data['volume']?.toString() ??
+                '0',
+          ) ??
+          0;
 
       // Accumulate price points for animated sparkline
       if (price > 0) {
@@ -272,21 +338,93 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
         if (history.length > 40) history.removeAt(0);
         trpxPriceHistory.value = history;
       }
-    } catch (e) {
-      print('TRPX_TICKER error: $e');
-    }
+    } catch (_) {}
   }
 
   /// Start polling ticker every 3 s so sparkline animates with live prices
   void startTrpxTickerPolling() {
     _trpxTickerTimer?.cancel();
+    // Reset history so screen always starts fresh — no catch-up animation
+    trpxPriceHistory.value = [];
     fetchTrpxTicker();
-    _trpxTickerTimer = Timer.periodic(const Duration(seconds: 3), (_) => fetchTrpxTicker());
+    _trpxTickerTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => fetchTrpxTicker(),
+    );
   }
 
   void stopTrpxTickerPolling() {
     _trpxTickerTimer?.cancel();
     _trpxTickerTimer = null;
+  }
+
+  // ── Multi-coin ticker (for carousel cards) ───────────────────────────────
+  // symbol → price history (max 40 pts)
+  final coinHistories = <String, List<double>>{}.obs;
+  // symbol → {price, change, volume, goingUp}
+  final coinTickers = <String, Map<String, dynamic>>{}.obs;
+  Timer? _coinCarouselTimer;
+
+  Future<void> fetchCoinTicker(String symbol) async {
+    try {
+      final res = await _get('/api/v1/spot/ticker/${symbol}USDT');
+      final j = _decode(res);
+      final data = j['data'] ?? j;
+      final price = double.tryParse(
+            data['current_price']?.toString() ??
+                data['last_price']?.toString() ??
+                data['price']?.toString() ??
+                '0',
+          ) ?? 0;
+      if (price <= 0) return;
+      final change = double.tryParse(
+            data['price_change_24h']?.toString() ??
+                data['price_change_percent']?.toString() ??
+                data['change']?.toString() ??
+                '0',
+          ) ?? 0;
+      final volume = double.tryParse(
+            data['volume_24h']?.toString() ??
+                data['quote_volume']?.toString() ??
+                data['volume']?.toString() ??
+                '0',
+          ) ?? 0;
+      final prev = coinTickers[symbol]?['change'] as double? ?? change;
+      final goingUp = change >= prev;
+
+      // Update histories
+      final hist = List<double>.from(coinHistories[symbol] ?? []);
+      hist.add(price);
+      if (hist.length > 40) hist.removeAt(0);
+      coinHistories[symbol] = hist;
+
+      coinTickers[symbol] = {
+        'price': price,
+        'change': change,
+        'volume': volume,
+        'goingUp': goingUp,
+      };
+      // trigger Obx
+      coinHistories.refresh();
+      coinTickers.refresh();
+    } catch (_) {}
+  }
+
+  void startCoinCarouselPolling(List<String> symbols) {
+    _coinCarouselTimer?.cancel();
+    // Reset all histories so screen starts fresh — no catch-up animation
+    coinHistories.clear();
+    coinTickers.removeWhere((k, _) => !symbols.contains(k));
+    for (final s in symbols) fetchCoinTicker(s);
+    _coinCarouselTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) { for (final s in symbols) fetchCoinTicker(s); },
+    );
+  }
+
+  void stopCoinCarouselPolling() {
+    _coinCarouselTimer?.cancel();
+    _coinCarouselTimer = null;
   }
 
   // ── Coin Dashboard (live data per coin) ──────────────────────────────────
@@ -296,13 +434,13 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
   Future<void> fetchCoinDashboard(int coinId) async {
     isLoadingCoinDashboard.value = true;
     try {
-      final j = _decode(await _get('/api/mc-staking/coin-dashboard?coin_id=$coinId'));
-      print('MC_COIN_DASHBOARD raw: $j');
+      final j = _decode(
+        await _get('/api/mc-staking/coin-dashboard?coin_id=$coinId'),
+      );
       if (j['success'] == true) {
         coinDashboard.value = j['data'] as Map<String, dynamic>;
       }
-    } catch (e) {
-      print('MC_COIN_DASHBOARD error: $e');
+    } catch (_) {
     } finally {
       isLoadingCoinDashboard.value = false;
     }
@@ -316,21 +454,14 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
         _get('/api/mc-staking/portfolio'),
         _get('/api/mc-staking/statistics'),
       ]);
-      print('MC_PORTFOLIO raw: ${pRes.body}');
       final pj = _decode(pRes);
       final sj = _decode(sRes);
       if (pj['success'] == true) {
         portfolio.value = McPortfolioData.fromJson(pj['data']);
-        print('MC_PORTFOLIO items: ${portfolio.value?.portfolio.length}');
-        for (final p in portfolio.value?.portfolio ?? []) {
-          print('  item stakeUid=${p.stakeUid} coin=${p.coinSymbol} staked=${p.stakedAmount} dailyRate=${p.dailyRate} dailyReward=${p.dailyReward} totalEarned=${p.totalEarned} usdtValue=${p.usdtValue} planName=${p.planName} planType=${p.planType} endDate=${p.endDate} stakedAt=${p.stakedAt}');
-        }
-      } else {
-        print('MC_PORTFOLIO failed: ${pj['message']}');
       }
-      if (sj['success'] == true) statistics.value = McStatistics.fromJson(sj['data']);
+      if (sj['success'] == true)
+        statistics.value = McStatistics.fromJson(sj['data']);
     } catch (e) {
-      print('MC_PORTFOLIO error: $e');
       showToast('Error loading portfolio');
     } finally {
       isLoadingPortfolio.value = false;
@@ -341,9 +472,17 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
   Future<bool> withdrawReward(String uid, double liveAmount) async {
     isWithdrawing.value = uid;
     try {
-      final j = _decode(await _post('/api/mc-staking/withdraw-reward', {'uid': uid, 'live_amount': liveAmount}));
+      final j = _decode(
+        await _post('/api/mc-staking/withdraw-reward', {
+          'uid': uid,
+          'live_amount': liveAmount,
+        }),
+      );
       final ok = j['success'] == true;
-      showToast(j['message'] ?? (ok ? 'Withdrawal successful!' : 'Failed'), isError: !ok);
+      showToast(
+        j['message'] ?? (ok ? 'Withdrawal successful!' : 'Failed'),
+        isError: !ok,
+      );
       return ok;
     } catch (e) {
       showToast('Network error. Please try again.');
@@ -357,21 +496,17 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
   Future<void> fetchRewards({int page = 1}) async {
     isLoadingRewards.value = true;
     try {
-      final res = await _get('/api/mc-staking/my-rewards?per_page=15&page=$page');
-      print('MC_REWARDS raw: ${res.body}');
+      final res = await _get(
+        '/api/mc-staking/my-rewards?per_page=15&page=$page',
+      );
       final j = _decode(res);
       if (j['success'] == true) {
-        rewards.assignAll((j['data']['data'] as List).map((e) => McStakingReward.fromJson(e)));
+        rewards.assignAll(
+          (j['data']['data'] as List).map((e) => McStakingReward.fromJson(e)),
+        );
         rewardsMeta.value = j['data'] as Map<String, dynamic>;
-        print('MC_REWARDS count=${rewards.length}');
-        for (final r in rewards.take(3)) {
-          print('  reward id=${r.id} coin=${r.coin?.symbol} amount=${r.rewardAmount} rate=${r.dailyRate} date=${r.rewardDate}');
-        }
-      } else {
-        print('MC_REWARDS failed: ${j['message']}');
       }
     } catch (e) {
-      print('MC_REWARDS error: $e');
       showToast('Error loading rewards');
     } finally {
       isLoadingRewards.value = false;
@@ -382,9 +517,15 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
   Future<void> fetchReferralRewards({int page = 1}) async {
     isLoadingReferral.value = true;
     try {
-      final j = _decode(await _get('/api/mc-staking/my-referral-rewards?per_page=15&page=$page'));
+      final j = _decode(
+        await _get(
+          '/api/mc-staking/my-referral-rewards?per_page=15&page=$page',
+        ),
+      );
       if (j['success'] == true) {
-        referralRewards.assignAll((j['data']['data'] as List).map((e) => McReferralReward.fromJson(e)));
+        referralRewards.assignAll(
+          (j['data']['data'] as List).map((e) => McReferralReward.fromJson(e)),
+        );
         referralMeta.value = j['data'] as Map<String, dynamic>;
       }
     } catch (e) {
@@ -398,9 +539,13 @@ calcResult.value = j['success'] == true ? McCalcResult.fromJson(j) : null;
   Future<void> fetchWithdrawHistory({int page = 1}) async {
     isLoadingWithdraw.value = true;
     try {
-      final j = _decode(await _get('/api/mc-staking/withdraw-history?per_page=20&page=$page'));
+      final j = _decode(
+        await _get('/api/mc-staking/withdraw-history?per_page=20&page=$page'),
+      );
       if (j['success'] == true) {
-        withdrawHistory.assignAll((j['data']['data'] as List).map((e) => McWithdrawRecord.fromJson(e)));
+        withdrawHistory.assignAll(
+          (j['data']['data'] as List).map((e) => McWithdrawRecord.fromJson(e)),
+        );
         withdrawMeta.value = j['data'] as Map<String, dynamic>;
       }
     } catch (e) {
