@@ -83,10 +83,8 @@ class _TransferScreenState extends State<TransferScreen>
         Uri.parse('$_baseUrl/api/get-coin-list?transfer=1&from_fund_type=$_fundFrom&to_fund_type=$_fundTo'),
         headers: _authHeaders(),
       );
-      print('[Transfer] coins status=${res.statusCode} body=${res.body.substring(0, res.body.length.clamp(0, 400))}');
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body);
-        // API may return data directly as list or nested under 'data'
         final raw = j['data'] is List ? j['data'] : (j['data']?['data'] ?? j['coins'] ?? []);
         final list = (raw as List).map<Map<String, dynamic>>((e) => {
           'coin_type': e['coin_type']?.toString() ?? '',
@@ -94,38 +92,34 @@ class _TransferScreenState extends State<TransferScreen>
           'balance': double.tryParse(e['balance']?.toString() ?? '0') ?? 0,
           'coin_icon': e['coin_icon']?.toString() ?? e['icon']?.toString() ?? '',
         }).toList();
-        print('[Transfer] coins parsed count=${list.length}');
         if (mounted) {
           setState(() => _coins = list);
           if (list.isNotEmpty) await _selectCoin(list.first);
         }
       }
-    } catch (e) {
-      print('[Transfer] coins error: $e');
-    }
+    } catch (_) {}
     if (mounted) setState(() => _loadingCoins = false);
   }
 
   Future<void> _selectCoin(Map<String, dynamic> coin) async {
+    if (!mounted) return;
     setState(() { _selectedCoin = coin; _availableBalance = 0; });
     _amountCtrl.clear();
+    double bal = 0;
     try {
       final coinType = coin['coin_type'] as String;
-      final url = '$_baseUrl/api/get-fund-transfer-wallet-balance?coin_type=$coinType&to_fund_type=$_fundTo&from_fund_type=$_fundFrom';
-      final headers = _authHeaders();
-      print('[Transfer] balance url=$url headers=$headers');
-      final res = await http.get(Uri.parse(url), headers: headers);
-      print('[Transfer] balance status=${res.statusCode} body=${res.body.substring(0, res.body.length.clamp(0, 300))}');
+      final res = await http.get(
+        Uri.parse('$_baseUrl/api/get-fund-transfer-wallet-balance?coin_type=$coinType&to_fund_type=$_fundTo&from_fund_type=$_fundFrom'),
+        headers: _authHeaders(),
+      );
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body);
         if (j['success'] == true) {
-          final bal = double.tryParse(j['data']?['from_balance']?.toString() ?? '0') ?? 0;
-          if (mounted) setState(() => _availableBalance = bal);
+          bal = double.tryParse(j['data']?['from_balance']?.toString() ?? '0') ?? 0;
         }
       }
-    } catch (e) {
-      print('[Transfer] balance error: $e');
-    }
+    } catch (_) {}
+    if (mounted) setState(() => _availableBalance = bal);
   }
 
   void _swap() {
