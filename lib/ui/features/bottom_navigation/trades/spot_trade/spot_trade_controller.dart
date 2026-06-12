@@ -411,6 +411,8 @@ class SpotTradeController extends GetxController implements SocketListener {
       return;
     }
 
+    final sym = _spotSymbol;
+
     // Update precision from spot pair metadata
     final _updatePrecision = () {
       final meta = spotPairsMeta.firstWhereOrNull(
