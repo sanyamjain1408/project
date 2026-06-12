@@ -13,7 +13,9 @@ import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:tradexpro_flutter/utils/text_util.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import '../../../currency_pair_details/currency_pair_details_screen.dart';
+import '../../../root/root_controller.dart';
+import '../../../../../helper/bottom_nav_helper.dart';
+import '../../../trades/spot_trade/spot_trade_controller.dart';
 
 class MarketSort {
   bool? price;
@@ -190,8 +192,17 @@ class MarketCoinItemViewBottom extends StatelessWidget {
     String formattedPrice = coinFormat(coin.price); // LandingMarketView jaisa
 
     return GestureDetector(
-      onTap: () =>
-          Get.to(() => CurrencyPairDetailsScreen(pair: coin.convertCoinPair())),
+      onTap: () {
+        final pair = coin.convertCoinPair();
+        pair.coinPair = pair.getCoinPairKey();
+        pair.coinPairName = pair.getCoinPairName();
+        Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.trade);
+        if (Get.isRegistered<SpotTradeController>()) {
+          final ctrl = Get.find<SpotTradeController>();
+          ctrl.selectedCoinPair.value = pair;
+          ctrl.getDashBoardData();
+        }
+      },
       onLongPressStart: (lpDetails) => FavoriteHelper.showFavoritePopup(
         context,
         lpDetails.globalPosition,
