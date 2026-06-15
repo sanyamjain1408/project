@@ -37,6 +37,7 @@ import '../side_navigation/settings/settings_screen.dart';
 import '../side_navigation/staking/staking_screen.dart';
 import '../side_navigation/airdrop/airdrop_screen.dart';
 import '../side_navigation/about/about_trapix_screen.dart';
+import '../side_navigation/community/community_screen.dart';
 import '../side_navigation/spin_win/spin_win_screen.dart';
 import '../side_navigation/listing/listing_screen.dart';
 import '../side_navigation/official_verification/official_verification_screen.dart';
@@ -592,16 +593,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     ),
                     _menuRow("assets/icons/about.png", "About Trapix", () => Get.to(() => const AboutTrapixScreen())),
                     _menuRow("assets/icons/api.png", "API Setting", () {}),
-                    _menuRow(
-                      "assets/icons/join.png",
-                      "Join Telegram channel",
-                      () => openUrlInBrowser("https://t.me/trapix"),
-                    ),
-                    _menuRow(
-                      "assets/icons/follow.png",
-                      "Follow us on X",
-                      () => openUrlInBrowser("https://x.com/trapix"),
-                    ),
+                    _menuRow("assets/images/community.png", "Community", () => Get.to(() => const CommunityScreen())),
 
                     const SizedBox(height: 6),
                     Divider(color: _divider, thickness: 1, height: 1),
@@ -726,7 +718,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── MENU ROW — icon + label + arrow ─────────────────────────────────────
+
   Widget _menuRow(String iconPath, String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
