@@ -213,7 +213,7 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = _isBuy ? Color(0xFFCCFF00) : _red;
+    final accentColor = _isBuy ? Color(0xFFCCFF00) : Color(0xFFCCFF00);
     final convertLabel = _isBuy ? 'USDT' : 'INR';
 
     return Scaffold(
@@ -363,11 +363,11 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
                       TextSpan(
                         text: 'Need higher limits?',
                         style: TextStyle(
-                          color: _white.withValues(alpha: 0.5),
+                          color: Color(0xFFCCFF00),
                           fontSize: 12,
                           fontFamily: _font,
                           decoration: TextDecoration.underline,
-                          decorationColor: _white.withValues(alpha: 0.5),
+                          decorationColor: Color(0xFFCCFF00),
                         ),
                       ),
                     ],
@@ -381,12 +381,15 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
           const Spacer(),
 
           // ── Coin row ─────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _CoinRow(
-              isBuy: _isBuy,
-              selectedCoin: _selectedCoin,
-              onTap: _showCoinSheet,
+          GestureDetector(
+            onTap: _showCoinSheet,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _CoinRow(
+                isBuy: _isBuy,
+                selectedCoin: _selectedCoin,
+              ),
             ),
           ),
           Padding(
@@ -489,11 +492,9 @@ class _BuySellToggle extends StatelessWidget {
 class _CoinRow extends StatelessWidget {
   const _CoinRow({
     required this.isBuy,
-    required this.onTap,
     this.selectedCoin,
   });
   final bool isBuy;
-  final VoidCallback onTap;
   final Currency? selectedCoin;
 
   @override
@@ -501,9 +502,7 @@ class _CoinRow extends StatelessWidget {
     final symbol = selectedCoin?.coinType ?? 'USDT';
     final iconUrl = selectedCoin?.coinIcon;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
+    return Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
@@ -567,7 +566,6 @@ class _CoinRow extends StatelessWidget {
               const Icon(Icons.chevron_right, color: Color(0xFFCCFF00), size: 18),
           ],
         ),
-      ),
     );
   }
 }
@@ -582,6 +580,7 @@ class _PaymentRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
+
         children: [
           Image.asset(
             isBuy ? 'assets/images/upi.png' : 'assets/icons/deposit.png',
