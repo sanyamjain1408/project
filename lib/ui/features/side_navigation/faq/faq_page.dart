@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/models/faq.dart';
-import 'package:tradexpro_flutter/utils/appbar_util.dart';
-import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
-import 'package:tradexpro_flutter/utils/decorations.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
-import 'package:tradexpro_flutter/utils/text_util.dart';
 import 'faq_controller.dart';
+
+const _bg   = Color(0xFF111111);
+const _card = Color(0xFF1A1A1A);
+const _white = Colors.white;
+const _grey  = Color(0xFF8A8A8A);
+const _green = Color(0xFFCCFF00);
+const _font  = 'DMSans';
 
 class FAQPage extends StatefulWidget {
   const FAQPage({super.key});
@@ -29,22 +32,45 @@ class FAQPageState extends State<FAQPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: appBarBackWithActions(title: "FAQ".tr),
-        body: Obx(() {
-          return _controller.faqList.isEmpty
-              ? handleEmptyViewWithLoading(_controller.isLoading)
-              : ListView.builder(
-            shrinkWrap: true,
-                scrollDirection: Axis.vertical,
-                itemCount: _controller.faqList.length,
-                itemBuilder: (BuildContext context, int index) {
-                  if (_controller.hasMoreData && index == (_controller.faqList.length - 1)) {
-                    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => _controller.getFAQList(true));
-                  }
-                  return FAQItemView(faq: _controller.faqList[index]);
-                },
-              );
-        }));
+      backgroundColor: _bg,
+      appBar: AppBar(
+        backgroundColor: _bg,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: GestureDetector(
+          onTap: () => Get.back(),
+          child: const Padding(
+            padding: EdgeInsets.only(left: 16),
+            child: Icon(Icons.arrow_back, color: _white, size: 22),
+          ),
+        ),
+        leadingWidth: 48,
+        title: const Text(
+          'FAQ',
+          style: TextStyle(
+            color: _white,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            fontFamily: _font,
+          ),
+        ),
+      ),
+      body: Obx(() {
+        if (_controller.faqList.isEmpty) {
+          return handleEmptyViewWithLoading(_controller.isLoading);
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.only(top: 8, bottom: 40),
+          itemCount: _controller.faqList.length,
+          itemBuilder: (context, index) {
+            if (_controller.hasMoreData && index == (_controller.faqList.length - 1)) {
+              WidgetsBinding.instance.addPostFrameCallback((_) => _controller.getFAQList(true));
+            }
+            return FAQItemView(faq: _controller.faqList[index]);
+          },
+        );
+      }),
+    );
   }
 }
 
@@ -59,50 +85,125 @@ class FAQRelatedView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         vSpacer20(),
-        Text("FAQ".tr, 
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          fontFamily: "DMSans",
-          height: 24/16
-        ),),
+        const Text(
+          'FAQ',
+          style: TextStyle(
+            color: _white,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            fontFamily: _font,
+            height: 24 / 16,
+          ),
+        ),
         vSpacer10(),
         if (faqList.isEmpty)
           showEmptyView(message: "Related FAQ not found".tr)
         else
-          for (final faq in faqList) FAQItemView(faq: faq, margin: const EdgeInsets.symmetric(vertical: Dimens.paddingMin))
+          for (final faq in faqList)
+            FAQItemView(faq: faq, margin: const EdgeInsets.symmetric(vertical: Dimens.paddingMin)),
       ],
     );
   }
 }
 
-class FAQItemView extends StatelessWidget {
+class FAQItemView extends StatefulWidget {
   const FAQItemView({super.key, required this.faq, this.margin});
 
   final FAQ faq;
   final EdgeInsets? margin;
 
   @override
+  State<FAQItemView> createState() => _FAQItemViewState();
+}
+
+class _FAQItemViewState extends State<FAQItemView> with SingleTickerProviderStateMixin {
+  bool _expanded = false;
+  late final AnimationController _ctrl;
+  late final Animation<double> _rotate;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 220));
+    _rotate = Tween<double>(begin: 0, end: 0.5)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() => _expanded = !_expanded);
+    _expanded ? _ctrl.forward() : _ctrl.reverse();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: boxDecorationRoundCorner(color: context.theme.dialogTheme.backgroundColor),
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: Dimens.paddingMid, vertical: Dimens.paddingMin),
-      child: Theme(
-        data: context.theme.copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          title: TextRobotoAutoBold(faq.question ?? "", maxLines: 10),
-          backgroundColor: Colors.transparent,
-          collapsedIconColor: context.theme.primaryColor,
-          iconColor: context.theme.primaryColor,
-          children: <Widget>[
-            dividerHorizontal(height: 1),
+      margin: widget.margin ??
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: _toggle,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.faq.question ?? '',
+                      style: TextStyle(
+                        color: _expanded ? _green : _white,
+                        fontSize: 15,
+                        fontFamily: _font,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  RotationTransition(
+                    turns: _rotate,
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: _expanded ? _green : _grey,
+                      size: 22,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded)
             Padding(
-              padding: const EdgeInsets.all(Dimens.paddingMid),
-              child: Text(faq.answer ?? "", style: context.textTheme.displaySmall?.copyWith(fontSize: Dimens.fontSizeMid)),
-            )
-          ],
-        ),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(height: 1, color: Colors.white.withValues(alpha: 0.08)),
+                  const SizedBox(height: 12),
+                  Text(
+                    widget.faq.answer ?? '',
+                    style: TextStyle(
+                      color: _white.withValues(alpha: 0.75),
+                      fontSize: 13,
+                      fontFamily: _font,
+                      fontWeight: FontWeight.w400,
+                      height: 1.6,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
