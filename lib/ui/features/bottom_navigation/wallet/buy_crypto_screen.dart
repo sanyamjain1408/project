@@ -35,7 +35,9 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
   void _loadDefaultCoin() {
     APIRepository().getCoinList(currencyType: 1).then((resp) {
       if (resp.success && resp.data != null) {
-        final list = List<Currency>.from(resp.data!.map((x) => Currency.fromJson(x)));
+        final list = List<Currency>.from(
+          resp.data!.map((x) => Currency.fromJson(x)),
+        );
         final usdt = list.firstWhere(
           (c) => (c.coinType ?? '').toUpperCase() == 'USDT',
           orElse: () => list.isNotEmpty ? list.first : Currency(),
@@ -48,7 +50,9 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
   void _onKey(String key) {
     setState(() {
       if (key == '⌫') {
-        _amount = _amount.length > 1 ? _amount.substring(0, _amount.length - 1) : '0';
+        _amount = _amount.length > 1
+            ? _amount.substring(0, _amount.length - 1)
+            : '0';
       } else if (key == '.') {
         if (!_amount.contains('.')) _amount += '.';
       } else {
@@ -97,7 +101,8 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
             Center(
               child: Container(
                 margin: const EdgeInsets.only(top: 10, bottom: 8),
-                width: 36, height: 4,
+                width: 36,
+                height: 4,
                 decoration: BoxDecoration(
                   color: Colors.white24,
                   borderRadius: BorderRadius.circular(2),
@@ -149,7 +154,10 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
                       icon: 'assets/images/upi.png',
                       title: 'Pay via instant UPI',
                       subtitle: 'Deposit from your registered Bank A/c Only',
-                      extraIcons: ['assets/images/ppay.png', 'assets/images/gpay.png'],
+                      extraIcons: [
+                        'assets/images/ppay.png',
+                        'assets/images/gpay.png',
+                      ],
                       limit: 'Min. \$ 100 - Max. \$ 1,00,000',
                       fees: '0%',
                       processingTime: 'Within 5 Minutes*',
@@ -205,7 +213,8 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
       loading.value = false;
       if (resp.success && resp.data != null) {
         final list = List<Currency>.from(
-            resp.data!.map((x) => Currency.fromJson(x)));
+          resp.data!.map((x) => Currency.fromJson(x)),
+        );
         coins.value = list;
       }
     });
@@ -226,7 +235,8 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
             Center(
               child: Container(
                 margin: const EdgeInsets.only(top: 10, bottom: 8),
-                width: 36, height: 4,
+                width: 36,
+                height: 4,
                 decoration: BoxDecoration(
                   color: Colors.white24,
                   borderRadius: BorderRadius.circular(2),
@@ -255,8 +265,13 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
                 }
                 if (coins.isEmpty) {
                   return Center(
-                    child: Text('No coins found',
-                        style: TextStyle(color: Colors.white54, fontFamily: _font)),
+                    child: Text(
+                      'No coins found',
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontFamily: _font,
+                      ),
+                    ),
                   );
                 }
                 return ListView.builder(
@@ -277,31 +292,48 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         child: Row(
                           children: [
-                            ClipOval(child: showImageNetwork(imagePath: coin.coinIcon, width: 32, height: 32, bgColor: Colors.transparent)),
+                            ClipOval(
+                              child: showImageNetwork(
+                                imagePath: coin.coinIcon,
+                                width: 32,
+                                height: 32,
+                                bgColor: Colors.transparent,
+                              ),
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(symbol,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontFamily: _font,
-                                        fontWeight: FontWeight.w400,
-                                        height: 1.5,
-                                      )),
-                                  Text(name,
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.5),
-                                        fontSize: 12,
-                                        fontFamily: _font,
-                                      )),
+                                  Text(
+                                    symbol,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontFamily: _font,
+                                      fontWeight: FontWeight.w400,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                  Text(
+                                    name,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      fontSize: 12,
+                                      fontFamily: _font,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                             if (isSelected)
-                              const Icon(Icons.check, color: Color(0xFFCCFF00), size: 18),
+                              const Icon(
+                                Icons.check,
+                                color: Color(0xFFCCFF00),
+                                size: 18,
+                              ),
                           ],
                         ),
                       ),
@@ -349,7 +381,9 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: _SpinningTimeIcon(
-              onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')),
+              onTap: () => Get.to(
+                () => const TransactionHistoryScreen(initialTab: 'deposit'),
+              ),
             ),
           ),
         ],
@@ -409,8 +443,11 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
                                   height: 1.5,
                                 ),
                               ),
-                              Icon(Icons.arrow_drop_down,
-                                  color: _white.withValues(alpha: 0.5), size: 20),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                color: _white.withValues(alpha: 0.5),
+                                size: 20,
+                              ),
                             ],
                           ),
                         ],
@@ -419,15 +456,18 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      
+
                       children: [
                         Image.asset(
                           'assets/images/uu.png',
                           width: 18,
                           height: 18,
                           color: accentColor,
-                          errorBuilder: (_, e, s) =>
-                              Icon(Icons.swap_horiz, color: accentColor, size: 22),
+                          errorBuilder: (_, e, s) => Icon(
+                            Icons.swap_horiz,
+                            color: accentColor,
+                            size: 22,
+                          ),
                         ),
                         const SizedBox(height: 5),
                         Text(
@@ -481,10 +521,7 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _CoinRow(
-                isBuy: _isBuy,
-                selectedCoin: _selectedCoin,
-              ),
+              child: _CoinRow(isBuy: _isBuy, selectedCoin: _selectedCoin),
             ),
           ),
           Padding(
@@ -561,7 +598,12 @@ class _BuySellToggle extends StatelessWidget {
     );
   }
 
-  Widget _tab(String label, bool active, Color activeColor, VoidCallback onTap) {
+  Widget _tab(
+    String label,
+    bool active,
+    Color activeColor,
+    VoidCallback onTap,
+  ) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -589,10 +631,7 @@ class _BuySellToggle extends StatelessWidget {
 
 // ── Coin Row ──────────────────────────────────────────────────────────────────
 class _CoinRow extends StatelessWidget {
-  const _CoinRow({
-    required this.isBuy,
-    this.selectedCoin,
-  });
+  const _CoinRow({required this.isBuy, this.selectedCoin});
   final bool isBuy;
   final Currency? selectedCoin;
 
@@ -602,78 +641,84 @@ class _CoinRow extends StatelessWidget {
     final iconUrl = selectedCoin?.coinIcon;
 
     return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            ClipOval(child: showImageNetwork(imagePath: iconUrl, width: 30, height: 30, bgColor: Colors.transparent)),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isBuy ? 'Buy' : 'Sell',
-                  style: TextStyle(
-                    color: _white.withValues(alpha: 0.5),
-                    fontSize: 12,
-                    fontFamily: _font,
-                  ),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          ClipOval(
+            child: showImageNetwork(
+              imagePath: iconUrl,
+              width: 30,
+              height: 30,
+              bgColor: Colors.transparent,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isBuy ? 'Buy' : 'Sell',
+                style: TextStyle(
+                  color: _white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                  fontFamily: _font,
                 ),
-                Text(
-                  symbol,
-                  style: const TextStyle(
-                    color: _white,
-                    fontSize: 16,
-                    fontFamily: _font,
-                    fontWeight: FontWeight.w400,
-                    height: 1.5,
-                  ),
+              ),
+              Text(
+                symbol,
+                style: const TextStyle(
+                  color: _white,
+                  fontSize: 16,
+                  fontFamily: _font,
+                  fontWeight: FontWeight.w400,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          if (!isBuy)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Available',
+                      style: TextStyle(
+                        color: _white.withValues(alpha: 0.5),
+                        fontSize: 12,
+                        fontFamily: _font,
+                      ),
+                    ),
+                    Text(
+                      '0 $symbol',
+                      style: const TextStyle(
+                        color: _white,
+                        fontSize: 16,
+                        fontFamily: _font,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Color(0xFFCCFF00),
+                  size: 18,
                 ),
               ],
-            ),
-            const Spacer(),
-            if (!isBuy)
-              Row(
-  mainAxisSize: MainAxisSize.min,
-  crossAxisAlignment: CrossAxisAlignment.end,
-  children: [
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          'Available',
-          style: TextStyle(
-            color: _white.withValues(alpha: 0.5),
-            fontSize: 12,
-            fontFamily: _font,
-          ),
-        ),
-        Text(
-          '0 $symbol',
-          style: const TextStyle(
-            color: _white,
-            fontSize: 16,
-            fontFamily: _font,
-            height: 1.5,
-          ),
-        ),
-      ],
-    ),
-    const SizedBox(width: 4),
-    const Icon(
-      Icons.chevron_right,
-      color: Color(0xFFCCFF00),
-      size: 18,
-    ),
-  ],
-)
-            else
-              const Icon(Icons.chevron_right, color: Color(0xFFCCFF00), size: 18),
-          ],
-        ),
+            )
+          else
+            const Icon(Icons.chevron_right, color: Color(0xFFCCFF00), size: 18),
+        ],
+      ),
     );
   }
 }
-
 
 // ── Payment/Receiving Method Row ──────────────────────────────────────────────
 class _PaymentRow extends StatelessWidget {
@@ -685,7 +730,6 @@ class _PaymentRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
-
         children: [
           Image.asset(
             isBuy ? 'assets/images/upi.png' : 'assets/icons/deposit.png',
@@ -699,11 +743,14 @@ class _PaymentRow extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: const Text('U',
-                  style: TextStyle(
-                      color: _bg,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold)),
+              child: const Text(
+                'U',
+                style: TextStyle(
+                  color: _bg,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -731,8 +778,7 @@ class _PaymentRow extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Icon(Icons.chevron_right,
-              color: Color(0xFFCCFF00), size: 18),
+          Icon(Icons.chevron_right, color: Color(0xFFCCFF00), size: 18),
         ],
       ),
     );
@@ -767,8 +813,11 @@ class _Numpad extends StatelessWidget {
                     height: 68,
                     child: Center(
                       child: key == '⌫'
-                          ? const Icon(Icons.backspace_outlined,
-                              color: _white, size: 22)
+                          ? const Icon(
+                              Icons.backspace_outlined,
+                              color: _white,
+                              size: 22,
+                            )
                           : Text(
                               key,
                               style: const TextStyle(
@@ -869,62 +918,113 @@ class _PaymentMethodCard extends StatelessWidget {
               if (extraIcons.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 Row(
-                  children: extraIcons.map((p) => Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Image.asset(p, width: 22, height: 22,
-                        errorBuilder: (_, __, ___) => const SizedBox()),
-                  )).toList(),
+                  children: extraIcons
+                      .map(
+                        (p) => Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Image.asset(
+                            p,
+                            width: 22,
+                            height: 22,
+                            errorBuilder: (_, __, ___) => const SizedBox(),
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
               if (limit != null || fees != null || processingTime != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
-                  child: Container(height: 1, color: _white.withValues(alpha: 0.1)),
+                  child: Container(
+                    height: 1,
+                    color: _white.withValues(alpha: 0.1),
+                  ),
                 ),
               if (limit != null) ...[
                 const SizedBox(height: 8),
-                Text.rich(TextSpan(children: [
+                Text.rich(
                   TextSpan(
-                    text: 'Limit: ',
-                    style: TextStyle(color: _white.withValues(alpha: 0.5), fontSize: 12, fontFamily: _font),
+                    children: [
+                      TextSpan(
+                        text: 'Limit: ',
+                        style: TextStyle(
+                          color: _white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontFamily: _font,
+                        ),
+                      ),
+                      TextSpan(
+                        text: limit,
+                        style: const TextStyle(
+                          color: _white,
+                          fontSize: 12,
+                          fontFamily: _font,
+                        ),
+                      ),
+                    ],
                   ),
-                  TextSpan(
-                    text: limit,
-                    style: const TextStyle(color: _white, fontSize: 12, fontFamily: _font),
-                  ),
-                ])),
+                ),
               ],
               if (fees != null) ...[
                 const SizedBox(height: 4),
-                Text.rich(TextSpan(children: [
+                Text.rich(
                   TextSpan(
-                    text: 'Fees: ',
-                    style: TextStyle(color: _white.withValues(alpha: 0.5), fontSize: 12, fontFamily: _font),
+                    children: [
+                      TextSpan(
+                        text: 'Fees: ',
+                        style: TextStyle(
+                          color: _white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontFamily: _font,
+                        ),
+                      ),
+                      TextSpan(
+                        text: fees,
+                        style: const TextStyle(
+                          color: _white,
+                          fontSize: 12,
+                          fontFamily: _font,
+                        ),
+                      ),
+                    ],
                   ),
-                  TextSpan(
-                    text: fees,
-                    style: const TextStyle(color: _white, fontSize: 12, fontFamily: _font),
-                  ),
-                ])),
+                ),
               ],
               if (processingTime != null) ...[
                 const SizedBox(height: 4),
-                Text.rich(TextSpan(children: [
+                Text.rich(
                   TextSpan(
-                    text: 'Processing Time: ',
-                    style: TextStyle(color: _white.withValues(alpha: 0.5), fontSize: 12, fontFamily: _font),
+                    children: [
+                      TextSpan(
+                        text: 'Processing Time: ',
+                        style: TextStyle(
+                          color: _white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontFamily: _font,
+                        ),
+                      ),
+                      TextSpan(
+                        text: processingTime,
+                        style: const TextStyle(
+                          color: _white,
+                          fontSize: 12,
+                          fontFamily: _font,
+                        ),
+                      ),
+                    ],
                   ),
-                  TextSpan(
-                    text: processingTime,
-                    style: const TextStyle(color: _white, fontSize: 12, fontFamily: _font),
-                  ),
-                ])),
+                ),
               ],
               if (disabledLabel != null) ...[
                 const SizedBox(height: 6),
                 Text(
                   disabledLabel!,
-                  style: const TextStyle(color: Color(0xFFD05858), fontSize: 12, fontFamily: _font),
+                  style: const TextStyle(
+                    color: Color(0xFFD05858),
+                    fontSize: 12,
+                    fontFamily: _font,
+                  ),
                 ),
               ],
             ],
@@ -973,7 +1073,8 @@ class _SpinningTimeIconState extends State<_SpinningTimeIcon>
           'assets/icons/time.png',
           width: 22,
           height: 22,
-          errorBuilder: (_, e, s) => const Icon(Icons.history, color: _white, size: 22),
+          errorBuilder: (_, e, s) =>
+              const Icon(Icons.history, color: _white, size: 22),
         ),
       ),
     );
