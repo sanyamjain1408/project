@@ -15,7 +15,7 @@ import '../../../../../utils/image_util.dart';
 import '../../../../../utils/spacers.dart';
 import '../../../../../utils/text_util.dart';
 import '../../../../../utils/extensions.dart';
-import '../../../side_navigation/activity/activity_screen.dart';
+import '../transaction_history_screen.dart';
 import '../../../side_navigation/faq/faq_page.dart';
 import '../check_deposit/check_deposit_page.dart';
 import '../wallet_widgets.dart';
@@ -168,8 +168,8 @@ class _WalletCryptoDepositScreenState extends State<WalletCryptoDepositScreen>
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 20),
-              child: RotationTransition(
-                turns: _spinCtrl,
+              child: GestureDetector(
+                onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')),
                 child: Image.asset(
                   'assets/icons/time.png',
                   width: 20,
@@ -564,10 +564,7 @@ class _WalletCryptoDepositDetailScreenState
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
-              onTap: () {
-                TemporaryData.activityType = HistoryType.deposit;
-                Get.to(() => const ActivityScreen());
-              },
+              onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')),
               child: RotationTransition(
                 turns: _spinCtrl,
                 child: Image.asset(
