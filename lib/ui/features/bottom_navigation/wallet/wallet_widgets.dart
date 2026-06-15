@@ -6,6 +6,7 @@ import 'package:tradexpro_flutter/data/models/history.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/activity/activity_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/buy_crypto_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_pnl_screen.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
@@ -889,7 +890,10 @@ class _AddFundsSheet extends StatelessWidget {
             icon: 'assets/icons/passport.png',
             title: 'Buy crypto',
             subtitle: 'Buy instantly using Visa, Mastercard and More.',
-            onTap: () {},
+            onTap: () {
+              Get.back();
+              Get.to(() => const BuyCryptoScreen());
+            },
           ),
           _item(
             icon: 'assets/icons/p2p.png',
