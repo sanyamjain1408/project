@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/currency.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transaction_history_screen.dart';
@@ -24,6 +25,7 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
   late bool _isBuy;
   String _amount = '0';
   Currency? _selectedCoin;
+  String _balance = '0';
 
   @override
   void initState() {
@@ -42,7 +44,21 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
           (c) => (c.coinType ?? '').toUpperCase() == 'USDT',
           orElse: () => list.isNotEmpty ? list.first : Currency(),
         );
-        if (mounted) setState(() => _selectedCoin = usdt);
+        if (mounted) {
+          setState(() => _selectedCoin = usdt);
+          _loadBalance(usdt.coinType ?? '');
+        }
+      }
+    });
+  }
+
+  void _loadBalance(String coinType) {
+    if (coinType.isEmpty) return;
+    APIRepository().getWalletNetworks(coinType, TransferType.withdraw).then((resp) {
+      if (resp.success && resp.data != null) {
+        final networks = CurrencyNetworks.fromJson(resp.data);
+        final bal = networks.wallet?.balance ?? 0.0;
+        if (mounted) setState(() => _balance = bal.toStringAsFixed(4));
       }
     });
   }
@@ -284,7 +300,11 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
                     final isSelected = _selectedCoin?.coinType == symbol;
                     return GestureDetector(
                       onTap: () {
-                        setState(() => _selectedCoin = coin);
+                        setState(() {
+                          _selectedCoin = coin;
+                          _balance = '0';
+                        });
+                        _loadBalance(coin.coinType ?? '');
                         Navigator.pop(context);
                       },
                       child: Container(
@@ -521,7 +541,7 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _CoinRow(isBuy: _isBuy, selectedCoin: _selectedCoin),
+              child: _CoinRow(isBuy: _isBuy, selectedCoin: _selectedCoin, balance: _balance),
             ),
           ),
           Padding(
@@ -631,9 +651,10 @@ class _BuySellToggle extends StatelessWidget {
 
 // ── Coin Row ──────────────────────────────────────────────────────────────────
 class _CoinRow extends StatelessWidget {
-  const _CoinRow({required this.isBuy, this.selectedCoin});
+  const _CoinRow({required this.isBuy, this.selectedCoin, this.balance = '0'});
   final bool isBuy;
   final Currency? selectedCoin;
+  final String balance;
 
   @override
   Widget build(BuildContext context) {
@@ -677,43 +698,36 @@ class _CoinRow extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          if (!isBuy)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Available',
-                      style: TextStyle(
-                        color: _white.withValues(alpha: 0.5),
-                        fontSize: 12,
-                        fontFamily: _font,
-                      ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Available',
+                    style: TextStyle(
+                      color: _white.withValues(alpha: 0.5),
+                      fontSize: 12,
+                      fontFamily: _font,
                     ),
-                    Text(
-                      '0 $symbol',
-                      style: const TextStyle(
-                        color: _white,
-                        fontSize: 16,
-                        fontFamily: _font,
-                        height: 1.5,
-                      ),
+                  ),
+                  Text(
+                    '$balance $symbol',
+                    style: const TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontFamily: _font,
+                      height: 1.5,
                     ),
-                  ],
-                ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.chevron_right,
-                  color: Color(0xFFCCFF00),
-                  size: 18,
-                ),
-              ],
-            )
-          else
-            const Icon(Icons.chevron_right, color: Color(0xFFCCFF00), size: 18),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right, color: Color(0xFFCCFF00), size: 18),
+            ],
+          ),
         ],
       ),
     );
