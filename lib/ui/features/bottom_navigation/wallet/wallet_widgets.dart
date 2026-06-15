@@ -1030,7 +1030,10 @@ class _WithdrawSheet extends StatelessWidget {
             icon: 'assets/icons/passport.png',
             title: 'Sell crypto',
             subtitle: 'Sell instantly using Visa, Mastercard and More.',
-            onTap: () {},
+            onTap: () {
+              Get.back();
+              Get.to(() => const BuyCryptoScreen(startWithSell: true));
+            },
           ),
           _item(
             icon: 'assets/icons/p2p.png',
