@@ -21,7 +21,7 @@ import '../../../../../utils/spacers.dart';
 import '../../../../../utils/text_field_util.dart';
 import '../../../../../utils/text_util.dart';
 import '../../../side_navigation/faq/faq_page.dart';
-import '../history_sheet.dart';
+import '../transaction_history_screen.dart';
 import '../wallet_widgets.dart';
 import 'wallet_crypto_withdraw_controller.dart';
 
@@ -171,7 +171,7 @@ class _WalletCryptoWithdrawScreenState
             Padding(
               padding: const EdgeInsets.only(right: 20),
               child: GestureDetector(
-                onTap: () => showHistorySheet(),
+                onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'withdraw')),
                 child: Image.asset(
                   'assets/icons/time.png',
                   width: 20,
@@ -633,7 +633,7 @@ class _WalletCryptoWithdrawDetailScreenState
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
-              onTap: () => showHistorySheet(),
+              onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'withdraw')),
               child: Image.asset(
                 'assets/icons/time.png',
                 width: 24,
