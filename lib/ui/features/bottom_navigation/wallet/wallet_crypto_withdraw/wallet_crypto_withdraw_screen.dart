@@ -51,16 +51,15 @@ class _WalletCryptoWithdrawScreenState
   final _controller = Get.put(WalletCryptoWithdrawController());
   final TextEditingController _searchCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
-  String _query = '';
-  String? _selectedChip;
 
   @override
   void initState() {
     super.initState();
     _controller.initController();
-    _searchCtrl.addListener(
-      () => setState(() => _query = _searchCtrl.text.trim().toLowerCase()),
-    );
+    _searchCtrl.addListener(() {
+      _controller.searchQuery.value = _searchCtrl.text.trim().toLowerCase();
+      _controller.updateDisplayList();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _controller.getWithdrawCoinList(preWallet: widget.wallet);
       if (widget.wallet?.coinType != null &&
@@ -76,35 +75,6 @@ class _WalletCryptoWithdrawScreenState
     _searchCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
-  }
-
-  List<Currency> get _filtered {
-    var list = _controller.currencyList.toList();
-    if (_selectedChip != null) {
-      list = list.where((c) => c.coinType == _selectedChip).toList();
-    }
-    if (_query.isNotEmpty) {
-      list = list
-          .where(
-            (c) =>
-                (c.coinType?.toLowerCase().contains(_query) ?? false) ||
-                (c.name?.toLowerCase().contains(_query) ?? false),
-          )
-          .toList();
-    }
-    return list;
-  }
-
-  List<Currency> get _sortedList {
-    final list = _filtered.toList();
-    if (_controller.coinBalanceMap.isNotEmpty) {
-      list.sort((a, b) {
-        final ba = _controller.coinBalanceMap[a.coinType ?? ''] ?? 0;
-        final bb = _controller.coinBalanceMap[b.coinType ?? ''] ?? 0;
-        return bb.compareTo(ba);
-      });
-    }
-    return list;
   }
 
   @override
@@ -210,11 +180,12 @@ class _WalletCryptoWithdrawScreenState
                   spacing: 10,
                   runSpacing: 10,
                   children: popular.map((coin) {
-                    final sel = _selectedChip == coin.coinType;
+                    final sel = _controller.selectedChip.value == coin.coinType;
                     return GestureDetector(
-                      onTap: () => setState(
-                        () => _selectedChip = sel ? null : coin.coinType,
-                      ),
+                      onTap: () {
+                        _controller.selectedChip.value = sel ? '' : (coin.coinType ?? '');
+                        _controller.updateDisplayList();
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -262,12 +233,12 @@ class _WalletCryptoWithdrawScreenState
             // ── COIN LIST ─────────────────────────────────────────────────────
             Expanded(
               child: Obx(() {
-                final list = _sortedList;
                 if (_controller.isLoading.value || !_controller.balanceMapReady.value) {
                   return const Center(
                     child: CircularProgressIndicator(color: _green),
                   );
                 }
+                final list = _controller.displayList;
                 if (list.isEmpty) {
                   return const Center(
                     child: Text(
@@ -285,6 +256,7 @@ class _WalletCryptoWithdrawScreenState
                   itemBuilder: (_, idx) {
                     final coin = list[idx];
                     return _WithdrawCoinItem(
+                      key: ValueKey(coin.coinType),
                       coin: coin,
                       controller: _controller,
                       onTap: () {
@@ -308,42 +280,46 @@ class _WalletCryptoWithdrawScreenState
   }
 }
 
-// Matches website's formatCoinBalanceDetails: comma-separated, smart decimals
-String _formatCoinBalance(double bal, double price) {
-  if (bal == 0) return '0.00';
-  final int decimals = price < 1.0 ? 4 : (bal < 0.0001 ? 8 : 4);
-  final fmt = NumberFormat('#,##0.${'0' * decimals}', 'en_US');
-  // trim trailing zeros but keep at least 2
-  String s = fmt.format(bal);
+// Pre-created formatters — never recreated per build
+final _fmt2  = NumberFormat('#,##0.00',       'en_US');
+final _fmt4  = NumberFormat('#,##0.0000',     'en_US');
+final _fmt6  = NumberFormat('#,##0.000000',   'en_US');
+final _fmt8  = NumberFormat('#,##0.00000000', 'en_US');
+final _trailZero = RegExp(r'0+$');
+final _trailDot  = RegExp(r'\.$');
+
+String _trimDecimals(String s, int minDecimals) {
   final dotIdx = s.indexOf('.');
-  if (dotIdx >= 0) {
-    s = s.replaceAll(RegExp(r'0+$'), '');
-    if (s.endsWith('.')) s += '00';
-    // ensure at least 2 decimal places
-    final afterDot = s.length - dotIdx - 1;
-    if (afterDot < 2) s = s.padRight(dotIdx + 3, '0');
-  }
+  if (dotIdx < 0) return s;
+  s = s.replaceAll(_trailZero, '').replaceAll(_trailDot, '');
+  final after = s.length - s.indexOf('.') - 1;
+  if (after < minDecimals) s = s.padRight(s.indexOf('.') + 1 + minDecimals, '0');
   return s;
 }
 
-// Matches website's formatWalletUsd: price-aware decimal places, comma-separated
+String _formatCoinBalance(double bal, double price) {
+  if (bal == 0) return '0.00';
+  if (price < 1.0 || bal < 0.0001) return _trimDecimals(_fmt4.format(bal), 2);
+  return _trimDecimals(_fmt4.format(bal), 2);
+}
+
 String _formatWalletUsd(double usd, double price) {
   if (usd == 0) return '0.00';
-  final int decimals = price >= 1.0 ? 2 : (price >= 0.01 ? 4 : (price >= 0.0001 ? 6 : 8));
-  final fmt = NumberFormat('#,##0.${'0' * decimals}', 'en_US');
-  String s = fmt.format(usd);
-  final dotIdx = s.indexOf('.');
-  if (dotIdx >= 0) {
-    s = s.replaceAll(RegExp(r'0+$'), '');
-    if (s.endsWith('.')) s += '00';
-    final afterDot = s.length - dotIdx - 1;
-    if (afterDot < 2) s = s.padRight(dotIdx + 3, '0');
+  final NumberFormat fmt;
+  if (price >= 1.0) {
+    fmt = _fmt2;
+  } else if (price >= 0.01) {
+    fmt = _fmt4;
+  } else if (price >= 0.0001) {
+    fmt = _fmt6;
+  } else {
+    fmt = _fmt8;
   }
-  return s;
+  return _trimDecimals(fmt.format(usd), 2);
 }
 
 class _WithdrawCoinItem extends StatelessWidget {
-  const _WithdrawCoinItem({required this.coin, required this.onTap, required this.controller});
+  const _WithdrawCoinItem({super.key, required this.coin, required this.onTap, required this.controller});
   final Currency coin;
   final VoidCallback onTap;
   final WalletCryptoWithdrawController controller;

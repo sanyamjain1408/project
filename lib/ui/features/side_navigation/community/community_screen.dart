@@ -40,29 +40,29 @@ class CommunityScreen extends StatelessWidget {
         children: [
           const SizedBox(height: 8),
           _communityRow(
-            'assets/icons/join.png',
+            'assets/images/community.png',
             'Join Telegram Channel',
             'Join',
-            () => openUrlInBrowser('https://t.me/trapix'),
+            () => openUrlInBrowser('https://t.me/TrapixExchange'),
           ),
           _communityRow(
-            'assets/icons/follow.png',
+            'assets/images/community.png',
             'Follow us on X',
             'Follow',
-            () => openUrlInBrowser('https://x.com/trapix'),
+            () => openUrlInBrowser('https://x.com/TrapixExchange'),
           ),
           _communityRow(
             'assets/images/community.png',
             'Follow us on Instagram',
             'Follow',
-            () => openUrlInBrowser('https://instagram.com/trapix'),
+            null,
           ),
         ],
       ),
     );
   }
 
-  Widget _communityRow(String iconPath, String label, String buttonLabel, VoidCallback onTap) {
+  Widget _communityRow(String iconPath, String label, String buttonLabel, VoidCallback? onTap) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       child: Row(
@@ -82,19 +82,23 @@ class CommunityScreen extends StatelessWidget {
           ),
           GestureDetector(
             onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: _green,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                buttonLabel,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: _dmSans,
+            child: SizedBox(
+              width: 70,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                decoration: BoxDecoration(
+                  color: onTap != null ? _green : _green.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  buttonLabel,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: _dmSans,
+                  ),
                 ),
               ),
             ),

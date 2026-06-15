@@ -34,6 +34,33 @@ class WalletCryptoWithdrawController extends GetxController {
   bool isEvm = getSettingsLocal()?.isEvmWallet ?? false;
   Rx<Decimal> walletBalance = Decimal.zero.obs;
 
+  // Search + chip filter — reactive so screen rebuilds only when these change
+  RxString searchQuery = ''.obs;
+  RxString selectedChip = ''.obs;
+
+  // Pre-computed sorted+filtered list — recomputed only when deps change
+  RxList<Currency> displayList = <Currency>[].obs;
+
+  void updateDisplayList() {
+    final q = searchQuery.value.toLowerCase();
+    final chip = selectedChip.value;
+    var list = currencyList.toList();
+    if (chip.isNotEmpty) list = list.where((c) => c.coinType == chip).toList();
+    if (q.isNotEmpty) {
+      list = list.where((c) =>
+        (c.coinType?.toLowerCase().contains(q) ?? false) ||
+        (c.name?.toLowerCase().contains(q) ?? false)).toList();
+    }
+    if (coinBalanceMap.isNotEmpty) {
+      list.sort((a, b) {
+        final ba = coinBalanceMap[a.coinType ?? ''] ?? 0;
+        final bb = coinBalanceMap[b.coinType ?? ''] ?? 0;
+        return bb.compareTo(ba);
+      });
+    }
+    displayList.value = list;
+  }
+
   void initController() {
     networkList.value = [];
     selectedCurrency.value = Currency();
@@ -51,6 +78,7 @@ class WalletCryptoWithdrawController extends GetxController {
             isLoading.value = false;
             if (resp.success && resp.data != null) {
               currencyList.value = List<Currency>.from(resp.data!.map((x) => Currency.fromJson(x)));
+              updateDisplayList();
               final preCode = preWallet?.coinType ?? '';
               if (preCode.isNotEmpty) {
                 walletBalance.value = makeDecimal(preWallet?.balance ?? preWallet?.availableBalance);
@@ -109,6 +137,7 @@ class WalletCryptoWithdrawController extends GetxController {
         coinBalanceMap.value = Map.from(accBal);
         coinInfoMap.value = Map.from(accInfo);
         balanceMapReady.value = true;
+        updateDisplayList();
       }
     });
   }
