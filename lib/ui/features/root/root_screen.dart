@@ -36,6 +36,7 @@ import '../side_navigation/ib_program/ib_screen.dart';
 import '../side_navigation/settings/settings_screen.dart';
 import '../side_navigation/staking/staking_screen.dart';
 import '../side_navigation/airdrop/airdrop_screen.dart';
+import '../side_navigation/about/about_trapix_screen.dart';
 import '../side_navigation/spin_win/spin_win_screen.dart';
 import '../side_navigation/listing/listing_screen.dart';
 import '../side_navigation/official_verification/official_verification_screen.dart';
@@ -589,7 +590,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       "Trapix Transparency Center",
                       () {},
                     ),
-                    _menuRow("assets/icons/about.png", "About Trapix", () {}),
+                    _menuRow("assets/icons/about.png", "About Trapix", () => Get.to(() => const AboutTrapixScreen())),
                     _menuRow("assets/icons/api.png", "API Setting", () {}),
                     _menuRow(
                       "assets/icons/join.png",
