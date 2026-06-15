@@ -92,6 +92,123 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
     return result.toString() + decPart;
   }
 
+  void _showPaymentSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: const BoxDecoration(
+          color: Color(0xFF111111),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 8),
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Select Payment Method',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _font,
+                      height: 1.5,
+                    ),
+                  ),
+                  Text(
+                    'Est. Received',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 12,
+                      fontFamily: _font,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Recommended',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 12,
+                        fontFamily: _font,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _PaymentMethodCard(
+                      icon: 'assets/images/upi.png',
+                      title: 'Pay via instant UPI',
+                      subtitle: 'Deposit from your registered Bank A/c Only',
+                      extraIcons: ['assets/images/ppay.png', 'assets/images/gpay.png'],
+                      limit: 'Min. \$ 100 - Max. \$ 1,00,000',
+                      fees: '0%',
+                      processingTime: 'Within 5 Minutes*',
+                      onTap: () => Get.back(),
+                    ),
+                    const SizedBox(height: 10),
+                    _PaymentMethodCard(
+                      icon: 'assets/images/visa.png',
+                      title: 'Pay via Bank Card',
+                      limit: 'Min. \$ 100 - Max. \$ 1,00,000',
+                      onTap: () => Get.back(),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Other Method',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 12,
+                        fontFamily: _font,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _PaymentMethodCard(
+                      icon: 'assets/images/bank.png',
+                      title: 'Instant Bank Transfer',
+                      limit: 'Min. \$ 100 - Max. \$ 1,00,000',
+                      onTap: () => Get.back(),
+                    ),
+                    const SizedBox(height: 10),
+                    _PaymentMethodCard(
+                      icon: 'assets/images/bank.png',
+                      title: 'Fast Bank Transfer - IMPS',
+                      limit: 'Min. \$ 100 - Max. \$ 1,00,000',
+                      disabled: true,
+                      disabledLabel: 'Temporarily Disabled',
+                      onTap: null,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showCoinSheet() {
     final RxList<Currency> coins = <Currency>[].obs;
     final RxBool loading = true.obs;
@@ -397,9 +514,13 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
             child: Divider(color: _white.withValues(alpha: 0.1), height: 1),
           ),
           // ── Payment row ──────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _PaymentRow(isBuy: _isBuy),
+          GestureDetector(
+            onTap: _showPaymentSheet,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _PaymentRow(isBuy: _isBuy),
+            ),
           ),
 
           // ── Preview Order button ─────────────────────────────────────────
@@ -681,6 +802,150 @@ class _Numpad extends StatelessWidget {
             }).toList(),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+// ── Payment Method Card ───────────────────────────────────────────────────────
+class _PaymentMethodCard extends StatelessWidget {
+  const _PaymentMethodCard({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+    this.extraIcons = const [],
+    this.limit,
+    this.fees,
+    this.processingTime,
+    this.disabled = false,
+    this.disabledLabel,
+  });
+  final String icon;
+  final String title;
+  final String? subtitle;
+  final List<String> extraIcons;
+  final String? limit;
+  final String? fees;
+  final String? processingTime;
+  final bool disabled;
+  final String? disabledLabel;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: Opacity(
+        opacity: disabled ? 0.6 : 1.0,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          decoration: BoxDecoration(
+            color: _card,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  SizedBox(
+                    width: 34,
+                    height: 34,
+                    child: Image.asset(
+                      icon,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, e, s) => const SizedBox(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: _white,
+                      fontSize: 16,
+                      fontFamily: _font,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  subtitle!,
+                  style: TextStyle(
+                    color: _white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    fontFamily: _font,
+                  ),
+                ),
+              ],
+              if (extraIcons.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: extraIcons.map((p) => Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Image.asset(p, width: 22, height: 22,
+                        errorBuilder: (_, __, ___) => const SizedBox()),
+                  )).toList(),
+                ),
+              ],
+              if (limit != null || fees != null || processingTime != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Container(height: 1, color: _white.withValues(alpha: 0.1)),
+                ),
+              if (limit != null) ...[
+                const SizedBox(height: 8),
+                Text.rich(TextSpan(children: [
+                  TextSpan(
+                    text: 'Limit: ',
+                    style: TextStyle(color: _white.withValues(alpha: 0.5), fontSize: 12, fontFamily: _font),
+                  ),
+                  TextSpan(
+                    text: limit,
+                    style: const TextStyle(color: _white, fontSize: 12, fontFamily: _font),
+                  ),
+                ])),
+              ],
+              if (fees != null) ...[
+                const SizedBox(height: 4),
+                Text.rich(TextSpan(children: [
+                  TextSpan(
+                    text: 'Fees: ',
+                    style: TextStyle(color: _white.withValues(alpha: 0.5), fontSize: 12, fontFamily: _font),
+                  ),
+                  TextSpan(
+                    text: fees,
+                    style: const TextStyle(color: _white, fontSize: 12, fontFamily: _font),
+                  ),
+                ])),
+              ],
+              if (processingTime != null) ...[
+                const SizedBox(height: 4),
+                Text.rich(TextSpan(children: [
+                  TextSpan(
+                    text: 'Processing Time: ',
+                    style: TextStyle(color: _white.withValues(alpha: 0.5), fontSize: 12, fontFamily: _font),
+                  ),
+                  TextSpan(
+                    text: processingTime,
+                    style: const TextStyle(color: _white, fontSize: 12, fontFamily: _font),
+                  ),
+                ])),
+              ],
+              if (disabledLabel != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  disabledLabel!,
+                  style: const TextStyle(color: Color(0xFFD05858), fontSize: 12, fontFamily: _font),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
