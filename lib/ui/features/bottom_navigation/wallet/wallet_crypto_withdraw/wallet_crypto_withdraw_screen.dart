@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 
 import '../../../../../data/local/constants.dart';
@@ -46,10 +47,8 @@ class WalletCryptoWithdrawScreen extends StatefulWidget {
 }
 
 class _WalletCryptoWithdrawScreenState
-    extends State<WalletCryptoWithdrawScreen>
-    with SingleTickerProviderStateMixin {
+    extends State<WalletCryptoWithdrawScreen> {
   final _controller = Get.put(WalletCryptoWithdrawController());
-  late final AnimationController _spinCtrl;
   final TextEditingController _searchCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
   String _query = '';
@@ -59,10 +58,6 @@ class _WalletCryptoWithdrawScreenState
   void initState() {
     super.initState();
     _controller.initController();
-    _spinCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat();
     _searchCtrl.addListener(
       () => setState(() => _query = _searchCtrl.text.trim().toLowerCase()),
     );
@@ -78,7 +73,6 @@ class _WalletCryptoWithdrawScreenState
 
   @override
   void dispose() {
-    _spinCtrl.dispose();
     _searchCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
@@ -101,41 +95,16 @@ class _WalletCryptoWithdrawScreenState
     return list;
   }
 
-  Map<String, List<Currency>> get _grouped {
-    final map = <String, List<Currency>>{};
-    for (final c in _filtered) {
-      final k =
-          (c.coinType?.isNotEmpty == true) ? c.coinType![0].toUpperCase() : '#';
-      final key = RegExp(r'[0-9]').hasMatch(k) ? '0-9' : k;
-      map.putIfAbsent(key, () => []).add(c);
+  List<Currency> get _sortedList {
+    final list = _filtered.toList();
+    if (_controller.coinBalanceMap.isNotEmpty) {
+      list.sort((a, b) {
+        final ba = _controller.coinBalanceMap[a.coinType ?? ''] ?? 0;
+        final bb = _controller.coinBalanceMap[b.coinType ?? ''] ?? 0;
+        return bb.compareTo(ba);
+      });
     }
-    return map;
-  }
-
-  List<dynamic> get _flatList {
-    final grouped = _grouped;
-    final keys = grouped.keys.toList()..sort();
-    final flat = <dynamic>[];
-    for (final k in keys) {
-      flat.add(k);
-      flat.addAll(grouped[k]!);
-    }
-    return flat;
-  }
-
-  void _scrollToLetter(String letter) {
-    final flat = _flatList;
-    final idx = flat.indexWhere((e) => e is String && e == letter);
-    if (idx < 0) return;
-    double offset = 0;
-    for (int i = 0; i < idx; i++) {
-      offset += flat[i] is String ? 32.0 : 60.0;
-    }
-    _scrollCtrl.animateTo(
-      offset.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    return list;
   }
 
   @override
@@ -293,13 +262,13 @@ class _WalletCryptoWithdrawScreenState
             // ── COIN LIST ─────────────────────────────────────────────────────
             Expanded(
               child: Obx(() {
-                final flat = _flatList;
-                if (_controller.isLoading.value && flat.isEmpty) {
+                final list = _sortedList;
+                if (_controller.isLoading.value || !_controller.balanceMapReady.value) {
                   return const Center(
                     child: CircularProgressIndicator(color: _green),
                   );
                 }
-                if (flat.isEmpty) {
+                if (list.isEmpty) {
                   return const Center(
                     child: Text(
                       'No coins found',
@@ -307,87 +276,28 @@ class _WalletCryptoWithdrawScreenState
                     ),
                   );
                 }
-                final grouped = _grouped;
-                final keys = grouped.keys.toList()..sort();
-                return Stack(
-                  children: [
-                    ListView.builder(
-                      controller: _scrollCtrl,
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).viewPadding.bottom,
-                      ),
-                      itemCount: flat.length,
-                      itemBuilder: (_, idx) {
-                        final item = flat[idx];
-                        if (item is String) {
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
-                            child: Text(
-                              item,
-                              style: const TextStyle(
-                                color: _white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: _dmSans,
-                                height: 24 / 16,
-                              ),
-                            ),
-                          );
-                        }
-                        final coin = item as Currency;
-                        return _WithdrawCoinItem(
-                          coin: coin,
-                          onTap: () {
-                            _controller.selectedCurrency.value = coin;
-                            _controller.isEvm
-                                ? _controller.getWalletNetworks()
-                                : _controller.getWalletWithdrawal();
-                            Get.to(
-                              () => const WalletCryptoWithdrawDetailScreen(),
-                            );
-                          },
+                return ListView.builder(
+                  controller: _scrollCtrl,
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewPadding.bottom,
+                  ),
+                  itemCount: list.length,
+                  itemBuilder: (_, idx) {
+                    final coin = list[idx];
+                    return _WithdrawCoinItem(
+                      coin: coin,
+                      controller: _controller,
+                      onTap: () {
+                        _controller.selectedCurrency.value = coin;
+                        _controller.isEvm
+                            ? _controller.getWalletNetworks()
+                            : _controller.getWalletWithdrawal();
+                        Get.to(
+                          () => const WalletCryptoWithdrawDetailScreen(),
                         );
                       },
-                    ),
-
-                    // ── A-Z INDEX ───────────────────────────────────────────
-                    Positioned(
-                      right: 4,
-                      top: 0,
-                      bottom: 0,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.center,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: keys
-                                .map(
-                                  (k) => GestureDetector(
-                                    onTap: () => _scrollToLetter(k),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 1.5,
-                                      ),
-                                      child: Text(
-                                        k,
-                                        style: const TextStyle(
-                                          color: _grey,
-                                          fontSize: 10,
-                                          fontFamily: _dmSans,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 );
               }),
             ),
@@ -398,10 +308,45 @@ class _WalletCryptoWithdrawScreenState
   }
 }
 
+// Matches website's formatCoinBalanceDetails: comma-separated, smart decimals
+String _formatCoinBalance(double bal, double price) {
+  if (bal == 0) return '0.00';
+  final int decimals = price < 1.0 ? 4 : (bal < 0.0001 ? 8 : 4);
+  final fmt = NumberFormat('#,##0.${'0' * decimals}', 'en_US');
+  // trim trailing zeros but keep at least 2
+  String s = fmt.format(bal);
+  final dotIdx = s.indexOf('.');
+  if (dotIdx >= 0) {
+    s = s.replaceAll(RegExp(r'0+$'), '');
+    if (s.endsWith('.')) s += '00';
+    // ensure at least 2 decimal places
+    final afterDot = s.length - dotIdx - 1;
+    if (afterDot < 2) s = s.padRight(dotIdx + 3, '0');
+  }
+  return s;
+}
+
+// Matches website's formatWalletUsd: price-aware decimal places, comma-separated
+String _formatWalletUsd(double usd, double price) {
+  if (usd == 0) return '0.00';
+  final int decimals = price >= 1.0 ? 2 : (price >= 0.01 ? 4 : (price >= 0.0001 ? 6 : 8));
+  final fmt = NumberFormat('#,##0.${'0' * decimals}', 'en_US');
+  String s = fmt.format(usd);
+  final dotIdx = s.indexOf('.');
+  if (dotIdx >= 0) {
+    s = s.replaceAll(RegExp(r'0+$'), '');
+    if (s.endsWith('.')) s += '00';
+    final afterDot = s.length - dotIdx - 1;
+    if (afterDot < 2) s = s.padRight(dotIdx + 3, '0');
+  }
+  return s;
+}
+
 class _WithdrawCoinItem extends StatelessWidget {
-  const _WithdrawCoinItem({required this.coin, required this.onTap});
+  const _WithdrawCoinItem({required this.coin, required this.onTap, required this.controller});
   final Currency coin;
   final VoidCallback onTap;
+  final WalletCryptoWithdrawController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -446,6 +391,40 @@ class _WithdrawCoinItem extends StatelessWidget {
                 ],
               ),
             ),
+            Obx(() {
+              final info = controller.coinInfoMap[coin.coinType ?? ''];
+              final bal = info?.balance ?? 0;
+              final coinPrice = double.tryParse(coin.coinPrice ?? '') ?? 0;
+              final usd = bal * coinPrice;
+              final balDisplay = _formatCoinBalance(bal, coinPrice);
+              final usdDisplay = '\$${_formatWalletUsd(usd, coinPrice)}';
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    balDisplay,
+                    style: TextStyle(
+                      color: bal > 0 ? _white : _grey,
+                      fontSize: bal > 0 ? 16 : 14,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: _dmSans,
+                      height: 24 / (bal > 0 ? 16 : 14),
+                    ),
+                  ),
+                  if (usd > 0)
+                    Text(
+                      usdDisplay,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 12,
+                        fontFamily: _dmSans,
+                        fontWeight: FontWeight.w400,
+                        height: 16 / 12,
+                      ),
+                    ),
+                ],
+              );
+            }),
           ],
         ),
       ),

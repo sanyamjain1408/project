@@ -10,13 +10,21 @@ import '../../../../../data/models/faq.dart';
 import '../../../../../data/models/history.dart';
 import '../../../../../data/models/list_response.dart';
 import '../../../../../data/models/response.dart';
+import '../../../../../data/local/api_constants.dart';
 import '../../../../../data/remote/api_repository.dart';
 import '../../../../../helper/app_helper.dart';
 import '../../../../../utils/common_utils.dart';
+class CoinWalletInfo {
+  final double balance;
+  const CoinWalletInfo({required this.balance});
+}
 
 class WalletCryptoWithdrawController extends GetxController {
   RxList<FAQ> faqList = <FAQ>[].obs;
   RxList<Currency> currencyList = <Currency>[].obs;
+  final RxMap<String, double> coinBalanceMap = <String, double>{}.obs;
+  final RxMap<String, CoinWalletInfo> coinInfoMap = <String, CoinWalletInfo>{}.obs;
+  RxBool balanceMapReady = false.obs;
   RxList<Network> networkList = <Network>[].obs;
   Rx<Currency> selectedCurrency = Currency().obs;
   Rx<Network> selectedNetwork = Network().obs;
@@ -35,6 +43,7 @@ class WalletCryptoWithdrawController extends GetxController {
 
   Future<void> getWithdrawCoinList({Wallet? preWallet}) async {
     isLoading.value = true;
+    _buildBalanceMap();
     APIRepository()
         .getCoinList(isWithdraw: true, currencyType: CurrencyType.crypto)
         .then(
@@ -60,6 +69,48 @@ class WalletCryptoWithdrawController extends GetxController {
             showToast(err.toString());
           },
         );
+  }
+
+  void _buildBalanceMap() {
+    balanceMapReady.value = false;
+    _fetchWalletPage(1, <String, double>{}, <String, CoinWalletInfo>{});
+  }
+
+  void _fetchWalletPage(int page, Map<String, double> accBal, Map<String, CoinWalletInfo> accInfo) {
+    APIRepository().getWalletList(page, type: WalletViewType.spot, perPage: 200).then((resp) {
+      if (!resp.success || resp.data == null) {
+        coinBalanceMap.value = Map.from(accBal);
+        coinInfoMap.value = Map.from(accInfo);
+        balanceMapReady.value = true;
+        return;
+      }
+      final raw = resp.data[APIKeyConstants.wallets] ?? resp.data;
+      ListResponse listResp;
+      try {
+        listResp = ListResponse.fromJson(raw);
+      } catch (_) {
+        coinBalanceMap.value = Map.from(accBal);
+        coinInfoMap.value = Map.from(accInfo);
+        balanceMapReady.value = true;
+        return;
+      }
+      for (final item in (listResp.data ?? [])) {
+        final w = Wallet.fromJson(item);
+        final ct = w.coinType ?? '';
+        if (ct.isNotEmpty) {
+          final bal = (w.availableBalance ?? w.balance ?? 0).toDouble();
+          accBal[ct] = bal;
+          accInfo[ct] = CoinWalletInfo(balance: bal);
+        }
+      }
+      if (listResp.nextPageUrl != null) {
+        _fetchWalletPage(page + 1, accBal, accInfo);
+      } else {
+        coinBalanceMap.value = Map.from(accBal);
+        coinInfoMap.value = Map.from(accInfo);
+        balanceMapReady.value = true;
+      }
+    });
   }
 
   /// For CORE Exchange

@@ -599,10 +599,10 @@ class APIRepository {
     return provider.getRequest(APIURLConstants.getWalletBalanceDetails, authHeader(), query: mapObj);
   }
 
-  Future<ServerResponse> getWalletList(int page, {int? type, String? search}) async {
+  Future<ServerResponse> getWalletList(int page, {int? type, String? search, int? perPage}) async {
     var mapObj = <String, String>{};
     mapObj[APIKeyConstants.page] = "$page";
-    mapObj[APIKeyConstants.perPage] = DefaultValue.listLimitLarge.toString();
+    mapObj[APIKeyConstants.perPage] = (perPage ?? DefaultValue.listLimitLarge).toString();
     mapObj[APIKeyConstants.search] = search ?? "";
     if (type != WalletViewType.p2p) mapObj[APIKeyConstants.type] = type.toString();
     final url = type == WalletViewType.p2p
