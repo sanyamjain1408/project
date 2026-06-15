@@ -17,14 +17,26 @@ class BuyCryptoScreen extends StatefulWidget {
   State<BuyCryptoScreen> createState() => _BuyCryptoScreenState();
 }
 
-class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
+class _BuyCryptoScreenState extends State<BuyCryptoScreen>
+    with SingleTickerProviderStateMixin {
   late bool _isBuy;
   String _amount = '0';
+  late AnimationController _spinCtrl;
 
   @override
   void initState() {
     super.initState();
     _isBuy = !widget.startWithSell;
+    _spinCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _spinCtrl.dispose();
+    super.dispose();
   }
 
   void _onKey(String key) {
@@ -96,12 +108,15 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
               onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')),
-              child: Image.asset(
-                'assets/icons/time.png',
-                width: 22,
-                height: 22,
-                errorBuilder: (_, e, s) =>
-                    const Icon(Icons.history, color: _white, size: 22),
+              child: RotationTransition(
+                turns: _spinCtrl,
+                child: Image.asset(
+                  'assets/icons/time.png',
+                  width: 22,
+                  height: 22,
+                  errorBuilder: (_, e, s) =>
+                      const Icon(Icons.history, color: _white, size: 22),
+                ),
               ),
             ),
           ),
