@@ -20,21 +20,15 @@ class BuyCryptoScreen extends StatefulWidget {
   State<BuyCryptoScreen> createState() => _BuyCryptoScreenState();
 }
 
-class _BuyCryptoScreenState extends State<BuyCryptoScreen>
-    with SingleTickerProviderStateMixin {
+class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
   late bool _isBuy;
   String _amount = '0';
-  late AnimationController _spinCtrl;
   Currency? _selectedCoin;
 
   @override
   void initState() {
     super.initState();
     _isBuy = !widget.startWithSell;
-    _spinCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    )..repeat();
     _loadDefaultCoin();
   }
 
@@ -49,12 +43,6 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
         if (mounted) setState(() => _selectedCoin = usdt);
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _spinCtrl.dispose();
-    super.dispose();
   }
 
   void _onKey(String key) {
@@ -360,18 +348,8 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: GestureDetector(
+            child: _SpinningTimeIcon(
               onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'deposit')),
-              child: RotationTransition(
-                turns: _spinCtrl,
-                child: Image.asset(
-                  'assets/icons/time.png',
-                  width: 22,
-                  height: 22,
-                  errorBuilder: (_, e, s) =>
-                      const Icon(Icons.history, color: _white, size: 22),
-                ),
-              ),
             ),
           ),
         ],
@@ -654,35 +632,40 @@ class _CoinRow extends StatelessWidget {
             ),
             const Spacer(),
             if (!isBuy)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'Available',
-                    style: TextStyle(
-                      color: _white.withValues(alpha: 0.5),
-                      fontSize: 12,
-                      fontFamily: _font,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        '0 $symbol',
-                        style: const TextStyle(
-                          color: _white,
-                          fontSize: 16,
-                          fontFamily: _font,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right,
-                          color: Color(0xFFCCFF00), size: 18),
-                    ],
-                  ),
-                ],
-              )
+              Row(
+  mainAxisSize: MainAxisSize.min,
+  crossAxisAlignment: CrossAxisAlignment.end,
+  children: [
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          'Available',
+          style: TextStyle(
+            color: _white.withValues(alpha: 0.5),
+            fontSize: 12,
+            fontFamily: _font,
+          ),
+        ),
+        Text(
+          '0 $symbol',
+          style: const TextStyle(
+            color: _white,
+            fontSize: 16,
+            fontFamily: _font,
+            height: 1.5,
+          ),
+        ),
+      ],
+    ),
+    const SizedBox(width: 4),
+    const Icon(
+      Icons.chevron_right,
+      color: Color(0xFFCCFF00),
+      size: 18,
+    ),
+  ],
+)
             else
               const Icon(Icons.chevron_right, color: Color(0xFFCCFF00), size: 18),
           ],
@@ -690,6 +673,7 @@ class _CoinRow extends StatelessWidget {
     );
   }
 }
+
 
 // ── Payment/Receiving Method Row ──────────────────────────────────────────────
 class _PaymentRow extends StatelessWidget {
@@ -945,6 +929,51 @@ class _PaymentMethodCard extends StatelessWidget {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Spinning Time Icon ────────────────────────────────────────────────────────
+class _SpinningTimeIcon extends StatefulWidget {
+  const _SpinningTimeIcon({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  State<_SpinningTimeIcon> createState() => _SpinningTimeIconState();
+}
+
+class _SpinningTimeIconState extends State<_SpinningTimeIcon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: RotationTransition(
+        turns: _ctrl,
+        child: Image.asset(
+          'assets/icons/time.png',
+          width: 22,
+          height: 22,
+          errorBuilder: (_, e, s) => const Icon(Icons.history, color: _white, size: 22),
         ),
       ),
     );
