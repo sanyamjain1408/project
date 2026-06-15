@@ -20,8 +20,8 @@ import '../../../../../utils/qr_scanner.dart';
 import '../../../../../utils/spacers.dart';
 import '../../../../../utils/text_field_util.dart';
 import '../../../../../utils/text_util.dart';
-import '../../../side_navigation/activity/activity_screen.dart';
 import '../../../side_navigation/faq/faq_page.dart';
+import '../history_sheet.dart';
 import '../wallet_widgets.dart';
 import 'wallet_crypto_withdraw_controller.dart';
 
@@ -171,19 +171,13 @@ class _WalletCryptoWithdrawScreenState
             Padding(
               padding: const EdgeInsets.only(right: 20),
               child: GestureDetector(
-                onTap: () {
-                  TemporaryData.activityType = HistoryType.withdraw;
-                  Get.to(() => const ActivityScreen());
-                },
-                child: RotationTransition(
-                  turns: _spinCtrl,
-                  child: Image.asset(
-                    'assets/icons/time.png',
-                    width: 20,
-                    height: 20,
-                    errorBuilder: (context, error, stack) =>
-                        const Icon(Icons.history, color: _white, size: 24),
-                  ),
+                onTap: () => showHistorySheet(),
+                child: Image.asset(
+                  'assets/icons/time.png',
+                  width: 20,
+                  height: 20,
+                  errorBuilder: (context, error, stack) =>
+                      const Icon(Icons.history, color: _white, size: 24),
                 ),
               ),
             ),
@@ -639,19 +633,13 @@ class _WalletCryptoWithdrawDetailScreenState
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
-              onTap: () {
-                TemporaryData.activityType = HistoryType.withdraw;
-                Get.to(() => const ActivityScreen());
-              },
-              child: RotationTransition(
-                turns: _spinCtrl,
-                child: Image.asset(
-                  'assets/icons/time.png',
-                  width: 24,
-                  height: 24,
-                  errorBuilder: (context, error, stack) =>
-                      const Icon(Icons.history, color: _white, size: 24),
-                ),
+              onTap: () => showHistorySheet(),
+              child: Image.asset(
+                'assets/icons/time.png',
+                width: 24,
+                height: 24,
+                errorBuilder: (context, error, stack) =>
+                    const Icon(Icons.history, color: _white, size: 24),
               ),
             ),
           ),
