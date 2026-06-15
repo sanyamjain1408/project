@@ -106,7 +106,7 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.75,
+        height: MediaQuery.of(context).size.height * 0.9,
         decoration: const BoxDecoration(
           color: Color(0xFF111111),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -114,30 +114,29 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 10, bottom: 8),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const SizedBox(height: 16),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+              padding: const EdgeInsets.fromLTRB(12, 0, 20, 4),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Select Payment Method',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: _font,
-                      height: 1.5,
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Expanded(
+                    child: Text(
+                      'Select Payment Method',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: _font,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                   Text(
