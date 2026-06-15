@@ -12,6 +12,7 @@ import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/home_dashboard_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/live_chat_screen.dart';
 import 'package:tradexpro_flutter/utils/alert_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/decorations.dart';
@@ -534,7 +535,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _sectionHeader("Get help"),
                     _menuRow("assets/icons/help.png", "Help & Support", () {
                       Get.back();
-                      openCrispChatView();
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveChatScreen()));
                     }),
                     _menuRow("assets/icons/fee.png", "Fee structure", () {}),
                     _menuRow("assets/icons/app.png", "App feedback", () {}),
