@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/data/models/currency.dart';
+import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transaction_history_screen.dart';
+import 'package:tradexpro_flutter/utils/image_util.dart';
 
 const _bg = Color(0xFF111111);
 const _card = Color(0xFF1A1A1A);
@@ -22,6 +25,7 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
   late bool _isBuy;
   String _amount = '0';
   late AnimationController _spinCtrl;
+  Currency? _selectedCoin;
 
   @override
   void initState() {
@@ -31,6 +35,20 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
       vsync: this,
       duration: const Duration(seconds: 8),
     )..repeat();
+    _loadDefaultCoin();
+  }
+
+  void _loadDefaultCoin() {
+    APIRepository().getCoinList(currencyType: 1).then((resp) {
+      if (resp.success && resp.data != null) {
+        final list = List<Currency>.from(resp.data!.map((x) => Currency.fromJson(x)));
+        final usdt = list.firstWhere(
+          (c) => (c.coinType ?? '').toUpperCase() == 'USDT',
+          orElse: () => list.isNotEmpty ? list.first : Currency(),
+        );
+        if (mounted) setState(() => _selectedCoin = usdt);
+      }
+    });
   }
 
   @override
@@ -72,6 +90,125 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
     }
     result.write(intPart.substring(i));
     return result.toString() + decPart;
+  }
+
+  void _showCoinSheet() {
+    final RxList<Currency> coins = <Currency>[].obs;
+    final RxBool loading = true.obs;
+
+    APIRepository().getCoinList(currencyType: 1).then((resp) {
+      loading.value = false;
+      if (resp.success && resp.data != null) {
+        final list = List<Currency>.from(
+            resp.data!.map((x) => Currency.fromJson(x)));
+        coins.value = list;
+      }
+    });
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.65,
+        decoration: const BoxDecoration(
+          color: Color(0xFF111111),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 8),
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: Text(
+                _isBuy ? 'Asset to Buy' : 'Asset to Sell',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: _font,
+                  height: 1.5,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Obx(() {
+                if (loading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFCCFF00)),
+                  );
+                }
+                if (coins.isEmpty) {
+                  return Center(
+                    child: Text('No coins found',
+                        style: TextStyle(color: Colors.white54, fontFamily: _font)),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: coins.length,
+                  itemBuilder: (_, i) {
+                    final coin = coins[i];
+                    final symbol = coin.coinType ?? '';
+                    final name = coin.name ?? symbol;
+                    final isSelected = _selectedCoin?.coinType == symbol;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() => _selectedCoin = coin);
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        color: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            ClipOval(child: showImageNetwork(imagePath: coin.coinIcon, width: 32, height: 32, bgColor: Colors.transparent)),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(symbol,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontFamily: _font,
+                                        fontWeight: FontWeight.w400,
+                                        height: 1.5,
+                                      )),
+                                  Text(name,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.5),
+                                        fontSize: 12,
+                                        fontFamily: _font,
+                                      )),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(Icons.check, color: Color(0xFFCCFF00), size: 18),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -246,7 +383,11 @@ class _BuyCryptoScreenState extends State<BuyCryptoScreen>
           // ── Coin row ─────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _CoinRow(isBuy: _isBuy),
+            child: _CoinRow(
+              isBuy: _isBuy,
+              selectedCoin: _selectedCoin,
+              onTap: _showCoinSheet,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -346,93 +487,86 @@ class _BuySellToggle extends StatelessWidget {
 
 // ── Coin Row ──────────────────────────────────────────────────────────────────
 class _CoinRow extends StatelessWidget {
-  const _CoinRow({required this.isBuy});
+  const _CoinRow({
+    required this.isBuy,
+    required this.onTap,
+    this.selectedCoin,
+  });
   final bool isBuy;
+  final VoidCallback onTap;
+  final Currency? selectedCoin;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/images/usdt.png',
-            width: 30,
-            height: 30,
-            errorBuilder: (_, e, s) => Container(
-              width: 30,
-              height: 30,
-              decoration: const BoxDecoration(
-                color: Color(0xFF50AF95),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: const Text('T',
-                  style: TextStyle(
-                      color: _white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold)),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isBuy ? 'Buy' : 'Sell',
-                style: TextStyle(
-                  color: _white.withValues(alpha: 0.5),
-                  fontSize: 12,
-                  fontFamily: _font,
-                ),
-              ),
-              const Text(
-                'USDT',
-                style: TextStyle(
-                  color: _white,
-                  fontSize: 16,
-                  fontFamily: _font,
-                  fontWeight: FontWeight.w400,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          if (!isBuy)
+    final symbol = selectedCoin?.coinType ?? 'USDT';
+    final iconUrl = selectedCoin?.coinIcon;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            ClipOval(child: showImageNetwork(imagePath: iconUrl, width: 30, height: 30, bgColor: Colors.transparent)),
+            const SizedBox(width: 10),
             Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Available',
+                  isBuy ? 'Buy' : 'Sell',
                   style: TextStyle(
                     color: _white.withValues(alpha: 0.5),
                     fontSize: 12,
                     fontFamily: _font,
                   ),
                 ),
-                Row(
-                  children: [
-                    const Text(
-                      '0 USDT',
-                      style: TextStyle(
-                        color: _white,
-                        fontSize: 16,
-                        fontFamily: _font,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.chevron_right,
-                        color: _white.withValues(alpha: 0.5), size: 18),
-                  ],
+                Text(
+                  symbol,
+                  style: const TextStyle(
+                    color: _white,
+                    fontSize: 16,
+                    fontFamily: _font,
+                    fontWeight: FontWeight.w400,
+                    height: 1.5,
+                  ),
                 ),
               ],
-            )
-          else
-            Icon(Icons.chevron_right,
-                color: Color(0xFFCCFF00), size: 18),
-        ],
+            ),
+            const Spacer(),
+            if (!isBuy)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Available',
+                    style: TextStyle(
+                      color: _white.withValues(alpha: 0.5),
+                      fontSize: 12,
+                      fontFamily: _font,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        '0 $symbol',
+                        style: const TextStyle(
+                          color: _white,
+                          fontSize: 16,
+                          fontFamily: _font,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right,
+                          color: Color(0xFFCCFF00), size: 18),
+                    ],
+                  ),
+                ],
+              )
+            else
+              const Icon(Icons.chevron_right, color: Color(0xFFCCFF00), size: 18),
+          ],
+        ),
       ),
     );
   }
