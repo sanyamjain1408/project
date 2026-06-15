@@ -926,7 +926,9 @@ class _TradeCurrencyPairSelectionViewState
   @override
   Widget build(BuildContext context) {
     final pairs = _filteredPairs;
-    return Container(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingLarge),
       decoration: BoxDecoration(
@@ -937,6 +939,7 @@ class _TradeCurrencyPairSelectionViewState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           vSpacer20(),
+          const SizedBox(height: 20),
           // ── Search + close ──
           Row(
             children: [
@@ -946,7 +949,7 @@ class _TradeCurrencyPairSelectionViewState
                   height: Dimens.btnHeightMid,
                   margin: 0,
                   onTextChange: widget.onTextChange,
-                  bgColor: const Color(0xFF1A1A1A),
+                  bgColor: const Color(0xFF111111),
                   iconColor: _green,
                 ),
               ),
@@ -1093,6 +1096,7 @@ class _TradeCurrencyPairSelectionViewState
           ),
         ],
       ),
+    ),
     );
   }
 }
