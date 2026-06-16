@@ -651,7 +651,6 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Flexible(
                           child: Text(
