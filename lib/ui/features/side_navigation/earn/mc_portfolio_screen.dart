@@ -72,6 +72,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
         _c.fetchCoinDashboard(widget.coinId!).then((_) {
           _dashData = _c.coinDashboard.value;
         }),
+        _c.fetchPortfolio(),
         _c.fetchRewards(),
       ]);
     } else {
