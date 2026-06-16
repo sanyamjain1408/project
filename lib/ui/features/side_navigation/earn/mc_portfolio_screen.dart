@@ -23,7 +23,8 @@ class McPortfolioScreen extends StatefulWidget {
 class _McPortfolioScreenState extends State<McPortfolioScreen> {
   late McStakingController _c;
 
-  double _totalEarned = 0;
+  double _totalEarned = 0;       // USDT total (for multi-coin)
+  double _totalEarnedCoin = 0;   // coin units (for single-coin display)
   double _totalPerSec = 0;
   double _totalDailyRewardCoin = 0;
 
@@ -175,6 +176,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       // liveEarned in coin units = perSecCoin * totalElapsed
       final liveEarnedCoin = perSecCoin * elapsedSec;
       initTotalUsdt += liveEarnedCoin * price;
+      _totalEarnedCoin += liveEarnedCoin;
 
       // _StakeBase now tracks coin units; base seeded at startMs for continuous counting
       _stakeBases[item.stakeUid] = _StakeBase(
@@ -190,10 +192,11 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     _totalDailyRewardCoin = totalDailyCoin;
     _counterReady = true;
 
-    _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
+    _ticker = Timer.periodic(const Duration(milliseconds: 16), (_) {
       if (!mounted) return;
       final now = DateTime.now().millisecondsSinceEpoch;
       double totalUsdt = 0;
+      double totalCoin = 0;
       for (final item in _positions) {
         final sb = _stakeBases[item.stakeUid];
         if (sb == null) continue;
@@ -201,9 +204,11 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
         final elapsedSec = ((now - sb.baseTime) / 1000).clamp(0.0, double.infinity);
         final liveEarnedCoin = sb.perSec * elapsedSec;
         totalUsdt += liveEarnedCoin * price;
+        totalCoin += liveEarnedCoin;
       }
       setState(() {
         _totalEarned = totalUsdt;
+        _totalEarnedCoin = totalCoin;
       });
     });
   }
@@ -452,7 +457,9 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        '\$ ${_totalEarned.toStringAsFixed(8)}',
+                        _positions.length == 1
+                            ? '${_totalEarnedCoin.toStringAsFixed(8)}'
+                            : '\$ ${_totalEarned.toStringAsFixed(8)}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 30,
@@ -462,6 +469,20 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                         ),
                       ),
                     ),
+
+                    // Show coin symbol label when single-coin view (like web)
+                    if (_positions.length == 1) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        _positions.first.coinSymbol,
+                        style: const TextStyle(
+                          color: Color(0xFFCCFF00),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                    ],
 
                     // Per Second | Daily Total — same layout as earn screen hero
                     Row(
