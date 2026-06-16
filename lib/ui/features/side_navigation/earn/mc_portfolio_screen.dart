@@ -600,215 +600,143 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   // ── STAKE CARD ───────────────────────────────────────────────────────────────
   Widget _buildStakeCard(McPortfolioItem item) {
     final symbol = item.coinSymbol;
-    // Try logo from item → dash top-level → coins list → CoinGecko fallback
     final coinLogoFromDash = _dashData?['coin_logo'] as String?;
     final coinLogoFromList = _c.coins.firstWhereOrNull((c) => c.symbol == symbol)?.logo;
     final resolvedLogo = item.coinLogo ?? coinLogoFromDash ?? coinLogoFromList;
     final logoUrl = mcLogoUrl(resolvedLogo, symbol: symbol);
-    final earnedCoin = _stakeAvailable(item.stakeUid);
+    final availableCoin = _stakeAvailable(item.stakeUid);
     final liveEarnedCoin = _stakeLiveEarned(item.stakeUid);
+    final price = item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1.0;
+    final liveEarnedUsdt = liveEarnedCoin * price;
+    final rewardAccruedUsdt = item.totalEarned * price;
+    final withdrawRewardUsdt = item.totalWithdrawn * price;
     final dailyRewardCoin = item.stakedAmount * (item.dailyRate / 100);
-    final startFmt = _fmtDate(item.stakedAt);
+    final dailyRewardUsdt = dailyRewardCoin * price;
     final planDays = _parseDays(item.planName);
-    // Days remaining: compute from stakedAt + planDays if no endDate
     final stakedAtDt = item.stakedAt != null ? DateTime.tryParse(item.stakedAt!) : null;
     final endDt = item.endDate != null && item.endDate!.isNotEmpty
         ? DateTime.tryParse(item.endDate!)
-        : (stakedAtDt != null && planDays > 0
-            ? stakedAtDt.add(Duration(days: planDays))
-            : null);
-    // Show actual end date; if flexible with no endDate, compute from stakedAt + planDays
-    final endFmt = endDt != null ? _fmtDate(endDt.toIso8601String()) : 'Flexible';
-
+        : (stakedAtDt != null && planDays > 0 ? stakedAtDt.add(Duration(days: planDays)) : null);
+    final daysCompleted = stakedAtDt != null ? DateTime.now().difference(stakedAtDt).inDays : 0;
+    final daysRemaining = endDt != null ? endDt.difference(DateTime.now()).inDays.clamp(0, planDays) : 0;
+    final maturityFmt = endDt != null ? _fmtDateLong(endDt.toIso8601String()) : 'Flexible';
+    final stakingType = item.planType == 1 ? 'Flexible Staking' : 'Locked Staking';
     return Container(
       decoration: BoxDecoration(
         color: _kCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        borderRadius: BorderRadius.circular(10),
       ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ────────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          // ── Row 1: coin icon + name/subtitle + withdraw button ────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipOval(
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  color: const Color(0xFF222222),
+                  child: logoUrl.isNotEmpty
+                      ? Image.network(logoUrl, fit: BoxFit.cover, errorBuilder: (_, e, s) => _initial(symbol, 36))
+                      : _initial(symbol, 36),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '$symbol-USDT',
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0x4C00FF04),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text('Active', style: TextStyle(color: Color(0xFF00FF04), fontSize: 12, fontFamily: 'DMSans')),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${planDays > 0 ? '$planDays Days' : 'Open'} · ${item.planType == 1 ? 'Flexible' : 'Fixed'}',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Obx(() {
+                final busy = _c.isWithdrawing.value == item.stakeUid;
+                return GestureDetector(
+                  onTap: busy || availableCoin <= 0.000001 ? null : () => _openWithdrawModal(item),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: availableCoin > 0.000001 ? _kGreen : Colors.grey.shade700,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: busy
+                        ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                        : Text(
+                            'Withdraw\n${availableCoin.toStringAsFixed(4)} $symbol',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Color(0xFF111111), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
+                          ),
+                  ),
+                );
+              }),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // ── Action Pills row: Earnings Schedule | Cancel Stake ────────────
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                // Coin icon / initials
-                ClipOval(
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    color: const Color(0xFF222222),
-                    child: logoUrl.isNotEmpty
-                        ? Image.network(
-                            logoUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, e, s) => _initial(symbol, 36),
-                          )
-                        : _initial(symbol, 36),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                // Symbol + plan
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            '$symbol-USDT',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'DMSans',
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          // Active badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF00FF04).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFF00FF04).withValues(alpha: 0.4),
-                                width: 0.5,
-                              ),
-                            ),
-                            child: const Text(
-                              'Active',
-                              style: TextStyle(
-                                color: Color(0xFF00FF04),
-                                fontSize: 11,
-                                fontFamily: 'DMSans',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '${planDays > 0 ? '$planDays Days' : 'Open'} · ${item.planType == 1 ? 'Flexible' : 'Fixed'}',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.4),
-                          fontSize: 11,
-                          fontFamily: 'DMSans',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Withdraw button
+                _darkPill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: item.stakeUid))),
+                const SizedBox(width: 8),
                 Obx(() {
-                  final busy = _c.isWithdrawing.value == item.stakeUid;
-                  return GestureDetector(
-                    onTap: busy ? null : () => _openWithdrawModal(item),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: busy ? _kGreen.withValues(alpha: 0.4) : _kGreen,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: busy
-                          ? const SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                            )
-                          : Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text(
-                                  'Withdraw',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: 'DMSans',
-                                  ),
-                                ),
-                                Text(
-                                  '${earnedCoin.toStringAsFixed(4)} $symbol',
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 10,
-                                    fontFamily: 'DMSans',
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
+                  final cancelling = _c.isCancelling.value == item.stakeUid;
+                  return _darkPill(
+                    cancelling ? 'Cancelling...' : 'Cancel Stake',
+                    const Color(0xFFFF0000),
+                    cancelling ? null : () => _confirmCancel(item.stakeUid),
                   );
                 }),
-              ],
-            ),
-          ),
-
-          // ── Action Pills ───────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              children: [
-                _pill(
-                  'Earnings Schedule',
-                  _kGreen,
-                  Colors.black,
-                  () => Get.to(() => McEarningsScheduleScreen(stakeUid: item.stakeUid)),
-                ),
                 const SizedBox(width: 8),
-                _pill(
-                  'Cancel Stake',
-                  Colors.transparent,
-                  Colors.red,
-                  () => _confirmCancel(item.stakeUid),
-                  border: Colors.red.withValues(alpha: 0.5),
-                ),
+                _darkPill('Certificate', const Color(0xFFCCFF00), () {}),
               ],
             ),
           ),
 
-          // ── Divider ────────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Container(height: 1, color: Colors.white.withValues(alpha: 0.06)),
-          ),
+          const SizedBox(height: 16),
 
-          // ── Stat Rows ──────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              children: [
-                _totalEarnedRow(liveEarnedCoin, item.coinPriceUsdt, symbol),
-                _statRow(
-                  'Total Stacked',
-                  '${item.stakedAmount.toStringAsFixed(0)} $symbol',
-                  Colors.white,
-                ),
-                _statRow(
-                  'USDT Value',
-                  '${item.usdtValue.toStringAsFixed(2)} USDT',
-                  Colors.white,
-                ),
-                _statRow(
-                  'Daily Earning',
-                  '${dailyRewardCoin.toStringAsFixed(8)} $symbol',
-                  Colors.white,
-                ),
-                _statRow(
-                  'Daily Rate',
-                  '${item.dailyRate.toStringAsFixed(6)}%/day',
-                  Colors.white,
-                ),
-                _statRow(
-                  'Date',
-                  '$startFmt → $endFmt',
-                  Colors.white,
-                ),
-              ],
-            ),
-          ),
+          // ── Stat rows (Figma exact) ────────────────────────────────────────
+          _statRow('Live Earnings', '${liveEarnedUsdt.toStringAsFixed(4)} USDT', Colors.white),
+          _statRow('Reward Accrued', '${rewardAccruedUsdt.toStringAsFixed(4)} USDT', Colors.white),
+          _statRow('Withdraw Reward', '${withdrawRewardUsdt.toStringAsFixed(4)} USDT', Colors.white),
+          _statRow('Total Stacked', '${item.stakedAmount.toStringAsFixed(0)} $symbol', const Color(0xFF4DD78D)),
+          _statRow('USDT Value', '${item.usdtValue.toStringAsFixed(2)} USDT', Colors.white),
+          _statRow('Daily Rate', '${item.dailyRate.toStringAsFixed(6)}%/days', Colors.white),
+          _statRow('Daily Reward', '${dailyRewardUsdt.toStringAsFixed(5)} USDT', Colors.white),
+          _statRow('Days Completed', '$daysCompleted / $planDays days', Colors.white),
+          _statRow('Days Remaining', planDays > 0 ? '$daysRemaining days' : 'Flexible', Colors.white),
+          _statRow('Maturity Date', maturityFmt, Colors.white),
+          _statRow('Staking Type', stakingType, Colors.white),
         ],
       ),
     );
@@ -844,6 +772,21 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
               fontFamily: 'DMSans',
             ),
           ),
+        ),
+      );
+
+  Widget _darkPill(String label, Color fg, VoidCallback? onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF111111),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          alignment: Alignment.center,
+          child: Text(label, style: TextStyle(color: fg, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400), maxLines: 1),
         ),
       );
 
@@ -1174,6 +1117,15 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   Future<void> _confirmCancel(String uid) async {
     final ok = await _c.cancelStake(uid);
     if (ok) _loadData();
+  }
+
+  String _fmtDateLong(String? d) {
+    if (d == null || d.isEmpty) return '—';
+    try {
+      final dt = DateTime.parse(d);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+    } catch (_) { return d; }
   }
 
   String _fmtDate(String? d) {
