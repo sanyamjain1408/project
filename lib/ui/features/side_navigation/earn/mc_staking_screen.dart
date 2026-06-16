@@ -8,6 +8,7 @@ import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_up/sign_up_screen.dart';
 import 'mc_staking_controller.dart' show McStakingController, mcLogoUrl;
 import 'mc_staking_models.dart';
+import 'mc_certificate_screen.dart';
 import 'mc_portfolio_screen.dart';
 import 'mc_my_stakes_screen.dart';
 
@@ -381,7 +382,7 @@ class _McStakingScreenState extends State<McStakingScreen>
                     child: GestureDetector(
                       onTap: () {
                         Navigator.of(context).pop();
-                        Get.to(() => const McMyStakesScreen());
+                        Get.to(() => McCertificateScreen(stake: stake));
                       },
                       child: Container(
                         height: 46,

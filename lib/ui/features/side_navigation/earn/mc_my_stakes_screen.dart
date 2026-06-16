@@ -6,6 +6,7 @@ import 'mc_staking_controller.dart' show McStakingController, mcLogoUrl;
 import 'mc_staking_models.dart';
 import 'mc_portfolio_screen.dart';
 import 'mc_earnings_schedule_screen.dart';
+import 'mc_certificate_screen.dart';
 import 'mc_staking_screen.dart' show McRewardsScreen, McReferralRewardsScreen;
 
 const _kGreen = Color(0xFFCCFF00);
@@ -1150,7 +1151,24 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
           const SizedBox(height: 8),
 
           // ── Row 3: Certificate ────────────────────────────────────────────
-          _pillFixed('Certificate', const Color(0xFFCCFF00), 79, () {}),
+          _pillFixed('Certificate', const Color(0xFFCCFF00), 79, () {
+            final price = coinPrice;
+            Get.to(() => McCertificateScreen(stake: {
+              'plan_name': stake.plan?.planName ?? '',
+              'coin_symbol': symbol,
+              'amount': stake.amount,
+              'daily_rate': stake.dailyRate,
+              'total_return': stake.plan != null && stake.plan!.durationDays > 0
+                  ? (stake.dailyRate * stake.plan!.durationDays).toStringAsFixed(2)
+                  : null,
+              'duration_days': stake.plan?.durationDays ?? 0,
+              'start_date': stake.startDate ?? '',
+              'end_date': stake.endDate ?? '',
+              'plan_type': stake.plan?.planType ?? 1,
+              'user_name': 'Valued Staker',
+              'cert_no': 'TRPX-\${stake.uid.substring(0, 8).toUpperCase()}',
+            }));
+          }),
 
           const SizedBox(height: 16),
 
