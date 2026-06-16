@@ -278,15 +278,20 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     });
     final ok = await _c.withdrawReward(info.uid, info.earnedUsdt);
     if (ok) {
-      final sb = _stakeBases[info.uid];
-      if (sb != null) {
-        final elapsed = (DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000;
-        final cur = sb.base + sb.perSec * elapsed;
-        sb.base = (cur - info.earnedUsdt).clamp(0.0, double.infinity);
-        sb.baseTime = DateTime.now().millisecondsSinceEpoch;
-      }
+      // Re-fetch fresh data so last_withdrawn_at resets and available goes to 0
+      await Future.wait([
+        _c.fetchPortfolio(),
+        if (widget.coinId != null && widget.coinId! > 0)
+          _c.fetchCoinDashboard(widget.coinId!).then((_) {
+            _dashData = _c.coinDashboard.value;
+          }),
+      ]);
+      _counterReady = false;
+      _stakeBases.clear();
+      _buildPositions();
+      _initCounter();
     }
-    setState(() => _isConfirmingWithdraw = false);
+    if (mounted) setState(() => _isConfirmingWithdraw = false);
   }
 
   @override

@@ -970,7 +970,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
 
   late final double _perSec;
   late final int _startDateMs;
-  late final int _availStartMs; // last_withdrawn_at or staked_at
+  late int _availStartMs; // last_withdrawn_at or staked_at — mutable for post-withdrawal reset
 
   void _computeLive() {
     if (stake.status != 1) {
@@ -1008,6 +1008,15 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
   @override
   void didUpdateWidget(_StakeCardWidget old) {
     super.didUpdateWidget(old);
+    // Reset available start time after withdrawal (new last_withdrawn_at from API)
+    if (old.stake.lastWithdrawnAt != widget.stake.lastWithdrawnAt) {
+      final availDt = (stake.lastWithdrawnAt != null && stake.lastWithdrawnAt!.isNotEmpty)
+          ? DateTime.tryParse(stake.lastWithdrawnAt!)
+          : null;
+      setState(() {
+        _availStartMs = availDt?.millisecondsSinceEpoch ?? _startDateMs;
+      });
+    }
   }
 
   @override
