@@ -1425,35 +1425,33 @@ class _WithdrawConfirmDialogState extends State<_WithdrawConfirmDialog> {
               ]),
             ),
             const SizedBox(height: 16),
-            Row(children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: OutlinedButton.styleFrom(foregroundColor: Colors.white54, side: const BorderSide(color: Color(0xFF333333))),
-                  child: const Text('Cancel'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _loading ? null : () async {
+                  setState(() => _loading = true);
+                  await widget.onConfirm();
+                  if (mounted) setState(() => _loading = false);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFCCFF00),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
+                child: _loading
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                    : const Text('Confirm Withdraw', style: TextStyle(fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: ElevatedButton(
-                  onPressed: _loading ? null : () async {
-                    setState(() => _loading = true);
-                    await widget.onConfirm();
-                    if (mounted) setState(() => _loading = false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFCCFF00),
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: _loading
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                      : const Text('Confirm Withdraw', style: TextStyle(fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
-                ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel', style: TextStyle(color: Colors.white54, fontFamily: 'DMSans')),
               ),
-            ]),
+            ),
           ],
         ),
       ),
