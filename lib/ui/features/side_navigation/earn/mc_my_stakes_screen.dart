@@ -1166,7 +1166,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
               'end_date': stake.endDate ?? '',
               'plan_type': stake.plan?.planType ?? 1,
               'user_name': 'Valued Staker',
-              'cert_no': 'TRPX-\${stake.uid.substring(0, 8).toUpperCase()}',
+              'cert_no': 'TRPX-${stake.uid.length >= 8 ? stake.uid.substring(0, 8).toUpperCase() : stake.uid.toUpperCase()}',
             }));
           }),
 

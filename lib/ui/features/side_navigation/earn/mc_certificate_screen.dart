@@ -1,281 +1,266 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
-const _kGold = Color(0xFFB8960C);
-const _kGreen = Color(0xFFCCFF00);
-const _kBg = Color(0xFF0A1A0A);
-
-class McCertificateScreen extends StatelessWidget {
+class McCertificateScreen extends StatefulWidget {
   final Map<String, dynamic> stake;
   const McCertificateScreen({super.key, required this.stake});
 
-  String get _certNo => stake['cert_no'] ?? 'TRPX-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-  String get _planName => stake['plan_name'] ?? '—';
-  String get _symbol => stake['coin_symbol'] ?? '';
-  String get _amount => stake['amount']?.toString() ?? '0';
-  String get _dailyRate => stake['daily_rate']?.toString() ?? '0';
-  String get _totalReturn => stake['total_return']?.toString() ?? '';
-  int get _durationDays => stake['duration_days'] ?? 0;
-  String get _startDate => stake['start_date'] ?? '';
-  String get _endDate => stake['end_date'] ?? '';
-  int get _planType => stake['plan_type'] ?? 1;
-  String get _userName => stake['user_name'] ?? 'Valued Staker';
+  @override
+  State<McCertificateScreen> createState() => _McCertificateScreenState();
+}
 
-  String _fmtDate(String d) {
-    try {
-      final dt = DateTime.parse(d);
-      const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return '${dt.day} ${m[dt.month-1]} ${dt.year}';
-    } catch (_) { return d; }
+class _McCertificateScreenState extends State<McCertificateScreen> {
+  late final WebViewController _controller;
+  bool _loaded = false;
+  double _certHeight = 300;
+
+  @override
+  void initState() {
+    super.initState();
+    final html = _buildCertHtml(widget.stake);
+    final encoded = base64Encode(utf8.encode(html));
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0xFF0A1A0A))
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageFinished: (_) async {
+          // Get scaled height from JS
+          final result = await _controller.runJavaScriptReturningResult(
+            'document.documentElement.getBoundingClientRect().height'
+          );
+          final h = double.tryParse(result.toString()) ?? 300;
+          if (mounted) setState(() { _certHeight = h; _loaded = true; });
+        },
+      ))
+      ..loadRequest(Uri.parse('data:text/html;base64,$encoded'));
   }
 
-  String get _stakingType => _planType == 1 ? 'Flexible' : _planType == 2 ? 'Locked Staking' : 'Long-Term';
+  String get _certNo => widget.stake['cert_no'] ?? 'TRPX-00000000';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: const Color(0xFF0A0A0A),
       body: SafeArea(
         child: Column(
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
                     child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
                   ),
-                  const SizedBox(width: 16),
-                  const Text('Staking Certificate', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
-                  const Spacer(),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text('Staking Certificate',
+                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                  ),
                   GestureDetector(
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: _certNo));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Certificate number copied'), backgroundColor: Color(0xFF1A1A1A)),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Certificate No. copied'),
+                        backgroundColor: Color(0xFF1A1A1A),
+                        duration: Duration(seconds: 2),
+                      ));
                     },
-                    child: const Icon(Icons.copy, color: Color(0xFFCCFF00), size: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                      child: const Row(children: [
+                        Icon(Icons.copy, color: Color(0xFFB8960C), size: 14),
+                        SizedBox(width: 4),
+                        Text('Copy No.', style: TextStyle(color: Color(0xFFB8960C), fontSize: 12)),
+                      ]),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF0A1A0A), Color(0xFF0D2010), Color(0xFF091505), Color(0xFF0A1A0A)],
+
+            // WebView certificate — fixed height based on scaled cert
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Stack(
+                children: [
+                  Container(
+                    height: _certHeight,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFB8960C).withValues(alpha: 0.3)),
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _kGold, width: 1.5),
+                    clipBehavior: Clip.hardEdge,
+                    child: WebViewWidget(controller: _controller),
                   ),
-                  child: Stack(
-                    children: [
-                      // Corner decorations
-                      ..._corners(),
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            // Logo + brand
-                            _dividerRow(),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 40, height: 40,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF152010),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: _kGold.withValues(alpha: 0.5)),
-                                  ),
-                                  child: const Center(child: Text('T', style: TextStyle(color: _kGreen, fontSize: 20, fontWeight: FontWeight.w900, fontFamily: 'DMSans'))),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('TRAPIX', style: TextStyle(color: _kGreen, fontSize: 22, fontWeight: FontWeight.w900, fontFamily: 'DMSans', letterSpacing: 3)),
-                                    Text('EXCHANGE', style: TextStyle(color: _kGold, fontSize: 9, letterSpacing: 4, fontFamily: 'DMSans')),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            _dividerRow(),
-                            const SizedBox(height: 16),
-
-                            // Title
-                            Text('DIGITAL STAKING CERTIFICATE', style: TextStyle(color: _kGold, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 2, fontFamily: 'DMSans')),
-                            const SizedBox(height: 4),
-                            Text('★ CERTIFICATE OF DIGITAL STAKING PARTICIPATION ★', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 8, letterSpacing: 1.5, fontFamily: 'DMSans')),
-                            const SizedBox(height: 8),
-                            Text('This certificate is proudly presented to', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11, fontFamily: 'DMSans')),
-                            const SizedBox(height: 4),
-                            Text(_userName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 1.5, fontFamily: 'DMSans')),
-                            const SizedBox(height: 4),
-                            RichText(
-                              textAlign: TextAlign.center,
-                              text: TextSpan(
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11, fontFamily: 'DMSans'),
-                                children: [
-                                  const TextSpan(text: 'for successfully participating in the '),
-                                  TextSpan(text: _planName, style: const TextStyle(color: _kGreen, fontWeight: FontWeight.w700)),
-                                  const TextSpan(text: ' staking program.'),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 20),
-                            Container(height: 1, color: _kGold.withValues(alpha: 0.3)),
-                            const SizedBox(height: 16),
-
-                            // Details section
-                            _sectionTitle('🌸  Certificate Details  🌸'),
-                            const SizedBox(height: 10),
-                            _detailRow('Certificate No.', _certNo, _kGold),
-                            _detailRow('Asset', _symbol, Colors.white),
-                            _detailRow('Staking Product', _planName, Colors.white),
-                            _detailRow('Staked Amount', '${double.tryParse(_amount)?.toStringAsFixed(2) ?? _amount} $_symbol', _kGreen),
-                            _detailRow('Daily Reward Rate', '${double.tryParse(_dailyRate)?.toStringAsFixed(4) ?? _dailyRate}% / Day', _kGold),
-                            if (_totalReturn.isNotEmpty && _totalReturn != 'null')
-                              _detailRow('Total Return', '$_totalReturn%', _kGold),
-                            _detailRow('Subscription Type', _stakingType, Colors.white),
-
-                            const SizedBox(height: 16),
-                            _sectionTitle('📅  Important Dates'),
-                            const SizedBox(height: 10),
-                            if (_startDate.isNotEmpty) _detailRow('Start Date', _fmtDate(_startDate), Colors.white),
-                            if (_durationDays > 0) _detailRow('Duration', '$_durationDays Days', Colors.white),
-                            if (_endDate.isNotEmpty) _detailRow('Maturity Date', _fmtDate(_endDate), Colors.white),
-                            _detailRow('Status', '● Active', const Color(0xFF00B052)),
-
-                            const SizedBox(height: 16),
-                            _sectionTitle('🛡  Verification Details'),
-                            const SizedBox(height: 10),
-                            _detailRow('Exchange', 'Trapix Exchange', Colors.white),
-                            _detailRow('Certificate Type', 'Digital Subscription', Colors.white),
-                            if (_startDate.isNotEmpty) _detailRow('Issued On', _fmtDate(_startDate), Colors.white),
-                            _detailRow('Issued By', 'Trapix Exchange', _kGold),
-                            _detailRow('Verification Status', '✓ Valid', _kGreen),
-
-                            const SizedBox(height: 20),
-                            Container(height: 1, color: _kGold.withValues(alpha: 0.3)),
-                            const SizedBox(height: 12),
-
-                            // Declaration
-                            Text(
-                              'This certificate acknowledges the holder\'s enrollment in the designated Trapix staking plan and serves as an official record of participation. All rewards and benefits remain subject to the applicable Trapix Exchange terms and operational policies.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 9, height: 1.6, fontFamily: 'DMSans'),
-                            ),
-
-                            const SizedBox(height: 16),
-                            Container(height: 1, color: _kGold.withValues(alpha: 0.3)),
-                            const SizedBox(height: 12),
-
-                            // Footer
-                            const Text('TRAPIX EXCHANGE', style: TextStyle(color: _kGold, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 4, fontFamily: 'DMSans')),
-                            const SizedBox(height: 4),
-                            Text('TRADE RESPONSIBLY · STAKE SECURELY · GROW WITH TRAPIX', style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 7, letterSpacing: 1.5, fontFamily: 'DMSans')),
-                            const SizedBox(height: 8),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                  if (!_loaded)
+                    SizedBox(
+                      height: _certHeight,
+                      child: const Center(child: CircularProgressIndicator(color: Color(0xFFCCFF00))),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const Spacer(),
+
+            const SizedBox(height: 12),
           ],
         ),
       ),
     );
   }
-
-  Widget _dividerRow() => Row(
-    children: [
-      Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.transparent, _kGold])))),
-      const SizedBox(width: 8),
-      Container(width: 6, height: 6, decoration: BoxDecoration(color: _kGold, shape: BoxShape.circle)),
-      const SizedBox(width: 8),
-      Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [_kGold, Colors.transparent])))),
-    ],
-  );
-
-  Widget _sectionTitle(String t) => Row(
-    children: [
-      Expanded(child: Container(height: 1, color: _kGold.withValues(alpha: 0.2))),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Text(t, style: TextStyle(color: _kGold, fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.5, fontFamily: 'DMSans')),
-      ),
-      Expanded(child: Container(height: 1, color: _kGold.withValues(alpha: 0.2))),
-    ],
-  );
-
-  Widget _detailRow(String label, String value, Color valueColor) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 12, fontFamily: 'DMSans')),
-        Text(value, style: TextStyle(color: valueColor, fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
-      ],
-    ),
-  );
-
-  List<Widget> _corners() {
-    const s = 20.0;
-    const t = 2.0;
-    return [
-      Positioned(top: 0, left: 0, child: _corner(top: true, left: true, s: s, t: t)),
-      Positioned(top: 0, right: 0, child: _corner(top: true, left: false, s: s, t: t)),
-      Positioned(bottom: 0, left: 0, child: _corner(top: false, left: true, s: s, t: t)),
-      Positioned(bottom: 0, right: 0, child: _corner(top: false, left: false, s: s, t: t)),
-    ];
-  }
-
-  Widget _corner({required bool top, required bool left, required double s, required double t}) =>
-      SizedBox(
-        width: s, height: s,
-        child: CustomPaint(
-          painter: _CornerPainter(top: top, left: left, color: _kGold, thickness: t),
-        ),
-      );
 }
 
-class _CornerPainter extends CustomPainter {
-  final bool top, left;
-  final Color color;
-  final double thickness;
-  _CornerPainter({required this.top, required this.left, required this.color, required this.thickness});
+String _buildCertHtml(Map<String, dynamic> s) {
+  final certNo = s['cert_no'] ?? 'TRPX-00000000';
+  final planName = s['plan_name'] ?? '';
+  final symbol = s['coin_symbol'] ?? '';
+  final coinName = s['coin_name'] ?? '';
+  final amount = double.tryParse(s['amount']?.toString() ?? '0') ?? 0;
+  final dailyRate = double.tryParse(s['daily_rate']?.toString() ?? '0') ?? 0;
+  final totalReturn = s['total_return']?.toString() ?? '';
+  final durationDays = s['duration_days'] ?? 0;
+  final startDate = s['start_date'] ?? '';
+  final endDate = s['end_date'] ?? '';
+  final planType = s['plan_type'] ?? 1;
+  final userName = s['user_name'] ?? 'Valued Staker';
+  final stakingType = planType == 2 ? 'Locked Staking' : planType == 3 ? 'Long-Term' : 'Flexible';
+  final qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=TRAPIX-CERT-$certNo';
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color..strokeWidth = thickness..style = PaintingStyle.stroke;
-    final path = Path();
-    if (top && left) {
-      path.moveTo(0, size.height); path.lineTo(0, 0); path.lineTo(size.width, 0);
-    } else if (top && !left) {
-      path.moveTo(0, 0); path.lineTo(size.width, 0); path.lineTo(size.width, size.height);
-    } else if (!top && left) {
-      path.moveTo(0, 0); path.lineTo(0, size.height); path.lineTo(size.width, size.height);
-    } else {
-      path.moveTo(0, size.height); path.lineTo(size.width, size.height); path.lineTo(size.width, 0);
-    }
-    canvas.drawPath(path, paint);
-  }
+  final totalReturnRow = (totalReturn.isNotEmpty && totalReturn != 'null')
+      ? '<div class="dr"><span class="dl">Total Return</span><span class="dv gold">$totalReturn%</span></div>'
+      : '';
+  final maturityRow = endDate.isNotEmpty
+      ? '<div class="dr"><span class="dl">Maturity Date</span><span class="dv">$endDate</span></div>'
+      : '';
+  final durationRow = durationDays > 0
+      ? '<div class="dr"><span class="dl">Duration</span><span class="dv">$durationDays Days</span></div>'
+      : '';
 
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
+  return '''<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Staking Certificate - $certNo</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;600;700&display=swap");
+*{margin:0;padding:0;box-sizing:border-box;}
+body{width:1122px;height:794px;overflow:hidden;font-family:"Inter",sans-serif;}
+.cert{width:1122px;height:794px;position:relative;background:linear-gradient(135deg,#0a1a0a 0%,#0d2010 30%,#091505 60%,#0a1a0a 100%);color:#fff;display:flex;flex-direction:column;}
+.bo{position:absolute;inset:8px;border:2px solid #b8960c;border-radius:4px;pointer-events:none;}
+.bi{position:absolute;inset:14px;border:1px solid rgba(184,150,12,0.4);border-radius:3px;pointer-events:none;}
+.c{position:absolute;width:55px;height:55px;}
+.ctl{top:8px;left:8px;border-top:3px solid #b8960c;border-left:3px solid #b8960c;}
+.ctr{top:8px;right:8px;border-top:3px solid #b8960c;border-right:3px solid #b8960c;}
+.cbl{bottom:8px;left:8px;border-bottom:3px solid #b8960c;border-left:3px solid #b8960c;}
+.cbr{bottom:8px;right:8px;border-bottom:3px solid #b8960c;border-right:3px solid #b8960c;}
+.hdr{display:flex;align-items:center;justify-content:center;gap:20px;padding:22px 60px 14px;border-bottom:1px solid rgba(184,150,12,0.3);}
+.divg{width:120px;height:2px;background:linear-gradient(90deg,transparent,#b8960c,transparent);}
+.logo-w{display:flex;align-items:center;gap:12px;}
+.logo-img{width:44px;height:44px;object-fit:contain;}
+.brand{font-family:"Cinzel",serif;font-size:26px;font-weight:900;color:#ccff00;letter-spacing:3px;}
+.brand-s{font-family:"Cinzel",serif;font-size:10px;color:#b8960c;letter-spacing:4px;margin-top:-4px;}
+.ts{text-align:center;padding:12px 60px 8px;}
+.mt{font-family:"Cinzel",serif;font-size:28px;font-weight:900;color:#b8960c;letter-spacing:4px;text-shadow:0 0 30px rgba(184,150,12,0.5);}
+.st{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:3px;margin-top:3px;}
+.pres{font-size:11px;color:rgba(255,255,255,0.6);margin-top:7px;}
+.uname{font-family:"Cinzel",serif;font-size:20px;font-weight:700;color:#fff;margin-top:3px;letter-spacing:2px;}
+.pl{font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px;}
+.pl span{color:#ccff00;font-weight:700;}
+.body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;flex:1;padding:8px 36px 12px;}
+.sec{padding:0 14px;}
+.sec+.sec{border-left:1px solid rgba(184,150,12,0.2);}
+.sth{font-size:9px;font-weight:700;letter-spacing:2px;color:#b8960c;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.sth::before,.sth::after{content:"";flex:1;height:1px;background:rgba(184,150,12,0.3);}
+.dr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.dl{font-size:9.5px;color:rgba(255,255,255,0.45);}
+.dv{font-size:10.5px;font-weight:700;color:#fff;}
+.dv.gold{color:#b8960c;}
+.dv.green{color:#ccff00;}
+.sbadge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,176,82,0.15);border:1px solid #00b052;border-radius:20px;padding:2px 8px;font-size:9px;color:#00b052;font-weight:700;}
+.qrw{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:10px;}
+.qrb{width:88px;height:88px;background:#fff;padding:6px;border-radius:4px;}
+.qrb img{width:76px;height:76px;}
+.decl{font-size:9px;color:rgba(255,255,255,0.4);line-height:1.65;}
+.ftr{text-align:center;padding:6px 60px 18px;border-top:1px solid rgba(184,150,12,0.3);}
+.fb{font-family:"Cinzel",serif;font-size:13px;font-weight:700;color:#b8960c;letter-spacing:4px;}
+.ft{font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:2px;margin-top:2px;}
+.seal{position:absolute;right:50px;bottom:100px;width:88px;height:88px;border-radius:50%;border:3px solid #b8960c;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#0a1a0a,#152a10);box-shadow:0 0 20px rgba(184,150,12,0.4);}
+.seal-t{font-family:"Cinzel",serif;font-size:7.5px;color:#b8960c;letter-spacing:1px;text-align:center;font-weight:700;}
+.seal-l{font-size:20px;color:#ccff00;font-weight:900;font-family:"Cinzel",serif;}
+</style>
+<script>
+window.onload = function() {
+  var vw = window.innerWidth || document.documentElement.clientWidth;
+  var scale = vw / 1122;
+  document.body.style.transform = 'scale(' + scale + ')';
+  document.body.style.transformOrigin = 'top left';
+  document.body.style.width = '1122px';
+  document.body.style.height = '794px';
+  document.body.style.overflow = 'hidden';
+  document.documentElement.style.width = vw + 'px';
+  document.documentElement.style.height = (794 * scale) + 'px';
+  document.documentElement.style.overflow = 'hidden';
+};
+</script>
+</head><body>
+<div class="cert">
+  <div class="bo"></div><div class="bi"></div>
+  <div class="c ctl"></div><div class="c ctr"></div><div class="c cbl"></div><div class="c cbr"></div>
+  <div class="hdr">
+    <div class="divg"></div>
+    <div class="logo-w">
+      <img src="https://trapix.com/green_logo.png" class="logo-img" onerror="this.style.display='none'"/>
+      <div><div class="brand">TRAPIX</div><div class="brand-s">EXCHANGE</div></div>
+    </div>
+    <div class="divg"></div>
+  </div>
+  <div class="ts">
+    <div class="mt">DIGITAL STAKING CERTIFICATE</div>
+    <div class="st">★ CERTIFICATE OF DIGITAL STAKING PARTICIPATION ★</div>
+    <div class="pres">This certificate is proudly presented to</div>
+    <div class="uname">$userName</div>
+    <div class="pl">for successfully participating in the <span>$planName</span> staking program offered by <span>Trapix Exchange</span>.</div>
+  </div>
+  <div class="body">
+    <div class="sec">
+      <div class="sth">🌸 Certificate Details 🌸</div>
+      <div class="dr"><span class="dl">Certificate No.</span><span class="dv gold">$certNo</span></div>
+      <div class="dr"><span class="dl">Asset</span><span class="dv">$symbol $coinName</span></div>
+      <div class="dr"><span class="dl">Staking Product</span><span class="dv">$planName</span></div>
+      <div class="dr"><span class="dl">Staked Amount</span><span class="dv green">${amount.toStringAsFixed(2)} $symbol</span></div>
+      <div class="dr"><span class="dl">Daily Rate</span><span class="dv gold">${dailyRate.toStringAsFixed(2)}% / Day</span></div>
+      $totalReturnRow
+      <div class="dr"><span class="dl">Type</span><span class="dv">$stakingType</span></div>
+    </div>
+    <div class="sec">
+      <div class="sth">📅 Important Dates</div>
+      <div class="dr"><span class="dl">Start Date</span><span class="dv">$startDate</span></div>
+      $durationRow
+      $maturityRow
+      <div class="dr"><span class="dl">Status</span><span class="dv"><span class="sbadge">● Active</span></span></div>
+      <div class="qrw">
+        <div class="qrb"><img src="$qrUrl" alt="QR"/></div>
+        <div style="font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:1px;">SCAN TO VERIFY</div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sth">📋 Declaration</div>
+      <p class="decl">This certificate acknowledges the holder's enrollment in the designated Trapix staking plan and serves as an official record of participation. All rewards remain subject to Trapix Exchange terms and operational policies.</p>
+      <div style="margin-top:10px;">
+        <div class="sth">🛡 Verification</div>
+        <div class="dr"><span class="dl">Exchange</span><span class="dv">Trapix Exchange</span></div>
+        <div class="dr"><span class="dl">Issued On</span><span class="dv">$startDate</span></div>
+        <div class="dr"><span class="dl">Issued By</span><span class="dv gold">Trapix Exchange</span></div>
+        <div class="dr"><span class="dl">Status</span><span class="dv green">✓ Valid</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="seal"><div class="seal-l">T</div><div class="seal-t">TRAPIX<br/>EXCHANGE<br/>VERIFIED</div></div>
+  <div class="ftr"><div class="fb">TRAPIX EXCHANGE</div><div class="ft">TRADE RESPONSIBLY · STAKE SECURELY · GROW WITH TRAPIX</div></div>
+</div>
+</body></html>''';
 }
