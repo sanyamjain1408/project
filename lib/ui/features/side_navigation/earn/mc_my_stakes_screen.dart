@@ -1078,7 +1078,11 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
           Navigator.of(context).pop();
           final result = await _c.cancelStake(stake.uid);
           if (result != null && mounted) {
+            // Immediately remove from list so card disappears right away
+            _c.stakes.removeWhere((s) => s.uid == stake.uid);
+            // Also reload both lists fresh from API
             widget.onReload();
+            _c.fetchPortfolio();
             showDialog(
               context: context,
               barrierDismissible: true,

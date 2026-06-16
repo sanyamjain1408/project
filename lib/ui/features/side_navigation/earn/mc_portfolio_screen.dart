@@ -1247,6 +1247,10 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
           Navigator.of(context).pop();
           final result = await _c.cancelStake(item.stakeUid);
           if (result != null && mounted) {
+            // Immediately remove from positions so card disappears right away
+            _positions.removeWhere((p) => p.stakeUid == item.stakeUid);
+            _c.stakes.removeWhere((s) => s.uid == item.stakeUid);
+            if (mounted) setState(() {});
             await _loadData();
             showDialog(
               context: context,
