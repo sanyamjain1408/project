@@ -249,8 +249,10 @@ class _McStakingScreenState extends State<McStakingScreen>
       _amountCtrl.clear();
       _c.calcResult.value = null;
       setState(() => _perSec = 0);
-      // Show congratulations modal
-      if (mounted) _showCongratulationsModal(stakeData);
+      // Show after subscribe screen closes
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) _showCongratulationsModal(stakeData);
+      });
     }
   }
 
@@ -2348,9 +2350,6 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                               ? null
                               : () async {
                                   await widget.onStake();
-                                  await Future.delayed(
-                                    const Duration(milliseconds: 1500),
-                                  );
                                   Get.back();
                                 },
                           style: ElevatedButton.styleFrom(
