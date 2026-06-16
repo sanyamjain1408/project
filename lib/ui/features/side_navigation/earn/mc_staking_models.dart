@@ -174,6 +174,7 @@ class McPortfolioItem {
   final int planType;
   final String? endDate;
   final String? stakedAt;
+  final String? lastWithdrawnAt;
   final double totalWithdrawn;
   final double coinPriceUsdt;
   final double usdtValue;
@@ -191,6 +192,7 @@ class McPortfolioItem {
     required this.planType,
     this.endDate,
     this.stakedAt,
+    this.lastWithdrawnAt,
     required this.totalWithdrawn,
     required this.coinPriceUsdt,
     required this.usdtValue,
@@ -200,10 +202,8 @@ class McPortfolioItem {
   factory McPortfolioItem.fromJson(Map<String, dynamic> j) {
     final staked = double.tryParse(j['staked_amount'].toString()) ?? 0;
     final rate = double.tryParse(j['daily_rate'].toString()) ?? 0;
-    // Backend may send daily_reward or we compute it
     final dr = double.tryParse(j['daily_reward']?.toString() ?? '0') ?? 0;
     final dailyReward = dr > 0 ? dr : staked * rate / 100;
-    // Backend sends total_reward (not total_reward_earned) in portfolio
     final totalEarned = double.tryParse(
             (j['total_reward_earned'] ?? j['total_reward'])?.toString() ?? '0') ??
         0;
@@ -219,6 +219,7 @@ class McPortfolioItem {
       planType: j['plan_type'] ?? 1,
       endDate: j['end_date'],
       stakedAt: j['staked_at'] ?? j['start_date'],
+      lastWithdrawnAt: j['last_withdrawn_at'],
       totalWithdrawn: double.tryParse(j['total_withdrawn'].toString()) ?? 0,
       coinPriceUsdt: double.tryParse(j['coin_price_usdt'].toString()) ?? 1,
       usdtValue: double.tryParse(j['usdt_value'].toString()) ?? 0,

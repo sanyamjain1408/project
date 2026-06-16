@@ -3518,17 +3518,20 @@ class _StakingLiveHeroState extends State<_StakingLiveHero> {
     for (final item in portfolio.portfolio) {
       totalPerSec += item.perSecUsdt;
       dailyTotal += item.dailyReward > 0 ? item.dailyReward * (item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1) : item.perSecUsdt * 86400;
-      final startMs = DateTime.tryParse(item.stakedAt ?? '')
+      // All-time earned: from original staked_at
+      final stakedMs = DateTime.tryParse(item.stakedAt ?? '')
               ?.millisecondsSinceEpoch ??
           DateTime.now().millisecondsSinceEpoch;
-      final secs = ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000)
+      final totalSecs = ((DateTime.now().millisecondsSinceEpoch - stakedMs) / 1000)
           .clamp(0.0, double.infinity);
-      final earned = item.perSecUsdt * secs;
-      // totalWithdrawn is in coin units, convert to USDT
-      final price = item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1;
-      final withdrawnUsdt = item.totalWithdrawn * price;
-      initTotal += earned;
-      initAvail += (earned - withdrawnUsdt).clamp(0.0, double.infinity);
+      initTotal += item.perSecUsdt * totalSecs;
+      // Available: from last_withdrawn_at (same as web calculateStakingRewards)
+      final availStart = item.lastWithdrawnAt ?? item.stakedAt ?? '';
+      final availMs = DateTime.tryParse(availStart)?.millisecondsSinceEpoch ??
+          stakedMs;
+      final availSecs = ((DateTime.now().millisecondsSinceEpoch - availMs) / 1000)
+          .clamp(0.0, double.infinity);
+      initAvail += item.perSecUsdt * availSecs;
     }
     _perSec = totalPerSec;
     _dailyTotal = dailyTotal;
