@@ -1126,23 +1126,26 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
           const SizedBox(height: 14),
 
           // ── Row 2: Live Price | Earnings Schedule | Cancel Stake ──────────
-          Row(
-            children: [
-              _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))),
-              const SizedBox(width: 6),
-              Expanded(child: _pill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid)))),
-              if (isActive) ...[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))),
                 const SizedBox(width: 6),
-                Obx(() {
-                  final cancelling = _c.isCancelling.value == stake.uid;
-                  return _pill(
-                    cancelling ? 'Wait...' : 'Cancel Stake',
-                    const Color(0xFFFF0000),
-                    cancelling ? null : () async { final ok = await _c.cancelStake(stake.uid); if (ok) widget.onReload(); },
-                  );
-                }),
+                _pill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid))),
+                if (isActive) ...[
+                  const SizedBox(width: 6),
+                  Obx(() {
+                    final cancelling = _c.isCancelling.value == stake.uid;
+                    return _pill(
+                      cancelling ? 'Wait...' : 'Cancel Stake',
+                      const Color(0xFFFF0000),
+                      cancelling ? null : () async { final ok = await _c.cancelStake(stake.uid); if (ok) widget.onReload(); },
+                    );
+                  }),
+                ],
               ],
-            ],
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -1199,13 +1202,13 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
         onTap: onTap,
         child: Container(
           height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: const Color(0xFF111111),
             borderRadius: BorderRadius.circular(20),
           ),
           alignment: Alignment.center,
-          child: Text(label, style: TextStyle(color: fg, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400)),
+          child: Text(label, style: TextStyle(color: fg, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400), maxLines: 1),
         ),
       );
 
