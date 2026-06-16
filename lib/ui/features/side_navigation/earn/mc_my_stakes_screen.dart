@@ -1020,6 +1020,51 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
     }
   }
 
+  Future<void> _doWithdraw() async {
+    final symbol = stake.coin?.symbol ?? '—';
+    final portfolioPrice = _c.portfolio.value?.portfolio
+        .firstWhereOrNull((p) => p.stakeUid == stake.uid)?.coinPriceUsdt ?? 0;
+    final coinPrice = portfolioPrice > 0 ? portfolioPrice : (stake.coinPriceUsdt > 0 ? stake.coinPriceUsdt : 1.0);
+    final earnedUsdt = _availableCoin * coinPrice;
+    final fee = _availableCoin * 0.02;
+    final received = _availableCoin * 0.98;
+
+    if (!mounted) return;
+    Navigator.of(context).pop(); // close confirm dialog
+
+    final ok = await _c.withdrawReward(stake.uid, earnedUsdt);
+    if (ok && mounted) {
+      widget.onReload();
+      // Show success dialog
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => _WithdrawSuccessDialog(
+          received: received,
+          fee: fee,
+          symbol: symbol,
+        ),
+      );
+    }
+  }
+
+  void _openWithdrawConfirm() {
+    final symbol = stake.coin?.symbol ?? '—';
+    final fee = _availableCoin * 0.02;
+    final received = _availableCoin * 0.98;
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => _WithdrawConfirmDialog(
+        earnedCoin: _availableCoin,
+        fee: fee,
+        received: received,
+        symbol: symbol,
+        onConfirm: _doWithdraw,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _ticker?.cancel();
@@ -1102,11 +1147,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
                 Obx(() {
                   final withdrawing = _c.isWithdrawing.value == stake.uid;
                   return GestureDetector(
-                    onTap: withdrawing || _availableCoin <= 0.000001 ? null : () async {
-                      final price = coinPrice > 0 ? coinPrice : 1.0;
-                      final ok = await _c.withdrawReward(stake.uid, _availableCoin * price);
-                      if (ok) widget.onReload();
-                    },
+                    onTap: withdrawing || _availableCoin <= 0.000001 ? null : _openWithdrawConfirm,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -1344,4 +1385,151 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
     if (dt == null) return d;
     return '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}';
   }
+}
+
+// ── Withdraw Confirm Dialog ───────────────────────────────────────────────────
+class _WithdrawConfirmDialog extends StatefulWidget {
+  final double earnedCoin, fee, received;
+  final String symbol;
+  final Future<void> Function() onConfirm;
+  const _WithdrawConfirmDialog({required this.earnedCoin, required this.fee, required this.received, required this.symbol, required this.onConfirm});
+  @override State<_WithdrawConfirmDialog> createState() => _WithdrawConfirmDialogState();
+}
+class _WithdrawConfirmDialogState extends State<_WithdrawConfirmDialog> {
+  bool _loading = false;
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('💰', style: TextStyle(fontSize: 36)),
+            const SizedBox(height: 8),
+            const Text('Confirm Withdrawal', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
+            const SizedBox(height: 4),
+            Text('Rewards will be sent to your spot wallet', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12, fontFamily: 'DMSans')),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)),
+              child: Column(children: [
+                _row('Gross Reward', '${widget.earnedCoin.toStringAsFixed(8)} ${widget.symbol}', Colors.white),
+                const Divider(color: Color(0xFF222222)),
+                _row('Service Fee (2%)', '- ${widget.fee.toStringAsFixed(8)} ${widget.symbol}', const Color(0xFFF87171)),
+                const Divider(color: Color(0xFF222222)),
+                _row('You Receive', '${widget.received.toStringAsFixed(8)} ${widget.symbol}', const Color(0xFFCCFF00), bold: true),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.white54, side: const BorderSide(color: Color(0xFF333333))),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : () async {
+                    setState(() => _loading = true);
+                    await widget.onConfirm();
+                    if (mounted) setState(() => _loading = false);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFCCFF00),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: _loading
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : const Text('Confirm Withdraw', style: TextStyle(fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+                ),
+              ),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _row(String l, String v, Color vc, {bool bold = false}) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+      Text(v, style: TextStyle(color: vc, fontSize: 12, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, fontFamily: 'DMSans')),
+    ]),
+  );
+}
+
+// ── Withdraw Success Dialog ───────────────────────────────────────────────────
+class _WithdrawSuccessDialog extends StatelessWidget {
+  final double received, fee;
+  final String symbol;
+  const _WithdrawSuccessDialog({required this.received, required this.fee, required this.symbol});
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60, height: 60,
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFCCFF00), width: 2.5)),
+              child: const Icon(Icons.check_rounded, color: Color(0xFFCCFF00), size: 32),
+            ),
+            const SizedBox(height: 12),
+            const Text('Withdrawal Successful!', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
+            const SizedBox(height: 4),
+            Text('Your staking rewards have been credited to your Spot Wallet.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12, fontFamily: 'DMSans')),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)),
+              child: Column(children: [
+                _row('Amount Received', '${received.toStringAsFixed(8)} $symbol', const Color(0xFFCCFF00)),
+                const Divider(color: Color(0xFF222222)),
+                _row('Service Fee (2%)', '${fee.toStringAsFixed(8)} $symbol', const Color(0xFFF87171)),
+                const Divider(color: Color(0xFF222222)),
+                _row('Destination', 'Spot Wallet', Colors.white),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFCCFF00),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _row(String l, String v, Color vc) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+      Text(v, style: TextStyle(color: vc, fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'DMSans')),
+    ]),
+  );
 }
