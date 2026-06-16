@@ -3500,13 +3500,22 @@ class _StakingLiveHeroState extends State<_StakingLiveHero> {
         ? Get.find<McStakingController>()
         : Get.put(McStakingController());
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // If portfolio already loaded, init immediately
-      if (_c.portfolio.value != null &&
-          _c.portfolio.value!.portfolio.isNotEmpty) {
-        _initCounter();
-      } else {
+      if (_c.portfolio.value == null || _c.portfolio.value!.portfolio.isEmpty) {
         await _c.fetchPortfolio();
-        _initCounter();
+      }
+      _initCounter();
+      // Start polling live prices for all staked coins
+      final symbols = _c.portfolio.value?.portfolio
+          .map((e) => e.coinSymbol)
+          .toSet()
+          .toList() ?? [];
+      if (symbols.isNotEmpty) {
+        _c.startCoinCarouselPolling(symbols);
+        // Recalc every 3s when tickers refresh
+        Timer.periodic(const Duration(seconds: 3), (_) {
+          if (!mounted) return;
+          _recalcFromPortfolio();
+        });
       }
     });
   }
@@ -3514,24 +3523,40 @@ class _StakingLiveHeroState extends State<_StakingLiveHero> {
   void _initCounter() {
     final portfolio = _c.portfolio.value;
     if (portfolio == null || portfolio.portfolio.isEmpty) return;
+    _recalcFromPortfolio();
+  }
+
+  // Recalculates totals using live coin prices from ticker (same as web).
+  // Called on init and whenever tickers update.
+  void _recalcFromPortfolio() {
+    final portfolio = _c.portfolio.value;
+    if (portfolio == null || portfolio.portfolio.isEmpty) return;
     double totalPerSec = 0, initTotal = 0, initAvail = 0, dailyTotal = 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
     for (final item in portfolio.portfolio) {
-      totalPerSec += item.perSecUsdt;
-      dailyTotal += item.dailyReward > 0 ? item.dailyReward * (item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1) : item.perSecUsdt * 86400;
+      // Use live ticker price if available, else fallback to portfolio price
+      final tickerData = _c.coinTickers[item.coinSymbol];
+      final price = (tickerData != null && (tickerData['price'] as double) > 0)
+          ? tickerData['price'] as double
+          : (item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1.0);
+
+      // perSec in coin units × live price
+      final perSecCoin = (item.stakedAmount * (item.dailyRate / 100)) / 86400;
+      final perSecUsdt = perSecCoin * price;
+
+      totalPerSec += perSecUsdt;
+      dailyTotal += perSecUsdt * 86400;
+
       // All-time earned: from original staked_at
-      final stakedMs = DateTime.tryParse(item.stakedAt ?? '')
-              ?.millisecondsSinceEpoch ??
-          DateTime.now().millisecondsSinceEpoch;
-      final totalSecs = ((DateTime.now().millisecondsSinceEpoch - stakedMs) / 1000)
-          .clamp(0.0, double.infinity);
-      initTotal += item.perSecUsdt * totalSecs;
-      // Available: from last_withdrawn_at (same as web calculateStakingRewards)
+      final stakedMs = DateTime.tryParse(item.stakedAt ?? '')?.millisecondsSinceEpoch ?? now;
+      final totalSecs = ((now - stakedMs) / 1000).clamp(0.0, double.infinity);
+      initTotal += perSecUsdt * totalSecs;
+
+      // Available: from last_withdrawn_at (same as web)
       final availStart = item.lastWithdrawnAt ?? item.stakedAt ?? '';
-      final availMs = DateTime.tryParse(availStart)?.millisecondsSinceEpoch ??
-          stakedMs;
-      final availSecs = ((DateTime.now().millisecondsSinceEpoch - availMs) / 1000)
-          .clamp(0.0, double.infinity);
-      initAvail += item.perSecUsdt * availSecs;
+      final availMs = DateTime.tryParse(availStart)?.millisecondsSinceEpoch ?? stakedMs;
+      final availSecs = ((now - availMs) / 1000).clamp(0.0, double.infinity);
+      initAvail += perSecUsdt * availSecs;
     }
     _perSec = totalPerSec;
     _dailyTotal = dailyTotal;
@@ -3539,13 +3564,13 @@ class _StakingLiveHeroState extends State<_StakingLiveHero> {
     _initAvail = initAvail;
     _liveEarning = initTotal;
     _availableToWithdraw = initAvail;
-    _sessionStart = DateTime.now().millisecondsSinceEpoch;
+    _sessionStart = now;
     if (!mounted) return;
     setState(() => _ready = true);
+    _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
       if (!mounted) return;
-      final sinceSession =
-          (DateTime.now().millisecondsSinceEpoch - _sessionStart) / 1000;
+      final sinceSession = (DateTime.now().millisecondsSinceEpoch - _sessionStart) / 1000;
       final earned = _initTotal + _perSec * sinceSession;
       _c.liveEarningUsdt.value = earned;
       setState(() {
