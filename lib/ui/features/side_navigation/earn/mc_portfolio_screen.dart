@@ -1422,52 +1422,58 @@ class _CancelConfirmDialogState extends State<_CancelConfirmDialog> {
     final receive = widget.stakedAmount - penalty;
     return Dialog(
       backgroundColor: const Color(0xFF1A1A1A),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 56, height: 56,
+              width: 68, height: 68,
               decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF3D1A00)),
-              child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFF59E0B), size: 30),
+              child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFF59E0B), size: 36),
             ),
-            const SizedBox(height: 12),
-            const Text('Early Cancellation', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
-            const SizedBox(height: 4),
-            Text('You are cancelling before the plan completes.', textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12, fontFamily: 'DMSans')),
             const SizedBox(height: 16),
+            const Text('Early Cancellation', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
+            const SizedBox(height: 6),
+            Text('You are cancelling before the plan completes.', textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 13, fontFamily: 'DMSans')),
+            const SizedBox(height: 22),
             Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)),
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(14)),
               child: Column(children: [
                 const Text('A 20% penalty will be deducted',
-                  style: TextStyle(color: Color(0xFFF87171), fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
-                const SizedBox(height: 10),
+                  style: TextStyle(color: Color(0xFFF87171), fontSize: 13, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+                const SizedBox(height: 12),
                 _row('Staked', '${widget.stakedAmount.toStringAsFixed(0)} ${widget.symbol}', Colors.white),
-                const Divider(color: Color(0xFF222222)),
+                const SizedBox(height: 4),
+                const Divider(color: Color(0xFF2A2A2A)),
+                const SizedBox(height: 4),
                 _row('Penalty (20%)', '-${penalty.toStringAsFixed(0)} ${widget.symbol}', const Color(0xFFF87171)),
-                const Divider(color: Color(0xFF222222)),
+                const SizedBox(height: 4),
+                const Divider(color: Color(0xFF2A2A2A)),
+                const SizedBox(height: 4),
                 _row('You receive', '${receive.toStringAsFixed(0)} ${widget.symbol}', const Color(0xFFCCFF00), bold: true),
               ]),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Row(children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFF333333)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    side: const BorderSide(color: Color(0xFF444444)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Keep Staking', style: TextStyle(fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+                  child: const Text('Keep Staking', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: ElevatedButton(
                   onPressed: _loading ? null : () async {
@@ -1478,12 +1484,12 @@ class _CancelConfirmDialogState extends State<_CancelConfirmDialog> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFEF4444),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _loading
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Cancel Anyway', style: TextStyle(fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+                      : const Text('Cancel Anyway', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
                 ),
               ),
             ]),
@@ -1493,10 +1499,10 @@ class _CancelConfirmDialogState extends State<_CancelConfirmDialog> {
     );
   }
   Widget _row(String l, String v, Color vc, {bool bold = false}) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
+    padding: const EdgeInsets.symmetric(vertical: 3),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
-      Text(v, style: TextStyle(color: vc, fontSize: 12, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, fontFamily: 'DMSans')),
+      Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13, fontFamily: 'DMSans')),
+      Text(v, style: TextStyle(color: vc, fontSize: 13, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, fontFamily: 'DMSans')),
     ]),
   );
 }
@@ -1510,41 +1516,51 @@ class _CancelSuccessDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFF1A1A1A),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 60, height: 60,
+              width: 68, height: 68,
               decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFCCFF00), width: 2.5)),
-              child: const Icon(Icons.check_rounded, color: Color(0xFFCCFF00), size: 32),
+              child: const Icon(Icons.check_rounded, color: Color(0xFFCCFF00), size: 36),
             ),
-            const SizedBox(height: 12),
-            const Text('Stake Cancelled', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
-            const SizedBox(height: 4),
-            Text('Funds returned to your Spot Wallet.', textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12, fontFamily: 'DMSans')),
             const SizedBox(height: 16),
+            const Text('Stake Cancelled', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
+            const SizedBox(height: 6),
+            Text('Funds returned to your Spot Wallet.', textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 13, fontFamily: 'DMSans')),
+            const SizedBox(height: 22),
             Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)),
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(14)),
               child: Column(children: [
                 _row('Staked Amount', '${stakedAmount.toStringAsFixed(0)} $symbol', Colors.white),
-                const Divider(color: Color(0xFF222222)),
+                const SizedBox(height: 4),
+                const Divider(color: Color(0xFF2A2A2A)),
+                const SizedBox(height: 4),
                 _row('Early Fee (20%)', '-${penalty.toStringAsFixed(0)} $symbol', const Color(0xFFF87171)),
-                const Divider(color: Color(0xFF222222)),
+                const SizedBox(height: 4),
+                const Divider(color: Color(0xFF2A2A2A)),
+                const SizedBox(height: 4),
                 _row('You Received', '${refund.toStringAsFixed(0)} $symbol', const Color(0xFFCCFF00), bold: true),
-                const Divider(color: Color(0xFF222222)),
+                const SizedBox(height: 4),
+                const Divider(color: Color(0xFF2A2A2A)),
+                const SizedBox(height: 4),
                 _row('Destination', 'Spot Wallet', Colors.white),
                 if (txRef.isNotEmpty) ...[
-                  const Divider(color: Color(0xFF222222)),
+                  const SizedBox(height: 4),
+                  const Divider(color: Color(0xFF2A2A2A)),
+                  const SizedBox(height: 4),
                   _row('Transaction ID', txRef, Colors.white),
                 ],
               ]),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -1552,7 +1568,7 @@ class _CancelSuccessDialog extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFCCFF00),
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
@@ -1564,10 +1580,10 @@ class _CancelSuccessDialog extends StatelessWidget {
     );
   }
   Widget _row(String l, String v, Color vc, {bool bold = false}) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
+    padding: const EdgeInsets.symmetric(vertical: 3),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
-      Flexible(child: Text(v, textAlign: TextAlign.right, style: TextStyle(color: vc, fontSize: 12, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, fontFamily: 'DMSans'))),
+      Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13, fontFamily: 'DMSans')),
+      Flexible(child: Text(v, textAlign: TextAlign.right, style: TextStyle(color: vc, fontSize: 13, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, fontFamily: 'DMSans'))),
     ]),
   );
 }
