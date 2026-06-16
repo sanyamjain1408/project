@@ -258,21 +258,21 @@ class McStakingController extends GetxController {
   }
 
   // ── Cancel stake ──────────────────────────────────────────────────────────
-  Future<bool> cancelStake(String uid) async {
+  Future<Map<String, dynamic>?> cancelStake(String uid) async {
     isCancelling.value = uid;
     try {
       final j = _decode(
         await _post('/api/mc-staking/cancel-stake', {'uid': uid}),
       );
       final ok = j['success'] == true;
-      showToast(
-        j['message'] ?? (ok ? 'Cancelled!' : 'Cannot cancel'),
-        isError: !ok,
-      );
-      return ok;
+      if (!ok) {
+        showToast(j['message'] ?? 'Cannot cancel', isError: true);
+        return null;
+      }
+      return j;
     } catch (e) {
       showToast('Network error. Please try again.');
-      return false;
+      return null;
     } finally {
       isCancelling.value = '';
     }

@@ -727,7 +727,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   return _darkPill(
                     cancelling ? 'Cancelling...' : 'Cancel Stake',
                     const Color(0xFFFF0000),
-                    cancelling ? null : () => _confirmCancel(item.stakeUid),
+                    cancelling ? null : () => _openCancelConfirm(item),
                   );
                 }),
                 const SizedBox(width: 8),
@@ -1236,9 +1236,33 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   );
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
-  Future<void> _confirmCancel(String uid) async {
-    final ok = await _c.cancelStake(uid);
-    if (ok) _loadData();
+  void _openCancelConfirm(McPortfolioItem item) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => _CancelConfirmDialog(
+        stakedAmount: item.stakedAmount,
+        symbol: item.coinSymbol,
+        onConfirm: () async {
+          Navigator.of(context).pop();
+          final result = await _c.cancelStake(item.stakeUid);
+          if (result != null && mounted) {
+            await _loadData();
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (_) => _CancelSuccessDialog(
+                stakedAmount: double.tryParse(result['staked_amount']?.toString() ?? '0') ?? item.stakedAmount,
+                penalty: double.tryParse(result['penalty']?.toString() ?? '0') ?? 0,
+                refund: double.tryParse(result['refund']?.toString() ?? '0') ?? 0,
+                symbol: result['symbol']?.toString() ?? item.coinSymbol,
+                txRef: result['tx_ref']?.toString() ?? '',
+              ),
+            );
+          }
+        },
+      ),
+    );
   }
 
   String _fmtDateLong(String? d) {
@@ -1364,4 +1388,170 @@ class _PortfolioHeroBorderPainter extends CustomPainter {
   }
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+// ── Cancel Confirm Dialog ─────────────────────────────────────────────────────
+class _CancelConfirmDialog extends StatefulWidget {
+  final double stakedAmount;
+  final String symbol;
+  final Future<void> Function() onConfirm;
+  const _CancelConfirmDialog({required this.stakedAmount, required this.symbol, required this.onConfirm});
+  @override State<_CancelConfirmDialog> createState() => _CancelConfirmDialogState();
+}
+class _CancelConfirmDialogState extends State<_CancelConfirmDialog> {
+  bool _loading = false;
+  @override
+  Widget build(BuildContext context) {
+    final penalty = widget.stakedAmount * 0.20;
+    final receive = widget.stakedAmount - penalty;
+    return Dialog(
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56, height: 56,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF3D1A00)),
+              child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFF59E0B), size: 30),
+            ),
+            const SizedBox(height: 12),
+            const Text('Early Cancellation', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
+            const SizedBox(height: 4),
+            Text('You are cancelling before the plan completes.', textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12, fontFamily: 'DMSans')),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)),
+              child: Column(children: [
+                const Text('A 20% penalty will be deducted',
+                  style: TextStyle(color: Color(0xFFF87171), fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+                const SizedBox(height: 10),
+                _row('Staked', '${widget.stakedAmount.toStringAsFixed(0)} ${widget.symbol}', Colors.white),
+                const Divider(color: Color(0xFF222222)),
+                _row('Penalty (20%)', '-${penalty.toStringAsFixed(0)} ${widget.symbol}', const Color(0xFFF87171)),
+                const Divider(color: Color(0xFF222222)),
+                _row('You receive', '${receive.toStringAsFixed(0)} ${widget.symbol}', const Color(0xFFCCFF00), bold: true),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFF333333)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Keep Staking', style: TextStyle(fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _loading ? null : () async {
+                    setState(() => _loading = true);
+                    await widget.onConfirm();
+                    if (mounted) setState(() => _loading = false);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF4444),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: _loading
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Cancel Anyway', style: TextStyle(fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+                ),
+              ),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _row(String l, String v, Color vc, {bool bold = false}) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+      Text(v, style: TextStyle(color: vc, fontSize: 12, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, fontFamily: 'DMSans')),
+    ]),
+  );
+}
+
+// ── Cancel Success Dialog ─────────────────────────────────────────────────────
+class _CancelSuccessDialog extends StatelessWidget {
+  final double stakedAmount, penalty, refund;
+  final String symbol, txRef;
+  const _CancelSuccessDialog({required this.stakedAmount, required this.penalty, required this.refund, required this.symbol, required this.txRef});
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60, height: 60,
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFCCFF00), width: 2.5)),
+              child: const Icon(Icons.check_rounded, color: Color(0xFFCCFF00), size: 32),
+            ),
+            const SizedBox(height: 12),
+            const Text('Stake Cancelled', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
+            const SizedBox(height: 4),
+            Text('Funds returned to your Spot Wallet.', textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12, fontFamily: 'DMSans')),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)),
+              child: Column(children: [
+                _row('Staked Amount', '${stakedAmount.toStringAsFixed(0)} $symbol', Colors.white),
+                const Divider(color: Color(0xFF222222)),
+                _row('Early Fee (20%)', '-${penalty.toStringAsFixed(0)} $symbol', const Color(0xFFF87171)),
+                const Divider(color: Color(0xFF222222)),
+                _row('You Received', '${refund.toStringAsFixed(0)} $symbol', const Color(0xFFCCFF00), bold: true),
+                const Divider(color: Color(0xFF222222)),
+                _row('Destination', 'Spot Wallet', Colors.white),
+                if (txRef.isNotEmpty) ...[
+                  const Divider(color: Color(0xFF222222)),
+                  _row('Transaction ID', txRef, Colors.white),
+                ],
+              ]),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFCCFF00),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, fontFamily: 'DMSans')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _row(String l, String v, Color vc, {bool bold = false}) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+      Flexible(child: Text(v, textAlign: TextAlign.right, style: TextStyle(color: vc, fontSize: 12, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, fontFamily: 'DMSans'))),
+    ]),
+  );
 }
