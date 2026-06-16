@@ -541,7 +541,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
                             'My Stake',
                             _kGreen,
                             Colors.black,
-                            () => Get.to(() => const McMyStakesScreen()),
+                            () => Get.to(() => const McMyStakesScreen())?.then((_) => _loadData()),
                           ),
                         ),
                         const SizedBox(width: 10),
