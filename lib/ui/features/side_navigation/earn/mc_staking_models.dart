@@ -175,6 +175,7 @@ class McPortfolioItem {
   final double dailyReward;
   final String planName;
   final int planType;
+  final int durationDays;
   final String? endDate;
   final String? stakedAt;
   final String? lastWithdrawnAt;
@@ -193,6 +194,7 @@ class McPortfolioItem {
     required this.dailyReward,
     required this.planName,
     required this.planType,
+    this.durationDays = 0,
     this.endDate,
     this.stakedAt,
     this.lastWithdrawnAt,
@@ -220,6 +222,7 @@ class McPortfolioItem {
       dailyReward: dailyReward,
       planName: j['plan_name'] ?? '',
       planType: j['plan_type'] ?? 1,
+      durationDays: j['duration_days'] ?? 0,
       endDate: j['end_date'],
       stakedAt: j['staked_at'] ?? j['start_date'],
       lastWithdrawnAt: j['last_withdrawn_at'],

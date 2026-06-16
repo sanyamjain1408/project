@@ -116,6 +116,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
           dailyReward: dailyReward,
           planName: pos['plan_name'] ?? '',
           planType: pos['plan_type'] ?? 1,
+          durationDays: int.tryParse(pos['duration_days']?.toString() ?? '0') ?? 0,
           endDate: pos['end_date'],
           stakedAt: pos['staked_at'] ?? pos['start_date'],
           lastWithdrawnAt: pos['last_withdrawn_at'] ?? portfolioItem?.lastWithdrawnAt,
@@ -612,7 +613,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     final withdrawRewardUsdt = item.totalWithdrawn * price;
     final dailyRewardCoin = item.stakedAmount * (item.dailyRate / 100);
     final dailyRewardUsdt = dailyRewardCoin * price;
-    final planDays = _parseDays(item.planName);
+    final planDays = item.durationDays > 0 ? item.durationDays : _parseDays(item.planName);
     final stakedAtDt = item.stakedAt != null ? DateTime.tryParse(item.stakedAt!) : null;
     final endDt = item.endDate != null && item.endDate!.isNotEmpty
         ? DateTime.tryParse(item.endDate!)
