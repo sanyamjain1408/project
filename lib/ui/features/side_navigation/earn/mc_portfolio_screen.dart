@@ -653,10 +653,13 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          '$symbol-USDT',
-                          maxLines: 1,
-                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
+                        Flexible(
+                          child: Text(
+                            '$symbol-USDT',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
+                          ),
                         ),
                         const SizedBox(width: 6),
                         Container(
