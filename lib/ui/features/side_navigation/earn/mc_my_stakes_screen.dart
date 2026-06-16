@@ -1126,22 +1126,26 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
           const SizedBox(height: 14),
 
           // ── Row 2: Live Price | Earnings Schedule | Cancel Stake ──────────
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))),
-              _pill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid))),
-              if (isActive)
-                Obx(() {
-                  final cancelling = _c.isCancelling.value == stake.uid;
-                  return _pill(
-                    cancelling ? 'Cancelling...' : 'Cancel Stake',
-                    const Color(0xFFFF0000),
-                    cancelling ? null : () async { final ok = await _c.cancelStake(stake.uid); if (ok) widget.onReload(); },
-                  );
-                }),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))),
+                const SizedBox(width: 8),
+                _pill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid))),
+                if (isActive) ...[
+                  const SizedBox(width: 8),
+                  Obx(() {
+                    final cancelling = _c.isCancelling.value == stake.uid;
+                    return _pill(
+                      cancelling ? 'Cancelling...' : 'Cancel Stake',
+                      const Color(0xFFFF0000),
+                      cancelling ? null : () async { final ok = await _c.cancelStake(stake.uid); if (ok) widget.onReload(); },
+                    );
+                  }),
+                ],
+              ],
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -1151,7 +1155,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
           const SizedBox(height: 16),
 
           // ── Stats rows ────────────────────────────────────────────────────
-          _statRow('Live Earned', liveEarnedUsdt > 0 ? '${_liveEarned.toStringAsFixed(4)} USDT' : '${_liveEarned.toStringAsFixed(8)} $symbol', Colors.white),
+          _liveEarnedRow(symbol),
           _statRow('Staked Amount', '${stake.amount.toStringAsFixed(2)} $symbol', const Color(0xFF4DD78D)),
           _statRow('Day Completed', '$elapsed / $totalDays days', Colors.white),
           _statRow('Day Remaining', totalDays > 0 ? '$remaining days' : 'Flexible', Colors.white),
