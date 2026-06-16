@@ -29,7 +29,8 @@ Widget showCircleAvatar(String? url, {double size = 90}) {
   );
 }
 
-ColorFilter? getColorFilter(Color? color) => color == null ? null : ColorFilter.mode(color, BlendMode.srcIn);
+ColorFilter? getColorFilter(Color? color) =>
+    color == null ? null : ColorFilter.mode(color, BlendMode.srcIn);
 
 Widget showCachedNetworkImage(String url, {double size = 90}) {
   return CachedNetworkImage(
@@ -42,106 +43,171 @@ Widget showCachedNetworkImage(String url, {double size = 90}) {
   );
 }
 
-Widget showImageAsset(
-    {IconData? icon,
-    String? imagePath = "assets/icons/blogo.png",
-    double? width,
-    double? height,
-    VoidCallback? onPressCallback,
-    Color? color,
-    BoxFit? boxFit = BoxFit.contain,
-    double? iconSize}) {
+Widget showImageAsset({
+  IconData? icon,
+  String? imagePath = "assets/icons/blogo.png",
+  double? width,
+  double? height,
+  VoidCallback? onPressCallback,
+  Color? color,
+  BoxFit? boxFit = BoxFit.contain,
+  double? iconSize,
+}) {
   return InkWell(
     onTap: onPressCallback,
     child: imagePath!.isNotEmpty
         ? imagePath.contains(".svg")
-            ? SvgPicture.asset(imagePath, fit: boxFit!, width: width, height: height, colorFilter: getColorFilter(color))
-            : Image.asset(imagePath, fit: boxFit!, width: width, height: height, color: color)
+              ? SvgPicture.asset(
+                  imagePath,
+                  fit: boxFit!,
+                  width: width,
+                  height: height,
+                  colorFilter: getColorFilter(color),
+                )
+              : Image.asset(
+                  imagePath,
+                  fit: boxFit!,
+                  width: width,
+                  height: height,
+                  color: color,
+                )
         : Icon(icon!, size: iconSize, color: color),
   );
 }
 
-Widget showImageNetwork(
-    {String? imagePath,
-      double? width,
-      double? height,
-      VoidCallback? onPressCallback,
-      Color? iconColor,
-      BoxFit boxFit = BoxFit.contain,
-      Color? bgColor,
-      double? iconSize,
-      double? padding,
-      bool hideDefaultImage = false}) {
+Widget showImageNetwork({
+  String? imagePath,
+  double? width,
+  double? height,
+  VoidCallback? onPressCallback,
+  Color? iconColor,
+  BoxFit boxFit = BoxFit.contain,
+  Color? bgColor,
+  double? iconSize,
+  double? padding,
+  bool hideDefaultImage = false,
+}) {
   return InkWell(
-      onTap: onPressCallback,
-      child: Container(
-        height: height,
-        width: width,
-        color: bgColor ?? Colors.grey.withValues(alpha: 0.25),
-        padding: EdgeInsets.all(padding ?? 0),
-        child: imagePath.isValid
-            ? imagePath!.contains(".svg")
-            ? SvgPicture.network(imagePath, fit: boxFit, colorFilter: getColorFilter(iconColor))
-            : Image.network(imagePath,
-            fit: boxFit, errorBuilder: (context, error, stackTrace) => hideDefaultImage ? const SizedBox() : const AppLogo())
-            : (hideDefaultImage ? const SizedBox() : const AppLogo()),
-      ));
+    onTap: onPressCallback,
+    child: Container(
+      height: height,
+      width: width,
+      color: bgColor ?? Colors.grey.withValues(alpha: 0.25),
+      padding: EdgeInsets.all(padding ?? 0),
+      child: imagePath.isValid
+          ? imagePath!.contains(".svg")
+                ? SvgPicture.network(
+                    imagePath,
+                    fit: boxFit,
+                    colorFilter: getColorFilter(iconColor),
+                  )
+                : Image.network(
+                    imagePath,
+                    fit: boxFit,
+                    errorBuilder: (context, error, stackTrace) =>
+                        hideDefaultImage ? const SizedBox() : const AppLogo(),
+                  )
+          : (hideDefaultImage ? const SizedBox() : const AppLogo()),
+    ),
+  );
 }
 
 Widget showImageLocal(File file, {double size = 90}) {
-  return Container(padding: const EdgeInsets.all(5), child: Image.file(file, width: size, height: size, fit: BoxFit.cover));
+  return Container(
+    padding: const EdgeInsets.all(5),
+    child: Image.file(file, width: size, height: size, fit: BoxFit.cover),
+  );
 }
 
 Widget showCircleAvatarLocal(File file, {double size = 90}) {
-  return ClipOval(child: Image.file(file, width: size, height: size, fit: BoxFit.cover));
+  return ClipOval(
+    child: Image.file(file, width: size, height: size, fit: BoxFit.cover),
+  );
 }
 
-void showImageChooser(BuildContext context, Function(File, bool) onChoose, {bool isCamera = true, bool isGallery = true, bool isCrop = true}) {
+void showImageChooser(
+  BuildContext context,
+  Function(File, bool) onChoose, {
+  bool isCamera = true,
+  bool isGallery = true,
+  bool isCrop = true,
+}) {
   hideKeyboard(context: context);
   choosePhotoModalBottomSheet(
-      onTakePic: isCamera
-          ? () {
-              Get.back();
-              getImage(false, onChoose, isCrop);
-            }
-          : null,
-      onChoosePic: isGallery
-          ? () {
-              Get.back();
-              getImage(true, onChoose, isCrop);
-            }
-          : null,
-      width: Get.width * 0.85);
+    onTakePic: isCamera
+        ? () {
+            Get.back();
+            getImage(false, onChoose, isCrop);
+          }
+        : null,
+    onChoosePic: isGallery
+        ? () {
+            Get.back();
+            getImage(true, onChoose, isCrop);
+          }
+        : null,
+    width: Get.width * 0.85,
+  );
 }
 
-void choosePhotoModalBottomSheet({VoidCallback? onTakePic, VoidCallback? onChoosePic, double width = 0}) => Get.bottomSheet(
-      Container(
-          alignment: Alignment.bottomCenter,
-          //height: 300,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (onTakePic != null)
-                buttonRoundedMain(
-                    text: "Take a picture".tr, onPress: onTakePic, width: width, textColor: Colors.black, bgColor: Colors.white),
-              if (onTakePic != null) dividerHorizontal(height: 10, indent: Get.width - width),
-              if (onChoosePic != null)
-                buttonRoundedMain(
-                    text: "Choose a picture".tr, onPress: onChoosePic, width: width, textColor: Colors.black, bgColor: Colors.white),
-              if (onChoosePic != null) dividerHorizontal(height: 10, indent: Get.width - width),
-              buttonRoundedMain(text: "Cancel".tr, onPress: () => Get.back(), width: width, textColor: Colors.black, bgColor: Colors.grey),
-              const SizedBox(height: 10)
-            ],
-          )),
-      isDismissible: true,
-    );
+void choosePhotoModalBottomSheet({
+  VoidCallback? onTakePic,
+  VoidCallback? onChoosePic,
+  double width = 0,
+}) => Get.bottomSheet(
+  Container(
+    alignment: Alignment.bottomCenter,
+    //height: 300,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        if (onTakePic != null)
+          buttonRoundedMain(
+            text: "Take a picture".tr,
+            onPress: onTakePic,
+            width: width,
+            textColor: Colors.black,
+            bgColor: Colors.white,
+          ),
+        if (onTakePic != null)
+          dividerHorizontal(height: 10, indent: Get.width - width),
+        if (onChoosePic != null)
+          buttonRoundedMain(
+            text: "Choose a picture".tr,
+            onPress: onChoosePic,
+            width: width,
+            textColor: Colors.black,
+            bgColor: Colors.white,
+          ),
+        if (onChoosePic != null)
+          dividerHorizontal(height: 10, indent: Get.width - width),
+        buttonRoundedMain(
+          text: "Cancel".tr,
+          onPress: () => Get.back(),
+          width: width,
+          textColor: Colors.black,
+          bgColor: Colors.grey,
+        ),
+        const SizedBox(height: 10),
+      ],
+    ),
+  ),
+  isDismissible: true,
+);
 
-Future getImage(bool isGallery, Function(File, bool) onChoose, bool isCrop) async {
+Future getImage(
+  bool isGallery,
+  Function(File, bool) onChoose,
+  bool isCrop,
+) async {
   XFile? res;
   if (isGallery) {
     res = await ImagePicker().pickImage(source: ImageSource.gallery);
   } else {
-    res = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 70);
+    res = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 70,
+    );
   }
   if (res != null) {
     if (isCrop) {
@@ -152,19 +218,30 @@ Future getImage(bool isGallery, Function(File, bool) onChoose, bool isCrop) asyn
   }
 }
 
-Future cropImage(bool isGallery, XFile file, Function(File, bool) onChoose) async {
-  final   aspectRatioPresets = [
+Future cropImage(
+  bool isGallery,
+  XFile file,
+  Function(File, bool) onChoose,
+) async {
+  final aspectRatioPresets = [
     CropAspectRatioPreset.square,
     CropAspectRatioPreset.ratio3x2,
     CropAspectRatioPreset.original,
     CropAspectRatioPreset.ratio4x3,
-    CropAspectRatioPreset.ratio16x9
+    CropAspectRatioPreset.ratio16x9,
   ];
   CroppedFile? croppedFile = await ImageCropper().cropImage(
     sourcePath: file.path,
     uiSettings: [
-      AndroidUiSettings(initAspectRatio: CropAspectRatioPreset.original, lockAspectRatio: true, aspectRatioPresets: aspectRatioPresets),
-      IOSUiSettings(aspectRatioLockEnabled: true, aspectRatioPresets: aspectRatioPresets),
+      AndroidUiSettings(
+        initAspectRatio: CropAspectRatioPreset.original,
+        lockAspectRatio: true,
+        aspectRatioPresets: aspectRatioPresets,
+      ),
+      IOSUiSettings(
+        aspectRatioLockEnabled: true,
+        aspectRatioPresets: aspectRatioPresets,
+      ),
     ],
   );
 
@@ -174,7 +251,11 @@ Future cropImage(bool isGallery, XFile file, Function(File, bool) onChoose) asyn
   }
 }
 
-void saveFileOnTempPath(File chooseFile, {String? imgName, Function(File)? onNewFile}) async {
+void saveFileOnTempPath(
+  File chooseFile, {
+  String? imgName,
+  Function(File)? onNewFile,
+}) async {
   imgName = imgName ?? pathTempProfileImageName;
 
   getImageDirectoryPath(imgName).then((tempPath) {

@@ -126,6 +126,10 @@ class APIURLConstants {
   static const getStakingInvestmentPaymentList = "/api/staking/investment-get-payment-list";
   static const getStakingLandingDetails = "/api/staking/landing-details";
 
+  static const getGiveaways = "/api/v1/giveaways";
+  static const joinGiveaway = "/api/v1/giveaways"; // + /{id}/join
+  static const completeGiveawayTask = "/api/v1/giveaways"; // + /{id}/tasks/{taskId}/complete
+
   static const getGiftCardMainPage = "/api/gift-card/gift-card-main-page";
   static const getGiftCardCheck = "/api/gift-card/check-card";
   static const getGiftCardRedeemCode = "/api/gift-card/get-redeem-code";

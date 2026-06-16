@@ -523,6 +523,31 @@ class APIRepository {
     return provider.getRequest(APIURLConstants.getLimitOrderTolerance, authHeader(), query: mapObj);
   }
 
+  // ── Giveaways ──────────────────────────────────────────────────────────────
+  Future<ServerResponse> getGiveaways() async {
+    return provider.getRequest(APIURLConstants.getGiveaways, authHeader());
+  }
+
+  Future<ServerResponse> getGiveawayDetail(dynamic id) async {
+    return provider.getRequest('${APIURLConstants.getGiveaways}/$id', authHeader());
+  }
+
+  Future<ServerResponse> getGiveawayLeaderboard(dynamic id) async {
+    return provider.getRequest('${APIURLConstants.getGiveaways}/$id/leaderboard', authHeader());
+  }
+
+  Future<ServerResponse> getGiveawayWinners(dynamic id) async {
+    return provider.getRequest('${APIURLConstants.getGiveaways}/$id/winners', authHeader());
+  }
+
+  Future<ServerResponse> joinGiveaway(dynamic id) async {
+    return provider.postRequest('${APIURLConstants.getGiveaways}/$id/join', {}, authHeader());
+  }
+
+  Future<ServerResponse> completeGiveawayTask(dynamic giveawayId, dynamic taskId) async {
+    return provider.postRequest('${APIURLConstants.getGiveaways}/$giveawayId/tasks/$taskId/complete', {}, authHeader());
+  }
+
   /// *** ------------ *** ///
   /// *** GET requests *** ///
   /// *** ------------ *** ///

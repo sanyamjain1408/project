@@ -39,6 +39,7 @@ import '../side_navigation/staking/staking_screen.dart';
 import '../side_navigation/airdrop/airdrop_screen.dart';
 import '../side_navigation/about/about_trapix_screen.dart';
 import '../side_navigation/community/community_screen.dart';
+import '../side_navigation/giveaway/giveaway_screen.dart';
 import '../side_navigation/spin_win/spin_win_screen.dart';
 import '../side_navigation/listing/listing_screen.dart';
 import '../side_navigation/official_verification/official_verification_screen.dart';
@@ -565,6 +566,11 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
 
                     // ── REWARDS ──────────────────────────────────────────────
                     _sectionHeader("Rewards"),
+                    _menuRow(
+                      "assets/images/giveaway.png",
+                      "Giveaways",
+                      () => Get.to(() => const GiveawayScreen()),
+                    ),
                     _menuRow(
                       "assets/icons/refer_earn.png",
                       "Referral",
