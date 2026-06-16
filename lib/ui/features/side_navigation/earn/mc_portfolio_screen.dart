@@ -5,6 +5,7 @@ import 'mc_staking_controller.dart' show McStakingController, mcLogoUrl;
 import 'mc_staking_models.dart';
 import 'mc_my_stakes_screen.dart';
 import 'mc_earnings_schedule_screen.dart';
+import 'mc_certificate_screen.dart';
 
 const _kGreen = Color(0xFFCCFF00);
 const _kCard = Color(0xFF1A1A1A);
@@ -721,7 +722,22 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   );
                 }),
                 const SizedBox(width: 8),
-                _darkPill('Certificate', const Color(0xFFCCFF00), () {}),
+                _darkPill('Certificate', const Color(0xFFCCFF00), () {
+                  Get.to(() => McCertificateScreen(stake: {
+                    'plan_name': item.planName,
+                    'coin_symbol': symbol,
+                    'coin_name': '',
+                    'amount': item.stakedAmount,
+                    'daily_rate': item.dailyRate,
+                    'total_return': planDays > 0 ? (item.dailyRate * planDays).toStringAsFixed(2) : null,
+                    'duration_days': planDays,
+                    'start_date': item.stakedAt ?? '',
+                    'end_date': item.endDate ?? '',
+                    'plan_type': item.planType,
+                    'user_name': 'Valued Staker',
+                    'cert_no': 'TRPX-${item.stakeUid.length >= 8 ? item.stakeUid.substring(0, 8).toUpperCase() : item.stakeUid.toUpperCase()}',
+                  }));
+                }),
               ],
             ),
           ),
