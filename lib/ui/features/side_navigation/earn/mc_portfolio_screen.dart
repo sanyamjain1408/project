@@ -178,12 +178,16 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
       initTotalUsdt += liveEarnedCoin * price;
       _totalEarnedCoin += liveEarnedCoin;
 
-      // _StakeBase now tracks coin units; base seeded at startMs for continuous counting
+      // _StakeBase tracks coin units from staked_at; lastWithdrawnMs for available calc
+      final lastWMs = item.lastWithdrawnAt != null
+          ? DateTime.tryParse(item.lastWithdrawnAt!)?.millisecondsSinceEpoch
+          : null;
       _stakeBases[item.stakeUid] = _StakeBase(
         base: 0,
         perSec: perSecCoin,
         baseTime: startMs,
         totalWithdrawn: item.totalWithdrawn,
+        lastWithdrawnMs: lastWMs,
       );
     }
 
@@ -219,13 +223,15 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     super.dispose();
   }
 
-  // Returns available coin units = liveEarned - totalWithdrawn
+  // Returns available coin units — earned since last_withdrawn_at (same as web)
   double _stakeAvailable(String uid) {
     final sb = _stakeBases[uid];
     if (sb == null) return 0;
-    final elapsed = ((DateTime.now().millisecondsSinceEpoch - sb.baseTime) / 1000).clamp(0.0, double.infinity);
-    final liveEarned = sb.perSec * elapsed;
-    return (liveEarned - sb.totalWithdrawn).clamp(0.0, double.infinity);
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    // Use last_withdrawn_at as start if available, else staked_at (baseTime)
+    final availStartMs = sb.lastWithdrawnMs ?? sb.baseTime;
+    final elapsed = ((nowMs - availStartMs) / 1000).clamp(0.0, double.infinity);
+    return (sb.perSec * elapsed).clamp(0.0, double.infinity);
   }
 
   // Returns total live earned coin units (from start_date)
@@ -243,17 +249,20 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   }
 
   void _openWithdrawModal(McPortfolioItem item) {
-    final earnedUsdt = _stakeAvailable(item.stakeUid);
-    final earnedCoin = item.coinPriceUsdt > 0 ? earnedUsdt / item.coinPriceUsdt : earnedUsdt;
-    if (earnedUsdt <= 0) {
+    // availableCoin = earned since last_withdrawn_at
+    final availableCoin = _stakeAvailable(item.stakeUid);
+    if (availableCoin <= 0.000001) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No rewards to withdraw yet.'), backgroundColor: Colors.red),
       );
       return;
     }
+    // Send USDT value to backend (backend converts to coin) — same as web
+    final price = item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1.0;
+    final earnedUsdt = availableCoin * price;
     setState(() => _withdrawInfo = _WithdrawInfo(
           uid: item.stakeUid,
-          earnedCoin: earnedCoin,
+          earnedCoin: availableCoin,
           earnedUsdt: earnedUsdt,
           symbol: item.coinSymbol,
         ));
@@ -1186,7 +1195,8 @@ class _StakeBase {
   final double perSec;
   int baseTime;
   final double totalWithdrawn;
-  _StakeBase({required this.base, required this.perSec, required this.baseTime, this.totalWithdrawn = 0});
+  final int? lastWithdrawnMs; // for available calculation
+  _StakeBase({required this.base, required this.perSec, required this.baseTime, this.totalWithdrawn = 0, this.lastWithdrawnMs});
 }
 
 class _WithdrawInfo {

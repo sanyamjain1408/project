@@ -963,37 +963,43 @@ class _StakeCardWidget extends StatefulWidget {
 class _StakeCardWidgetState extends State<_StakeCardWidget> {
   Timer? _ticker;
   double _liveEarned = 0.0;
+  double _availableCoin = 0.0; // earned since last_withdrawn_at
 
   McStakingController get _c => widget.c;
   McStake get stake => widget.stake;
 
-  // Website formula (MobileStakingHistory): liveEarned = perSec * secondsElapsedFromStartDate
-  // For inactive stakes: shows total_reward_earned (frozen)
   late final double _perSec;
   late final int _startDateMs;
+  late final int _availStartMs; // last_withdrawn_at or staked_at
 
   void _computeLive() {
     if (stake.status != 1) {
       _liveEarned = stake.totalRewardEarned;
+      _availableCoin = 0;
       return;
     }
-    final secondsElapsed =
-        (DateTime.now().millisecondsSinceEpoch - _startDateMs) / 1000.0;
-    _liveEarned = _perSec * secondsElapsed.clamp(0.0, double.infinity);
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final totalSecs = ((nowMs - _startDateMs) / 1000.0).clamp(0.0, double.infinity);
+    _liveEarned = _perSec * totalSecs;
+    // Available = earned since last_withdrawn_at (same as web)
+    final availSecs = ((nowMs - _availStartMs) / 1000.0).clamp(0.0, double.infinity);
+    _availableCoin = _perSec * availSecs;
   }
 
   @override
   void initState() {
     super.initState();
     _perSec = stake.amount * (stake.dailyRate / 100) / 86400;
-    // stake.startDate = j['staked_at'] ?? j['start_date'] — backend now returns correct staked_at
     final startDt = stake.startDate != null ? DateTime.tryParse(stake.startDate!) : null;
-    _startDateMs =
-        startDt?.millisecondsSinceEpoch ??
-        DateTime.now().millisecondsSinceEpoch;
+    _startDateMs = startDt?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch;
+    // Available starts from last_withdrawn_at if exists, else staked_at (same as web)
+    final availDt = (stake.lastWithdrawnAt != null && stake.lastWithdrawnAt!.isNotEmpty)
+        ? DateTime.tryParse(stake.lastWithdrawnAt!)
+        : null;
+    _availStartMs = availDt?.millisecondsSinceEpoch ?? _startDateMs;
     _computeLive();
     if (stake.status == 1) {
-      _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      _ticker = Timer.periodic(const Duration(milliseconds: 16), (_) {
         if (mounted) setState(_computeLive);
       });
     }
@@ -1110,45 +1116,51 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
                 ),
                 if (stake.status != 3) ...[
                   const SizedBox(width: 10),
-                  // Withdraw button — only for non-cancelled stakes
-                  GestureDetector(
-                    onTap: () => Get.to(() => const McPortfolioScreen()),
-                    child: Container(
-                      width: 110, // apni requirement ke hisab se
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _kGreen,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Withdraw',
-                            style: TextStyle(
-                              color: Color(0xFF0A0A0A),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'DMSans',
+                  // Withdraw button — only for active stakes with available rewards
+                  if (stake.status == 1)
+                  Obx(() {
+                    final withdrawing = _c.isWithdrawing.value == stake.uid;
+                    return GestureDetector(
+                      onTap: withdrawing || _availableCoin <= 0.000001 ? null : () async {
+                        final price = stake.coinPriceUsdt > 0 ? stake.coinPriceUsdt : 1.0;
+                        final usdtToSend = _availableCoin * price;
+                        final ok = await _c.withdrawReward(stake.uid, usdtToSend);
+                        if (ok) widget.onReload();
+                      },
+                      child: Container(
+                        width: 110,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _availableCoin > 0.000001 ? _kGreen : Colors.grey,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              withdrawing ? 'Withdrawing...' : 'Withdraw',
+                              style: const TextStyle(
+                                color: Color(0xFF0A0A0A),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'DMSans',
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${(_liveEarned - stake.totalWithdrawn).clamp(0.0, double.infinity).toStringAsFixed(4)} $symbol',
-                            style: const TextStyle(
-                              color: Color(0xFF1A1A1A),
-                              fontSize: 12,
-                              fontFamily: 'DMSans',
-                              fontWeight: FontWeight.w400,
+                            const SizedBox(height: 2),
+                            Text(
+                              '${_availableCoin.toStringAsFixed(4)} $symbol',
+                              style: const TextStyle(
+                                color: Color(0xFF1A1A1A),
+                                fontSize: 12,
+                                fontFamily: 'DMSans',
+                                fontWeight: FontWeight.w400,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 ],
               ],
             ),
