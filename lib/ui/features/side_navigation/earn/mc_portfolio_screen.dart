@@ -411,7 +411,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
                 painter: _PortfolioHeroPainter(
                   cardW: screenW,
                   cardH: cardH,
-                  fillColor: const Color(0xFF111111),
+                  fillColor: const Color(0xFF1A1A1A),
                 ),
               ),
             ),
@@ -424,11 +424,14 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
               child: Transform.rotate(
                 angle: 1.250,
                 alignment: Alignment.center,
-                child: Image.asset(
-                  'assets/images/wallet_green_wave.png',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.bottomRight,
-                  errorBuilder: (_, e, s) => const SizedBox.shrink(),
+                child: Opacity(
+                  opacity: 0.5,
+                  child: Image.asset(
+                    'assets/images/wallet_green_wave.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.bottomRight,
+                    errorBuilder: (_, e, s) => const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),

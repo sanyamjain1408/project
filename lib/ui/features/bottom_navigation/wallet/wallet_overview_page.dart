@@ -1302,7 +1302,10 @@ class _FutureWalletBody extends StatelessWidget {
                       child: Transform.rotate(
                         angle: 1.250,
                         alignment: Alignment.center,
-                        child: Image.asset('assets/images/wallet_green_wave.png', fit: BoxFit.cover, alignment: Alignment.bottomRight),
+                        child: Opacity(
+                          opacity: 0.5,
+                          child: Image.asset('assets/images/wallet_green_wave.png', fit: BoxFit.cover, alignment: Alignment.bottomRight),
+                        ),
                       ),
                     ),
                     // Border
@@ -1527,7 +1530,7 @@ class _FutureHeroBgPainter extends CustomPainter {
   const _FutureHeroBgPainter({required this.cardW, required this.cardH, required this.svgW, required this.svgH});
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawPath(_buildFutureHeroPath(cardW, cardH, svgW, svgH), Paint()..color = const Color(0xFF111111).withOpacity(0.5));
+    canvas.drawPath(_buildFutureHeroPath(cardW, cardH, svgW, svgH), Paint()..color = const Color(0xFF1A1A1A));
   }
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;

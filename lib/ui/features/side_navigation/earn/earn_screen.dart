@@ -3342,7 +3342,7 @@ class _EarnHeroShell extends StatelessWidget {
                     painter: _EarnHeroPainter(
                       cardW: screenW,
                       cardH: _earnCardH,
-                      fillColor: const Color(0xFF111111).withOpacity(0.5),
+                      fillColor: const Color(0xFF1A1A1A),
                     ),
                   ),
                 ),
@@ -3357,10 +3357,13 @@ class _EarnHeroShell extends StatelessWidget {
               child: Transform.rotate(
                 angle: 1.250,
                 alignment: Alignment.center,
-                child: Image.asset(
-                  'assets/images/wallet_green_wave.png',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.bottomRight,
+                child: Opacity(
+                  opacity: 0.5,
+                  child: Image.asset(
+                    'assets/images/wallet_green_wave.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.bottomRight,
+                  ),
                 ),
               ),
             ),
