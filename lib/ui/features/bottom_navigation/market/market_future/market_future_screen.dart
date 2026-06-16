@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/utils/text_field_util.dart';
-import 'package:tradexpro_flutter/utils/dimens.dart';
-import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
 import '../market_spot/market_spot_controller.dart';
@@ -19,7 +17,7 @@ import '../../trades/future_trade/future_controller.dart';
 final Map<String, String> _iconCache = {};
 
 // ─── Design tokens (same as spot) ────────────────────────────────────────────
-const _green  = Color(0xFFB5F000);
+const _green  = Color(0xFFCCFF00);
 const _dim    = Color(0xFF1A1A1A);
 const _dm     = 'DMSans';
 
@@ -234,18 +232,15 @@ class MarketFutureState extends State<MarketFutureScreen> {
           const SizedBox(height: 10),
 
           // Search
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: textFieldSearch(
-                controller: _searchCtrl,
-                height: Dimens.btnHeightSmall,
-                margin: 0,
-                borderRadius: Dimens.radiusCornerMid,
-                onTextChange: (_) {},
-                bgColor: _dim,
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: textFieldSearch(
+              controller: _searchCtrl,
+              height: 30,
+              margin: 0,
+              borderRadius: 10,
+              onTextChange: (_) {},
+              bgColor: _dim,
             ),
           ),
 
@@ -266,7 +261,7 @@ class MarketFutureState extends State<MarketFutureScreen> {
                         color: _green,
                         onRefresh: _fetchPairs,
                         child: ListView.builder(
-                          padding: const EdgeInsets.all(5),
+                          padding: EdgeInsets.zero,
                           itemCount: _filtered.length,
                           itemBuilder: (_, i) => _FuturePairItem(pair: _filtered[i], iconMap: _iconMap),
                         ),
@@ -279,7 +274,7 @@ class MarketFutureState extends State<MarketFutureScreen> {
 
   Widget _buildFilterTabs() {
     return Container(
-      height: 35,
+      height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       color: Colors.transparent,
       child: Row(
@@ -288,15 +283,16 @@ class MarketFutureState extends State<MarketFutureScreen> {
           return GestureDetector(
             onTap: () { setState(() => _filterIndex = e.key); _applyFilter(); },
             child: Container(
-              height: 35,
+              height: 40,
               color: Colors.transparent,
               margin: const EdgeInsets.only(right: 20),
               alignment: Alignment.center,
               child: Text(e.value,
                 style: TextStyle(
-                  fontSize: 14, fontFamily: _dm,
-                  fontWeight: isSelected ? FontWeight.w400 : FontWeight.w300,
-                  color: isSelected ? Colors.white : Colors.white54)),
+                  fontSize: 15, fontFamily: _dm,
+                  fontWeight: FontWeight.w400,
+                  height: 1.33,
+                  color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5))),
             ),
           );
         }).toList(),
@@ -305,7 +301,6 @@ class MarketFutureState extends State<MarketFutureScreen> {
   }
 
   Widget _buildCategoryList() {
-    const hotCats = ['TradFi', 'Stocks', 'Indices', 'Commodity'];
     return Container(
       height: 24,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -314,39 +309,22 @@ class MarketFutureState extends State<MarketFutureScreen> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (context, i) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final on = _catIndex == i;
           final label = _categories[i];
-          final isHot = hotCats.contains(label);
-          final isAI  = label == 'AI';
           return GestureDetector(
             onTap: () { setState(() => _catIndex = i); _applyFilter(); },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               decoration: BoxDecoration(
-                color: on ? _green : _dim,
-                borderRadius: BorderRadius.circular(6),
+                color: on ? const Color(0xFFCCFF00) : _dim,
+                borderRadius: BorderRadius.circular(5),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isHot) ...[
-                    const Text('🔥', style: TextStyle(fontSize: 13)),
-                    const SizedBox(width: 3),
-                  ] else if (isAI) ...[
-                    Container(
-                      width: 7, height: 7,
-                      decoration: const BoxDecoration(color: Color(0xFFFF8A00), shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 3),
-                  ],
-                  Text(label,
-                    style: TextStyle(
-                      color: on ? Colors.black : Colors.white,
-                      fontSize: 13, fontWeight: on ? FontWeight.w700 : FontWeight.w500, fontFamily: _dm)),
-                ],
-              ),
+              child: Text(label,
+                style: TextStyle(
+                  color: on ? Colors.black : Colors.white,
+                  fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33)),
             ),
           );
         },
@@ -355,21 +333,22 @@ class MarketFutureState extends State<MarketFutureScreen> {
   }
 
   Widget _buildHeaderRow() {
-    return Container(
-      height: 20,
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      color: Colors.transparent,
-      child: const Row(
+      child: Row(
         children: [
-          Expanded(flex: 3,
-            child: Text('Pair/Vol', style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w400, height: 1.6))),
-          Expanded(flex: 2,
-            child: Text('Price', textAlign: TextAlign.right,
-                style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w400, height: 1.6))),
-          SizedBox(width: 20),
-          Expanded(flex: 2,
-            child: Text('24h Change', textAlign: TextAlign.right,
-                style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w400, height: 1.6))),
+          Expanded(
+            child: Text('Pair/Vol',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
+          SizedBox(
+            width: 80,
+            child: Text('Price', textAlign: TextAlign.end,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 83,
+            child: Text('24h Change', textAlign: TextAlign.end,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
         ],
       ),
     );
@@ -387,7 +366,6 @@ class _FuturePairItem extends StatelessWidget {
     final isUp       = pair.priceChangePct >= 0;
     final changeStr  = '${isUp ? '+' : ''}${pair.priceChangePct.toStringAsFixed(2)}%';
     final priceStr   = coinFormat(pair.lastPrice);
-    final priceStr6  = '\$${coinFormat(pair.lastPrice, fixed: 6)}';
     final volStr     = '\$${numberFormatCompact(pair.volume, decimals: 2)}';
     final cColor     = isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
 
@@ -407,46 +385,40 @@ class _FuturePairItem extends StatelessWidget {
         }
         Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        margin: const EdgeInsets.only(bottom: 5),
-        color: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            hSpacer10(),
-
-            // ── Coin icon + name + volume ──
+            // Icon + name + volume
             Expanded(
-              flex: 5,
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Coin icon — from spot market cache, else jsdelivr, else fallback
                   ClipOval(child: _buildIcon()),
-                  hSpacer10(),
-                  Expanded(
+                  const SizedBox(width: 8),
+                  Flexible(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Line 1: symbol + tag inline (matches web)
                         Row(
-                          mainAxisSize: MainAxisSize.max,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Flexible(
-                              child: RichText(
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                text: TextSpan(
+                              child: Text.rich(
+                                TextSpan(
                                   text: pair.baseAsset,
-                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500, fontFamily: _dm),
+                                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.25),
                                   children: [
                                     TextSpan(
                                       text: '/${pair.quoteAsset}',
-                                      style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w400, fontFamily: _dm),
+                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.25),
                                     ),
                                   ],
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (_categoryTag(pair.category) != null) ...[
@@ -455,11 +427,9 @@ class _FuturePairItem extends StatelessWidget {
                             ],
                           ],
                         ),
-                        // Line 2: volume only
                         Text(volStr,
-                            style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
@@ -467,48 +437,42 @@ class _FuturePairItem extends StatelessWidget {
               ),
             ),
 
-            hSpacer5(),
-
-            // ── Price ──
-            Expanded(
-              flex: 2,
+            // Price — fixed 80px right-aligned
+            SizedBox(
+              width: 80,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(priceStr,
-                      maxLines: 1, textAlign: TextAlign.end,
-                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600, fontFamily: _dm)),
-                  Text(priceStr6,
-                      style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w400, fontFamily: _dm),
-                      maxLines: 1),
+                    textAlign: TextAlign.end, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600, fontFamily: _dm, height: 1.25)),
+                  Text('\$$priceStr',
+                    textAlign: TextAlign.end, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33)),
                 ],
               ),
             ),
 
-            hSpacer20(),
+            const SizedBox(width: 8),
 
-            // ── 24h Change badge ──
-            Expanded(
-              flex: 2,
-              child: SizedBox(
-                height: 30,
-                child: Container(
-                  decoration: BoxDecoration(color: cColor, borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: Center(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(changeStr,
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
-                          maxLines: 1),
-                    ),
+            // Change badge — fixed 83px
+            SizedBox(
+              width: 83,
+              height: 30,
+              child: Container(
+                decoration: BoxDecoration(color: cColor, borderRadius: BorderRadius.circular(5)),
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(changeStr,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600, fontFamily: _dm, height: 1.33),
+                      maxLines: 1),
                   ),
                 ),
               ),
             ),
-
-            hSpacer15(),
           ],
         ),
       ),
@@ -528,22 +492,36 @@ class _FuturePairItem extends StatelessWidget {
   }
 
   Widget? _categoryTag(String category) {
-    String? label;
-    Color? color;
     switch (category) {
-      case 'stock':     label = 'Stocks';  color = const Color(0xFF2ecc8f); break;
-      case 'index':     label = 'Index';   color = const Color(0xFF5aa9ff); break;
       case 'commodity':
-        label = _kFullNames[pair.baseAsset.toUpperCase()] ?? 'Commodity';
-        color = const Color(0xFFE0B341);
-        break;
+        final label = _kFullNames[pair.baseAsset.toUpperCase()] ?? 'Commodity';
+        return Container(
+          width: 28,
+          height: 16,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0x4CFFD800),
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.86), width: 1),
+          ),
+          child: Text(label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFFFFD900), fontSize: 8, fontWeight: FontWeight.w400, fontFamily: _dm)),
+        );
+      case 'stock':
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          decoration: BoxDecoration(color: const Color(0x332ecc8f), borderRadius: BorderRadius.circular(4)),
+          child: const Text('Stock', style: TextStyle(color: Color(0xFF2ecc8f), fontSize: 8, fontWeight: FontWeight.w400, fontFamily: _dm)),
+        );
+      case 'index':
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          decoration: BoxDecoration(color: const Color(0x335aa9ff), borderRadius: BorderRadius.circular(4)),
+          child: const Text('Index', style: TextStyle(color: Color(0xFF5aa9ff), fontSize: 8, fontWeight: FontWeight.w400, fontFamily: _dm)),
+        );
       default: return null;
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-      decoration: BoxDecoration(color: color!.withOpacity(0.18), borderRadius: BorderRadius.circular(3)),
-      child: Text(label!, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w600, fontFamily: _dm)),
-    );
   }
 
 }
@@ -585,7 +563,7 @@ class _CoinIconState extends State<_CoinIcon> {
     if (_attempt >= _maxAttempts) return _fallback();
     return Image.network(
       _url(_attempt),
-      width: 28, height: 28, fit: BoxFit.cover,
+      width: 30, height: 30, fit: BoxFit.cover,
       errorBuilder: (context, error, stack) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) setState(() => _attempt++);
@@ -596,7 +574,7 @@ class _CoinIconState extends State<_CoinIcon> {
   }
 
   Widget _fallback() => Container(
-    width: 28, height: 28,
+    width: 30, height: 30,
     decoration: const BoxDecoration(color: _dim, shape: BoxShape.circle),
     alignment: Alignment.center,
     child: Text(

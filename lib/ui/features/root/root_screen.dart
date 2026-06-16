@@ -130,55 +130,60 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── BOTTOM NAV — UNCHANGED ───────────────────────────────────────────────
   Widget _getBottomNavigationBar() {
     navList = AppBottomNavHelper.getBottomNavList();
 
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.only(left: 18, right: 18,top: 5),
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 76,
+        margin: EdgeInsets.zero,
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: List.generate(navList.length, (index) {
+            final isSelected = _controller.bottomNavIndex == index;
 
-      decoration:  BoxDecoration(color: Color(0xFF111111).withOpacity(0.5), borderRadius: BorderRadius.circular(20)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(navList.length, (index) {
-          final isSelected = _controller.bottomNavIndex == index;
-
-          return GestureDetector(
-            onTap: () => changeBottomNavTab(navList[index].id),
-            child: Container(
-              color: Colors.transparent,
-              // <--- Yahan gap control karo
-              child: Column(
-                children: [
-                  // ── ICON — same for selected & unselected ──
-                  SizedBox(
-                    width: 30,
-                    height: 30,
-                    child: Image.asset(
-                      navList[index].imagePath,
-                      // koi color filter nahi — icon same rahega
+            return GestureDetector(
+              onTap: () => changeBottomNavTab(navList[index].id),
+              behavior: HitTestBehavior.opaque,
+              child: SizedBox(
+                width: 64,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 30,
+                      height: 30,
+                      child: Image.asset(navList[index].imagePath),
                     ),
-                  ),
-
-                  const SizedBox(height: 0),
-                  // ── LABEL — green if selected, white54 if not ──
-                  Text(
-                    navList[index].name ?? "",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: "DMSans",
-                      color: isSelected
-                          ? const Color(0xFFCCFF00)
-                          : Colors.white54,
+                    const SizedBox(height: 4),
+                    Text(
+                      navList[index].name ?? "",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: "DMSans",
+                        height: 1.33,
+                        color: isSelected
+                            ? const Color(0xFFCCFF00)
+                            : Colors.white.withValues(alpha: 0.5),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }

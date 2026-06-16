@@ -27,11 +27,11 @@ Color _fgColor(int v) {
 }
 
 String _fgLabel(int v) {
-  if (v <= 20) return 'Extreme Fear';
+  if (v <= 20) return 'Fear';
   if (v <= 40) return 'Fear';
   if (v <= 60) return 'Neutral';
   if (v <= 80) return 'Greed';
-  return 'Extreme Greed';
+  return 'Greed';
 }
 
 // ── Heatmap color ──────────────────────────────────────────────────
@@ -185,9 +185,10 @@ class _MarketOpportunityScreenState extends State<MarketOpportunityScreen> {
                             ],
                           ),
                           const Spacer(),
-                          // Historical pills
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                          // Historical pills — IntrinsicWidth makes all pills same width as widest
+                          IntrinsicWidth(
+                            child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _FgHistoryRow(
                                 label: 'Yesterday',
@@ -204,6 +205,7 @@ class _MarketOpportunityScreenState extends State<MarketOpportunityScreen> {
                                 value: _ctrl.fgLastMonth.value,
                               ),
                             ],
+                          ),
                           ),
                         ],
                       ),
@@ -1450,12 +1452,13 @@ class _FgHistoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final col = _fgColor(value); // value ke hisaab se color
+    final col = _fgColor(value);
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       children: [
         Text(
           label,
+          textAlign: TextAlign.end,
           style: const TextStyle(
             color: _kMuted,
             fontSize: 12,
@@ -1464,35 +1467,39 @@ class _FgHistoryRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        Expanded(
+          child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: col.withOpacity(0.10), // us color ki 10% opacity
+            color: col.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: '${_fgLabel(value)} – ',
-                  style: TextStyle(
-                    color: col, // label bhi same color
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'DMSans',
+          child: Center(
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${_fgLabel(value)} – ',
+                    style: TextStyle(
+                      color: col,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: '$value',
-                  style: TextStyle(
-                    color: col, // number bhi same color
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'DMSans',
+                  TextSpan(
+                    text: '$value',
+                    style: TextStyle(
+                      color: col,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+          ),
           ),
         ),
       ],

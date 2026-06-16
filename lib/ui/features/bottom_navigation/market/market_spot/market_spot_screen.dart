@@ -4,7 +4,6 @@ import 'package:tradexpro_flutter/utils/appbar_util.dart';
 import 'package:tradexpro_flutter/utils/common_utils.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
 import 'package:tradexpro_flutter/utils/decorations.dart';
-import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:tradexpro_flutter/utils/text_field_util.dart';
 
@@ -72,23 +71,19 @@ class MarketSpotState extends State<MarketSpotScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildFilterTabBar(),
-
             _buildStaticCategoryList(),
 
             const SizedBox(height: 10),
 
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: textFieldSearch(
-                  controller: _controller.searchController,
-                  height: Dimens.btnHeightSmall,
-                  margin: 0,
-                  borderRadius: Dimens.radiusCornerMid,
-                  onTextChange: _controller.onTextChanged,
-                  bgColor: const Color(0xFF1A1A1A),
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: textFieldSearch(
+                controller: _controller.searchController,
+                height: 30,
+                margin: 0,
+                borderRadius: 10,
+                onTextChange: _controller.onTextChanged,
+                bgColor: const Color(0xFF1A1A1A),
               ),
             ),
 
@@ -111,7 +106,7 @@ class MarketSpotState extends State<MarketSpotScreen>
                         : showEmptyView(height: 100)
                   : Expanded(
                       child: ListView.separated(
-                        padding: const EdgeInsets.all(5),
+                        padding: EdgeInsets.zero,
                         separatorBuilder: (context, index) =>
                             const SizedBox.shrink(),
                         itemCount: _controller.marketList.length,
@@ -143,12 +138,12 @@ class MarketSpotState extends State<MarketSpotScreen>
     );
   }
 
+
   Widget _buildFilterTabBar() {
     final filterList = _controller.getFilterList();
-
     return Obx(
       () => Container(
-        height: 35,
+        height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         color: Colors.transparent,
         child: Row(
@@ -156,27 +151,24 @@ class MarketSpotState extends State<MarketSpotScreen>
             final index = entry.key;
             final title = entry.value;
             final isSelected = _controller.selectedFilterIndex.value == index;
-
             return GestureDetector(
               onTap: () {
                 _filterTabController.animateTo(index);
                 _controller.onFilterChanged(index);
               },
               child: Container(
-                height: 35,
+                height: 40,
                 color: Colors.transparent,
-                margin: const EdgeInsets.only(
-                  right: 20,
-                ), // <--- Yahan gap do apne hisaab se
+                margin: const EdgeInsets.only(right: 20),
                 alignment: Alignment.center,
-
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontFamily: "DMSans",
-                    fontWeight: isSelected ? FontWeight.w400 : FontWeight.w300,
-                    color: isSelected ? Colors.white : Colors.white54,
+                    fontWeight: FontWeight.w400,
+                    color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                    height: 1.33,
                   ),
                 ),
               ),
@@ -187,7 +179,6 @@ class MarketSpotState extends State<MarketSpotScreen>
     );
   }
 
-  // ── STATIC CATEGORY LIST ──
   Widget _buildStaticCategoryList() {
     final categories = [
       "All",
@@ -195,45 +186,39 @@ class MarketSpotState extends State<MarketSpotScreen>
       "Meme",
       "RWA",
       "DeFi",
-      "NFT",
       "Layer 1",
       "Layer 2",
+      "GameFi",
+      "Others",
     ];
 
     return Container(
-      height: 20,
+      height: 24,
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      margin: EdgeInsets.only(top: 10, bottom: 10),
+      margin: const EdgeInsets.only(top: 10, bottom: 10),
       color: Colors.transparent,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 10),
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final isSelected = _selectedCategoryIndex == index;
           return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedCategoryIndex = index;
-              });
-            },
+            onTap: () => setState(() => _selectedCategoryIndex = index),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFFB5F000)
-                    : Color(0xFF1A1A1A), // "All" ke liye thoda different color
-                borderRadius: BorderRadius.circular(6),
+                color: isSelected ? const Color(0xFFCCFF00) : const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
                 categories[index],
                 style: TextStyle(
-                  color: isSelected
-                      ? const Color(0xFF000000)
-                      : const Color(0xFFFFFFFF),
+                  color: isSelected ? Colors.black : Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   fontFamily: "DMSans",
+                  height: 1.33,
                 ),
               ),
             ),
@@ -250,48 +235,52 @@ class MarketHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 20,
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      color: Colors.transparent,
-      child: const Row(
+      child: Row(
         children: [
+          // Pair/Vol — left
           Expanded(
             flex: 3,
-            child: const Text(
+            child: Text(
               "Pair/Vol",
               style: TextStyle(
-                color: Colors.white30, // ✅ 50% white
-                fontSize: 14,
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
                 fontWeight: FontWeight.w400,
-                height: 1.6,
+                fontFamily: "DMSans",
+                height: 1.33,
               ),
             ),
           ),
-          Expanded(
-            flex: 2,
+          // Price — fixed width right-aligned
+          SizedBox(
+            width: 80,
             child: Text(
               "Price",
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.end,
               style: TextStyle(
-                color: Colors.white30, // ✅ 50% white
-                fontSize: 14,
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
                 fontWeight: FontWeight.w400,
-                height: 1.6,
+                fontFamily: "DMSans",
+                height: 1.33,
               ),
             ),
           ),
-          SizedBox(width: 20),
-          Expanded(
-            flex: 2,
+          const SizedBox(width: 8),
+          // 24h Change — fixed width right
+          SizedBox(
+            width: 83,
             child: Text(
               "24h Change",
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white30, // ✅ 50% white
-                fontSize: 14,
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
                 fontWeight: FontWeight.w400,
-                height: 1.6,
+                fontFamily: "DMSans",
+                height: 1.33,
               ),
             ),
           ),

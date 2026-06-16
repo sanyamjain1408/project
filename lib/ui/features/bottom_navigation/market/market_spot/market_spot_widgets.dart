@@ -12,7 +12,6 @@ import 'package:tradexpro_flutter/utils/image_util.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'package:tradexpro_flutter/utils/text_util.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 import '../../../root/root_controller.dart';
 import '../../../../../helper/bottom_nav_helper.dart';
 import '../../trades/spot_trade/spot_trade_controller.dart';
@@ -181,10 +180,12 @@ class MarketCoinItemViewBottom extends StatelessWidget {
     super.key,
     required this.coin,
     this.onFavChange,
+    this.showPerp = false,
   });
 
   final MarketCoin coin;
   final Function(String?)? onFavChange;
+  final bool showPerp;
 
   @override
   Widget build(BuildContext context) {
@@ -210,75 +211,92 @@ class MarketCoinItemViewBottom extends StatelessWidget {
         '',
         onFavChange,
       ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        margin: const EdgeInsets.only(bottom: 5),
-        color: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── 1. LEFT SPACER (LandingMarketView jaisa) ──
-            hSpacer10(),
-
-            // ── 2. ICON + COIN NAME + VOLUME COLUMN ──
+            // Icon + name + volume
             Expanded(
-              flex: 3,
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Icon (same size as LandingMarketView)
                   ClipOval(
                     child: showImageNetwork(
                       imagePath: coin.coinIcon,
                       width: 30,
                       height: 30,
-                      bgColor: Colors.transparent,
+                      bgColor: const Color(0xFFD9D9D9),
                     ),
                   ),
-                  hSpacer10(),
-
-                  Expanded(
+                  const SizedBox(width: 8),
+                  Flexible(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // ── Coin Name: BTC/USDT (AutoSizeText.rich — LandingMarketView jaisa) ──
-                        AutoSizeText.rich(
-                          TextSpan(
-                            text: coin.coinType ?? '',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: formattedPrice.length > 9
-                                  ? "DMSans"
-                                  : "DMSans", // Font size ke hisaab se font family switch kar sakte hain agar needed ho toh (LandingMarketView me aisa hai)
-                            ),
-                            children: <TextSpan>[
-                              if ((coin.baseCoinType ?? '').isNotEmpty)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text.rich(
                                 TextSpan(
-                                  text: "/${coin.baseCoinType}",
+                                  text: coin.coinType ?? '',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: "DMSans",
+                                    height: 1.25,
+                                  ),
+                                  children: [
+                                    if ((coin.baseCoinType ?? '').isNotEmpty)
+                                      TextSpan(
+                                        text: "/${coin.baseCoinType}",
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.5),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w400,
+                                          fontFamily: "DMSans",
+                                          height: 1.25,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (showPerp) ...[
+                              const SizedBox(width: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2A2A2A),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: const Text(
+                                  'Perp',
                                   style: TextStyle(
                                     color: Colors.white54,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w300,
-                                    fontFamily: formattedPrice.length > 9
-                                        ? "DMSans"
-                                        : "DMSans", // Font size ke hisaab se font family switch kar sakte hain agar needed ho toh (LandingMarketView me aisa hai)
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: "DMSans",
+                                    height: 1.2,
                                   ),
                                 ),
+                              ),
                             ],
-                          ),
-                          maxLines: 1,
+                          ],
                         ),
-
-                        // ── Volume (grey, 11px — LandingMarketView jaisa) ──
                         Text(
                           "\$${numberFormatCompact(coin.volume, decimals: 2)}",
-                          style: const TextStyle(
-                            color: Colors
-                                .white54, // _textDim — same as LandingMarketView
-                            fontSize: 11,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 12,
                             fontWeight: FontWeight.w400,
                             fontFamily: "DMSans",
+                            height: 1.33,
                           ),
                           maxLines: 1,
                         ),
@@ -289,74 +307,73 @@ class MarketCoinItemViewBottom extends StatelessWidget {
               ),
             ),
 
-            hSpacer5(),
-
-            // ── 3. PRICE COLUMN (LandingMarketView jaisa — end aligned) ──
-            Expanded(
-              flex: 3,
+            // Price — fixed 80px right-aligned
+            SizedBox(
+              width: 80,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── Upar: Bold Price ──
                   Text(
                     formattedPrice,
-                    maxLines: 1,
                     textAlign: TextAlign.end,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.white, // _textDim — same as LandingMarketView
+                      color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       fontFamily: "DMSans",
+                      height: 1.25,
                     ),
                   ),
-                  // ── Niche: $ price (grey, 11px) ──
                   Text(
-                    "\$${coinFormat(coin.price, fixed: 6)}",
-                    style: const TextStyle(
-                      color: Colors
-                          .white54, // _textDim — same as LandingMarketView
-                      fontSize: 11,
+                    "\$$formattedPrice",
+                    textAlign: TextAlign.end,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 12,
                       fontWeight: FontWeight.w400,
                       fontFamily: "DMSans",
+                      height: 1.33,
                     ),
-                    maxLines: 1,
                   ),
                 ],
               ),
             ),
 
-            hSpacer20(), // LandingMarketView me hSpacer20 hai
-            // ── 4. CHANGE BUTTON (LandingMarketView jaisa — Expanded flex:2) ──
-            Expanded(
-              flex: 2,
-              child: SizedBox(
-                height: 30,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: cColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: Center(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        "$sign${coinFormat(coin.change, fixed: 2)}%",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
+            const SizedBox(width: 8),
+
+            // Change badge — fixed 83px
+            SizedBox(
+              width: 83,
+              height: 30,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cColor,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      "$sign${coinFormat(coin.change, fixed: 2)}%",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: "DMSans",
+                        height: 1.33,
                       ),
+                      maxLines: 1,
                     ),
                   ),
                 ),
               ),
             ),
-
-            hSpacer15(), // LandingMarketView me hSpacer15 hai
           ],
         ),
       ),

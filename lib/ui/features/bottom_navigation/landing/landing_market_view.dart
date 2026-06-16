@@ -1,33 +1,22 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../data/models/coin_pair.dart';
 import '../../../../helper/app_helper.dart';
-import '../../../../utils/appbar_util.dart';
-import '../../../../utils/button_util.dart';
-import '../../../../utils/common_utils.dart';
 import '../../../../utils/common_widgets.dart';
-import '../../../../utils/decorations.dart';
 import '../../../../utils/dimens.dart';
 import '../../../../utils/extensions.dart';
 import '../../../../utils/image_util.dart';
 import '../../../../utils/number_util.dart';
-import '../../../../utils/spacers.dart';
-import '../../../../utils/text_util.dart';
 import '../trades/spot_trade/spot_trade_controller.dart';
 import '../../root/root_controller.dart';
 import '../../../../data/local/constants.dart';
 import 'landing_controller.dart';
 
-
-
-const _bg =  Color.fromARGB(255, 17, 17, 17);
-const _card      = Color(0xFF111318);
-const _green     = Color(0xFFB5F000);
-const _border    = Color(0xFF1E2128);
-const _textDim   = Color(0xFF6B7280);
-const _textMid   = Color(0xFFB0B8C1);
+const _dmSans = 'DMSans';
+const _white  = Colors.white;
+const _grey   = Color(0x80FFFFFF); // 50% white
+const _bg     = Color(0xFF111111);
 
 class LandingMarketView extends StatefulWidget {
   const LandingMarketView({super.key});
@@ -36,15 +25,21 @@ class LandingMarketView extends StatefulWidget {
   State<LandingMarketView> createState() => _LandingMarketViewState();
 }
 
-class _LandingMarketViewState extends State<LandingMarketView> with SingleTickerProviderStateMixin {
+class _LandingMarketViewState extends State<LandingMarketView>
+    with SingleTickerProviderStateMixin {
   final _controller = Get.find<LandingController>();
   late final TabController _tabController;
-  RxBool isExpand = false.obs;
 
   @override
   void initState() {
     _tabController = TabController(length: 3, vsync: this);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -54,78 +49,98 @@ class _LandingMarketViewState extends State<LandingMarketView> with SingleTicker
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          tabBarUnderline(
-            ["Core Assets".tr, "24H Gainer".tr, "New Listing".tr],
-            _tabController,
-            onTap: (index) => _controller.selectedTab.value = index,
-            indicatorSize: TabBarIndicatorSize.label,
-            indicator: BoxDecoration(
-              border: Border(bottom: BorderSide(color: _green,width: 4))
-            ),
-            fontSize: Dimens.fontSizeMid,
+          // ── TAB BAR ───────────────────────────────────────────────
+          TabBar(
+            controller: _tabController,
+            onTap: (i) => _controller.selectedTab.value = i,
             isScrollable: true,
-
-            labelPadding: const EdgeInsets.symmetric(horizontal: 12.0),
-          ),
-          dividerHorizontal(height: 0),
-          vSpacer10(),
-          Row(
-            children: [
-              hSpacer10(),
-              Expanded(flex: 3, child: TextRobotoAutoNormal("Pair".tr)),
-              hSpacer5(),
-              Expanded(flex: 3, child: TextRobotoAutoNormal("Price".tr, textAlign: TextAlign.center)),
-              hSpacer5(),
-              Expanded(flex: 2, child: TextRobotoAutoNormal("24h Change".tr, textAlign: TextAlign.end)),
-              hSpacer10(),
+            tabAlignment: TabAlignment.start,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+            indicator: const BoxDecoration(),
+            indicatorSize: TabBarIndicatorSize.label,
+            dividerColor: Colors.transparent,
+            overlayColor: WidgetStateProperty.all(Colors.transparent),
+            splashFactory: NoSplash.splashFactory,
+            labelColor: _white,
+            unselectedLabelColor: _grey,
+            labelStyle: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.w400, fontFamily: _dmSans),
+            tabs: [
+              Tab(text: "Core Assets".tr),
+              Tab(text: "24H Gainer".tr),
+              Tab(text: "New Listing".tr),
             ],
           ),
-          vSpacer5(),
+
+          // ── COLUMN HEADERS ────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+            child: Row(children: [
+              // Pair/Volume — takes remaining space (mirrors data row Expanded)
+              const Expanded(
+                child: Text('Pair/Volume',
+                    style: TextStyle(color: _grey, fontSize: 12,
+                        fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+              ),
+              // Last Price — fixed 90px, centered (mirrors data row SizedBox(width:90))
+              const SizedBox(
+                width: 90,
+                child: Text('Last Price',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: _grey, fontSize: 12,
+                        fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+              ),
+              const SizedBox(width: 8),
+              // 24H Change — fixed 83px, centered (mirrors data row SizedBox(width:83))
+              const SizedBox(
+                width: 83,
+                child: Text('24H Change',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: _grey, fontSize: 12,
+                        fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+              ),
+            ]),
+          ),
+
+          // ── LIST ──────────────────────────────────────────────────
           Obx(() {
             final lData = _controller.landingList.value;
-            final list = _controller.selectedTab.value == 0
+            final tab = _controller.selectedTab.value;
+            final list = tab == 0
                 ? lData.assetCoinPairs
-                : (_controller.selectedTab.value == 1 ? lData.hourlyCoinPairs : lData.latestCoinPairs);
+                : (tab == 1 ? lData.hourlyCoinPairs : lData.latestCoinPairs);
             return list.isValid
-                ? ListView.separated(
+                ? ListView.builder(
                     shrinkWrap: true,
-                    padding: EdgeInsets.zero,
-                    itemBuilder: (context, index) => MarketTrendItemView(coin: list![index]),
-                    separatorBuilder: (context, index) => Container(height: 16, color: Colors.transparent),
-                    itemCount: list?.length ?? 0,
+                    padding: const EdgeInsets.only(bottom: 16),
                     physics: const NeverScrollableScrollPhysics(),
+                    itemCount: list!.length,
+                    itemBuilder: (_, i) => _MarketRow(coin: list[i]),
                   )
                 : showEmptyView(height: Dimens.btnHeightMain);
           }),
-          SizedBox(height: 20),
         ],
       ),
     );
   }
-
-  int getListLength(int listLength) {
-    final length = isExpand.value ? 10 : 5;
-
-    return listLength > length ? length : listLength;
-  }
 }
 
-class MarketTrendItemView extends StatelessWidget {
-  const MarketTrendItemView({super.key, required this.coin});
-
+class _MarketRow extends StatelessWidget {
+  const _MarketRow({required this.coin});
   final CoinPair coin;
 
   @override
   Widget build(BuildContext context) {
     final (sign, color) = getNumberData(coin.priceChange);
-    String formattedPrice = coinFormat(coin.lastPrice);
+    final price = coinFormat(coin.lastPrice);
+    final change = "$sign${coinFormat(coin.priceChange, fixed: 2)}%";
 
     return InkWell(
-      
       onTap: () {
         coin.coinPair = coin.getCoinPairKey();
         coin.coinPairName = coin.getCoinPairName();
-        // Switch to Trade tab and load the selected pair
         Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.trade);
         if (Get.isRegistered<SpotTradeController>()) {
           final ctrl = Get.find<SpotTradeController>();
@@ -133,131 +148,123 @@ class MarketTrendItemView extends StatelessWidget {
           ctrl.getDashBoardData();
         }
       },
-      child: Row(
-        children: [
-          hSpacer10(),
-          
-          // --- 1. ICON + COLUMN SECTION ---
-          Expanded(
-            flex: 3,
-            child: Row(
-              children: [
-                // Icon: Waisa ka waisa (Network Image)
-                ClipOval(
-                  child: showImageNetwork(
-                    imagePath: coin.icon,
-                    width: 30,
-                    height: 30,
-                    bgColor: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── PAIR / VOLUME (left-aligned, takes remaining space) ──
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Coin icon circle
+                  ClipOval(
+                    child: showImageNetwork(
+                      imagePath: coin.icon,
+                      width: 30,
+                      height: 30,
+                      bgColor: const Color(0xFFD9D9D9),
+                    ),
                   ),
-                ),
-                hSpacer5(),
-                
-                // Column: Upar Name, Niche Price ($23k)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Upar: Coin Name (BTC/USDT)
-                      AutoSizeText.rich(
-                        TextSpan(
-                          text: coin.childCoinName ?? '',
-                          style: Get.theme.textTheme.labelMedium!.copyWith(fontSize: Dimens.fontSizeMidExtra),
-                          children: <TextSpan>[
-                            TextSpan(
-                              text: "/${coin.parentCoinName ?? ''}",
-                              style: Get.theme.textTheme.displaySmall!.copyWith(fontSize: Dimens.fontSizeSmall),
-                            ),
-                          ],
-                        ),
-                        maxLines: 1,
-                      ),
-                      Text(
-                        numberFormatCompact(coin.volume, symbol: "\$"),
-                        style: const TextStyle(color: Colors.grey, fontSize: 11),
-                        maxLines: 1,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          hSpacer5(),
-          
-          // --- 2. PRICE SECTION ---
-          Expanded(
-            flex: 3,
-            child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Upar: Coin Name (BTC/USDT)
-                     TextRobotoAutoBold(formattedPrice, maxLines: 1, textAlign: TextAlign.end),
-                      // Niche: Price (e.g., $23k)
-                      Text(
-                            "\$${formattedPrice} ", // Yahan Price add hoga
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 11, // Chhota font size
-                            ),
-                            maxLines: 1,
+                  const SizedBox(width: 8),
+                  // Name + volume — constrained so long names don't push right columns
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            text: coin.childCoinName ?? '',
+                            style: const TextStyle(
+                              color: _white, fontSize: 16,
+                              fontFamily: _dmSans, fontWeight: FontWeight.w400,
+                              height: 1.25),
+                            children: [
+                              TextSpan(
+                                text: '/${coin.parentCoinName ?? ''}',
+                                style: TextStyle(
+                                  color: _white.withValues(alpha: 0.5),
+                                  fontSize: 16, fontFamily: _dmSans,
+                                  fontWeight: FontWeight.w400, height: 1.25),
+                              ),
+                            ],
                           ),
-                    ],
-                  ),
-            
-            
-            
-          ),
-          
-          hSpacer20(),
-          
-          // --- 3. BUTTON SECTION ---
-          // Expanded(
-          //   flex: 2,
-          //   child: buttonText(
-          //     "$sign${coinFormat(coin.priceChange, fixed: 2)}%",
-          //     radius: Dimens.radiusCorner,
-          //     bgColor: color,
-          //     textColor: Colors.white,
-          //     visualDensity: VisualDensity.compact,
-          //   ),
-          // ),
-
-          Expanded(
-              flex: 2,
-              child: SizedBox(
-                height: 30,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(Dimens.radiusCorner),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: Center(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        "$sign${coinFormat(coin.priceChange, fixed: 2)}%",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                      ),
+                        Text(
+                          numberFormatCompact(coin.volume, symbol: '\$'),
+                          style: const TextStyle(
+                            color: _grey, fontSize: 12,
+                            fontFamily: _dmSans, fontWeight: FontWeight.w400,
+                            height: 1.33),
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── LAST PRICE (fixed width, center-aligned) ─────────────
+            SizedBox(
+              width: 90,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(price,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _white, fontSize: 16,
+                        fontFamily: _dmSans, fontWeight: FontWeight.w700,
+                        height: 1.25)),
+                  Text('\$$price',
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _white.withValues(alpha: 0.5), fontSize: 12,
+                        fontFamily: _dmSans, fontWeight: FontWeight.w400,
+                        height: 1.33)),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            // ── 24H CHANGE BADGE (fixed width, right edge) ────────────
+            SizedBox(
+              width: 83,
+              height: 30,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      change,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: _white, fontSize: 15,
+                        fontFamily: _dmSans, fontWeight: FontWeight.w600,
+                        height: 1.33),
                     ),
                   ),
                 ),
               ),
             ),
-          
-          hSpacer15(),
-        ],
+          ],
+        ),
       ),
-      
     );
   }
 }

@@ -15,7 +15,7 @@ import '../market_spot/market_spot_controller.dart';
 import '../market_spot/market_spot_widgets.dart' as spot;
 import 'favorites_pair_controller.dart';
 
-const _green = Color(0xFFB5F000);
+const _green = Color(0xFFCCFF00);
 
 // ── Storage helpers ───────────────────────────────────────────────────────────
 
@@ -238,12 +238,12 @@ class FavoritesPairScreenState extends State<FavoritesPairScreen> {
           _buildCategoryList(),
           const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: textFieldSearch(
               controller: _searchCtrl,
-              height: Dimens.btnHeightSmall,
+              height: 30,
               margin: 0,
-              borderRadius: Dimens.radiusCornerMid,
+              borderRadius: 10,
               onTextChange: (v) {
                 _searchTimer?.cancel();
                 _searchTimer = Timer(const Duration(milliseconds: 400), _applyFilters);
@@ -260,12 +260,13 @@ class FavoritesPairScreenState extends State<FavoritesPairScreen> {
               ? showEmptyView(height: 100)
               : Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.all(5),
+                    padding: EdgeInsets.zero,
                     itemCount: _displayList.length,
                     itemBuilder: (context, index) {
                       final fav = _displayList[index];
                       return spot.MarketCoinItemViewBottom(
                         coin: _favToMarketCoin(fav),
+                        showPerp: (fav['marketType'] as int? ?? 2) == 3,
                         onFavChange: (message) {
                           // Remove from favorites when star tapped on main screen
                           final coinType = fav['coinType'] as String? ?? '';
@@ -293,7 +294,7 @@ class FavoritesPairScreenState extends State<FavoritesPairScreen> {
 
   Widget _buildFilterTabBar() {
     return Container(
-      height: 35,
+      height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       color: Colors.transparent,
       child: Row(
@@ -303,17 +304,18 @@ class FavoritesPairScreenState extends State<FavoritesPairScreen> {
           return GestureDetector(
             onTap: () { setState(() => _filterIndex = i); _applyFilters(); },
             child: Container(
-              height: 35,
+              height: 40,
               color: Colors.transparent,
               margin: const EdgeInsets.only(right: 20),
               alignment: Alignment.center,
               child: Text(
                 entry.value,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontFamily: "DMSans",
-                  fontWeight: isSelected ? FontWeight.w400 : FontWeight.w300,
-                  color: isSelected ? Colors.white : Colors.white54,
+                  fontWeight: isSelected ? FontWeight.w400 : FontWeight.w400,
+                  color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                  height: 1.33,
                 ),
               ),
             ),
@@ -325,22 +327,22 @@ class FavoritesPairScreenState extends State<FavoritesPairScreen> {
 
   Widget _buildCategoryList() {
     return Container(
-      height: 20,
+      height: 24,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       margin: const EdgeInsets.only(top: 10, bottom: 10),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _categoryList.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (context, i) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final isSelected = _categoryIndex == i;
           return GestureDetector(
             onTap: () { setState(() => _categoryIndex = i); _applyFilters(); },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               decoration: BoxDecoration(
-                color: isSelected ? _green : const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(6),
+                color: isSelected ? const Color(0xFFCCFF00) : const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
                 _categoryList[i],
@@ -349,6 +351,7 @@ class FavoritesPairScreenState extends State<FavoritesPairScreen> {
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   fontFamily: "DMSans",
+                  height: 1.33,
                 ),
               ),
             ),
@@ -360,21 +363,21 @@ class FavoritesPairScreenState extends State<FavoritesPairScreen> {
 
   Widget _buildAddCoinButton(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SizedBox(
         width: double.infinity,
-        height: 46,
+        height: 40,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: _green,
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            backgroundColor: const Color(0xFFCCFF00),
+            foregroundColor: const Color(0xFF111111),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             elevation: 0,
           ),
           onPressed: () => _openAddCoinDrawer(context),
           child: const Text(
             "Add Coin",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: "DMSans"),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, fontFamily: "DMSans", height: 1.25),
           ),
         ),
       ),
@@ -951,34 +954,49 @@ class _MarketHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 20,
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      color: Colors.transparent,
-      child: const Row(
+      child: Row(
         children: [
           Expanded(
-            flex: 3,
             child: Text(
               "Pair/Vol",
-              style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w400, height: 1.6),
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                fontFamily: "DMSans",
+                height: 1.33,
+              ),
             ),
           ),
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 80,
             child: Text(
               "Price",
-              textAlign: TextAlign.right,
-              style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w400, height: 1.6),
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                fontFamily: "DMSans",
+                height: 1.33,
+              ),
             ),
           ),
-          SizedBox(width: 20),
-          Expanded(
-            flex: 2,
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 83,
             child: Text(
               "24h Change",
-              textAlign: TextAlign.right,
-              style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w400, height: 1.6),
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                fontFamily: "DMSans",
+                height: 1.33,
+              ),
             ),
           ),
         ],
