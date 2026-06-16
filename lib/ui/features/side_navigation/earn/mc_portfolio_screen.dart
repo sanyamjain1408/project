@@ -726,14 +726,14 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
 
           const SizedBox(height: 16),
 
-          // ── Stat rows (Figma exact) ────────────────────────────────────────
-          _statRow('Live Earnings', '${liveEarnedUsdt.toStringAsFixed(4)} USDT', Colors.white),
-          _statRow('Reward Accrued', '${rewardAccruedUsdt.toStringAsFixed(4)} USDT', Colors.white),
-          _statRow('Withdraw Reward', '${withdrawRewardUsdt.toStringAsFixed(4)} USDT', Colors.white),
+          // ── Stat rows ────────────────────────────────────────────────────
+          _statRow('Live Earnings', '${liveEarnedCoin.toStringAsFixed(6)} $symbol', Colors.white),
+          _statRow('Reward Accrued', '${item.totalEarned.toStringAsFixed(6)} $symbol', Colors.white),
+          _statRow('Withdraw Reward', '${item.totalWithdrawn.toStringAsFixed(6)} $symbol', Colors.white),
           _statRow('Total Stacked', '${item.stakedAmount.toStringAsFixed(0)} $symbol', const Color(0xFF4DD78D)),
           _statRow('USDT Value', '${item.usdtValue.toStringAsFixed(2)} USDT', Colors.white),
           _statRow('Daily Rate', '${item.dailyRate.toStringAsFixed(6)}%/days', Colors.white),
-          _statRow('Daily Reward', '${dailyRewardUsdt.toStringAsFixed(5)} USDT', Colors.white),
+          _statRow('Daily Reward', '${dailyRewardCoin.toStringAsFixed(6)} $symbol', Colors.white),
           _statRow('Days Completed', '$daysCompleted / $planDays days', Colors.white),
           _statRow('Days Remaining', planDays > 0 ? '$daysRemaining days' : 'Flexible', Colors.white),
           _statRow('Maturity Date', maturityFmt, Colors.white),
