@@ -89,7 +89,7 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
             child: Container(
               
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: EdgeInsets.zero,
                 children: [
                   Obx(() => _controller.isLoading.value ? showLoadingSmall() : vSpacer0()),
                   // Chart shown inline when bar-chart icon is tapped
@@ -100,7 +100,9 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
                           onTap: () => isChartShow.value = false)
                       : vSpacer0()),
                   vSpacer5(),
-                  Row(
+                  Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Order book (left) — height pinned to the right column
@@ -140,8 +142,12 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
                       ),
                     ],
                   ),
+                  ),
                   vSpacer5(),
-                  const SpotTradeHistoryView(),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: SpotTradeHistoryView(),
+                  ),
                 ],
               ),
             ),

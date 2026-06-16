@@ -218,7 +218,7 @@ class FutureOrderBook extends StatelessWidget {
                     : 50;
                 final askPct = 100 - bidPct;
                 return Container(
-                  height: 24,
+                  height: 25,
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(6),
@@ -521,7 +521,7 @@ class FutureTradeForm extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         Container(
-          height: 30,
+          height: 35,
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(5),
@@ -553,7 +553,7 @@ class FutureTradeForm extends StatelessWidget {
               onTap: () => onOrderTypeDropdownToggle(!showOrderTypeDropdown),
               child: Container(
                 width: double.infinity,
-                height: 26,
+                height: 28,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1A1A),
@@ -776,7 +776,7 @@ class FutureTradeForm extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: buySell == 'Buy' ? futureGreen : futureRed,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(5),
               ),
               alignment: Alignment.center,
               child: Text(
@@ -784,8 +784,8 @@ class FutureTradeForm extends StatelessWidget {
                     ? 'Processing...'
                     : (buySell == 'Buy' ? 'Buy' : 'Sell'),
                 style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
                   color: futureTextWhite,
                   fontFamily: futureDmSans,
                 ),
@@ -809,7 +809,7 @@ class _BtnDropdown extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        height: 24,
+        height: 28,
         decoration: BoxDecoration(
           color: const Color(0xFF1A1A1A),
           borderRadius: BorderRadius.circular(10),
@@ -1289,8 +1289,8 @@ class _FuturePositionsSectionState extends State<FuturePositionsSection> {
                             fontSize: 16,
                             fontWeight: active
                                 ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: active ? futureTextWhite : futureMuted,
+                                : FontWeight.w400,
+                            color: active ? futureTextWhite : Colors.white.withValues(alpha: 0.5),
                             fontFamily: futureDmSans,
                           ),
                         ),
@@ -1450,10 +1450,11 @@ class _PositionCard extends StatelessWidget {
               Text(
                 pos.symbol,
                 style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                   color: Color(0xFFFFFFFF),
                   fontFamily: futureDmSans,
+                  height: 1.25,
                 ),
               ),
               const SizedBox(width: 4),
@@ -1464,16 +1465,19 @@ class _PositionCard extends StatelessWidget {
                   fontWeight: FontWeight.w400,
                   color: Colors.white.withOpacity(0.5),
                   fontFamily: futureDmSans,
+                  height: 1.33,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                height: 18,
+                padding: const EdgeInsets.symmetric(horizontal: 5),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1A1A),
                   borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: Colors.white.withOpacity(0.5)),
+                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 0.2),
                 ),
+                alignment: Alignment.center,
                 child: Text(
                   'Cross ${pos.leverage}x',
                   style: TextStyle(
@@ -1481,6 +1485,7 @@ class _PositionCard extends StatelessWidget {
                     fontWeight: FontWeight.w400,
                     color: Colors.white.withOpacity(0.5),
                     fontFamily: futureDmSans,
+                    height: 1.33,
                   ),
                 ),
               ),
@@ -1709,9 +1714,9 @@ class _CardBtn extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w400,
                 color: Colors.white,
                 fontFamily: futureDmSans,
                 height: 16 / 12,

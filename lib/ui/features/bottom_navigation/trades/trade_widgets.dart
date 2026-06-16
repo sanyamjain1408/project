@@ -189,70 +189,63 @@ class BuySellToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected == 0 ? gBuyColor : gSellColor;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = (constraints.maxWidth.floor() - 4) / 2;
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5),
-          child: SizedBox(
-            height: 30,
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => onSelect(0),
-                    child: Container(
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: selected == 0
-                            ? const Color(0xFF00B052)
-                            : const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        options[0],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                        ),
-                      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      child: SizedBox(
+        height: 35,
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onSelect(0),
+                child: Container(
+                  height: 35,
+                  decoration: BoxDecoration(
+                    color: selected == 0
+                        ? const Color(0xFF00B052)
+                        : const Color(0xFF1A1A1A),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    options[0],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: "DMSans",
                     ),
                   ),
                 ),
-                const SizedBox(width: 0),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => onSelect(1),
-                    child: Container(
-                      height: 35,
-                      decoration: BoxDecoration(
-                        color: selected == 1
-                            ? const Color(0xFFD73C3C)
-                            : const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        options[1],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onSelect(1),
+                child: Container(
+                  height: 35,
+                  decoration: BoxDecoration(
+                    color: selected == 1
+                        ? const Color(0xFFD73C3C)
+                        : const Color(0xFF1A1A1A),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    options[1],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: "DMSans",
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
