@@ -41,6 +41,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   Timer? _ticker;
 
   _WithdrawInfo? _withdrawInfo;
+  _WithdrawSuccess? _withdrawSuccess;
   bool _isConfirmingWithdraw = false;
 
   @override
@@ -280,6 +281,13 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     });
     final ok = await _c.withdrawReward(info.uid, info.earnedUsdt);
     if (ok) {
+      final fee = info.earnedCoin * 0.02;
+      final received = info.earnedCoin * 0.98;
+      if (mounted) setState(() => _withdrawSuccess = _WithdrawSuccess(
+        amountReceived: received,
+        serviceFee: fee,
+        symbol: info.symbol,
+      ));
       // Re-fetch fresh data so last_withdrawn_at resets and available goes to 0
       await Future.wait([
         _c.fetchPortfolio(),
@@ -370,6 +378,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
               ),
             ),
             if (_withdrawInfo != null) _buildWithdrawModal(),
+            if (_withdrawSuccess != null) _buildWithdrawSuccessModal(),
           ],
         );
       }),
@@ -1112,6 +1121,100 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
     );
   }
 
+  Widget _buildWithdrawSuccessModal() {
+    final s = _withdrawSuccess!;
+    return GestureDetector(
+      onTap: () => setState(() => _withdrawSuccess = null),
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.85),
+        child: Center(
+          child: GestureDetector(
+            onTap: () {},
+            child: Container(
+              margin: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: _kCard,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Green check circle
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: _kGreen, width: 2.5),
+                    ),
+                    child: const Icon(Icons.check_rounded, color: _kGreen, size: 32),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Withdrawal Successful!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Your staking rewards have been credited to your Spot Wallet.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontSize: 12,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: _kBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        _modalRow('Amount Received',
+                            '${s.amountReceived.toStringAsFixed(8)} ${s.symbol}', _kGreen),
+                        const Divider(color: Color(0xFF222222)),
+                        _modalRow('Service Fee (2%)',
+                            '${s.serviceFee.toStringAsFixed(8)} ${s.symbol}', const Color(0xFFF87171)),
+                        const Divider(color: Color(0xFF222222)),
+                        _modalRow('Destination', 'Spot Wallet', Colors.white),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => setState(() => _withdrawSuccess = null),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kGreen,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text(
+                        'Done',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, fontFamily: 'DMSans'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _modalRow(String label, String value, Color color, {bool bold = false}) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 6),
     child: Row(
@@ -1186,6 +1289,13 @@ class _WithdrawInfo {
       required this.earnedCoin,
       required this.earnedUsdt,
       required this.symbol});
+}
+
+class _WithdrawSuccess {
+  final double amountReceived;
+  final double serviceFee;
+  final String symbol;
+  _WithdrawSuccess({required this.amountReceived, required this.serviceFee, required this.symbol});
 }
 
 // ── Hero shape (same SVG path as earn_screen _EarnHeroPainter) ────────────────
