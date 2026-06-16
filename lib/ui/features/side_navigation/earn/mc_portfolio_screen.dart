@@ -657,7 +657,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                             '$symbol-USDT',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
+                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
                           ),
                         ),
                         const SizedBox(width: 6),
