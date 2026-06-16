@@ -1032,325 +1032,184 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
     final planType = stake.plan?.planType ?? 1;
     final totalDays = stake.plan?.durationDays ?? 0;
     final elapsed = stake.daysElapsed;
-
+    final remaining = totalDays > 0 ? (totalDays - elapsed).clamp(0, totalDays) : 0;
     final progress = stake.progressFraction;
     final progressPct = (progress * 100).toStringAsFixed(0);
+    final statusLabel = isActive ? 'Active' : (stake.status == 2 ? 'Completed' : 'Cancelled');
+    final startStr = _fmtDate(stake.startDate);
+    final endStr = _fmtDate(stake.endDate);
 
-    final statusLabel = isActive
-        ? 'Active'
-        : (stake.status == 2 ? 'Completed' : 'Cancelled');
-    final statusColor = isActive
-        ? _kGreen
-        : (stake.status == 2
-              ? const Color(0xFF3B9EFF)
-              : const Color(0xFFFF453A));
+    // Live earned USDT value
+    final portfolioPrice = _c.portfolio.value?.portfolio
+        .firstWhereOrNull((p) => p.stakeUid == stake.uid)?.coinPriceUsdt ?? 0;
+    final coinPrice = portfolioPrice > 0 ? portfolioPrice : (stake.coinPriceUsdt > 0 ? stake.coinPriceUsdt : 0.0);
+    final liveEarnedUsdt = coinPrice > 0 ? _liveEarned * coinPrice : 0.0;
 
     return Container(
       decoration: BoxDecoration(
-        color: _kCard,
+        color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ────────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _coinImg(
-                  stake.coin?.logo ??
-                      _c.coins
-                          .firstWhereOrNull((c) => c.symbol == symbol)
-                          ?.logo,
-                  size: 20,
-                  symbol: symbol,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Coin name + status badge inline
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              '$symbol-USDT',
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'DMSans',
-                              ),
-                            ),
+          // ── Row 1: coin icon + name/subtitle + withdraw button ────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _coinImg(
+                stake.coin?.logo ?? _c.coins.firstWhereOrNull((c) => c.symbol == symbol)?.logo,
+                size: 30,
+                symbol: symbol,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '$symbol-USDT',
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
                           ),
-                          const SizedBox(width: 5),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Color(0xFF00FF04).withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              statusLabel,
-                              style: TextStyle(
-                                color: Color(0xFF00FF04),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: 'DMSans',
-                              ),
-                            ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0x4C00FF04),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${totalDays > 0 ? '$totalDays Days' : 'Open'} · ${planType == 1 ? 'Flexible' : 'Fixed'}',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.45),
-                          fontSize: 12,
-                          fontFamily: 'DMSans',
+                          child: Text(statusLabel, style: const TextStyle(color: Color(0xFF00FF04), fontSize: 12, fontFamily: 'DMSans')),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${totalDays > 0 ? '$totalDays Days' : 'Open'} · ${planType == 1 ? 'Flexible' : 'Fixed'}',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans'),
+                    ),
+                  ],
                 ),
-                if (stake.status != 3) ...[
-                  const SizedBox(width: 10),
-                  // Withdraw button — only for active stakes with available rewards
-                  if (stake.status == 1)
-                  Obx(() {
-                    final withdrawing = _c.isWithdrawing.value == stake.uid;
-                    return GestureDetector(
-                      onTap: withdrawing || _availableCoin <= 0.000001 ? null : () async {
-                        final price = stake.coinPriceUsdt > 0 ? stake.coinPriceUsdt : 1.0;
-                        final usdtToSend = _availableCoin * price;
-                        final ok = await _c.withdrawReward(stake.uid, usdtToSend);
-                        if (ok) widget.onReload();
-                      },
-                      child: Container(
-                        width: 110,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _availableCoin > 0.000001 ? _kGreen : Colors.grey,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              withdrawing ? 'Withdrawing...' : 'Withdraw',
-                              style: const TextStyle(
-                                color: Color(0xFF0A0A0A),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: 'DMSans',
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${_availableCoin.toStringAsFixed(4)} $symbol',
-                              style: const TextStyle(
-                                color: Color(0xFF1A1A1A),
-                                fontSize: 12,
-                                fontFamily: 'DMSans',
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
+              ),
+              const SizedBox(width: 10),
+              // Withdraw button (Figma: #CCFF00, rounded 10)
+              if (isActive)
+                Obx(() {
+                  final withdrawing = _c.isWithdrawing.value == stake.uid;
+                  return GestureDetector(
+                    onTap: withdrawing || _availableCoin <= 0.000001 ? null : () async {
+                      final price = coinPrice > 0 ? coinPrice : 1.0;
+                      final ok = await _c.withdrawReward(stake.uid, _availableCoin * price);
+                      if (ok) widget.onReload();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _availableCoin > 0.000001 ? const Color(0xFFCCFF00) : Colors.grey.shade700,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    );
-                  }),
-                ],
-              ],
-            ),
+                      child: Text(
+                        withdrawing ? 'Wait...\n$symbol' : 'Withdraw\n${_availableCoin.toStringAsFixed(4)} $symbol',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Color(0xFF111111), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
+                      ),
+                    ),
+                  );
+                }),
+            ],
           ),
 
           const SizedBox(height: 14),
 
-          // ── Action pills ──────────────────────────────────────────────────
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _actionPill(
-                  'Live Dashboard',
-                  const Color(0xFF77D215),
-                  () => Get.to(
-                    () => McPortfolioScreen(
-                      stakeUid: stake.uid,
-                      coinId: stake.coin?.id,
-                      coinSymbol: stake.coin?.symbol,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                _actionPill(
-                  'Earnings Schedule',
-                  _kGreen,
-                  () => Get.to(
-                    () => McEarningsScheduleScreen(stakeUid: stake.uid),
-                  ),
-                ),
-                if (isActive) ...[
-                  const SizedBox(width: 10),
-                  Obx(() {
-                    final cancelling = _c.isCancelling.value == stake.uid;
-                    return _actionPill(
-                      cancelling ? 'Cancelling...' : 'Cancel Stake',
-                      const Color(0xFFFF453A),
-                      cancelling
-                          ? null
-                          : () async {
-                              final ok = await _c.cancelStake(stake.uid);
-                              if (ok) widget.onReload();
-                            },
-                    );
-                  }),
-                ],
-              ],
+          // ── Row 2: Live Price | Earnings Schedule | Cancel Stake ──────────
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))),
+              _pill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid))),
+              if (isActive)
+                Obx(() {
+                  final cancelling = _c.isCancelling.value == stake.uid;
+                  return _pill(
+                    cancelling ? 'Cancelling...' : 'Cancel Stake',
+                    const Color(0xFFFF0000),
+                    cancelling ? null : () async { final ok = await _c.cancelStake(stake.uid); if (ok) widget.onReload(); },
+                  );
+                }),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // ── Row 3: Certificate ────────────────────────────────────────────
+          _pill('Certificate', const Color(0xFFCCFF00), () {}),
+
+          const SizedBox(height: 16),
+
+          // ── Stats rows ────────────────────────────────────────────────────
+          _statRow('Live Earned', liveEarnedUsdt > 0 ? '${_liveEarned.toStringAsFixed(4)} USDT' : '${_liveEarned.toStringAsFixed(8)} $symbol', Colors.white),
+          _statRow('Staked Amount', '${stake.amount.toStringAsFixed(2)} $symbol', const Color(0xFF4DD78D)),
+          _statRow('Day Completed', '$elapsed / $totalDays days', Colors.white),
+          _statRow('Day Remaining', totalDays > 0 ? '$remaining days' : 'Flexible', Colors.white),
+
+          const SizedBox(height: 12),
+
+          // ── Progress ──────────────────────────────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Progress', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+              Text('$progressPct% · Day $elapsed of $totalDays', style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 12, fontFamily: 'DMSans')),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 5,
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFCCFF00)),
             ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 6),
 
-          // ── Stats ─────────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _liveEarnedRow(symbol),
-                _statRow(
-                  'Staked Amount',
-                  '${stake.amount.toStringAsFixed(2)} $symbol',
-                  null,
-                ),
-                _statRow(
-                  'Daily Rate',
-                  '${stake.dailyRate.toStringAsFixed(6)}%/day',
-                  null,
-                ),
-                _statRow(
-                  'Total Earned',
-                  '${_liveEarned.toStringAsFixed(8)} $symbol',
-                  null,
-                ),
-                _statRow(
-                  'Day Remaining',
-                  totalDays > 0
-                      ? '${(totalDays - elapsed).clamp(0, totalDays)} / $totalDays days'
-                      : 'Flexible',
-                  null,
-                ),
-
-                const SizedBox(height: 10),
-
-                // Progress text row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Progress',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.45),
-                        fontSize: 12,
-                        fontFamily: 'DMSans',
-                      ),
-                    ),
-                    Flexible(
-                      child: Text(
-                        '$progressPct% · Day $elapsed of $totalDays · $elapsed completed',
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'DMSans',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 5,
-                    backgroundColor: Colors.white.withValues(alpha: 0.08),
-                    valueColor: const AlwaysStoppedAnimation<Color>(_kGreen),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Start — End dates
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _fmtDate(stake.startDate),
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'DMSans',
-                      ),
-                    ),
-                    Text(
-                      _fmtDate(stake.endDate) == ''
-                          ? 'Flexible'
-                          : _fmtDate(stake.endDate),
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'DMSans',
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          // Start — End dates
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(startStr, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+              Text(endStr.isEmpty ? 'Flexible' : endStr, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+            ],
           ),
-
-          const SizedBox(height: 18),
         ],
       ),
     );
   }
 
-  Widget _actionPill(String label, Color fg, VoidCallback? onTap) =>
+  Widget _pill(String label, Color fg, VoidCallback? onTap) =>
       GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: _kBg,
+            color: const Color(0xFF111111),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: fg,
-              fontSize: 12,
-              fontFamily: 'DMSans',
-              fontWeight: FontWeight.w400,
-            ),
-          ),
+          alignment: Alignment.center,
+          child: Text(label, style: TextStyle(color: fg, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400)),
         ),
       );
+
+  // keep for backward compat
+  Widget _actionPill(String label, Color fg, VoidCallback? onTap) => _pill(label, fg, onTap);
 
   Widget _statRow(String label, String value, Color? valueColor) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),
