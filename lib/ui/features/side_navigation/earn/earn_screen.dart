@@ -3481,9 +3481,11 @@ class _StakingLiveHero extends StatefulWidget {
   State<_StakingLiveHero> createState() => _StakingLiveHeroState();
 }
 
-class _StakingLiveHeroState extends State<_StakingLiveHero> {
+class _StakingLiveHeroState extends State<_StakingLiveHero>
+    with SingleTickerProviderStateMixin {
   late McStakingController _c;
   Timer? _ticker;
+  Ticker? _frameTicker;
   double _liveEarning = 0;
   double _perSec = 0;
   double _dailyTotal = 0;
@@ -3526,63 +3528,60 @@ class _StakingLiveHeroState extends State<_StakingLiveHero> {
     _recalcFromPortfolio();
   }
 
-  // Recalculates totals using live coin prices from ticker (same as web).
-  // Called on init and whenever tickers update.
+  // Recalculates base values using live coin prices. Called on init and every 3s.
   void _recalcFromPortfolio() {
     final portfolio = _c.portfolio.value;
     if (portfolio == null || portfolio.portfolio.isEmpty) return;
-    double totalPerSec = 0, initTotal = 0, initAvail = 0, dailyTotal = 0;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    for (final item in portfolio.portfolio) {
-      // Use live ticker price if available, else fallback to portfolio price
-      final tickerData = _c.coinTickers[item.coinSymbol];
-      final price = (tickerData != null && (tickerData['price'] as double) > 0)
-          ? tickerData['price'] as double
-          : (item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1.0);
-
-      // perSec in coin units × live price
-      final perSecCoin = (item.stakedAmount * (item.dailyRate / 100)) / 86400;
-      final perSecUsdt = perSecCoin * price;
-
-      totalPerSec += perSecUsdt;
-      dailyTotal += perSecUsdt * 86400;
-
-      // All-time earned: from original staked_at
-      final stakedMs = DateTime.tryParse(item.stakedAt ?? '')?.millisecondsSinceEpoch ?? now;
-      final totalSecs = ((now - stakedMs) / 1000).clamp(0.0, double.infinity);
-      initTotal += perSecUsdt * totalSecs;
-
-      // Available: from last_withdrawn_at (same as web)
-      final availStart = item.lastWithdrawnAt ?? item.stakedAt ?? '';
-      final availMs = DateTime.tryParse(availStart)?.millisecondsSinceEpoch ?? stakedMs;
-      final availSecs = ((now - availMs) / 1000).clamp(0.0, double.infinity);
-      initAvail += perSecUsdt * availSecs;
-    }
-    _perSec = totalPerSec;
-    _dailyTotal = dailyTotal;
-    _initTotal = initTotal;
-    _initAvail = initAvail;
-    _liveEarning = initTotal;
-    _availableToWithdraw = initAvail;
-    _sessionStart = now;
+    double totalPerSec = 0, dailyTotal = 0;
     if (!mounted) return;
     setState(() => _ready = true);
-    _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
+
+    // Start 60fps vsync frame ticker — recalcs directly from staked_at each frame
+    // exactly like web's requestAnimationFrame approach
+    _frameTicker?.dispose();
+    _frameTicker = createTicker((_) {
       if (!mounted) return;
-      final sinceSession = (DateTime.now().millisecondsSinceEpoch - _sessionStart) / 1000;
-      final earned = _initTotal + _perSec * sinceSession;
-      _c.liveEarningUsdt.value = earned;
+      final portfolio2 = _c.portfolio.value;
+      if (portfolio2 == null) return;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      double total = 0, avail = 0, perSec = 0, daily = 0;
+      for (final item in portfolio2.portfolio) {
+        final tickerData = _c.coinTickers[item.coinSymbol];
+        final price = (tickerData != null && (tickerData['price'] as double) > 0)
+            ? tickerData['price'] as double
+            : (item.coinPriceUsdt > 0 ? item.coinPriceUsdt : 1.0);
+
+        final perSecCoin = (item.stakedAmount * (item.dailyRate / 100)) / 86400;
+        final perSecUsdt = perSecCoin * price;
+        perSec += perSecUsdt;
+        daily += perSecUsdt * 86400;
+
+        // All-time: from staked_at
+        final stakedMs = DateTime.tryParse(item.stakedAt ?? '')?.millisecondsSinceEpoch ?? nowMs;
+        final totalSecs = ((nowMs - stakedMs) / 1000).clamp(0.0, double.infinity);
+        total += perSecUsdt * totalSecs;
+
+        // Available: from last_withdrawn_at
+        final availStart = item.lastWithdrawnAt ?? item.stakedAt ?? '';
+        final availMs = DateTime.tryParse(availStart)?.millisecondsSinceEpoch ?? stakedMs;
+        final availSecs = ((nowMs - availMs) / 1000).clamp(0.0, double.infinity);
+        avail += perSecUsdt * availSecs;
+      }
+      _c.liveEarningUsdt.value = total;
       setState(() {
-        _liveEarning = earned;
-        _availableToWithdraw = (_initAvail + _perSec * sinceSession).clamp(0.0, double.infinity);
+        _liveEarning = total;
+        _availableToWithdraw = avail;
+        _perSec = perSec;
+        _dailyTotal = daily;
       });
     });
+    _frameTicker!.start();
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    _frameTicker?.dispose();
     super.dispose();
   }
 
