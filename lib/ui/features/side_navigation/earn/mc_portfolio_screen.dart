@@ -118,6 +118,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
           planType: pos['plan_type'] ?? 1,
           endDate: pos['end_date'],
           stakedAt: pos['staked_at'] ?? pos['start_date'],
+          lastWithdrawnAt: pos['last_withdrawn_at'] ?? portfolioItem?.lastWithdrawnAt,
           totalWithdrawn: totalWithdrawn,
           coinPriceUsdt: coinPrice,
           usdtValue: usdtVal,
