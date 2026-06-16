@@ -269,11 +269,10 @@ class McStakingController extends GetxController {
         j['message'] ?? (ok ? 'Cancelled!' : 'Cannot cancel'),
         isError: !ok,
       );
-      if (ok) return j['stake'] as Map<String, dynamic>?;
-      return null;
+      return ok;
     } catch (e) {
       showToast('Network error. Please try again.');
-      return null;
+      return false;
     } finally {
       isCancelling.value = '';
     }
@@ -485,11 +484,10 @@ class McStakingController extends GetxController {
         j['message'] ?? (ok ? 'Withdrawal successful!' : 'Failed'),
         isError: !ok,
       );
-      if (ok) return j['stake'] as Map<String, dynamic>?;
-      return null;
+      return ok;
     } catch (e) {
       showToast('Network error. Please try again.');
-      return null;
+      return false;
     } finally {
       isWithdrawing.value = '';
     }
