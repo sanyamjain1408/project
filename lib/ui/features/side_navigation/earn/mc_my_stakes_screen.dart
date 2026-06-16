@@ -1202,7 +1202,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
 
           const SizedBox(height: 14),
 
-          // ── Row 2: Live Price | Earnings Schedule | Cancel Stake ──────────
+          // ── Row 2: Live Price | Earnings Schedule | Certificate | Cancel Stake ──
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -1212,6 +1212,24 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
                   const SizedBox(width: 6),
                 ],
                 _pill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid))),
+                const SizedBox(width: 6),
+                _pill('Certificate', const Color(0xFFCCFF00), () {
+                  Get.to(() => McCertificateScreen(stake: {
+                    'plan_name': stake.plan?.planName ?? '',
+                    'coin_symbol': symbol,
+                    'amount': stake.amount,
+                    'daily_rate': stake.dailyRate,
+                    'total_return': stake.plan != null && stake.plan!.durationDays > 0
+                        ? (stake.dailyRate * stake.plan!.durationDays).toStringAsFixed(2)
+                        : null,
+                    'duration_days': stake.plan?.durationDays ?? 0,
+                    'start_date': stake.startDate ?? '',
+                    'end_date': stake.endDate ?? '',
+                    'plan_type': stake.plan?.planType ?? 1,
+                    'user_name': 'Valued Staker',
+                    'cert_no': 'TRPX-${stake.uid.length >= 8 ? stake.uid.substring(0, 8).toUpperCase() : stake.uid.toUpperCase()}',
+                  }));
+                }),
                 if (isActive) ...[
                   const SizedBox(width: 6),
                   Obx(() {
@@ -1226,27 +1244,6 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
-
-          // ── Row 3: Certificate ────────────────────────────────────────────
-          _pillFixed('Certificate', const Color(0xFFCCFF00), 79, () {
-            final price = coinPrice;
-            Get.to(() => McCertificateScreen(stake: {
-              'plan_name': stake.plan?.planName ?? '',
-              'coin_symbol': symbol,
-              'amount': stake.amount,
-              'daily_rate': stake.dailyRate,
-              'total_return': stake.plan != null && stake.plan!.durationDays > 0
-                  ? (stake.dailyRate * stake.plan!.durationDays).toStringAsFixed(2)
-                  : null,
-              'duration_days': stake.plan?.durationDays ?? 0,
-              'start_date': stake.startDate ?? '',
-              'end_date': stake.endDate ?? '',
-              'plan_type': stake.plan?.planType ?? 1,
-              'user_name': 'Valued Staker',
-              'cert_no': 'TRPX-${stake.uid.length >= 8 ? stake.uid.substring(0, 8).toUpperCase() : stake.uid.toUpperCase()}',
-            }));
-          }),
 
           const SizedBox(height: 16),
 
