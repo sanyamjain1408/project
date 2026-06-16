@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/models/giveaway.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
-import 'package:tradexpro_flutter/utils/image_util.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'giveaway_leaderboard_screen.dart';
@@ -174,12 +173,18 @@ class _GiveawayDetailScreenState extends State<GiveawayDetailScreen> {
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: (g.bannerImage != null && g.bannerImage!.isNotEmpty)
-              ? showImageNetwork(
-                  imagePath: g.bannerImage,
+              ? Image.network(
+                  g.bannerImage!,
                   width: double.infinity,
-                  height: 118,
-                   boxFit: BoxFit.contain,
-                  bgColor: const Color(0xFF1A1A1A),
+                  height: 180,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (_, child, progress) => progress == null
+                      ? child
+                      : Container(
+                          width: double.infinity, height: 180,
+                          color: const Color(0xFF1A2200),
+                        ),
+                  errorBuilder: (_, e, s) => _defaultBanner(),
                 )
               : _defaultBanner(),
         ),
@@ -252,9 +257,9 @@ class _GiveawayDetailScreenState extends State<GiveawayDetailScreen> {
                             fontWeight: FontWeight.w800, fontFamily: _font)),
                     const SizedBox(width: 5),
                     if (g.coinIcon != null && g.coinIcon!.isNotEmpty)
-                      showImageNetwork(
-                          imagePath: g.coinIcon, width: 20, height: 20,
-                          bgColor: Colors.transparent)
+                      Image.network(g.coinIcon!, width: 20, height: 20,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, e, s) => const SizedBox.shrink())
                     else
                       Text(g.rewardLabel ?? '',
                           style: const TextStyle(color: _green, fontSize: 13,

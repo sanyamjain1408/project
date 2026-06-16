@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/models/giveaway.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
-import 'package:tradexpro_flutter/utils/image_util.dart';
-
 import 'giveaway_detail_screen.dart';
 
 const _bg    = Color(0xFF0B0B0F);
@@ -131,8 +129,7 @@ class _GiveawayCard extends StatelessWidget {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
             child: g.bannerImage != null
-                ? showImageNetwork(imagePath: g.bannerImage, width: double.infinity, height: 120,
-                    bgColor: Colors.transparent, boxFit: BoxFit.cover)
+                ? _BannerImage(url: g.bannerImage!, height: 120)
                 : _defaultBanner(),
           ),
           Padding(
@@ -197,6 +194,46 @@ class _GiveawayCard extends StatelessWidget {
     ),
     child: const Center(child: Text('🎁', style: TextStyle(fontSize: 44))),
   );
+}
+
+// Fast-loading banner with instant shimmer placeholder and fade-in
+class _BannerImage extends StatelessWidget {
+  const _BannerImage({required this.url, required this.height});
+  final String url;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.network(
+      url,
+      width: double.infinity,
+      height: height,
+      fit: BoxFit.cover,
+      // show shimmer instantly while loading
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          width: double.infinity,
+          height: height,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [const Color(0xFF1A2200), const Color(0xFF1A1A1A), const Color(0xFF1A2200)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (_, e, s) => Container(
+        width: double.infinity,
+        height: height,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(colors: [Color(0xFF1A3300), Color(0xFF0B0B0F)]),
+        ),
+        child: const Center(child: Text('🎁', style: TextStyle(fontSize: 44))),
+      ),
+    );
+  }
 }
 
 Widget _statusChip(Giveaway g) {
