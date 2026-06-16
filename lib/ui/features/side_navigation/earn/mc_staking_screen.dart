@@ -782,7 +782,8 @@ class _McStakingScreenState extends State<McStakingScreen>
                       );
                     }
                     final rows = <_PlanRow>[];
-                    for (final plan in _c.plans) {
+                    final sortedPlans = [..._c.plans]..sort((a, b) => a.durationDays.compareTo(b.durationDays));
+                    for (final plan in sortedPlans) {
                       if (plan.rateRules.isNotEmpty) {
                         for (final rule in plan.rateRules) {
                           rows.add(
@@ -1079,7 +1080,8 @@ class _McStakingScreenState extends State<McStakingScreen>
 
           // flat rows per rate rule
           final rows = <_PlanRow>[];
-          for (final plan in _c.plans) {
+          final sortedPlans = [..._c.plans]..sort((a, b) => a.durationDays.compareTo(b.durationDays));
+          for (final plan in sortedPlans) {
             if (plan.rateRules.isNotEmpty) {
               for (final rule in plan.rateRules) {
                 rows.add(
