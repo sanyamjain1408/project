@@ -6,6 +6,8 @@ import 'mc_staking_models.dart';
 import 'mc_my_stakes_screen.dart';
 import 'mc_earnings_schedule_screen.dart';
 import 'mc_certificate_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_widgets.dart' show RotatingIcon;
+import 'mc_withdraw_history_screen.dart';
 
 const _kGreen = Color(0xFFCCFF00);
 const _kCard = Color(0xFF1A1A1A);
@@ -347,6 +349,19 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
                         GestureDetector(
                           onTap: () => Get.back(),
                           child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => Get.to(() => const McWithdrawHistoryScreen(initialTab: 0)),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.35),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
+                            ),
+                            child: const RotatingIcon(),
+                          ),
                         ),
                       ],
                     ),

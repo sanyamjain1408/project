@@ -8,6 +8,8 @@ import 'mc_portfolio_screen.dart';
 import 'mc_earnings_schedule_screen.dart';
 import 'mc_certificate_screen.dart';
 import 'mc_staking_screen.dart' show McRewardsScreen, McReferralRewardsScreen;
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_widgets.dart' show RotatingIcon;
+import 'mc_withdraw_history_screen.dart';
 
 const _kGreen = Color(0xFFCCFF00);
 const _kCard = Color(0xFF1A1A1A);
@@ -260,6 +262,21 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'DMSans',
+                ),
+              ),
+
+              const Spacer(),
+
+              GestureDetector(
+                onTap: () => Get.to(() => const McWithdrawHistoryScreen(initialTab: 0)),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.35),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
+                  ),
+                  child: const RotatingIcon(),
                 ),
               ),
             ],
