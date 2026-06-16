@@ -578,7 +578,7 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
         'Live Dashboard',
         'Real-time earnings',
         Icons.show_chart_rounded,
-        () => Get.to(() => const McPortfolioScreen()),
+        () => Get.to(() => const McPortfolioScreen()).then((_) => _load()),
       ),
       _NavItem(
         'assets/images/referral.png',
@@ -1207,7 +1207,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))),
+                _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol)).then((_) => widget.onReload())),
                 const SizedBox(width: 6),
                 _pill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid))),
                 if (isActive) ...[

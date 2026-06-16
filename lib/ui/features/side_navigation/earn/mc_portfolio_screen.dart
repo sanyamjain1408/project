@@ -21,7 +21,7 @@ class McPortfolioScreen extends StatefulWidget {
   State<McPortfolioScreen> createState() => _McPortfolioScreenState();
 }
 
-class _McPortfolioScreenState extends State<McPortfolioScreen> {
+class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindingObserver {
   late McStakingController _c;
 
   double _totalEarned = 0;       // USDT total (for multi-coin)
@@ -47,11 +47,18 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _c = Get.isRegistered<McStakingController>()
         ? Get.find<McStakingController>()
         : Get.put(McStakingController());
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _loadData();
+  }
+
 
   Future<void> _loadData() async {
     _ticker?.cancel();
@@ -223,6 +230,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
     super.dispose();
   }
