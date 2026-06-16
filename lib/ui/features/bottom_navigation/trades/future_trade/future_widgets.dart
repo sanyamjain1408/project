@@ -1841,11 +1841,6 @@ class _OpenOrdersTab extends StatelessWidget {
                         value: o.quantity.toStringAsFixed(qp),
                       ),
                       FutureInfoCell(
-                        label: 'Fee (USDT)',
-                        value: o.fee.toStringAsFixed(4),
-                        textAlign: TextAlign.center,
-                      ),
-                      FutureInfoCell(
                         label: 'Price (USDT)',
                         value: o.price.toStringAsFixed(pp),
                         textAlign: TextAlign.center,
@@ -2438,6 +2433,7 @@ class _FutureOrderTabViewState extends State<_FutureOrderTabView> {
                       pp: widget.pp,
                       qp: widget.pair?.quantityPrecision ?? 4,
                       showDelete: widget.filter == 'open',
+                      showFee: widget.filter == 'all',
                       onDelete: widget.filter == 'open'
                           ? () => widget.ctrl.cancelOrder(displayList[i].id)
                           : null,
@@ -2753,6 +2749,7 @@ class _HistoryOrderCard extends StatelessWidget {
   final int pp;
   final int qp;
   final bool showDelete;
+  final bool showFee;
   final VoidCallback? onDelete;
 
   const _HistoryOrderCard({
@@ -2760,6 +2757,7 @@ class _HistoryOrderCard extends StatelessWidget {
     required this.pp,
     required this.qp,
     required this.showDelete,
+    this.showFee = false,
     this.onDelete,
   });
 
@@ -2851,8 +2849,8 @@ class _HistoryOrderCard extends StatelessWidget {
         ),
         // ── Field rows ────────────────────────────────────────────────────────
         _row('Amount', order.quantity.toStringAsFixed(qp)),
-        _row('Fee (USDT)', order.fee.toStringAsFixed(4)),
         _row('Price (USDT)', order.price.toStringAsFixed(pp)),
+        if (showFee) _row('Fee (USDT)', order.fee.toStringAsFixed(4)),
         _row('Total (USDT)', order.margin.toStringAsFixed(2)),
         if (!showDelete) _statusRow(isCompleted),
         const SizedBox(height: 10),

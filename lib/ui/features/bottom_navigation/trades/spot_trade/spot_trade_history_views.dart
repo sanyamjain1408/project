@@ -1458,7 +1458,6 @@ class _OpenOrderCard extends StatelessWidget {
           ),
           // ── Field rows ────────────────────────────────────────────────────
           _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
-          _row("Fee ($baseCoin)", coinFormat(trade.fees)),
           _row("Price ($baseCoin)", coinFormat(trade.price)),
           _row("Processed ($tradeCoin)", coinFormat(trade.processed)),
           _row("Total ($baseCoin)", coinFormat(trade.total)),
@@ -1616,7 +1615,8 @@ class SpotOrderHistoryItemView extends StatelessWidget {
           ),
           _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
           _row("Price ($baseCoin)", coinFormat(trade.price)),
-           _row("Fee ($baseCoin)", coinFormat(trade.fees)),
+          if (fromKey == FromKey.trade)
+            _row("Fee ($baseCoin)", coinFormat(trade.fees)),
           if (fromKey != FromKey.trade)
             _row("Total ($baseCoin)", coinFormat(trade.total)),
           if (fromKey == FromKey.trade)
@@ -1935,7 +1935,6 @@ class SpotTradeHistoryStopLimitItemView extends StatelessWidget {
             child: Column(
               children: [
                 _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
-                _row("Fee ($baseCoin)", coinFormat(trade.fees)),
                 _row("Price ($baseCoin)", coinFormat(trade.price)),
                 _row("Stop ($baseCoin)", coinFormat(trade.stop)),
                 _row("Total ($baseCoin)", coinFormat(trade.total)),
