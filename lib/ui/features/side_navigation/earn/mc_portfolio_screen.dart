@@ -728,7 +728,7 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
 
           // ── Stat rows ────────────────────────────────────────────────────
           _statRow('Live Earnings', '${liveEarnedCoin.toStringAsFixed(6)} $symbol', Colors.white),
-          _statRow('Reward Accrued', '${item.totalEarned.toStringAsFixed(6)} $symbol', Colors.white),
+          _statRow('Reward Accrued', '${availableCoin.toStringAsFixed(6)} $symbol', Colors.white),
           _statRow('Withdraw Reward', '${item.totalWithdrawn.toStringAsFixed(6)} $symbol', Colors.white),
           _statRow('Total Stacked', '${item.stakedAmount.toStringAsFixed(0)} $symbol', const Color(0xFF4DD78D)),
           _statRow('USDT Value', '${item.usdtValue.toStringAsFixed(2)} USDT', Colors.white),
