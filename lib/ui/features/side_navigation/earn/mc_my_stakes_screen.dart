@@ -1207,8 +1207,10 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))?.then((_) => widget.onReload())),
-                const SizedBox(width: 6),
+                if (isActive) ...[
+                  _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))?.then((_) => widget.onReload())),
+                  const SizedBox(width: 6),
+                ],
                 _pill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid))),
                 if (isActive) ...[
                   const SizedBox(width: 6),
