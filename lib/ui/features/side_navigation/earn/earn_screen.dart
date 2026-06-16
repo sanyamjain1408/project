@@ -3484,7 +3484,7 @@ class _StakingLiveHero extends StatefulWidget {
 class _StakingLiveHeroState extends State<_StakingLiveHero> {
   late McStakingController _c;
   Timer? _ticker;
-  Timer? _frameTicker;
+  Timer? _frameTimer;
   double _liveEarning = 0;
   double _perSec = 0;
   double _dailyTotal = 0;
@@ -3537,8 +3537,8 @@ class _StakingLiveHeroState extends State<_StakingLiveHero> {
 
     // Start 60fps vsync frame ticker — recalcs directly from staked_at each frame
     // exactly like web's requestAnimationFrame approach
-    _frameTicker?.cancel();
-    _frameTicker = Timer.periodic(const Duration(milliseconds: 16), (_) {
+    _frameTimer?.cancel();
+    _frameTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
       if (!mounted) return;
       final portfolio2 = _c.portfolio.value;
       if (portfolio2 == null) return;
@@ -3579,7 +3579,7 @@ class _StakingLiveHeroState extends State<_StakingLiveHero> {
   @override
   void dispose() {
     _ticker?.cancel();
-    _frameTicker?.cancel();
+    _frameTimer?.cancel();
     super.dispose();
   }
 
