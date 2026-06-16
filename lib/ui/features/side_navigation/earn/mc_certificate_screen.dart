@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class McCertificateScreen extends StatefulWidget {
@@ -32,6 +35,55 @@ class _McCertificateScreenState extends State<McCertificateScreen> {
   }
 
   String get _certNo => widget.stake['cert_no'] ?? 'TRPX-00000000';
+
+  Future<File> _saveCertFile() async {
+    final html = _buildCertHtml(widget.stake);
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/Trapix-Certificate-$_certNo.html');
+    await file.writeAsString(html);
+    return file;
+  }
+
+  Future<void> _download() async {
+    try {
+      final file = await _saveCertFile();
+      // On mobile, save to downloads via share sheet
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'text/html')],
+          subject: 'Trapix Staking Certificate - $_certNo',
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Download failed: $e'), backgroundColor: const Color(0xFF1A1A1A)),
+        );
+      }
+    }
+  }
+
+  Future<void> _share() async {
+    try {
+      final certNo = _certNo;
+      final planName = widget.stake['plan_name'] ?? '';
+      final amount = widget.stake['amount']?.toString() ?? '';
+      final symbol = widget.stake['coin_symbol'] ?? '';
+      final startDate = widget.stake['start_date'] ?? '';
+      await SharePlus.instance.share(
+        ShareParams(
+          text: 'My Trapix Staking Certificate\nPlan: $planName\nCert No: $certNo\nAmount: $amount $symbol\nStart: $startDate\nTrapix Exchange — trapix.com',
+          subject: 'Trapix Staking Certificate - $certNo',
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Share failed: $e'), backgroundColor: const Color(0xFF1A1A1A)),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +157,62 @@ class _McCertificateScreenState extends State<McCertificateScreen> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 16),
+
+            // Share + Download buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _share,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1A1A),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.share_outlined, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text('Share', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: GestureDetector(
+                      onTap: _download,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFB8960C),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.download_rounded, color: Colors.black, size: 18),
+                            SizedBox(width: 8),
+                            Text('Download Certificate', style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.w800)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
           ],
         ),
       ),
