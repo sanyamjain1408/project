@@ -651,12 +651,12 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Flexible(
-                          child: Text(
-                            '$symbol-USDT',
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
-                          ),
+                        Text(
+                          '$symbol-USDT',
+                          maxLines: 1,
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
                         ),
                         const SizedBox(width: 6),
                         Container(
