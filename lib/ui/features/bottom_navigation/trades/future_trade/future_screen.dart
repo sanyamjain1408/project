@@ -26,8 +26,10 @@ class NewFutureScreen extends StatefulWidget {
   State<NewFutureScreen> createState() => _NewFutureScreenState();
 }
 
-class _NewFutureScreenState extends State<NewFutureScreen> {
+class _NewFutureScreenState extends State<NewFutureScreen>
+    with SingleTickerProviderStateMixin {
   late final NewFutureController _ctrl;
+  late final TabController _topTabController;
 
   String _subTab = 'Future';
   String _buySell = 'Buy';
@@ -67,6 +69,11 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   void initState() {
     super.initState();
     _ctrl = Get.put(NewFutureController());
+    _topTabController = TabController(length: _topTabs.length, vsync: this);
+    _topTabController.addListener(() {
+      if (_topTabController.indexIsChanging) return;
+      setState(() => _subTab = _topTabs[_topTabController.index]);
+    });
     _limitPxCtrl = TextEditingController();
     _limitPxFocus.addListener(() {
       if (!_limitPxFocus.hasFocus) _limitPxUserEdited = false;
@@ -85,6 +92,7 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    _topTabController.dispose();
     _limitPxCtrl.dispose();
     _limitPxFocus.dispose();
     _priceWorker?.dispose();
@@ -231,21 +239,33 @@ class _NewFutureScreenState extends State<NewFutureScreen> {
   }
 
   Widget _buildTopTabs() {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(children: _topTabs.map((tab) {
-          final active = _subTab == tab;
-          return GestureDetector(
-            onTap: () => setState(() => _subTab = tab),
-            child: Padding(
-              padding: const EdgeInsets.only(right: 20),
-              child: Text(tab, style: TextStyle(fontSize: 16, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? futureTextWhite : Colors.white.withValues(alpha: 0.5), fontFamily: futureDmSans)),
-            ),
-          );
-        }).toList()),
+    return Padding(
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+      child: TabBar(
+        controller: _topTabController,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
+        indicator: const BoxDecoration(),
+        indicatorSize: TabBarIndicatorSize.label,
+        dividerColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white.withValues(alpha: 0.5),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+        labelStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          fontFamily: futureDmSans,
+          height: 1.5,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          fontFamily: futureDmSans,
+          height: 1.5,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        tabs: _topTabs.map((t) => Tab(text: t)).toList(),
       ),
     );
   }

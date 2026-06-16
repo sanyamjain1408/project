@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/market/market_opportunity/market_opportunity_screen.dart';
-import 'package:tradexpro_flutter/utils/appbar_util.dart';
 
 import 'favorites_pair/favorites_pair_screen.dart';
 import 'market_future/market_future_screen.dart';
@@ -119,27 +118,44 @@ class _MarketScreenState extends State<MarketScreen>
     return Scaffold(
       backgroundColor: _bgcolor,
 
-      body: SafeArea(
-        child: Column(
-          children: [
-
-            /// TAB BAR
-            TabBarPlain(
-              titles: getMarketTabs(),
+      body: Column(
+        children: [
+          /// TAB BAR
+          Padding(
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            child: TabBar(
               controller: _tabController,
               isScrollable: true,
-              fontSize: 16,
-              onTap: (index) {
-                selectedTab.value = index;
-              },
+              tabAlignment: TabAlignment.start,
+              indicator: const BoxDecoration(),
+              indicatorSize: TabBarIndicatorSize.label,
+              dividerColor: Colors.transparent,
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white.withValues(alpha: 0.5),
+              labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+              labelStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: "DMSans",
+                height: 1.5,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: "DMSans",
+                height: 1.5,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              tabs: getMarketTabs().map((t) => Tab(text: t)).toList(),
+              onTap: (index) => selectedTab.value = index,
             ),
-
-            /// BODY
-            Obx(
-              () => _getBody(selectedTab.value),
-            ),
-          ],
-        ),
+          ),
+          /// BODY
+          Obx(
+            () => _getBody(selectedTab.value),
+          ),
+        ],
       ),
     );
   }

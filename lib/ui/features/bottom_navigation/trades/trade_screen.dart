@@ -77,7 +77,7 @@ class _TradesScreenState extends State<TradesScreen>
           Material(
             color: const Color(0xFF111111),
             child: Padding(
-              padding: const EdgeInsets.only(top: 30),
+              padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
               child: TabBar(
                 controller: _tabController,
                 isScrollable: true,
