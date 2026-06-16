@@ -1139,7 +1139,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
     {"label": "Earn", "type": WalletViewType.earn},
     // {"label": "P2P", "type": WalletViewType.p2p},
     {"label": "Buy Crypto", "type": null},
-    {"label": "Check Deposit", "type": WalletViewType.checkDeposit},
+    // {"label": "Check Deposit", "type": WalletViewType.checkDeposit},
   ];
 
   int _selectedIndex = 0;
@@ -1176,21 +1176,24 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
         elevation: 0,
         scrolledUnderElevation: 0,
 
-        leadingWidth: 48,
+        leadingWidth: 44,
 
         titleSpacing: 0,
 
         leading: IconButton(
-          padding: const EdgeInsets.only(left: 12),
+          padding: const EdgeInsets.only(left: 0),
           icon: const Icon(Icons.arrow_back, color: _white),
           onPressed: () => Navigator.of(context).pop(),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          hoverColor: Colors.transparent,
         ),
 
         title: TabBar(
           controller: _tabController,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          labelPadding: const EdgeInsets.only(right: 16),
+          labelPadding: const EdgeInsets.only(right: 20),
           labelColor: _white,
           unselectedLabelColor: Colors.white.withOpacity(0.5),
 
@@ -1211,6 +1214,7 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
           indicator: const BoxDecoration(),
           dividerColor: Colors.transparent,
           overlayColor: WidgetStateProperty.all(Colors.transparent),
+          splashFactory: NoSplash.splashFactory,
 
           tabs: _tabs.map((t) => Tab(text: t["label"] as String)).toList(),
         ),
