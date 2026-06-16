@@ -212,7 +212,7 @@ class McStakingController extends GetxController {
   }
 
   // ── Submit stake ──────────────────────────────────────────────────────────
-  Future<bool> submitStake(int planId, double amount) async {
+  Future<Map<String, dynamic>?> submitStake(int planId, double amount) async {
     isStaking.value = true;
     try {
       final j = _decode(
@@ -226,10 +226,11 @@ class McStakingController extends GetxController {
         j['message'] ?? (ok ? 'Staking started!' : 'Failed'),
         isError: !ok,
       );
-      return ok;
+      if (ok) return j['stake'] as Map<String, dynamic>?;
+      return null;
     } catch (e) {
       showToast('Network error. Please try again.');
-      return false;
+      return null;
     } finally {
       isStaking.value = false;
     }
@@ -268,10 +269,11 @@ class McStakingController extends GetxController {
         j['message'] ?? (ok ? 'Cancelled!' : 'Cannot cancel'),
         isError: !ok,
       );
-      return ok;
+      if (ok) return j['stake'] as Map<String, dynamic>?;
+      return null;
     } catch (e) {
       showToast('Network error. Please try again.');
-      return false;
+      return null;
     } finally {
       isCancelling.value = '';
     }
@@ -483,10 +485,11 @@ class McStakingController extends GetxController {
         j['message'] ?? (ok ? 'Withdrawal successful!' : 'Failed'),
         isError: !ok,
       );
-      return ok;
+      if (ok) return j['stake'] as Map<String, dynamic>?;
+      return null;
     } catch (e) {
       showToast('Network error. Please try again.');
-      return false;
+      return null;
     } finally {
       isWithdrawing.value = '';
     }

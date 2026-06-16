@@ -244,13 +244,172 @@ class _McStakingScreenState extends State<McStakingScreen>
   Future<void> _handleStake() async {
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
     if (_selectedPlan == null || amount <= 0) return;
-    final ok = await _c.submitStake(_selectedPlan!.id, amount);
-    if (ok) {
+    final stakeData = await _c.submitStake(_selectedPlan!.id, amount);
+    if (stakeData != null) {
       _amountCtrl.clear();
       _c.calcResult.value = null;
       setState(() => _perSec = 0);
+      // Show congratulations modal
+      if (mounted) _showCongratulationsModal(stakeData);
     }
   }
+
+  void _showCongratulationsModal(Map<String, dynamic> stake) {
+    final planName = stake['plan_name'] ?? '';
+    final amount = stake['amount'];
+    final symbol = stake['coin_symbol'] ?? '';
+    final totalReturn = stake['total_return'];
+    final durationDays = stake['duration_days'] ?? 0;
+    final startDate = stake['start_date'] ?? '';
+    final endDate = stake['end_date'] ?? '';
+
+    String _fmt(String d) {
+      try {
+        final dt = DateTime.parse(d);
+        const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return '${dt.day} ${m[dt.month-1]} ${dt.year}';
+      } catch (_) { return d; }
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Close button
+              Align(
+                alignment: Alignment.topRight,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 32, height: 32,
+                    decoration: BoxDecoration(color: const Color(0xFF2A2A2A), shape: BoxShape.circle),
+                    child: const Icon(Icons.close, color: Colors.white, size: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Party emoji
+              Container(
+                width: 64, height: 64,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2A2A),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFCCFF00).withValues(alpha: 0.4), width: 2),
+                ),
+                child: const Center(child: Text('🎉', style: TextStyle(fontSize: 32))),
+              ),
+              const SizedBox(height: 16),
+              const Text('Congratulations!', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+              const SizedBox(height: 6),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13, fontFamily: 'DMSans'),
+                  children: [
+                    const TextSpan(text: 'Your '),
+                    TextSpan(text: planName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    const TextSpan(text: ' subscription has been\nsuccessfully activated.'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Details box
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111111),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    _certRow('Plan', planName, Colors.white),
+                    _certDivider(),
+                    _certRow('Amount', '${amount?.toString() ?? '0'} $symbol', Colors.white),
+                    if (totalReturn != null) ...[
+                      _certDivider(),
+                      _certRow('Total Return', '$totalReturn%', Colors.white),
+                    ],
+                    if (durationDays > 0) ...[
+                      _certDivider(),
+                      _certRow('Duration', '$durationDays Days', Colors.white),
+                    ],
+                    if (startDate.isNotEmpty) ...[
+                      _certDivider(),
+                      _certRow('Start Date', _fmt(startDate), Colors.white),
+                    ],
+                    if (endDate.isNotEmpty) ...[
+                      _certDivider(),
+                      _certRow('Maturity Date', _fmt(endDate), Colors.white),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'A staking certificate has been generated and saved to your account.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 11, fontFamily: 'DMSans'),
+              ),
+              const SizedBox(height: 16),
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        height: 46,
+                        decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(12)),
+                        alignment: Alignment.center,
+                        child: const Text('Close', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontFamily: 'DMSans')),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Get.to(() => const McMyStakesScreen());
+                      },
+                      child: Container(
+                        height: 46,
+                        decoration: BoxDecoration(color: const Color(0xFFCCFF00), borderRadius: BorderRadius.circular(12)),
+                        alignment: Alignment.center,
+                        child: const Text('📄 View Certificate', style: TextStyle(color: Color(0xFF111111), fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _certRow(String label, String value, Color valueColor) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13, fontFamily: 'DMSans')),
+        Text(value, style: TextStyle(color: valueColor, fontSize: 13, fontWeight: FontWeight.w700, fontFamily: 'DMSans')),
+      ],
+    ),
+  );
+
+  Widget _certDivider() => Container(height: 1, color: const Color(0xFF2A2A2A));
 
   @override
   Widget build(BuildContext context) {
