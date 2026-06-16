@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -3482,11 +3481,10 @@ class _StakingLiveHero extends StatefulWidget {
   State<_StakingLiveHero> createState() => _StakingLiveHeroState();
 }
 
-class _StakingLiveHeroState extends State<_StakingLiveHero>
-    with SingleTickerProviderStateMixin {
+class _StakingLiveHeroState extends State<_StakingLiveHero> {
   late McStakingController _c;
   Timer? _ticker;
-  Ticker? _frameTicker;
+  Timer? _frameTicker;
   double _liveEarning = 0;
   double _perSec = 0;
   double _dailyTotal = 0;
@@ -3539,8 +3537,8 @@ class _StakingLiveHeroState extends State<_StakingLiveHero>
 
     // Start 60fps vsync frame ticker — recalcs directly from staked_at each frame
     // exactly like web's requestAnimationFrame approach
-    _frameTicker?.dispose();
-    _frameTicker = createTicker((_) {
+    _frameTicker?.cancel();
+    _frameTicker = Timer.periodic(const Duration(milliseconds: 16), (_) {
       if (!mounted) return;
       final portfolio2 = _c.portfolio.value;
       if (portfolio2 == null) return;
@@ -3576,13 +3574,12 @@ class _StakingLiveHeroState extends State<_StakingLiveHero>
         _dailyTotal = daily;
       });
     });
-    _frameTicker!.start();
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
-    _frameTicker?.dispose();
+    _frameTicker?.cancel();
     super.dispose();
   }
 
