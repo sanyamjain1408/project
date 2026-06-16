@@ -14,7 +14,6 @@ class McCertificateScreen extends StatefulWidget {
 class _McCertificateScreenState extends State<McCertificateScreen> {
   late final WebViewController _controller;
   bool _loaded = false;
-  double _certHeight = 300;
 
   @override
   void initState() {
@@ -25,13 +24,8 @@ class _McCertificateScreenState extends State<McCertificateScreen> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF0A1A0A))
       ..setNavigationDelegate(NavigationDelegate(
-        onPageFinished: (_) async {
-          // Get scaled height from JS
-          final result = await _controller.runJavaScriptReturningResult(
-            'document.documentElement.getBoundingClientRect().height'
-          );
-          final h = double.tryParse(result.toString()) ?? 300;
-          if (mounted) setState(() { _certHeight = h; _loaded = true; });
+        onPageFinished: (_) {
+          if (mounted) setState(() => _loaded = true);
         },
       ))
       ..loadRequest(Uri.parse('data:text/html;base64,$encoded'));
@@ -41,10 +35,15 @@ class _McCertificateScreenState extends State<McCertificateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width - 16; // minus horizontal padding
+    // Certificate is 1122x794 — compute scaled height in Dart, no JS needed
+    final certH = 794.0 * (screenW / 1122.0);
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Padding(
@@ -84,31 +83,28 @@ class _McCertificateScreenState extends State<McCertificateScreen> {
               ),
             ),
 
-            // WebView certificate — fixed height based on scaled cert
+            // WebView certificate — exact height = 794 * scale, no overflow
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Stack(
-                children: [
-                  Container(
-                    height: _certHeight,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFB8960C).withValues(alpha: 0.3)),
+              child: SizedBox(
+                width: screenW,
+                height: certH,
+                child: Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFB8960C).withValues(alpha: 0.3)),
+                      ),
+                      clipBehavior: Clip.hardEdge,
+                      child: WebViewWidget(controller: _controller),
                     ),
-                    clipBehavior: Clip.hardEdge,
-                    child: WebViewWidget(controller: _controller),
-                  ),
-                  if (!_loaded)
-                    SizedBox(
-                      height: _certHeight,
-                      child: const Center(child: CircularProgressIndicator(color: Color(0xFFCCFF00))),
-                    ),
-                ],
+                    if (!_loaded)
+                      const Center(child: CircularProgressIndicator(color: Color(0xFFCCFF00))),
+                  ],
+                ),
               ),
             ),
-            const Spacer(),
-
-            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -177,7 +173,7 @@ body{width:1122px;height:794px;overflow:hidden;font-family:"Inter",sans-serif;}
 .sth::before,.sth::after{content:"";flex:1;height:1px;background:rgba(184,150,12,0.3);}
 .dr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
 .dl{font-size:9.5px;color:rgba(255,255,255,0.45);}
-.dv{font-size:10.5px;font-weight:700;color:#fff;}
+.dv{font-size:10.5px;font-weight:700;color:#fff;word-break:break-all;text-align:right;max-width:60%;}
 .dv.gold{color:#b8960c;}
 .dv.green{color:#ccff00;}
 .sbadge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,176,82,0.15);border:1px solid #00b052;border-radius:20px;padding:2px 8px;font-size:9px;color:#00b052;font-weight:700;}
