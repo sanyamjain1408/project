@@ -350,19 +350,6 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
                           onTap: () => Get.back(),
                           child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
                         ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () => Get.to(() => const McWithdrawHistoryScreen(initialTab: 0)),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.35),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
-                            ),
-                            child: const RotatingIcon(),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -454,6 +441,23 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
             Positioned.fill(
               child: CustomPaint(
                 painter: _PortfolioHeroBorderPainter(cardW: screenW, cardH: cardH),
+              ),
+            ),
+            // History icon — top right (same as staking dashboard)
+            Positioned(
+              top: 14,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Get.to(() => const McWithdrawHistoryScreen(initialTab: 0)),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.35),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
+                  ),
+                  child: const RotatingIcon(),
+                ),
               ),
             ),
             // Content
