@@ -505,17 +505,9 @@ class _FuturePairItem extends StatelessWidget {
       case 'commodity':
         final label = _kFullNames[pair.baseAsset.toUpperCase()] ?? 'Commodity';
         return Container(
-          width: 28,
-          height: 16,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: const Color(0x4CFFD800),
-            borderRadius: BorderRadius.circular(40),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.86), width: 1),
-          ),
-          child: Text(label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFFFFD900), fontSize: 8, fontWeight: FontWeight.w400, fontFamily: _dm)),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          decoration: BoxDecoration(color: const Color(0x4CFFD800), borderRadius: BorderRadius.circular(4)),
+          child: Text(label, style: const TextStyle(color: Color(0xFFFFD900), fontSize: 8, fontWeight: FontWeight.w400, fontFamily: _dm)),
         );
       case 'stock':
         return Container(
