@@ -27,7 +27,7 @@ class MarketSpotController extends GetxController implements SocketListener {
   Timer? _autoRefreshTimer; // ← Auto refresh timer
 
   List<String> getFilterList() {
-    return ["ALL", "USDT", "USDC", "BTC"];
+    return ["ALL", "USDT", "USDC"];
   }
 
   Map<int, String> getTypeMap() {

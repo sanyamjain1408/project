@@ -117,7 +117,7 @@ class MarketFutureState extends State<MarketFutureScreen> {
   Timer? _timer;
 
   static const _apiUrl  = 'https://api.trapix.com/api/v1/future/pairs';
-  static const _filters = ['ALL', 'USDT', 'USDC', 'BTC'];
+  static const _filters = ['ALL', 'USDT', 'USDC'];
   static const _categories = ['ALL', 'AI', 'TradFi', 'Stocks', 'Indices', 'Commodity'];
 
   @override
@@ -255,7 +255,16 @@ class MarketFutureState extends State<MarketFutureScreen> {
           _loading
               ? const Expanded(child: Center(child: CircularProgressIndicator(color: _green, strokeWidth: 2)))
               : _filtered.isEmpty
-                  ? Expanded(child: showEmptyView(height: 100))
+                  ? Expanded(
+                      child: _filters[_filterIndex] == 'USDC'
+                          ? const Center(
+                              child: Text(
+                                'Coming Soon',
+                                style: TextStyle(color: Colors.white54, fontSize: 14, fontFamily: 'DMSans'),
+                              ),
+                            )
+                          : showEmptyView(height: 100),
+                    )
                   : Expanded(
                       child: RefreshIndicator(
                         color: _green,

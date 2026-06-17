@@ -95,15 +95,26 @@ class MarketSpotState extends State<MarketSpotScreen>
 
 
             Obx(() {
+              final isUSDC = _controller.getFilterList()[_controller.selectedFilterIndex.value] == 'USDC';
               return _controller.marketList.isEmpty
                   ? _controller.isLoading.value
                         ? const Center(
                             child: CircularProgressIndicator(
-                              color: _green, // Green color
+                              color: _green,
                               strokeWidth: 2,
                             ),
                           )
-                        : showEmptyView(height: 100)
+                        : isUSDC
+                            ? const SizedBox(
+                                height: 100,
+                                child: Center(
+                                  child: Text(
+                                    'Coming Soon',
+                                    style: TextStyle(color: Colors.white54, fontSize: 14, fontFamily: 'DMSans'),
+                                  ),
+                                ),
+                              )
+                            : showEmptyView(height: 100)
                   : Expanded(
                       child: ListView.separated(
                         padding: EdgeInsets.zero,

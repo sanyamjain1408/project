@@ -25,7 +25,7 @@ class FavoritesPairController extends GetxController implements SocketListener {
   final searchController = TextEditingController();
   Timer? _searchTimer;
 
-  List<String> getFilterList() => ["ALL", "USDT", "USDC", "BTC"];
+  List<String> getFilterList() => ["ALL", "USDT", "USDC"];
 
   List<String> getCategoryList() => ["All", "🔥 AI", "Meme", "RWA", "DeFi", "NFT", "L1", "L2"];
 

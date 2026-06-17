@@ -67,7 +67,7 @@ class FavoritesPairScreenState extends State<FavoritesPairScreen> {
   Timer? _searchTimer;
   Timer? _priceTimer;
 
-  static const _filterList = ['ALL', 'USDT', 'USDC', 'BTC'];
+  static const _filterList = ['ALL', 'USDT', 'USDC'];
   static const _categoryList = ['All', '🔥 AI', 'Meme', 'RWA', 'DeFi', 'NFT', 'L1', 'L2'];
   static const _categoryCoins = <String, List<String>>{
     '🔥 AI': ['FET', 'AGIX', 'OCEAN', 'GRT', 'TAO', 'RNDR', 'WLD', 'NEAR', 'ICP', 'AKT'],
@@ -257,7 +257,17 @@ class FavoritesPairScreenState extends State<FavoritesPairScreen> {
           const _MarketHeaderRow(),
           const SizedBox(height: 7),
           _displayList.isEmpty
-              ? showEmptyView(height: 100)
+              ? _filterList[_filterIndex] == 'USDC'
+                  ? const SizedBox(
+                      height: 100,
+                      child: Center(
+                        child: Text(
+                          'Coming Soon',
+                          style: TextStyle(color: Colors.white54, fontSize: 14, fontFamily: 'DMSans'),
+                        ),
+                      ),
+                    )
+                  : showEmptyView(height: 100)
               : Expanded(
                   child: ListView.builder(
                     padding: EdgeInsets.zero,
@@ -448,7 +458,7 @@ class _AddCoinDrawerState extends State<_AddCoinDrawer> {
   final Map<String, Map<String, dynamic>> _pendingSpotInfo = {};
   final Map<String, Map<String, dynamic>> _pendingFutInfo = {};
 
-  static const _filterList = ['ALL', 'USDT', 'USDC', 'BTC'];
+  static const _filterList = ['ALL', 'USDT', 'USDC'];
 
   @override
   void initState() {
