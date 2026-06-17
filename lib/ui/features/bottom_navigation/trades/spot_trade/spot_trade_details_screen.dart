@@ -117,27 +117,34 @@ class _SpotTradeDetailsScreenState extends State<SpotTradeDetailsScreen> {
                 hSpacer5(),
               ],
             ),
-            // ── Top tabs: Chart | Coin Info | Contract Info ─────────────────
+            // ── Top tabs: Chart | Coin Info ──────────────────────────────────
             Obx(
               () => tabBarText(
-                ["Chart".tr, "Coin Info".tr, "Contract Info".tr],
+                ["Chart".tr, "Coin Info".tr],
                 chartIndex.value,
                 (index) => chartIndex.value = index,
-
                 selectedColor: Colors.white,
                 unSelectedColor: Colors.white.withValues(alpha: 0.5),
-
                 fontSize: 16,
-
                 selectedFontWeight: FontWeight.w700,
                 unSelectedFontWeight: FontWeight.w400,
-
                 fontFamily: "DMSans",
               ),
             ),
             // ── Content area ─────────────────────────────────────────────────
             Expanded(
               child: Obx(() {
+                if (chartIndex.value == 1) {
+                  final meta = _controller.spotPairsMeta.firstWhereOrNull(
+                    (p) => p.symbol == (_controller.selectedCoinPair.value.coinPair ?? '').replaceAll('_', ''),
+                  );
+                  return _CoinInfoView(
+                    pair: _controller.selectedCoinPair.value,
+                    spotPair: meta,
+                    ticker: _controller.spotTicker.value,
+                    prices: _controller.dashboardData.value.lastPriceData,
+                  );
+                }
                 if (chartIndex.value != 0) return const SizedBox.expand();
                 return ListView(
                   padding: EdgeInsets.zero,
@@ -596,6 +603,102 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
       ),
     );
   }
+}
+
+// ── Coin Info tab ───────────────────────────────────────────────────────────
+class _CoinInfoView extends StatelessWidget {
+  const _CoinInfoView({
+    required this.pair,
+    required this.spotPair,
+    required this.ticker,
+    required this.prices,
+  });
+
+  final CoinPair pair;
+  final SpotPair? spotPair;
+  final SpotTicker ticker;
+  final List<PriceData>? prices;
+
+  @override
+  Widget build(BuildContext context) {
+    final lastPrice = (prices?.isNotEmpty ?? false) ? prices!.first.price : 0.0;
+    final change = ticker.priceChange24h;
+    final isUp = change >= 0;
+    final changeColor = isUp ? const Color(0xFF4ED78E) : const Color(0xFFD05858);
+    final changeSign = isUp ? '+' : '';
+
+    final rows = <_InfoRow>[
+      _InfoRow('Symbol', spotPair?.symbol ?? pair.getCoinPairName()),
+      _InfoRow('Base Currency', pair.parentCoinName ?? ''),
+      _InfoRow('Quote Currency', pair.childCoinName ?? ''),
+      _InfoRow('Current Price', '${coinFormat(lastPrice, fixed: tradeDecimal)} ${pair.childCoinName ?? ''}'),
+      _InfoRow('24H Change', '$changeSign${coinFormat(change, fixed: 2)}%', valueColor: changeColor),
+      _InfoRow('24H High', coinFormat(ticker.high24h, fixed: tradeDecimal)),
+      _InfoRow('24H Low', coinFormat(ticker.low24h, fixed: tradeDecimal)),
+      _InfoRow('Maker Fee', '${spotPair?.makerFee ?? 0}%'),
+      _InfoRow('Taker Fee', '${spotPair?.takerFee ?? 0}%'),
+      _InfoRow('Min Order', '${spotPair?.minOrderAmount ?? 0} ${pair.parentCoinName ?? ''}'),
+    ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${pair.parentCoinName ?? ''} / ${pair.childCoinName ?? ''}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'DMSans',
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...rows.map((r) => _buildRow(r)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRow(_InfoRow r) {
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0x12FFFFFF))),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              r.label,
+              style: const TextStyle(
+                color: Color(0x80FFFFFF),
+                fontSize: 13,
+                fontFamily: 'DMSans',
+              ),
+            ),
+          ),
+          Text(
+            r.value,
+            style: TextStyle(
+              color: r.valueColor ?? Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'DMSans',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow {
+  const _InfoRow(this.label, this.value, {this.valueColor});
+  final String label;
+  final String value;
+  final Color? valueColor;
 }
 
 class AssetOverviewView extends StatelessWidget {
