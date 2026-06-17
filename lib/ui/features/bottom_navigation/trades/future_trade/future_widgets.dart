@@ -108,17 +108,20 @@ class FutureOrderBook extends StatelessWidget {
                   ),
                   maxLines: 2,
                 ),
-                Text(
-                  'Amount ($base)',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white54,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: "DMSans",
-                    height: 1.2,
+                SizedBox(
+                  width: 72,
+                  child: Text(
+                    'Amount ($base)',
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.white54,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: "DMSans",
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
                   ),
-                  maxLines: 2,
                 ),
               ],
             ),
@@ -351,7 +354,7 @@ class _BookRow extends StatelessWidget {
   }
 
   String _formatAmount(double val) {
-    final formatted = val.toStringAsFixed(5);
+    final formatted = val.toStringAsFixed(6);
     // If integer part alone is too wide (more than 7 chars), show integer only
     final intPart = val.toStringAsFixed(0);
     if (intPart.length > 7) return intPart;
@@ -393,16 +396,19 @@ class _BookRow extends StatelessWidget {
                 maxLines: 1,
               ),
             ),
-            Text(
-              _formatAmount(amountVal),
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.white,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'monospace',
+            SizedBox(
+              width: 72,
+              child: Text(
+                _formatAmount(amountVal),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'monospace',
+                ),
+                textAlign: TextAlign.right,
+                maxLines: 1,
               ),
-              textAlign: TextAlign.right,
-              maxLines: 1,
             ),
           ],
         ),
