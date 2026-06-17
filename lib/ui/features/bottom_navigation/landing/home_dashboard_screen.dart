@@ -264,7 +264,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                     size: 22,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
                               ],
                             ),
                           ),
@@ -272,14 +271,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                           Row(
                             children: [
                               Text(
-                                "Total Assets",
+                                "Total Asset",
                                 style: TextStyle(
-                                  color: const Color(
-                                    0xFFFFFFFF,
-                                  ).withValues(alpha: 0.5),
-                                  fontWeight: FontWeight.normal,
+                                  color: const Color(0xFFFFFFFF).withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.w500,
                                   fontFamily: "DMSans",
                                   fontSize: 16,
+                                  height: 1.25,
                                 ),
                               ),
                               const SizedBox(width: 5),
@@ -324,68 +322,77 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Amount + USDT inline
                                 Row(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
                                   children: [
                                     Text(
-                                      "\$${currencyFormat(balance.total)}",
+                                      "\$ ${currencyFormat(balance.total)}",
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w700,
                                         fontSize: 30,
                                         fontFamily: "DMSans",
+                                        height: 1.33,
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 6),
-                                      child: Text(
-                                        "USDT",
-                                        style: TextStyle(
-                                          color: const Color(
-                                            0xFFFFFFFF,
-                                          ).withValues(alpha: 0.5),
-                                          fontSize: 14,
-                                          height: 16/14,
-                                          fontFamily: "DMSans",
-                                        ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      "USDT",
+                                      style: TextStyle(
+                                        color: const Color(0xFFFFFFFF).withValues(alpha: 0.5),
+                                        fontSize: 15,
+                                        height: 1.33,
+                                        fontFamily: "DMSans",
+                                        fontWeight: FontWeight.w400,
                                       ),
                                     ),
                                   ],
                                 ),
-                                if (balance.todayPnl != null) ...[
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        "Today's PNL",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w400,
-                                          fontFamily: "DMSans",
-                                          height: 16/12,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        formatPnl(
-                                          balance.todayPnl,
-                                          balance.todayPnlPercent,
-                                        ),
-                                        style: TextStyle(
-                                          color: (balance.todayPnl ?? 0) >= 0
-                                              ? Color(0xFF77D215)
-                                              : Colors.redAccent,
-                                          fontSize: 12,
-                                          fontFamily: "DMSans",
-                                          fontWeight: FontWeight.w400,
-                                          height: 16/12,
-                                        ),
-                                      ),
-                                    ],
+                                const SizedBox(height: 2),
+                                // ≈ same price repeated below (Figma)
+                                Text(
+                                  "≈ \$${currencyFormat(balance.total)}",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontFamily: "DMSans",
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.33,
                                   ),
-                                ],
+                                ),
+                                const SizedBox(height: 4),
+                                // Today's PNL
+                                if (balance.todayPnl != null)
+                                  RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        const TextSpan(
+                                          text: "Today's PNL ",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w400,
+                                            fontFamily: "DMSans",
+                                            height: 1.33,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: formatPnl(balance.todayPnl, balance.todayPnlPercent),
+                                          style: TextStyle(
+                                            color: (balance.todayPnl ?? 0) >= 0
+                                                ? const Color(0xFF4ED78E)
+                                                : Colors.redAccent,
+                                            fontSize: 12,
+                                            fontFamily: "DMSans",
+                                            fontWeight: FontWeight.w400,
+                                            height: 1.33,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                               ],
                             );
                           }),
