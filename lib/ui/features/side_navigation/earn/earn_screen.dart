@@ -550,6 +550,7 @@ class _EarnScreenState extends State<EarnScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             Expanded(
