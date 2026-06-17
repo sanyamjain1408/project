@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/data/models/coin_pair.dart';
+import 'package:tradexpro_flutter/helper/app_helper.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/spot_trade/spot_trade_controller.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/trade_screen.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_up/sign_up_screen.dart';
 import 'mc_staking_controller.dart' show McStakingController, mcLogoUrl;
@@ -66,16 +68,6 @@ class _McStakingScreenState extends State<McStakingScreen>
   Timer? _calcTimer;
   double _perSec = 0;
 
-  // Sparkline animation — mirrors website's RAF + lerp approach
-  late final Ticker _sparkTicker;
-  final Map<String, List<double>> _coinDisplayHistories = {};
-  final _rng = math.Random();
-
-  // Carousel
-  late final PageController _carouselCtrl;
-  Timer? _carouselAutoTimer;
-  int _carouselPage = 0;
-
   @override
   void initState() {
     super.initState();
@@ -83,117 +75,37 @@ class _McStakingScreenState extends State<McStakingScreen>
         ? Get.find<McStakingController>()
         : Get.put(McStakingController());
 
-    _carouselCtrl = PageController(viewportFraction: 1.0);
-
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Clear any leftover display history from previous screen instance
-      _coinDisplayHistories.clear();
-
       _c.startTrpxTickerPolling();
       if (gUserRx.value.id > 0) _c.fetchPortfolio();
 
-      // Fetch coins, then immediately fetch all tickers before showing carousel
       await _c.fetchCoins();
       if (!mounted) return;
 
-      // Poll all non-TRPX coins and wait for first batch of tickers
       final others = _c.coins.map((c) => c.symbol).where((s) => s != 'TRPX').toList();
       if (others.isNotEmpty) {
         _c.startCoinCarouselPolling(others);
-        // Wait for first ticker responses (max 3s)
-        await Future.delayed(const Duration(milliseconds: 2500));
       }
-      if (!mounted) return;
-
-      // Now carousel shows only coins with confirmed ticker data
-      setState(() => _carouselPage = 0);
-      _carouselCtrl.jumpToPage(0);
-
-      // Auto-advance every 5 seconds
-      _carouselAutoTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-        if (!mounted) return;
-        final symbols = _carouselSymbols();
-        if (symbols.length < 2) return;
-        final next = (_carouselPage + 1) % symbols.length;
-        setState(() => _carouselPage = next);
-        _carouselCtrl.animateToPage(
-          next,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      });
     });
-
-    // 60fps ticker — lerps all coin display histories toward controller targets
-    _sparkTicker = createTicker((_) {
-      bool changed = false;
-
-      // TRPX
-      final trpxTarget = _c.trpxPriceHistory.toList();
-      if (trpxTarget.isNotEmpty) {
-        changed = true;
-        _lerpHistory('TRPX', trpxTarget);
-      }
-
-      // All other coins tracked by controller
-      for (final entry in _c.coinHistories.entries) {
-        final sym = entry.key;
-        if (sym == 'TRPX') continue;
-        final t = List<double>.from(entry.value);
-        if (t.isNotEmpty) {
-          changed = true;
-          _lerpHistory(sym, t);
-        }
-      }
-
-      if (changed && mounted) setState(() {});
-    });
-    _sparkTicker.start();
   }
 
   List<String> _carouselSymbols() {
-    // All staking coins — but only those whose ticker was successfully fetched
-    // (USDT has no USDTUSDT pair so it never appears in coinTickers)
-    final fetched = _c.coinTickers.keys.toSet()..add('TRPX');
-    final coinSymbols = _c.coins.map((c) => c.symbol).where((s) => fetched.contains(s)).toList();
-    return ['TRPX', ...coinSymbols.where((s) => s != 'TRPX')];
-  }
-
-
-  void _lerpHistory(String sym, List<double> target) {
-    final cur = _coinDisplayHistories[sym];
-    final len = target.length;
-    if (len == 0) return;
-
-    if (cur == null || cur.length != len) {
-      // First time — seed entire history as flat line at current last price
-      // This prevents the "speed-run" where old stored points animate in
-      _coinDisplayHistories[sym] = List.generate(len, (_) => target.last);
-      return;
+    // Only coins that have active staking plans (coinDurations set after _prefetchDurations)
+    final activeIds = _c.coinDurations.keys.toSet();
+    final activeCoins = _c.coins
+        .where((c) => activeIds.contains(c.id))
+        .map((c) => c.symbol)
+        .toList();
+    // Include TRPX always; filter others to active only
+    final result = <String>['TRPX'];
+    for (final s in activeCoins) {
+      if (s != 'TRPX') result.add(s);
     }
-
-    // Already seeded — lerp each point toward target with easeOut feel
-    // Historical points (older) move faster; live tip moves slower = smooth
-    final next = List<double>.generate(len, (i) {
-      // Factor: older points snap faster, newest point is slowest (0.08)
-      final t = i / (len - 1); // 0.0 = oldest, 1.0 = newest
-      final factor = 0.35 - t * 0.27; // oldest=0.35 → newest=0.08
-      return cur[i] + (target[i] - cur[i]) * factor;
-    });
-
-    // Micro-jitter on tip so it looks live
-    final range = target.reduce(math.max) - target.reduce(math.min);
-    final jitter = (range > 0 ? range : 1.0) * 0.002;
-    next[len - 1] += (_rng.nextDouble() - 0.5) * jitter;
-
-    _coinDisplayHistories[sym] = next;
+    return result;
   }
 
   @override
   void dispose() {
-    _sparkTicker.dispose();
-    _carouselCtrl.dispose();
-    _carouselAutoTimer?.cancel();
     _calcTimer?.cancel();
     _amountCtrl.dispose();
     _c.stopTrpxTickerPolling();
@@ -481,150 +393,161 @@ class _McStakingScreenState extends State<McStakingScreen>
     );
   }
 
-  // ── Coin Price Carousel ───────────────────────────────────────────────────
+  // ── Staking Tickers (website-style horizontal scroll) ────────────────────
   Widget _buildTrpxPriceCard() {
     return Obx(() {
-      _c.coinTickers.length; // observe — rebuilds when tickers arrive
-      _c.coins.length;       // observe — rebuilds when coins load
+      _c.coinTickers.length;
+      _c.coins.length;
+      _c.coinDurations.length;
       final symbols = _carouselSymbols();
       if (symbols.isEmpty) return const SizedBox.shrink();
-      if (_carouselPage >= symbols.length) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _carouselPage = 0);
-        });
-      }
 
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            height: 149,
-            child: PageView.builder(
-              controller: _carouselCtrl,
-              itemCount: symbols.length,
-              onPageChanged: (i) => setState(() => _carouselPage = i),
-              itemBuilder: (_, i) => Obx(() => _buildCoinCard(symbols[i])),
+          const Text(
+            'Staking Coins',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'DMSans',
             ),
           ),
-          if (symbols.length > 1) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(symbols.length, (i) {
-                final active = i == _carouselPage;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: active ? 16 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: active ? _green : Colors.white.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(3),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (int i = 0; i < symbols.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  SizedBox(
+                    width: 120,
+                    child: Obx(() => _buildTickerTile(symbols[i])),
                   ),
-                );
-              }),
+                ],
+              ],
             ),
-          ],
+          ),
         ],
       );
     });
   }
 
-  Widget _buildCoinCard(String symbol) {
+  Widget _buildTickerTile(String symbol) {
     final isTrpx = symbol == 'TRPX';
     final ticker = isTrpx
-        ? {'price': _c.trpxPrice.value, 'change': _c.trpxChange.value, 'volume': _c.trpxVolume.value, 'goingUp': _c.trpxGoingUp.value}
+        ? {'price': _c.trpxPrice.value, 'change': _c.trpxChange.value, 'goingUp': _c.trpxGoingUp.value}
         : (_c.coinTickers[symbol] ?? {});
     final price = (ticker['price'] as double?) ?? 0;
     final change = (ticker['change'] as double?) ?? 0;
-    final volume = (ticker['volume'] as double?) ?? 0;
-    final isPositive = (ticker['goingUp'] as bool?) ?? true;
-    final history = List<double>.from(_coinDisplayHistories[symbol] ?? []);
+    final isPositive = (ticker['goingUp'] as bool?) ?? (change >= 0);
     final coin = _c.coins.firstWhereOrNull((c) => c.symbol == symbol);
     final changeColor = isPositive ? const Color(0xFF77D215) : const Color(0xFFFF453A);
 
     String fmtPrice(double p) {
       if (p == 0) return '--';
-      if (p >= 1000) return '\$${p.toStringAsFixed(2)}';
-      if (p >= 1) return '\$${p.toStringAsFixed(4)}';
-      return '\$${p.toStringAsFixed(6)}';
+      if (p >= 1000) return p.toStringAsFixed(2);
+      if (p >= 1) return p.toStringAsFixed(4);
+      return p.toStringAsFixed(6);
     }
 
-    String fmtVolume(double v) {
-      if (v == 0) return '--';
-      if (v >= 1e9) return '\$${(v / 1e9).toStringAsFixed(2)}B';
-      if (v >= 1e6) return '\$${(v / 1e6).toStringAsFixed(2)}M';
-      if (v >= 1e3) return '\$${(v / 1e3).toStringAsFixed(2)}k';
-      return '\$${v.toStringAsFixed(2)}';
-    }
-
-    return Container(
-      height: 149,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          // Sparkline
-          Positioned(
-            left: 0, right: 0, bottom: 0, height: 80,
-            child: history.length >= 2
-                ? CustomPaint(
-                    painter: _TrpxSparklinePainter(
-                      changePercent: change,
-                      priceHistory: history,
-                      isPositiveOverride: isPositive,
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () {
+        getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          TradesScreen.switchToTab(1); // Spot tab
+          if (Get.isRegistered<SpotTradeController>()) {
+            Get.find<SpotTradeController>().selectPairBySymbol(symbol);
+          } else {
+            TemporaryData.selectedCurrencyPair = CoinPair(
+              coinPair: '${symbol}USDT',
+              coinPairName: '$symbol/USDT',
+              lastPrice: price,
+            );
+          }
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Coin icon + pair name
+            Row(
               children: [
-                _coinImg(coin?.logo, size: 30, symbol: symbol),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: TextSpan(children: [
-                        TextSpan(
-                          text: symbol,
-                          style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
-                        ),
-                        TextSpan(
-                          text: '/USDT',
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
-                        ),
-                      ]),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      fmtVolume(volume),
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans'),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(fmtPrice(price), style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'DMSans')),
-                    const SizedBox(width: 10),
-                    Text(
-                      '${isPositive ? '▲' : '▼'} ${change.abs().toStringAsFixed(2)}%',
-                      style: TextStyle(color: changeColor, fontSize: 12, fontFamily: 'DMSans'),
-                    ),
-                  ],
+                _coinImg(coin?.logo, size: 18, symbol: symbol),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: RichText(
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(children: [
+                      TextSpan(
+                        text: symbol,
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w600),
+                      ),
+                      TextSpan(
+                        text: '/USDT',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10, fontFamily: 'DMSans'),
+                      ),
+                    ]),
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+            // % change
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: changeColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '${isPositive ? '+' : ''}${change.toStringAsFixed(2)}%',
+                style: TextStyle(
+                  color: changeColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'DMSans',
+                ),
+              ),
+            ),
+            // Price
+            Text(
+              fmtPrice(price),
+              style: TextStyle(
+                color: changeColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'DMSans',
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            // ≈ USD + To trade
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    '≈ \$${fmtPrice(price)}',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 9, fontFamily: 'DMSans'),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  'Trade →',
+                  style: TextStyle(color: _green, fontSize: 9, fontWeight: FontWeight.w600, fontFamily: 'DMSans'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -3428,114 +3351,4 @@ Widget _pagination(Map<String, dynamic>? meta, Function(int) onPage) {
       );
     }),
   );
-}
-
-// ── TRPX Sparkline Painter ────────────────────────────────────────────────────
-// Generates a realistic-looking area chart curve driven by the live % change.
-// Positive change → upward trend on right side; negative → downward.
-class _TrpxSparklinePainter extends CustomPainter {
-  final double changePercent;
-  final List<double> priceHistory;
-  final bool? isPositiveOverride;
-
-  const _TrpxSparklinePainter({
-    required this.changePercent,
-    this.priceHistory = const [],
-    this.isPositiveOverride,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final isPositive = isPositiveOverride ?? (changePercent >= 0);
-    final lineColor = isPositive
-        ? const Color(0xFF77D215)
-        : const Color(0xFFFF453A);
-
-    List<Offset> points;
-    if (priceHistory.length >= 2) {
-      // Use real price data — normalize to canvas height
-      final minP = priceHistory.reduce((a, b) => a < b ? a : b);
-      final maxP = priceHistory.reduce((a, b) => a > b ? a : b);
-      final range = (maxP - minP).abs();
-      final count = priceHistory.length;
-      points = List.generate(count, (i) {
-        final x = w * i / (count - 1);
-        final normalized = range > 0 ? (priceHistory[i] - minP) / range : 0.5;
-        // flip: high price = low y (top of canvas)
-        final y = h * (1.0 - normalized * 0.8 - 0.1);
-        return Offset(x, y);
-      });
-    } else {
-      // Fallback static curve until enough data accumulates
-      final magnitude = (changePercent.abs() / 20).clamp(0.1, 0.7);
-      final raw = isPositive
-          ? [0.55, 0.65, 0.45, 0.60, 0.40, 0.50, 0.35, 0.30 - magnitude * 0.3]
-          : [0.45, 0.35, 0.55, 0.40, 0.60, 0.50, 0.65, 0.70 + magnitude * 0.3];
-      final count = raw.length;
-      points = List.generate(count, (i) {
-        final x = w * i / (count - 1);
-        final y = h * raw[i].clamp(0.05, 0.95);
-        return Offset(x, y);
-      });
-    }
-
-    final linePaint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          lineColor.withValues(alpha: 0.35),
-          lineColor.withValues(alpha: 0.0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, w, h))
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final fillPath = Path();
-    path.moveTo(points.first.dx, points.first.dy);
-    fillPath.moveTo(points.first.dx, h);
-    fillPath.lineTo(points.first.dx, points.first.dy);
-
-    for (int i = 0; i < points.length - 1; i++) {
-      final cp1 = Offset((points[i].dx + points[i + 1].dx) / 2, points[i].dy);
-      final cp2 = Offset(
-        (points[i].dx + points[i + 1].dx) / 2,
-        points[i + 1].dy,
-      );
-      path.cubicTo(
-        cp1.dx,
-        cp1.dy,
-        cp2.dx,
-        cp2.dy,
-        points[i + 1].dx,
-        points[i + 1].dy,
-      );
-      fillPath.cubicTo(
-        cp1.dx,
-        cp1.dy,
-        cp2.dx,
-        cp2.dy,
-        points[i + 1].dx,
-        points[i + 1].dy,
-      );
-    }
-
-    fillPath.lineTo(points.last.dx, h);
-    fillPath.close();
-
-    canvas.drawPath(fillPath, fillPaint);
-    canvas.drawPath(path, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(_TrpxSparklinePainter old) =>
-      old.changePercent != changePercent || old.priceHistory != priceHistory;
 }

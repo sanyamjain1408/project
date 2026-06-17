@@ -12,22 +12,29 @@ import 'spot_trade/spot_trade_screen.dart';
 class TradesScreen extends StatefulWidget {
   const TradesScreen({super.key});
 
+  // Called from outside (e.g. staking tickers) to switch to a specific tab
+  static void switchToTab(int index) {
+    _TradesScreenState._instance?._switchTab(index);
+  }
+
   @override
   State<TradesScreen> createState() => _TradesScreenState();
 }
 
 class _TradesScreenState extends State<TradesScreen>
     with SingleTickerProviderStateMixin {
-  // TradeController removed — it had length=2 which conflicted with our 5 tabs
   late final TabController _tabController;
 
   static const List<String> _tabs = ['Swap', 'Spot', 'Future', 'Earn', 'Staking', 'Buy Crypto'];
-  int _selectedTab = 1; // default: Spot
+  int _selectedTab = 1;
   int _previousTab = 1;
+
+  static _TradesScreenState? _instance;
 
   @override
   void initState() {
     super.initState();
+    _instance = this;
     _tabController = TabController(
       length: _tabs.length,
       vsync: this,
@@ -52,6 +59,18 @@ class _TradesScreenState extends State<TradesScreen>
       }
     });
 
+    // Handle navigation from staking/earn tickers → specific tab
+    if (TemporaryData.pendingTradeTab != null) {
+      final tab = TemporaryData.pendingTradeTab!;
+      TemporaryData.pendingTradeTab = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _tabController.animateTo(tab, duration: Duration.zero);
+          setState(() { _selectedTab = tab; _previousTab = tab; });
+        }
+      });
+    }
+
     // Handle deep-link navigation (old 2-tab IDs: 0=Spot, 1=P2P)
     if (TemporaryData.changingPageId != null) {
       final id = TemporaryData.changingPageId!;
@@ -65,8 +84,15 @@ class _TradesScreenState extends State<TradesScreen>
     }
   }
 
+  void _switchTab(int index) {
+    if (!mounted) return;
+    _tabController.animateTo(index, duration: Duration.zero);
+    setState(() { _selectedTab = index; _previousTab = index; });
+  }
+
   @override
   void dispose() {
+    if (_instance == this) _instance = null;
     _tabController.dispose();
     super.dispose();
   }

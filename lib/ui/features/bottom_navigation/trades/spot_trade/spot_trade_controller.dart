@@ -405,6 +405,25 @@ class SpotTradeController extends GetxController implements SocketListener {
     );
   }
 
+  // Select a coin pair by base symbol (e.g. 'TRPX') and reload data
+  void selectPairBySymbol(String baseSymbol) {
+    if (coinPairs.isEmpty) {
+      // Pairs not loaded yet — set pending so getDashBoardData picks it up after load
+      TemporaryData.selectedCurrencyPair = CoinPair(
+        coinPair: '${baseSymbol}USDT',
+        coinPairName: '$baseSymbol/USDT',
+      );
+      return;
+    }
+    final match = coinPairs.firstWhereOrNull(
+      (p) => (p.parentCoinName ?? '').toUpperCase() == baseSymbol.toUpperCase(),
+    );
+    if (match != null) {
+      selectedCoinPair.value = match;
+      getDashBoardData();
+    }
+  }
+
   void getDashBoardData() {
     if (!selectedCoinPair.value.coinPair.isValid) {
       getDefaultPairData();

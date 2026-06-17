@@ -26,6 +26,7 @@ class TemporaryData {
   static String? activityType;
   static int? changingPageId;
   static String? pendingFutureSymbol; // set before switching to Futures tab
+  static int? pendingTradeTab; // set to tab index before changeBottomNavIndex(trade)
 }
 
 enum IdVerificationType { none, nid, passport, driving, voter }
