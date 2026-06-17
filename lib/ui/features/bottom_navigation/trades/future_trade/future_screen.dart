@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/buy_crypto_screen.dart';
 // import 'package:tradexpro_flutter/addons/p2p_trade/ui/p2p_trade_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/trades/trapix_chart_widget.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -63,7 +64,7 @@ class _NewFutureScreenState extends State<NewFutureScreen>
   Timer? _countdownTimer;
   OverlayEntry? _precisionEntry;
 
-  static const _topTabs = ['Future', 'Earn', /*'P2P',*/ 'Copy Trading', 'Option'];
+  static const _topTabs = ['Future', 'Earn', 'Staking', 'Buy Crypto'];
 
   @override
   void initState() {
@@ -72,7 +73,15 @@ class _NewFutureScreenState extends State<NewFutureScreen>
     _topTabController = TabController(length: _topTabs.length, vsync: this);
     _topTabController.addListener(() {
       if (_topTabController.indexIsChanging) return;
-      setState(() => _subTab = _topTabs[_topTabController.index]);
+      final newTab = _topTabs[_topTabController.index];
+      if (newTab == 'Buy Crypto') {
+        Get.to(() => const BuyCryptoScreen());
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _topTabController.animateTo(_topTabs.indexOf(_subTab), duration: Duration.zero);
+        });
+      } else {
+        setState(() => _subTab = newTab);
+      }
     });
     _limitPxCtrl = TextEditingController();
     _limitPxFocus.addListener(() {
@@ -350,18 +359,8 @@ class _NewFutureScreenState extends State<NewFutureScreen>
       final cost = (marginVal + fee).toStringAsFixed(2);
       final maxQty = activePrice > 0 ? (_ctrl.balance.value * _leverage / activePrice).toStringAsFixed(qp) : '0.0000';
 
-      if (_subTab == 'Earn') return Column(children: [if (widget.showTopTabs) _buildTopTabs(), const Expanded(child: EarnScreen())]);
-      // if (_subTab == 'P2P') return Column(children: [if (widget.showTopTabs) _buildTopTabs(), const Expanded(child: P2PTradeScreen())]);
-      if (_subTab == 'Copy Trading' || _subTab == 'Option') {
-        return Column(children: [
-          if (widget.showTopTabs) _buildTopTabs(),
-          Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.construction_rounded, size: 48, color: futureMuted),
-            const SizedBox(height: 12),
-            Text('$_subTab Coming Soon', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: futureMuted, fontFamily: futureDmSans)),
-          ]))),
-        ]);
-      }
+      if (_subTab == 'Earn') return Column(children: [if (widget.showTopTabs) _buildTopTabs(), Expanded(child: EarnScreen(key: const ValueKey('future_earn')))]);
+      if (_subTab == 'Staking') return Column(children: [if (widget.showTopTabs) _buildTopTabs(), Expanded(child: EarnScreen(key: const ValueKey('future_staking'), initialTab: 3))]);
 
       final colWidth = (MediaQuery.of(context).size.width - 24) * 0.42;
 
