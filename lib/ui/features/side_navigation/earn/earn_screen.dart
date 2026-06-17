@@ -963,7 +963,7 @@ class _EarnScreenState extends State<EarnScreen> {
                             child: Text(
                               minApr == maxApr
                                   ? '${minApr.toStringAsFixed(2)}%'
-                                  : '${minApr.toStringAsFixed(2)}%â€“${maxApr.toStringAsFixed(2)}%',
+                                  : '${minApr.toStringAsFixed(2)}% – ${maxApr.toStringAsFixed(2)}%',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
