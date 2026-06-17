@@ -13,6 +13,7 @@ import 'package:tradexpro_flutter/data/models/history.dart';
 import 'package:tradexpro_flutter/data/models/response.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/check_deposit/check_deposit_page.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/buy_crypto_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_list_page.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
@@ -1155,7 +1156,14 @@ class _WalletDetailScreenState extends State<WalletDetailScreen>
       initialIndex: _selectedIndex,
     );
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
+      if (_tabController.indexIsChanging) return;
+      final tappedType = _tabs[_tabController.index]["type"];
+      if (tappedType == null) {
+        Get.to(() => const BuyCryptoScreen());
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _tabController.animateTo(_selectedIndex, duration: Duration.zero);
+        });
+      } else {
         setState(() => _selectedIndex = _tabController.index);
       }
     });
