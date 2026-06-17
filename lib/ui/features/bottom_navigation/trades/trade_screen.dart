@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 // import 'package:tradexpro_flutter/addons/p2p_trade/ui/p2p_trade_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
-import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_overview_page.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/buy_crypto_screen.dart';
 
 import 'future_trade/new_future_screen.dart';
 import 'spot_trade/spot_trade_screen.dart';
@@ -21,7 +21,7 @@ class _TradesScreenState extends State<TradesScreen>
   // TradeController removed — it had length=2 which conflicted with our 5 tabs
   late final TabController _tabController;
 
-  static const List<String> _tabs = ['Swap', 'Spot', 'Future', 'Earn', /*'P2P'*/];
+  static const List<String> _tabs = ['Swap', 'Spot', 'Future', 'Earn', 'Staking', 'Buy Crypto'];
   int _selectedTab = 1; // default: Spot
   int _previousTab = 1;
 
@@ -38,6 +38,11 @@ class _TradesScreenState extends State<TradesScreen>
       final newIndex = _tabController.index;
       if (newIndex == 0) {
         Get.to(() => const SwapScreen());
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _tabController.animateTo(_previousTab, duration: Duration.zero);
+        });
+      } else if (newIndex == 5) {
+        Get.to(() => const BuyCryptoScreen());
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _tabController.animateTo(_previousTab, duration: Duration.zero);
         });
@@ -122,9 +127,9 @@ class _TradesScreenState extends State<TradesScreen>
       case 2:
         return const Expanded(child: NewFutureScreen(showTopTabs: false));
       case 3:
-        return Expanded(child: const EarnScreen());
-      // case 4:
-      //   return const P2PTradeScreen();
+        return Expanded(child: EarnScreen(key: const ValueKey('earn')));
+      case 4:
+        return Expanded(child: EarnScreen(key: const ValueKey('staking'), initialTab: 3));
       default:
         return const SpotTradeScreen();
     }
