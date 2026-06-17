@@ -1061,32 +1061,6 @@ class _TradeCurrencyPairSelectionViewState
               ),
             ),
           ),
-          // ── Add Coin button ──
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _green,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () {},
-                child: const Text(
-                  "Add Coin",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: "DMSans",
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     ),

@@ -843,13 +843,20 @@ class SpotTradeController extends GetxController implements SocketListener {
   }
 
   void getCoinPairList(String searchText) {
+    final allPairs = (dashboardData.value.coinPairs?.isNotEmpty ?? false)
+        ? dashboardData.value.coinPairs!
+        : coinPairs.toList();
+
+    List<CoinPair> list;
     if (searchText.isEmpty) {
-      coinPairs.value = dashboardData.value.coinPairs ?? [];
+      list = List.from(allPairs);
     } else {
-      searchText = searchText.toLowerCase();
-      final list = (dashboardData.value.coinPairs ?? []).where((element) => (element.coinPairName ?? "").toLowerCase().contains(searchText)).toList();
-      coinPairs.value = list;
+      final q = searchText.toLowerCase();
+      list = allPairs.where((e) => (e.coinPairName ?? '').toLowerCase().contains(q)).toList();
     }
+
+    list.sort((a, b) => (b.lastPrice ?? 0).compareTo(a.lastPrice ?? 0));
+    coinPairs.value = list;
   }
 
   /// *** PLACE ORDER *** ///
