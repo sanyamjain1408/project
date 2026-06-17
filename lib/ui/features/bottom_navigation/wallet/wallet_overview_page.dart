@@ -15,11 +15,11 @@ import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/check_deposit/check_deposit_page.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_list_page.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
+import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
 import 'package:tradexpro_flutter/utils/dimens.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
-import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/utils/common_widgets.dart';
 import '../../side_navigation/activity/activity_screen.dart';
 import 'wallet_controller.dart';
@@ -1459,7 +1459,10 @@ class _FutureHeroButtons extends StatelessWidget {
       final btnW = (constraints.maxWidth - 16) / 3;
       return Row(
         children: [
-          _FutureBtn(label: 'Trade', iconWidget: const Icon(Icons.candlestick_chart_rounded, size: 16, color: Colors.black), isMain: true, width: btnW, onTap: () {}),
+          _FutureBtn(label: 'Trade', iconWidget: const Icon(Icons.candlestick_chart_rounded, size: 16, color: Colors.black), isMain: true, width: btnW, onTap: () {
+            Get.back();
+            getRootController().changeBottomNavIndex(AppBottomNavKey.future);
+          }),
           const SizedBox(width: 8),
           _FutureBtn(label: 'Swap', iconWidget: Image.asset('assets/images/swap.png', width: 16, height: 16), isMain: false, width: btnW, onTap: () => Get.to(() => const SwapScreen())),
           const SizedBox(width: 8),
