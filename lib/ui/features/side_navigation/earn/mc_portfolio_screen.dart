@@ -725,19 +725,23 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
                 final busy = _c.isWithdrawing.value == item.stakeUid;
                 return GestureDetector(
                   onTap: busy || availableCoin <= 0.000001 ? null : () => _openWithdrawModal(item),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: availableCoin > 0.000001 ? _kGreen : Colors.grey.shade700,
-                      borderRadius: BorderRadius.circular(10),
+                  child: SizedBox(
+                    width: 90,
+                    height: 52,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: availableCoin > 0.000001 ? _kGreen : Colors.grey.shade700,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: busy
+                          ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                          : Text(
+                              'Withdraw\n${availableCoin.toStringAsFixed(4)} $symbol',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Color(0xFF111111), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
+                            ),
                     ),
-                    child: busy
-                        ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                        : Text(
-                            'Withdraw\n${availableCoin.toStringAsFixed(4)} $symbol',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Color(0xFF111111), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
-                          ),
                   ),
                 );
               }),

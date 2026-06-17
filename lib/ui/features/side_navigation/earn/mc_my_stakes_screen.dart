@@ -1178,10 +1178,21 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0x4C00FF04),
+                            color: statusLabel == 'Cancelled'
+                                ? const Color(0x4CFF3B30)
+                                : const Color(0x4C00FF04),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Text(statusLabel, style: const TextStyle(color: Color(0xFF00FF04), fontSize: 12, fontFamily: 'DMSans')),
+                          child: Text(
+                            statusLabel,
+                            style: TextStyle(
+                              color: statusLabel == 'Cancelled'
+                                  ? const Color(0xFFFF3B30)
+                                  : const Color(0xFF00FF04),
+                              fontSize: 12,
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -1194,22 +1205,26 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
                 ),
               ),
               const SizedBox(width: 10),
-              // Withdraw button (Figma: #CCFF00, rounded 10)
+              // Withdraw button — fixed size so it doesn't shift with live amount
               if (isActive)
                 Obx(() {
                   final withdrawing = _c.isWithdrawing.value == stake.uid;
                   return GestureDetector(
                     onTap: withdrawing || _availableCoin <= 0.000001 ? null : _openWithdrawConfirm,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _availableCoin > 0.000001 ? const Color(0xFFCCFF00) : Colors.grey.shade700,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        withdrawing ? 'Wait...\n$symbol' : 'Withdraw\n${_availableCoin.toStringAsFixed(4)} $symbol',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF111111), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
+                    child: SizedBox(
+                      width: 90,
+                      height: 52,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: _availableCoin > 0.000001 ? const Color(0xFFCCFF00) : Colors.grey.shade700,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          withdrawing ? 'Wait...\n$symbol' : 'Withdraw\n${_availableCoin.toStringAsFixed(4)} $symbol',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Color(0xFF111111), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
+                        ),
                       ),
                     ),
                   );
