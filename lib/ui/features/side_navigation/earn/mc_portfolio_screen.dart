@@ -462,101 +462,88 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
             ),
             // Content
             Padding(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // "LIVE DASHBOARD" green label
-                  const Text(
-                    'LIVE DASHBOARD',
-                    style: TextStyle(
-                      color: _kGreen,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'DMSans',
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  // "Live Earning" grey sub-label
-                  Text(
-                    'Live Earning',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 12,
-                      fontFamily: 'DMSans',
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  if (!hasStakes) ...[
-                    const Text(
-                      'No Active Stakes',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'DMSans',
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Start staking to see your live earnings',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4),
-                        fontSize: 13,
-                        fontFamily: 'DMSans',
-                      ),
-                    ),
-                  ] else ...[
-                    // Big number
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        _positions.length == 1
-                            ? '${_totalEarnedCoin.toStringAsFixed(8)}'
-                            : '\$ ${_totalEarned.toStringAsFixed(8)}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 30,
+                  // ── Top: label + number + stats ──────────────────────────────
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'LIVE DASHBOARD',
+                        style: TextStyle(
+                          color: _kGreen,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'DMSans',
-                          fontFeatures: [FontFeature.tabularFigures()],
+                          letterSpacing: 1.2,
                         ),
                       ),
-                    ),
-
-                    // Show coin symbol label when single-coin view (like web)
-                    if (_positions.length == 1) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
-                        _positions.first.coinSymbol,
-                        style: const TextStyle(
-                          color: Color(0xFFCCFF00),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                        'Live Earning',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
                           fontFamily: 'DMSans',
                         ),
                       ),
-                    ],
-
-                    // Per Second | Daily Total — same layout as earn screen hero
-                    Row(
-                      children: [
-                        Expanded(child: _liveStatCol('Per Second', '+${_totalPerSec.toStringAsFixed(8)}')),
-                        Container(
-                          width: 1,
-                          height: 36,
-                          color: Colors.white.withValues(alpha: 0.10),
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                      if (!hasStakes) ...[
+                        const Text(
+                          'No Active Stakes',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'DMSans',
+                          ),
                         ),
-                        Expanded(child: _liveStatCol('Daily Total', _displayDailyCoin.toStringAsFixed(6))),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Start staking to see your live earnings',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            fontSize: 13,
+                            fontFamily: 'DMSans',
+                          ),
+                        ),
+                      ] else ...[
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _positions.length == 1
+                                ? '${_totalEarnedCoin.toStringAsFixed(8)}'
+                                : '\$ ${_totalEarned.toStringAsFixed(8)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 30,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'DMSans',
+                              fontFeatures: [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        ),
+                                               Row(
+                          children: [
+                            Expanded(child: _liveStatCol('Per Second', '+${_totalPerSec.toStringAsFixed(8)}')),
+                            Container(
+                              width: 1,
+                              height: 36,
+                              color: Colors.white.withValues(alpha: 0.10),
+                              margin: const EdgeInsets.symmetric(horizontal: 16),
+                            ),
+                            Expanded(child: _liveStatCol('Daily Total', _displayDailyCoin.toStringAsFixed(6))),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Buttons: My Stake + Calculator — full width expanded
+                    ],
+                  ),
+                  // ── Bottom: buttons ───────────────────────────────────────────
+                  if (hasStakes)
                     Row(
                       children: [
                         Expanded(
@@ -578,7 +565,6 @@ class _McPortfolioScreenState extends State<McPortfolioScreen> with WidgetsBindi
                         ),
                       ],
                     ),
-                  ],
                 ],
               ),
             ),
