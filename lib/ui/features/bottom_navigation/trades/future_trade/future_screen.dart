@@ -801,8 +801,8 @@ class _FutureMarqueeTickerState extends State<_FutureMarqueeTicker> {
         ? announcements.map((a) => '   ${a.title ?? ''}   ').join('')
         : '   Trapix Exchange   ';
     return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      height: 16,
+      padding: const EdgeInsets.only(right: 20, left: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
