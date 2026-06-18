@@ -224,6 +224,7 @@ class FuturePositionHistory {
   final String status;
   final String openedAt;
   final String closedAt;
+  final bool isBonus;
 
   FuturePositionHistory({
     required this.id,
@@ -239,6 +240,7 @@ class FuturePositionHistory {
     required this.status,
     required this.openedAt,
     required this.closedAt,
+    this.isBonus = false,
   });
 
   factory FuturePositionHistory.fromJson(Map<String, dynamic> j) => FuturePositionHistory(
@@ -255,6 +257,7 @@ class FuturePositionHistory {
     status: j['status'] ?? 'closed',
     openedAt: j['opened_at'] ?? j['created_at'] ?? '',
     closedAt: j['closed_at'] ?? '',
+    isBonus: (j['is_bonus'] == 1 || j['is_bonus'] == true),
   );
 }
 
