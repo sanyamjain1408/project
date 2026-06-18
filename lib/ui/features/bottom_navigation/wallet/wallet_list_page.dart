@@ -471,7 +471,8 @@ class _BalanceSearchBarState extends State<_BalanceSearchBar>
           const Spacer(),
 
           // ── Search bar slide in ──
-          AnimatedBuilder(
+          Expanded(
+            child: AnimatedBuilder(
             animation: _animation,
             builder: (context, child) {
               return SizedBox(
@@ -515,6 +516,7 @@ class _BalanceSearchBarState extends State<_BalanceSearchBar>
               ),
             ),
           ),
+          ), // Expanded
 
           const SizedBox(width: 10),
 
