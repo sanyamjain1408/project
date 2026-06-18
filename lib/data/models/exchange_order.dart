@@ -101,6 +101,7 @@ class Trade {
   Trade({
     this.type,
     this.id,
+    this.userId,
     this.transactionId,
     this.price,
     this.createdAt,
@@ -121,6 +122,7 @@ class Trade {
 
   String? type;
   int? id;
+  int? userId;
   String? transactionId;
   int? status;
   DateTime? createdAt;
@@ -142,6 +144,7 @@ class Trade {
         // "side" = buy/sell (spot API). "type" = buy/sell (legacy). "order_type" = limit/market (NOT the side).
         type: json["side"] ?? json["type"] ?? json["coin_trade_type"],
         id: json["id"] ?? json["order_id"],
+        userId: json["user_id"],
         transactionId: json["transaction_id"],
         status: json["status"] is int ? json["status"] : (json["status"] == "open" ? 0 : 1),
         createdAt: json["created_at"] == null ? null : _parseDate(json["created_at"].toString()),

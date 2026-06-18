@@ -1774,7 +1774,7 @@ class SpotTraderHistoryItemView extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 5),
             child: Row(
               children: [
-                Text("Order No.",
+                Text("Order Id.",
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.5),
                       fontSize: 12,
@@ -1784,7 +1784,9 @@ class SpotTraderHistoryItemView extends StatelessWidget {
                     )),
                 const Spacer(),
                 Text(
-                  trimTransactionId(trade.transactionId?.toString()),
+                  trade.transactionId?.isNotEmpty == true
+                      ? trimTransactionId(trade.transactionId)
+                      : (trade.id?.toString() ?? '—'),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -1797,10 +1799,12 @@ class SpotTraderHistoryItemView extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     Clipboard.setData(ClipboardData(
-                        text: trade.transactionId?.toString() ?? ""));
+                        text: trade.transactionId?.isNotEmpty == true
+                            ? trade.transactionId!
+                            : (trade.id?.toString() ?? '')));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text("Order No. copied"),
+                        content: const Text("Order Id. copied"),
                         duration: const Duration(seconds: 1),
                         backgroundColor: const Color(0xFF1A1A1A),
                         behavior: SnackBarBehavior.floating,
