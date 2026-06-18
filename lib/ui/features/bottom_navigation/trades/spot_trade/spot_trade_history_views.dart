@@ -590,6 +590,7 @@ class _SpotTradeHistoryFullScreenState
             dividerColor: Colors.transparent,
             dividerHeight: 0,
             padding: const EdgeInsets.symmetric(horizontal: 12),
+            labelPadding: const EdgeInsets.only(right: 15, left: 10),
             tabs: [
               Tab(text: "Open Order".tr),
               Tab(text: "Order History".tr),
