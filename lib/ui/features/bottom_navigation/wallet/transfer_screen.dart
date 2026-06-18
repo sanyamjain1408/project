@@ -77,21 +77,37 @@ class _TransferScreenState extends State<TransferScreen>
 
   Future<void> _loadCoins() async {
     if (!mounted) return;
-    setState(() { _loadingCoins = true; _coins = []; _selectedCoin = null; _availableBalance = 0; });
+    setState(() {
+      _loadingCoins = true;
+      _coins = [];
+      _selectedCoin = null;
+      _availableBalance = 0;
+    });
     try {
       final res = await http.get(
-        Uri.parse('$_baseUrl/api/get-coin-list?transfer=1&from_fund_type=$_fundFrom&to_fund_type=$_fundTo'),
+        Uri.parse(
+          '$_baseUrl/api/get-coin-list?transfer=1&from_fund_type=$_fundFrom&to_fund_type=$_fundTo',
+        ),
         headers: _authHeaders(),
       );
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body);
-        final raw = j['data'] is List ? j['data'] : (j['data']?['data'] ?? j['coins'] ?? []);
-        final list = (raw as List).map<Map<String, dynamic>>((e) => {
-          'coin_type': e['coin_type']?.toString() ?? '',
-          'name': e['name']?.toString() ?? e['coin_name']?.toString() ?? '',
-          'balance': double.tryParse(e['balance']?.toString() ?? '0') ?? 0,
-          'coin_icon': e['coin_icon']?.toString() ?? e['icon']?.toString() ?? '',
-        }).toList();
+        final raw = j['data'] is List
+            ? j['data']
+            : (j['data']?['data'] ?? j['coins'] ?? []);
+        final list = (raw as List)
+            .map<Map<String, dynamic>>(
+              (e) => {
+                'coin_type': e['coin_type']?.toString() ?? '',
+                'name':
+                    e['name']?.toString() ?? e['coin_name']?.toString() ?? '',
+                'balance':
+                    double.tryParse(e['balance']?.toString() ?? '0') ?? 0,
+                'coin_icon':
+                    e['coin_icon']?.toString() ?? e['icon']?.toString() ?? '',
+              },
+            )
+            .toList();
         if (mounted) {
           setState(() => _coins = list);
           if (list.isNotEmpty) await _selectCoin(list.first);
@@ -103,19 +119,26 @@ class _TransferScreenState extends State<TransferScreen>
 
   Future<void> _selectCoin(Map<String, dynamic> coin) async {
     if (!mounted) return;
-    setState(() { _selectedCoin = coin; _availableBalance = 0; });
+    setState(() {
+      _selectedCoin = coin;
+      _availableBalance = 0;
+    });
     _amountCtrl.clear();
     double bal = 0;
     try {
       final coinType = coin['coin_type'] as String;
       final res = await http.get(
-        Uri.parse('$_baseUrl/api/get-fund-transfer-wallet-balance?coin_type=$coinType&to_fund_type=$_fundTo&from_fund_type=$_fundFrom'),
+        Uri.parse(
+          '$_baseUrl/api/get-fund-transfer-wallet-balance?coin_type=$coinType&to_fund_type=$_fundTo&from_fund_type=$_fundFrom',
+        ),
         headers: _authHeaders(),
       );
       if (res.statusCode == 200) {
         final j = jsonDecode(res.body);
         if (j['success'] == true) {
-          bal = double.tryParse(j['data']?['from_balance']?.toString() ?? '0') ?? 0;
+          bal =
+              double.tryParse(j['data']?['from_balance']?.toString() ?? '0') ??
+              0;
         }
       }
     } catch (_) {}
@@ -131,7 +154,13 @@ class _TransferScreenState extends State<TransferScreen>
 
   void _openCurrencySheet() {
     if (_coins.isEmpty) {
-      Get.snackbar('Loading', 'Please wait...', backgroundColor: _card, colorText: Colors.white, duration: const Duration(seconds: 1));
+      Get.snackbar(
+        'Loading',
+        'Please wait...',
+        backgroundColor: _card,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 1),
+      );
       return;
     }
     showModalBottomSheet(
@@ -140,7 +169,10 @@ class _TransferScreenState extends State<TransferScreen>
       isScrollControlled: true,
       builder: (_) => _CoinSelectSheet(
         coins: _coins,
-        onSelect: (c) { _selectCoin(c); Get.back(); },
+        onSelect: (c) {
+          _selectCoin(c);
+          Get.back();
+        },
       ),
     );
   }
@@ -149,11 +181,21 @@ class _TransferScreenState extends State<TransferScreen>
     final coin = _selectedCoin;
     final amount = double.tryParse(_amountCtrl.text.trim()) ?? 0;
     if (coin == null || amount <= 0) {
-      Get.snackbar('Error', 'Enter a valid amount', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Enter a valid amount',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
     if (amount > _availableBalance) {
-      Get.snackbar('Error', 'Amount exceeds available balance', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Amount exceeds available balance',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
     setState(() => _processing = true);
@@ -170,14 +212,29 @@ class _TransferScreenState extends State<TransferScreen>
       );
       final j = jsonDecode(res.body);
       if (j['success'] == true) {
-        Get.snackbar('Success', j['message'] ?? 'Transfer successful', backgroundColor: const Color(0xFF4ED78E), colorText: Colors.black);
+        Get.snackbar(
+          'Success',
+          j['message'] ?? 'Transfer successful',
+          backgroundColor: const Color(0xFF4ED78E),
+          colorText: Colors.black,
+        );
         _amountCtrl.clear();
         _loadCoins();
       } else {
-        Get.snackbar('Failed', j['message'] ?? 'Transfer failed', backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Failed',
+          j['message'] ?? 'Transfer failed',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (_) {
-      Get.snackbar('Error', 'Something went wrong', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Something went wrong',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
     if (mounted) setState(() => _processing = false);
   }
@@ -197,30 +254,39 @@ class _TransferScreenState extends State<TransferScreen>
         leadingWidth: 48,
         leading: GestureDetector(
           onTap: () => Get.back(),
-          child: const Padding(
-            padding: EdgeInsets.only(left: 16),
-            child: Icon(Icons.arrow_back, color: _white, size: 22),
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            color: Colors.transparent,
+            alignment: Alignment.center,
+            child: const Icon(Icons.arrow_back, color: _white, size: 22),
           ),
         ),
-        title: const Text(
-          'Transfer',
-          style: TextStyle(
-            color: _white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            fontFamily: _dmSans,
+        title: Transform.translate(
+          offset: Offset(-20, 0),
+          child: const Text(
+            'Transfer',
+            style: TextStyle(
+              color: _white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              fontFamily: _dmSans,
+            ),
           ),
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: 10),
             child: GestureDetector(
-              onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'transfer')),
-              child: RotationTransition(
-                turns: _spinCtrl,
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
+              onTap: () => Get.to(
+                () => const TransactionHistoryScreen(initialTab: 'transfer'),
+              ),
+              child: Container(
+                width: 40,
+                height: 40,
+                color: Colors.transparent,
+                alignment: Alignment.center,
+                child: RotationTransition(
+                  turns: _spinCtrl,
                   child: Image.asset(
                     'assets/icons/time.png',
                     width: 20,
@@ -291,7 +357,11 @@ class _TransferScreenState extends State<TransferScreen>
             const SizedBox(height: 20),
 
             // ── TRANSFER DIRECTION CARD ─────────────────────────────────────
-            _TransferDirectionCard(screenW: screenW, fundFrom: _fundFrom, onSwap: _swap),
+            _TransferDirectionCard(
+              screenW: screenW,
+              fundFrom: _fundFrom,
+              onSwap: _swap,
+            ),
 
             const SizedBox(height: 40),
 
@@ -301,23 +371,52 @@ class _TransferScreenState extends State<TransferScreen>
               child: Container(
                 height: 50,
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Row(
                   children: [
                     if (_loadingCoins)
-                      const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: _green, strokeWidth: 2))
-                    else if (_selectedCoin != null && (_selectedCoin!['coin_icon'] as String).isNotEmpty) ...[
-                      showImageNetwork(imagePath: _selectedCoin!['coin_icon'], height: 30, width: 30, bgColor: Colors.transparent),
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: _green,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    else if (_selectedCoin != null &&
+                        (_selectedCoin!['coin_icon'] as String).isNotEmpty) ...[
+                      showImageNetwork(
+                        imagePath: _selectedCoin!['coin_icon'],
+                        height: 30,
+                        width: 30,
+                        bgColor: Colors.transparent,
+                      ),
                       const SizedBox(width: 10),
                     ],
                     Expanded(
                       child: Text(
                         _selectedCoin?['coin_type'] ?? 'Select Currency',
-                        style: const TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w400, fontFamily: _dmSans, height: 24 / 16),
+                        style: const TextStyle(
+                          color: _white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: _dmSans,
+                          height: 24 / 16,
+                        ),
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios, color: _white, size: 16),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      color: _white,
+                      size: 16,
+                    ),
                   ],
                 ),
               ),
@@ -329,19 +428,39 @@ class _TransferScreenState extends State<TransferScreen>
             Container(
               height: 50,
               width: double.infinity,
-              decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(
+                color: _card,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _amountCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: const TextStyle(color: _white, fontFamily: _dmSans, fontSize: 15, fontWeight: FontWeight.w400, height: 20 / 15),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      style: const TextStyle(
+                        color: _white,
+                        fontFamily: _dmSans,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        height: 20 / 15,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Min : 0.0000001',
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontFamily: _dmSans, fontSize: 15, fontWeight: FontWeight.w400, height: 20 / 15),
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontFamily: _dmSans,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          height: 20 / 15,
+                        ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 15,
+                        ),
                       ),
                     ),
                   ),
@@ -352,12 +471,28 @@ class _TransferScreenState extends State<TransferScreen>
                       children: [
                         Text(
                           _selectedCoin?['coin_type'] ?? 'USDT',
-                          style: TextStyle(color: Colors.white.withOpacity(0.5), fontFamily: _dmSans, fontSize: 15, fontWeight: FontWeight.w400, height: 20 / 15),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontFamily: _dmSans,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                            height: 20 / 15,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         GestureDetector(
-                          onTap: () => _amountCtrl.text = _availableBalance.toStringAsFixed(8),
-                          child: const Text('Max', style: TextStyle(color: Color(0xFF4ED78E), fontFamily: _dmSans, fontSize: 15, fontWeight: FontWeight.w400, height: 20 / 15)),
+                          onTap: () => _amountCtrl.text = _availableBalance
+                              .toStringAsFixed(8),
+                          child: const Text(
+                            'Max',
+                            style: TextStyle(
+                              color: Color(0xFF4ED78E),
+                              fontFamily: _dmSans,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              height: 20 / 15,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -371,7 +506,13 @@ class _TransferScreenState extends State<TransferScreen>
             // ── AVAILABLE ───────────────────────────────────────────────────
             Text(
               'Available: ${_availableBalance.toStringAsFixed(8)} ${_selectedCoin?['coin_type'] ?? 'USDT'}',
-              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 16 / 12),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 12,
+                fontFamily: _dmSans,
+                fontWeight: FontWeight.w400,
+                height: 16 / 12,
+              ),
             ),
 
             const SizedBox(height: 20),
@@ -393,20 +534,52 @@ class _TransferScreenState extends State<TransferScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text('Hold to Earn', style: TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _dmSans, height: 24 / 16)),
+                        Text(
+                          'Hold to Earn',
+                          style: TextStyle(
+                            color: _white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: _dmSans,
+                            height: 24 / 16,
+                          ),
+                        ),
                         SizedBox(height: 5),
-                        Text('No lock-up. Trade anytime with daily earnings credited automatically.', style: TextStyle(color: _white, fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+                        Text(
+                          'No lock-up. Trade anytime with daily earnings credited automatically.',
+                          style: TextStyle(
+                            color: _white,
+                            fontSize: 12,
+                            fontFamily: _dmSans,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(5),
-                      gradient: const LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [Color(0xFF53F8A0), Color(0xFF00E5AB)]),
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Color(0xFF53F8A0), Color(0xFF00E5AB)],
+                      ),
                     ),
-                    child: const Text('APR up to 3.2%', style: TextStyle(color: Color(0xFF000000), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
+                    child: const Text(
+                      'APR up to 3.2%',
+                      style: TextStyle(
+                        color: Color(0xFF000000),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: _dmSans,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -424,11 +597,29 @@ class _TransferScreenState extends State<TransferScreen>
                   disabledBackgroundColor: _green.withOpacity(0.5),
                   elevation: 0,
                   overlayColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 child: _processing
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                    : const Text('Confirm', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600, fontFamily: _dmSans, height: 24 / 16)),
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.black,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Confirm',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: _dmSans,
+                          height: 24 / 16,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -448,14 +639,36 @@ class _CoinSelectSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: const BoxDecoration(color: _bg, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      decoration: const BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: Container(margin: const EdgeInsets.symmetric(vertical: 12), width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)))),
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text('Select Currency', style: TextStyle(color: _white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: _dmSans, height: 1.4)),
+            child: Text(
+              'Select Currency',
+              style: TextStyle(
+                color: _white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                fontFamily: _dmSans,
+                height: 1.4,
+              ),
+            ),
           ),
           Expanded(
             child: ListView.builder(
@@ -469,17 +682,47 @@ class _CoinSelectSheet extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     child: Row(
                       children: [
-                        showImageNetwork(imagePath: coin['coin_icon'], height: 36, width: 36, bgColor: Colors.transparent),
+                        showImageNetwork(
+                          imagePath: coin['coin_icon'],
+                          height: 36,
+                          width: 36,
+                          bgColor: Colors.transparent,
+                        ),
                         const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(coin['coin_type'] ?? '', style: const TextStyle(color: _white, fontSize: 16, fontWeight: FontWeight.w400, fontFamily: _dmSans, height: 24 / 16)),
-                            Text(coin['name'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 16 / 12)),
+                            Text(
+                              coin['coin_type'] ?? '',
+                              style: const TextStyle(
+                                color: _white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: _dmSans,
+                                height: 24 / 16,
+                              ),
+                            ),
+                            Text(
+                              coin['name'] ?? '',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: 12,
+                                fontFamily: _dmSans,
+                                fontWeight: FontWeight.w400,
+                                height: 16 / 12,
+                              ),
+                            ),
                           ],
                         ),
                         const Spacer(),
-                        Text('${(coin['balance'] as double).toStringAsFixed(4)}', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, fontFamily: _dmSans)),
+                        Text(
+                          '${(coin['balance'] as double).toStringAsFixed(4)}',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 13,
+                            fontFamily: _dmSans,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -495,7 +738,11 @@ class _CoinSelectSheet extends StatelessWidget {
 
 // ── TRANSFER DIRECTION CARD ─────────────────────────────────────────────────────
 class _TransferDirectionCard extends StatelessWidget {
-  const _TransferDirectionCard({required this.screenW, required this.fundFrom, required this.onSwap});
+  const _TransferDirectionCard({
+    required this.screenW,
+    required this.fundFrom,
+    required this.onSwap,
+  });
   final double screenW;
   final int fundFrom;
   final VoidCallback onSwap;
@@ -910,4 +1157,3 @@ class _TransferBorderGlowPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
 }
-
