@@ -1891,73 +1891,52 @@ class _WalletCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.10),
             ),
           ),
-          // Available label
+          // Bottom 3-column row
           Positioned(
             left: 20,
-            top: 153,
-            child: Text('Available', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
-          ),
-          // Available value
-          Positioned(
-            left: 20,
-            top: 174,
-            child: Text(
-              isHide ? '****' : availableBalance.toStringAsFixed(4),
-              textAlign: TextAlign.center,
-              style: TextStyle(color: equityColor, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600),
-            ),
-          ),
-          // Available USD
-          Positioned(
-            left: 20,
-            top: 200,
-            child: Text(
-              isHide ? '' : '\$${availableBalance.toStringAsFixed(4)}',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400),
-            ),
-          ),
-          // Position Margin label
-          Positioned(
-            left: 143,
-            top: 153,
-            child: Text('Position Margin', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
-          ),
-          // Position Margin value
-          Positioned(
-            left: 143,
-            top: 174,
-            child: Text(
-              isHide ? '****' : positionMargin.toStringAsFixed(4),
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600),
-            ),
-          ),
-          // Position Margin USD
-          Positioned(
-            left: 143,
-            top: 200,
-            child: Text(
-              isHide ? '' : '\$${positionMargin.toStringAsFixed(2)}',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400),
-            ),
-          ),
-          // Order Margin label
-          Positioned(
             right: 20,
-            top: 153,
-            child: Text('Order Margin', textAlign: TextAlign.right, style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
-          ),
-          // Order Margin value
-          Positioned(
-            right: 20,
-            top: 174,
-            child: Text('0.00', textAlign: TextAlign.right, style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
-          ),
-          // Order Margin USD
-          Positioned(
-            right: 20,
-            top: 200,
-            child: Text('\$0.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+            top: 150,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Available
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Available', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+                      const SizedBox(height: 4),
+                      Text(isHide ? '****' : availableBalance.toStringAsFixed(4), style: TextStyle(color: equityColor, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
+                      Text(isHide ? '' : '\$${availableBalance.toStringAsFixed(4)}', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+                    ],
+                  ),
+                ),
+                // Position Margin
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Position Margin', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+                      const SizedBox(height: 4),
+                      Text(isHide ? '****' : positionMargin.toStringAsFixed(4), style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
+                      Text(isHide ? '' : '\$${positionMargin.toStringAsFixed(2)}', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+                    ],
+                  ),
+                ),
+                // Order Margin
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('Order Margin', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+                      const SizedBox(height: 4),
+                      const Text('0.00', style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
+                      Text('\$0.00', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
