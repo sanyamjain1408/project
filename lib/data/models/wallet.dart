@@ -36,7 +36,10 @@ class Wallet {
       this.encryptId,
       this.currencyType,
         this.decimal,
-      this.networkId});
+      this.networkId,
+      this.avgPrice,
+      this.pnl,
+      this.pnlText});
 
   int id;
   int? userId;
@@ -71,6 +74,9 @@ class Wallet {
   double? withdrawalFees;
   int? withdrawalFeesType;
   int? decimal;
+  double? avgPrice;
+  double? pnl;
+  String? pnlText;
 
   factory Wallet.fromJson(Map<String?, dynamic> json) {
   final coinPairs = json["coin_pairs"];
@@ -115,6 +121,9 @@ class Wallet {
     withdrawalFees: makeDouble(json["withdrawal_fees"]),
     withdrawalFeesType: makeInt(json["withdrawal_fees_type"]),
     decimal: json["decimal"],
+    avgPrice: makeDouble(json["avg_price"]),
+    pnl: makeDouble(json["pnl"]),
+    pnlText: json["pnl_text"],
   );
 }
 }

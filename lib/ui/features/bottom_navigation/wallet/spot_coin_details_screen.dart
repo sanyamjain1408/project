@@ -1,9 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/wallet.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transaction_history_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
@@ -11,20 +18,94 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_cr
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_fiat_deposit/wallet_fiat_deposit_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_fiat_withdrawal/wallet_fiat_withdrawal_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_overview_page.dart';
+import 'package:tradexpro_flutter/utils/date_util.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 
 const _dmSans = 'DMSans';
 
-class SpotCoinDetailsScreen extends StatelessWidget {
-  SpotCoinDetailsScreen({super.key, required this.wallet});
-
+class SpotCoinDetailsScreen extends StatefulWidget {
+  const SpotCoinDetailsScreen({super.key, required this.wallet});
   final Wallet wallet;
+
+  @override
+  State<SpotCoinDetailsScreen> createState() => _SpotCoinDetailsScreenState();
+}
+
+class _SpotCoinDetailsScreenState extends State<SpotCoinDetailsScreen> {
   final _controller = Get.find<WalletController>();
+
+  List<Map<String, dynamic>> _history = [];
+  bool _historyLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Map<String, String> _authHeaders() {
+    final token = GetStorage().read(PreferenceKey.accessToken) ?? '';
+    final type = GetStorage().read(PreferenceKey.accessType) ?? 'Bearer';
+    final secret = dotenv.env[EnvKeyValue.kApiSecret] ?? '';
+    return {
+      'Accept': 'application/json',
+      'userapisecret': secret,
+      if (token.isNotEmpty) 'Authorization': '$type $token',
+    };
+  }
+
+  Future<void> _loadHistory() async {
+    final coinType = widget.wallet.coinType ?? '';
+    try {
+      final results = await Future.wait([
+        http.get(
+          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=deposit&page=1&per_page=10&coin_type=$coinType'),
+          headers: _authHeaders(),
+        ),
+        http.get(
+          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=withdraw&page=1&per_page=10&coin_type=$coinType'),
+          headers: _authHeaders(),
+        ),
+      ]);
+
+      final List<Map<String, dynamic>> combined = [];
+      for (int i = 0; i < results.length; i++) {
+        final resp = results[i];
+        final tab = i == 0 ? 'deposit' : 'withdraw';
+        if (resp.statusCode == 200) {
+          final body = jsonDecode(resp.body);
+          final raw = body['data']?['histories']?['data'];
+          if (raw is List) {
+            for (final e in raw) {
+              combined.add({...Map<String, dynamic>.from(e), '_type': tab});
+            }
+          }
+        }
+      }
+
+      // sort by created_at desc, keep first 5
+      combined.sort((a, b) {
+        final da = DateTime.tryParse(a['created_at']?.toString() ?? '') ?? DateTime(0);
+        final db = DateTime.tryParse(b['created_at']?.toString() ?? '') ?? DateTime(0);
+        return db.compareTo(da);
+      });
+
+      if (mounted) {
+        setState(() {
+          _history = combined.take(5).toList();
+          _historyLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _historyLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final wallet = widget.wallet;
     final pairList = _controller.getCoinPairList(wallet.coinType ?? '');
     final currencyName = getSettingsLocal()?.currency ?? DefaultValue.currency;
     final symbol = wallet.coinType ?? '';
@@ -32,8 +113,8 @@ class SpotCoinDetailsScreen extends StatelessWidget {
     final totalUsd = wallet.totalBalanceUsd ?? 0;
     final available = wallet.availableBalance ?? 0;
     final locked = wallet.onOrder ?? 0;
-    final lockedUsd = wallet.onOrderUsd ?? 0;
     final availableUsd = wallet.availableBalanceUsd ?? 0;
+    final lockedUsd = wallet.onOrderUsd ?? 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
@@ -46,15 +127,9 @@ class SpotCoinDetailsScreen extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () => Get.back(),
-              child: const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 25,
-              ),
+              child: const Icon(Icons.arrow_back, color: Colors.white, size: 25),
             ),
-
             const SizedBox(width: 15),
-
             ClipOval(
               child: showImageNetwork(
                 imagePath: wallet.coinIcon,
@@ -63,9 +138,7 @@ class SpotCoinDetailsScreen extends StatelessWidget {
                 bgColor: Colors.transparent,
               ),
             ),
-
             const SizedBox(width: 5),
-
             Text(
               symbol,
               style: const TextStyle(
@@ -141,6 +214,9 @@ class SpotCoinDetailsScreen extends StatelessWidget {
                     locked: locked,
                     lockedUsd: lockedUsd,
                     currencyName: currencyName,
+                    avgPrice: wallet.avgPrice,
+                    pnl: wallet.pnl,
+                    pnlText: wallet.pnlText,
                   ),
                   vSpacer20(),
 
@@ -149,7 +225,11 @@ class SpotCoinDetailsScreen extends StatelessWidget {
                   vSpacer20(),
 
                   // ── History ──
-                  _HistorySection(),
+                  _HistorySection(
+                    loading: _historyLoading,
+                    history: _history,
+                    onViewAll: () => Get.to(() => const TransactionHistoryScreen()),
+                  ),
                   vSpacer20(),
                 ],
               ),
@@ -175,18 +255,37 @@ class _StatsGrid extends StatelessWidget {
     required this.locked,
     required this.lockedUsd,
     required this.currencyName,
+    this.avgPrice,
+    this.pnl,
+    this.pnlText,
   });
   final double available;
   final double availableUsd;
   final double locked;
   final double lockedUsd;
   final String currencyName;
+  final double? avgPrice;
+  final double? pnl;
+  final String? pnlText;
 
   @override
   Widget build(BuildContext context) {
+    final avgPriceStr = (avgPrice != null && avgPrice! > 0)
+        ? '${coinFormat(avgPrice!)} USDT'
+        : '0.00 USDT';
+
+    String pnlStr;
+    Color pnlColor;
+    if (pnlText != null && pnlText!.isNotEmpty) {
+      pnlStr = pnlText!;
+      pnlColor = (pnl != null && pnl! >= 0) ? const Color(0xFF4ED78E) : const Color(0xFFD63B3B);
+    } else {
+      pnlStr = '+0 USDT (0.00%)';
+      pnlColor = const Color(0xFFD63B3B);
+    }
+
     return Column(
       children: [
-        // Row 1: Available | Available (locked label)
         Row(
           children: [
             Expanded(child: _statLabel('Available')),
@@ -196,22 +295,11 @@ class _StatsGrid extends StatelessWidget {
         const SizedBox(height: 2),
         Row(
           children: [
-            Expanded(
-              child: _statValue(
-                coinFormat(available),
-                Colors.white.withValues(alpha: 0.50),
-              ),
-            ),
-            Expanded(
-              child: _statValue(
-                coinFormat(locked),
-                Colors.white.withValues(alpha: 0.50),
-              ),
-            ),
+            Expanded(child: _statValue(coinFormat(available), Colors.white.withValues(alpha: 0.50))),
+            Expanded(child: _statValue(coinFormat(locked), Colors.white.withValues(alpha: 0.50))),
           ],
         ),
         const SizedBox(height: 16),
-        // Row 2: Average Price | Today's PNL
         Row(
           children: [
             Expanded(child: _statLabel('Average Price')),
@@ -221,15 +309,8 @@ class _StatsGrid extends StatelessWidget {
         const SizedBox(height: 2),
         Row(
           children: [
-            Expanded(
-              child: _statValue(
-                '0.00 USDT',
-                Colors.white.withValues(alpha: 0.50),
-              ),
-            ),
-            Expanded(
-              child: _statValue('+0 USDT (0.00%)', const Color(0xFFD63B3B)),
-            ),
+            Expanded(child: _statValue(avgPriceStr, Colors.white.withValues(alpha: 0.50))),
+            Expanded(child: _statValue(pnlStr, pnlColor)),
           ],
         ),
       ],
@@ -298,9 +379,7 @@ class _RecommendedSection extends StatelessWidget {
                 actionLabel: 'Earn Now',
                 imagePath: 'assets/images/earning.png',
                 onTap: () => Get.to(
-                  () => const WalletDetailScreen(
-                    initialType: WalletViewType.earn,
-                  ),
+                  () => const WalletDetailScreen(initialType: WalletViewType.earn),
                 ),
               ),
             ),
@@ -334,9 +413,7 @@ class _RecommendCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
         decoration: ShapeDecoration(
           color: const Color(0xFF1A1A1A),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,7 +457,14 @@ class _RecommendCard extends StatelessWidget {
 // ── History ───────────────────────────────────────────────────────────────────
 
 class _HistorySection extends StatelessWidget {
-  const _HistorySection();
+  const _HistorySection({
+    required this.loading,
+    required this.history,
+    required this.onViewAll,
+  });
+  final bool loading;
+  final List<Map<String, dynamic>> history;
+  final VoidCallback onViewAll;
 
   @override
   Widget build(BuildContext context) {
@@ -401,7 +485,7 @@ class _HistorySection extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: onViewAll,
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 minimumSize: Size.zero,
@@ -420,18 +504,152 @@ class _HistorySection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 30),
-        Center(
-          child: Text(
-            'No recent history',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.50),
-              fontSize: 14,
-              fontFamily: _dmSans,
+        const SizedBox(height: 12),
+        if (loading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: CircularProgressIndicator(color: Color(0xFFCCFF00), strokeWidth: 2),
+            ),
+          )
+        else if (history.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Text(
+                'No recent history',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.50),
+                  fontSize: 14,
+                  fontFamily: _dmSans,
+                ),
+              ),
+            ),
+          )
+        else
+          ...history.map((tx) => _HistoryRow(tx: tx)),
+      ],
+    );
+  }
+}
+
+class _HistoryRow extends StatelessWidget {
+  const _HistoryRow({required this.tx});
+  final Map<String, dynamic> tx;
+
+  String _statusLabel(dynamic status) {
+    switch (status?.toString()) {
+      case '1': return 'Success';
+      case '0':
+      case '4': return 'Pending';
+      case '5': return 'Processing';
+      case '2': return 'Rejected';
+      default: return 'Failed';
+    }
+  }
+
+  Color _statusColor(String label) {
+    if (label == 'Success') return const Color(0xFF4ED78E);
+    if (label == 'Pending' || label == 'Processing') return const Color(0xFFE0B341);
+    return const Color(0xFFD73C3C);
+  }
+
+  String _formatDate(dynamic raw) {
+    try {
+      if (raw == null || raw.toString().isEmpty) return '';
+      final dt = DateTime.parse(raw.toString()).toLocal();
+      return formatDate(dt, format: "d MMM ''yy, hh:mm a");
+    } catch (_) {
+      return raw?.toString() ?? '';
+    }
+  }
+
+  String _fmtAmt(dynamic v) {
+    final d = double.tryParse(v?.toString() ?? '0') ?? 0;
+    if (d == d.truncateToDouble()) return d.toStringAsFixed(2);
+    return d.toStringAsFixed(8).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final type = tx['_type']?.toString() ?? 'deposit';
+    final isDep = type == 'deposit';
+    final coinType = tx['coin_type']?.toString() ?? '';
+    final amount = tx['amount'];
+    final status = _statusLabel(tx['status']);
+    final statusColor = _statusColor(status);
+    final date = _formatDate(tx['created_at']);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isDep
+                  ? const Color(0xFF015629).withValues(alpha: 0.4)
+                  : const Color(0xFF920000).withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isDep ? Icons.arrow_downward : Icons.arrow_upward,
+              color: isDep ? const Color(0xFF4ED78E) : const Color(0xFFD73C3C),
+              size: 18,
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isDep ? 'Deposit $coinType' : 'Withdraw $coinType',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontFamily: _dmSans,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  date,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.40),
+                    fontSize: 11,
+                    fontFamily: _dmSans,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${isDep ? '+' : '-'}${_fmtAmt(amount)} $coinType',
+                style: TextStyle(
+                  color: isDep ? const Color(0xFF4ED78E) : const Color(0xFFD73C3C),
+                  fontSize: 13,
+                  fontFamily: _dmSans,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                status,
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 11,
+                  fontFamily: _dmSans,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -461,7 +679,6 @@ class _BottomBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Add Funds
           if (wallet.isDeposit == 1)
             Expanded(
               child: _BarBtn(
@@ -477,7 +694,6 @@ class _BottomBar extends StatelessWidget {
             ),
           if (wallet.isDeposit == 1) const SizedBox(width: 10),
 
-          // Withdraw
           if (wallet.isWithdrawal == 1)
             Expanded(
               child: _BarBtn(
@@ -494,7 +710,6 @@ class _BottomBar extends StatelessWidget {
             ),
           if (wallet.isWithdrawal == 1) const SizedBox(width: 10),
 
-          // Transfer
           Expanded(
             child: _BarBtn(
               label: 'Transfer',
@@ -524,20 +739,14 @@ class _BarBtn extends StatelessWidget {
         alignment: Alignment.center,
         decoration: ShapeDecoration(
           color: const Color(0xFF1A1A1A),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             if (imagePath != null) ...[
-              Image.asset(
-                imagePath!,
-                width: 20,
-                height: 20,
-              ),
+              Image.asset(imagePath!, width: 20, height: 20),
               const SizedBox(width: 5),
             ],
             Text(
