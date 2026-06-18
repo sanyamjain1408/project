@@ -1613,14 +1613,13 @@ class SpotOrderHistoryItemView extends StatelessWidget {
               ),
             ),
           ),
+          _row("Order Id.", trade.transactionId?.isNotEmpty == true ? _trimTxId(trade.transactionId) : (trade.id?.toString() ?? '—')),
           _row("Amount ($tradeCoin)", coinFormat(trade.amount)),
           _row("Price ($baseCoin)", coinFormat(trade.price)),
           if (fromKey == FromKey.trade)
             _row("Fee ($baseCoin)", coinFormat(trade.fees)),
           if (fromKey != FromKey.trade)
             _row("Total ($baseCoin)", coinFormat(trade.total)),
-          if (fromKey == FromKey.trade)
-            _row("TX ID", _trimTxId(trade.transactionId?.toString())),
           _statusRow(trade.status),
           const SizedBox(height: 10),
           Divider(
