@@ -158,9 +158,9 @@ Widget signInNeedView({bool isDrawer = false}) {
           isDrawer ? vSpacer10() : vSpacer20(),
           isDrawer
               ? buttonText("Sign In".tr, onPress: () => Get.offAll(() => const SignInPage()), visualDensity: VisualDensity.compact)
-              : buttonRoundedMain(text: "Sign In".tr, onPress: () => Get.offAll(() => const SignInPage()), buttonHeight: Dimens.btnHeightMid),
+              : buttonRoundedMain(text: "Sign In".tr, onPress: () => Get.offAll(() => const SignInPage()), buttonHeight: Dimens.btnHeightMid, bgColor: const Color(0xFFCCFF00), textColor: Colors.black),
           isDrawer ? vSpacer10() : vSpacer20(),
-          textSpanWithAction('Do not have account'.tr, "Sign Up".tr, onTap: () => Get.offAll(() => const SignUpScreen())),
+          textSpanWithAction('Do not have account'.tr, "Sign Up".tr, onTap: () => Get.offAll(() => const SignUpScreen()), subColor: const Color(0xFFCCFF00)),
         ],
       ),
     ),
