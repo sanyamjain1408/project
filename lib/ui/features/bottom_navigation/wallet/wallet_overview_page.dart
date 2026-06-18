@@ -1719,6 +1719,7 @@ class _WalletCard extends StatelessWidget {
                 center: Alignment(-0.98, -0.95),
                 radius: 3.12,
                 colors: [Color(0xFF808080), Color(0xFF1A1A1A)],
+                stops: [0.0, 0.45],
               )
             : null,
         color: isReward ? null : const Color(0xFF1A1A1A),
