@@ -1913,7 +1913,9 @@ class _WalletCard extends StatelessWidget {
                 ),
                 // Position Margin
                 Expanded(
-                  child: Column(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Position Margin', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
@@ -1921,6 +1923,7 @@ class _WalletCard extends StatelessWidget {
                       Text(isHide ? '****' : positionMargin.toStringAsFixed(4), style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
                       Text(isHide ? '' : '\$${positionMargin.toStringAsFixed(2)}', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
                     ],
+                  ),
                   ),
                 ),
                 // Order Margin
