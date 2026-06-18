@@ -1797,8 +1797,8 @@ class _WalletCard extends StatelessWidget {
                 padding: const EdgeInsets.all(5),
                 decoration: ShapeDecoration(
                   gradient: const LinearGradient(
-                    begin: Alignment(0, 0),
-                    end: Alignment(1, 1),
+                    begin: Alignment(-0.00, -0.00),
+                    end: Alignment(1.00, 1.00),
                     colors: [Color(0xFF998400), Color(0xFFEDCE00)],
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
