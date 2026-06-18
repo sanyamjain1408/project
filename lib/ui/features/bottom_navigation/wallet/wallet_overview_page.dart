@@ -1838,13 +1838,13 @@ class _WalletCard extends StatelessWidget {
           ),
           // Unrealized PNL label
           Positioned(
-            left: 259,
+            right: 20,
             top: 70,
             child: Text('Unrealized PNL', textAlign: TextAlign.right, style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
           ),
           // Unrealized PNL value
           Positioned(
-            left: 274,
+            right: 20,
             top: 91,
             child: Text(
               isHide ? '****' : '$pnlSign${unrealizedPnl.toStringAsFixed(4)}',
@@ -1854,7 +1854,7 @@ class _WalletCard extends StatelessWidget {
           ),
           // Unrealized PNL USD
           Positioned(
-            left: 293,
+            right: 20,
             top: 117,
             child: Text(
               isHide ? '' : '($pnlSign\$${unrealizedPnl.abs().toStringAsFixed(2)})',
@@ -1865,14 +1865,11 @@ class _WalletCard extends StatelessWidget {
           // Divider line
           Positioned(
             left: 20,
+            right: 20,
             top: 143,
             child: Container(
-              width: 322,
-              decoration: ShapeDecoration(
-                shape: RoundedRectangleBorder(
-                  side: BorderSide(width: 1, strokeAlign: BorderSide.strokeAlignCenter, color: Colors.white.withValues(alpha: 0.10)),
-                ),
-              ),
+              height: 1,
+              color: Colors.white.withValues(alpha: 0.10),
             ),
           ),
           // Available label
@@ -1927,19 +1924,19 @@ class _WalletCard extends StatelessWidget {
           ),
           // Order Margin label
           Positioned(
-            left: 268,
+            right: 20,
             top: 153,
             child: Text('Order Margin', textAlign: TextAlign.right, style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
           ),
           // Order Margin value
           Positioned(
-            left: 305,
+            right: 20,
             top: 174,
             child: Text('0.00', textAlign: TextAlign.right, style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
           ),
           // Order Margin USD
           Positioned(
-            left: 309,
+            right: 20,
             top: 200,
             child: Text('\$0.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
           ),
