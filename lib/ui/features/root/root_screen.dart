@@ -350,7 +350,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
               else
                 // ── WELCOME SECTION (logout) ──────────────────────────
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                   child: Column(
                     children: [
                       Center(
@@ -373,20 +373,19 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
                       const Text(
                         'Welcome to Trapix',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white, fontSize: 30, fontFamily: _dmSans, fontWeight: FontWeight.w700),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
                           Expanded(
                             child: GestureDetector(
                               onTap: () { Get.back(); Get.offAll(() => const SignInPage()); },
                               child: Container(
-                                height: 48,
+                                height: 40,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   color: Colors.transparent,
@@ -403,7 +402,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                             child: GestureDetector(
                               onTap: () { Get.back(); Get.offAll(() => const SignUpScreen()); },
                               child: Container(
-                                height: 48,
+                                height: 40,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(10)),
                                 child: const Text('Sign Up', textAlign: TextAlign.center,
@@ -416,6 +415,8 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 20,),
 
               // ── SPIN + REFER BANNERS ──────────────────────────────────
               Container(
@@ -520,6 +521,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+               const SizedBox(height: 20),
 
               // ── QUICK ICON ROW (only when logged in) ──────────────────
               if (hasUser)
