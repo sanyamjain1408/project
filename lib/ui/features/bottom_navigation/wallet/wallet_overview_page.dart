@@ -1793,8 +1793,7 @@ class _WalletCard extends StatelessWidget {
               left: 152,
               top: 22,
               child: Container(
-                height: 26,
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: ShapeDecoration(
                   gradient: const LinearGradient(
                     begin: Alignment(0, 0),
@@ -1803,23 +1802,16 @@ class _WalletCard extends StatelessWidget {
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: const [
-                    Text(
-                      'Reward',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF111111),
-                        fontSize: 12,
-                        fontFamily: _dmSans,
-                        fontWeight: FontWeight.w400,
-                        height: 2,
-                      ),
-                    ),
-                  ],
+                child: const Text(
+                  'Reward',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF111111),
+                    fontSize: 12,
+                    fontFamily: _dmSans,
+                    fontWeight: FontWeight.w700,
+                    height: 1,
+                  ),
                 ),
               ),
             ),
