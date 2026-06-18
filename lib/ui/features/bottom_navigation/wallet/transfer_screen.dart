@@ -63,7 +63,7 @@ class _TransferScreenState extends State<TransferScreen>
     super.initState();
     _spinCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 8),
     )..repeat();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadCoins());
   }
@@ -221,12 +221,16 @@ class _TransferScreenState extends State<TransferScreen>
               },
               child: RotationTransition(
                 turns: _spinCtrl,
-                child: Image.asset(
-                  'assets/icons/time.png',
-                  width: 24,
-                  height: 24,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.history, color: _white, size: 24),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Image.asset(
+                    'assets/icons/time.png',
+                    width: 20,
+                    height: 20,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.history, color: _white, size: 20),
+                  ),
                 ),
               ),
             ),
