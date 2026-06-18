@@ -1658,7 +1658,7 @@ class _FutureCryptoAssetsTab extends StatelessWidget {
       final bonusUpnl = fc.bonusUnrealizedPnl.value;
 
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // ── Real USDT Card ──
           _WalletCard(
@@ -1669,7 +1669,7 @@ class _FutureCryptoAssetsTab extends StatelessWidget {
             positionMargin: realMargin,
             unrealizedPnl: realUpnl,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           // ── Reward USDT Card ──
           _WalletCard(
             isHide: isHide,
@@ -1738,7 +1738,7 @@ class _WalletCard extends StatelessWidget {
           ),
           // USDT label
           Positioned(
-            left: 60,
+            left: isReward ? 59 : 60,
             top: 23,
             child: Text(
               'USDT',
@@ -1768,7 +1768,7 @@ class _WalletCard extends StatelessWidget {
               ),
             ),
           ),
-          // Reward badge (only for reward card)
+          // Reward badge
           if (isReward)
             Positioned(
               left: 152,
@@ -1784,27 +1784,37 @@ class _WalletCard extends StatelessWidget {
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text(
-                  'Reward',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF111111),
-                    fontSize: 12,
-                    fontFamily: _dmSans,
-                    fontWeight: FontWeight.w400,
-                    height: 2,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: const [
+                    Text(
+                      'Reward',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF111111),
+                        fontSize: 12,
+                        fontFamily: _dmSans,
+                        fontWeight: FontWeight.w400,
+                        height: 2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
+          // Right arrow
+          Positioned(
+            right: 16,
+            top: 20,
+            child: Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.50), size: 20),
+          ),
           // Total Equity label
           Positioned(
             left: 20,
             top: 70,
-            child: Text(
-              'Total Equity',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33),
-            ),
+            child: Text('Total Equity', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
           ),
           // Total Equity value
           Positioned(
@@ -1830,11 +1840,7 @@ class _WalletCard extends StatelessWidget {
           Positioned(
             left: 259,
             top: 70,
-            child: Text(
-              'Unrealized PNL',
-              textAlign: TextAlign.right,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33),
-            ),
+            child: Text('Unrealized PNL', textAlign: TextAlign.right, style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
           ),
           // Unrealized PNL value
           Positioned(
