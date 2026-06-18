@@ -97,6 +97,7 @@ class FuturePosition {
   final double? stopLoss;
   final int leverage;
   final String status;
+  final bool isBonus;
 
   FuturePosition({
     required this.id,
@@ -111,6 +112,7 @@ class FuturePosition {
     this.stopLoss,
     required this.leverage,
     required this.status,
+    this.isBonus = false,
   });
 
   factory FuturePosition.fromJson(Map<String, dynamic> j) => FuturePosition(
@@ -126,6 +128,7 @@ class FuturePosition {
     stopLoss: j['stop_loss'] != null ? double.tryParse(j['stop_loss'].toString()) : null,
     leverage: j['leverage'] ?? 1,
     status: j['status'] ?? 'open',
+    isBonus: (j['is_bonus'] == 1 || j['is_bonus'] == true),
   );
 }
 

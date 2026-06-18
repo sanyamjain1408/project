@@ -13,11 +13,19 @@ class NewFutureController extends GetxController {
   final orders = <FutureOrder>[].obs;
   final trades = <FutureTrade>[].obs;
   final positionHistory = <FuturePositionHistory>[].obs;
-  final balance = 0.0.obs;          // total equity (margin balance)
-  final availableBalance = 0.0.obs; // data['available']
-  final marginUsed = 0.0.obs;       // data['margin_used']
-  final walletBalance = 0.0.obs;    // data['wallet_balance']
-  final unrealizedPnl = 0.0.obs;   // data['unrealized_pnl']
+  final balance = 0.0.obs;              // total equity (margin balance)
+  final availableBalance = 0.0.obs;    // data['available']
+  final marginUsed = 0.0.obs;          // data['margin_used']
+  final walletBalance = 0.0.obs;       // data['wallet_balance']
+  final unrealizedPnl = 0.0.obs;      // data['unrealized_pnl']
+  // Real USDT wallet
+  final realMarginBalance = 0.0.obs;  // data['real_margin_balance']
+  final realUnrealizedPnl = 0.0.obs;  // data['real_unrealized_pnl']
+  final realMarginUsed = 0.0.obs;     // data['real_margin_used']
+  // Reward USDT wallet
+  final bonusBalance = 0.0.obs;       // data['bonus_balance']
+  final bonusMarginUsed = 0.0.obs;    // data['bonus_margin_used']
+  final bonusUnrealizedPnl = 0.0.obs; // data['bonus_unrealized_pnl']
   final futurePnlToday = 0.0.obs;   // from /api/future/pnl
   final futurePnlPct = 0.0.obs;
   final isLoggedIn = false.obs;
@@ -266,6 +274,12 @@ class NewFutureController extends GetxController {
           balance.value = total > 0 ? total : (availableBalance.value + margin);
           walletBalance.value = wb > 0 ? wb : (availableBalance.value + margin);
           unrealizedPnl.value = upnl;
+          realMarginBalance.value = double.tryParse(d['real_margin_balance']?.toString() ?? '0') ?? 0;
+          realUnrealizedPnl.value = double.tryParse(d['real_unrealized_pnl']?.toString() ?? '0') ?? 0;
+          realMarginUsed.value = double.tryParse(d['real_margin_used']?.toString() ?? '0') ?? 0;
+          bonusBalance.value = double.tryParse(d['bonus_balance']?.toString() ?? '0') ?? 0;
+          bonusMarginUsed.value = double.tryParse(d['bonus_margin_used']?.toString() ?? '0') ?? 0;
+          bonusUnrealizedPnl.value = double.tryParse(d['bonus_unrealized_pnl']?.toString() ?? '0') ?? 0;
         }
       }
     } catch (_) {}

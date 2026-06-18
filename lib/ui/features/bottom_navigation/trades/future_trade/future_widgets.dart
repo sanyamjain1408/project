@@ -1495,6 +1495,20 @@ class _PositionCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (pos.isBonus) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFF8C00)]),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'REWARD',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.black, fontFamily: futureDmSans),
+                  ),
+                ),
+              ],
               const Spacer(),
               GestureDetector(
                 onTap: () {},
@@ -2293,6 +2307,17 @@ class _FuturePositionHistoryTabState extends State<_FuturePositionHistoryTab> {
                                   decoration: BoxDecoration(color: futureCard2, borderRadius: BorderRadius.circular(4)),
                                   child: Text('${pos.leverage}x', style: const TextStyle(color: Colors.white70, fontSize: 11, fontFamily: futureDmSans)),
                                 ),
+                                if (pos.isBonus) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFF8C00)]),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text('REWARD', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.black, fontFamily: futureDmSans)),
+                                  ),
+                                ],
                                 const Spacer(),
                                 Text(
                                   pos.status.toUpperCase(),
