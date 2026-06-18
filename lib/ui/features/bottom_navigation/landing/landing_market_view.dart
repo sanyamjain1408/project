@@ -84,15 +84,15 @@ class _LandingMarketViewState extends State<LandingMarketView>
                     style: TextStyle(color: _grey, fontSize: 12,
                         fontFamily: _dmSans, fontWeight: FontWeight.w400)),
               ),
-              // Last Price — fixed 90px, centered (mirrors data row SizedBox(width:90))
+              // Last Price — fixed 90px, right-aligned
               const SizedBox(
                 width: 90,
                 child: Text('Last Price',
-                    textAlign: TextAlign.center,
+                    textAlign: TextAlign.right,
                     style: TextStyle(color: _grey, fontSize: 12,
                         fontFamily: _dmSans, fontWeight: FontWeight.w400)),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 18),
               // 24H Change — fixed 83px, centered (mirrors data row SizedBox(width:83))
               const SizedBox(
                 width: 83,
@@ -209,15 +209,15 @@ class _MarketRow extends StatelessWidget {
               ),
             ),
 
-            // ── LAST PRICE (fixed width, center-aligned) ─────────────
+            // ── LAST PRICE (fixed width, right-aligned) ─────────────
             SizedBox(
               width: 90,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(price,
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.right,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -225,7 +225,7 @@ class _MarketRow extends StatelessWidget {
                         fontFamily: _dmSans, fontWeight: FontWeight.w700,
                         height: 1.25)),
                   Text('\$$price',
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.right,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -236,7 +236,7 @@ class _MarketRow extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: 18),
 
             // ── 24H CHANGE BADGE (fixed width, right edge) ────────────
             SizedBox(
