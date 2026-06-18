@@ -44,6 +44,7 @@ import '../side_navigation/spin_win/spin_win_screen.dart';
 import '../side_navigation/listing/listing_screen.dart';
 import '../side_navigation/official_verification/official_verification_screen.dart';
 import '../auth/sign_in/sign_in_screen.dart';
+import '../auth/sign_up/sign_up_screen.dart';
 import '../bottom_navigation/champion/champion_screen.dart';
 import '../side_navigation/price_alerts/price_alerts_screen.dart';
 import 'root_controller.dart';
@@ -256,143 +257,164 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () => Get.to(() => const ProfileScreen(initialTab: 2)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Image.asset(
-                            'assets/icons/setting.png', // apna path
-                            height: 20,
-                            width: 20,
+                      if (hasUser) ...[
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: () => Get.to(() => const ProfileScreen(initialTab: 2)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Image.asset(
+                              'assets/icons/setting.png',
+                              height: 20,
+                              width: 20,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
               ),
 
-              // ── PROFILE ROW ──────────────────────────────────────────
-              GestureDetector(
-                onTap: () => hasUser
-                    ? Get.to(() => const ProfileScreen())
-                    : Get.offAll(() => const SignInPage()),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 10,
-                  ),
-                  color: Colors.transparent,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(width: 10),
-                      // Avatar circle with green border
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            color: Colors.transparent,
-                            child: ClipOval(
-                              child: showCircleAvatar(
-                                hasUser ? user.photo : null,
-                                size: 52,
-                              ),
-                            ),
-                          ),
-
-                          if (hasUser) const SizedBox(height: 4),
-
-                          // Verified badge — only when logged in
-                          if (hasUser)
+              // ── PROFILE ROW (logged in) / WELCOME (logged out) ───────
+              if (hasUser)
+                GestureDetector(
+                  onTap: () => Get.to(() => const ProfileScreen()),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    color: Colors.transparent,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(width: 10),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2,
-                              ),
+                              width: 50,
+                              height: 50,
+                              color: Colors.transparent,
+                              child: ClipOval(child: showCircleAvatar(user.photo, size: 52)),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                               decoration: BoxDecoration(
                                 color: Color(0xFF015629).withValues(alpha: 0.4),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Text(
                                 "Verified",
-                                style: TextStyle(
-                                  color: Color(0xFF00FF4D),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: _dmSans,
-                                ),
+                                style: TextStyle(color: Color(0xFF00FF4D), fontSize: 10, fontWeight: FontWeight.w400, fontFamily: _dmSans),
                               ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(width: 20),
-                      // Name / email / uid
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AutoSizeText(
-                              hasUser
-                                  ? getName(user.firstName, user.lastName)
-                                  : "Sign In".tr,
-                              maxLines: 1,
-                              minFontSize: 12,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: _textWhite,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: _dmSans,
-                                letterSpacing: 0,
+                          ],
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AutoSizeText(
+                                getName(user.firstName, user.lastName),
+                                maxLines: 1,
+                                minFontSize: 12,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: _textWhite, fontSize: 20, fontWeight: FontWeight.w600, fontFamily: _dmSans, letterSpacing: 0),
                               ),
-                            ),
-                            if (hasUser) ...[
                               const SizedBox(height: 5),
                               Text(
                                 _maskEmail(user.email ?? ""),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: _textWhite,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: _dmSans,
-                                ),
+                                style: const TextStyle(color: _textWhite, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dmSans),
                               ),
                               const SizedBox(height: 5),
                               Row(
                                 children: [
-                                  Text(
-                                    "UID: ${user.id}",
-                                    style: const TextStyle(
-                                      color: _textWhite,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                      fontFamily: _dmSans,
-                                    ),
-                                  ),
+                                  Text("UID: ${user.id}", style: const TextStyle(color: _textWhite, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
                                   const SizedBox(width: 5),
-                                  Image.asset(
-                                    'assets/icons/uid.png',
-                                    height: 14,
-                                    width: 13,
-                                  ),
+                                  Image.asset('assets/icons/uid.png', height: 14, width: 13),
                                 ],
                               ),
                             ],
-                          ],
+                          ),
+                        ),
+                        const Spacer(),
+                        const Icon(Icons.chevron_right, color: _green, size: 30),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                // ── WELCOME SECTION (logout) ──────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: const ShapeDecoration(
+                            color: Color(0xFF1A1A1A),
+                            shape: OvalBorder(side: BorderSide(width: 1, color: Colors.white)),
+                          ),
+                          child: ClipOval(
+                            child: Padding(
+                              padding: const EdgeInsets.all(2),
+                              child: Image.asset(
+                                'assets/images/icon.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (ctx, err, st) => const Icon(Icons.currency_exchange, size: 26),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      const Spacer(),
-                      const Icon(Icons.chevron_right, color: _green, size: 30),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Welcome to Trapix',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white, fontSize: 30, fontFamily: _dmSans, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () { Get.back(); Get.offAll(() => const SignInPage()); },
+                              child: Container(
+                                height: 48,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: _green, width: 1),
+                                ),
+                                child: const Text('Sign In', textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.50)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () { Get.back(); Get.offAll(() => const SignUpScreen()); },
+                              child: Container(
+                                height: 48,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(10)),
+                                child: const Text('Sign Up', textAlign: TextAlign.center,
+                                  style: TextStyle(color: Color(0xFF111111), fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.50)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-              ),
 
               // ── SPIN + REFER BANNERS ──────────────────────────────────
               Container(
@@ -498,7 +520,8 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                 ),
               ),
 
-              // ── QUICK ICON ROW ────────────────────────────────────────
+              // ── QUICK ICON ROW (only when logged in) ──────────────────
+              if (hasUser)
               Container(
                 color: Colors.transparent,
                 padding: const EdgeInsets.symmetric(
@@ -513,13 +536,9 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _quickIcon('assets/icons/profilehistory.png', "History",
                         () => showHistorySheet()),
                     _quickIcon('assets/icons/profilesecurity.png', "Security",
-                        () => hasUser
-                            ? Get.to(() => const ProfileScreen(initialTab: 1))
-                            : Get.offAll(() => const SignInPage())),
+                        () => Get.to(() => const ProfileScreen(initialTab: 1))),
                     _quickIcon('assets/icons/profilekyc.png', "KYC",
-                        () => hasUser
-                            ? Get.to(() => const ProfileScreen(initialTab: 3))
-                            : Get.offAll(() => const SignInPage())),
+                        () => Get.to(() => const ProfileScreen(initialTab: 3))),
                     _quickIcon('assets/icons/profileprice.png', "Price Alert",
                         () => Get.to(() => const PriceAlertsScreen())),
                   ],
