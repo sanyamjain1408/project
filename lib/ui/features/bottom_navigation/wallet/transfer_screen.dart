@@ -9,7 +9,7 @@ import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
-import 'package:tradexpro_flutter/ui/features/side_navigation/activity/activity_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transaction_history_screen.dart';
 
 const _dmSans = 'DMSans';
 const _bg = Color(0xFF111111);
@@ -215,10 +215,7 @@ class _TransferScreenState extends State<TransferScreen>
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
-              onTap: () {
-                TemporaryData.activityType = HistoryType.transaction;
-                Get.to(() => const ActivityScreen());
-              },
+              onTap: () => Get.to(() => const TransactionHistoryScreen(initialTab: 'transfer')),
               child: RotationTransition(
                 turns: _spinCtrl,
                 child: SizedBox(
