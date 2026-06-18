@@ -426,7 +426,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       // Spin to Earn
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => Get.to(() => const SpinWinScreen()),
+                          onTap: () => hasUser ? Get.to(() => const SpinWinScreen()) : Get.offAll(() => const SignInPage()),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: BackdropFilter(
@@ -575,17 +575,17 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _menuRow(
                       "assets/icons/official.png",
                       "Official Verification",
-                      () => Get.to(() => const OfficialVerificationScreen()),
+                      () => hasUser ? Get.to(() => const OfficialVerificationScreen()) : Get.offAll(() => const SignInPage()),
                     ),
                     _menuRow(
                       "assets/icons/airdrop.png",
                       "Airdrop Campaign",
-                      () => Get.to(() => const AirdropScreen()),
+                      () => hasUser ? Get.to(() => const AirdropScreen()) : Get.offAll(() => const SignInPage()),
                     ),
                     _menuRow(
                       "assets/icons/listing.png",
                       "Listing",
-                      () => Get.to(() => const ListingScreen()),
+                      () => hasUser ? Get.to(() => const ListingScreen()) : Get.offAll(() => const SignInPage()),
                     ),
 
                     // ── REWARDS ──────────────────────────────────────────────
@@ -593,19 +593,17 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _menuRow(
                       "assets/images/giveaway.png",
                       "Giveaways",
-                      () => Get.to(() => const GiveawayScreen()),
+                      () => hasUser ? Get.to(() => const GiveawayScreen()) : Get.offAll(() => const SignInPage()),
                     ),
                     _menuRow(
                       "assets/icons/refer_earn.png",
                       "Referral",
-                      () => hasUser
-                          ? Get.to(() => const ReferralScreen())
-                          : Get.offAll(() => const SignInPage()),
+                      () => hasUser ? Get.to(() => const ReferralScreen()) : Get.offAll(() => const SignInPage()),
                     ),
                     _menuRow(
                       "assets/icons/spin.png",
                       "Spin & Win",
-                      () => Get.to(() => const SpinWinScreen()),
+                      () => hasUser ? Get.to(() => const SpinWinScreen()) : Get.offAll(() => const SignInPage()),
                     ),
                      _menuRow(
                       "assets/icons/ib.png",
