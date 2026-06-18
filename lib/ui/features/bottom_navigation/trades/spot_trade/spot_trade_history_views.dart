@@ -217,6 +217,10 @@ class SpotTradeHistoryViewState extends State<SpotTradeHistoryView> {
   }
 
   void _openHistorySheet(BuildContext context) {
+    if (gUserRx.value.id <= 0) {
+      Get.to(() => const SignInPage());
+      return;
+    }
     Get.to(() => SpotTradeHistoryFullScreen(controller: _controller));
   }
 }

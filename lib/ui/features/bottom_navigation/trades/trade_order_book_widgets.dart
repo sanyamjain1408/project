@@ -100,7 +100,9 @@ class OderBookFixedView extends StatelessWidget {
     const double rowH = 18.0;
     final double sectionH = maxRows * rowH;
 
-    return Column(
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // ── Top: header + rows + mid price ────────────────────────────────────────
@@ -286,6 +288,7 @@ class OderBookFixedView extends StatelessWidget {
           ],
         ),
       ],
+    ),
     );
   }
 

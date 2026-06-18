@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'future_controller.dart';
 import 'future_models.dart';
@@ -1260,6 +1262,10 @@ class FuturePositionsSection extends StatefulWidget {
 
 class _FuturePositionsSectionState extends State<FuturePositionsSection> {
   void _openHistory() {
+    if (gUserRx.value.id <= 0) {
+      Get.to(() => const SignInPage());
+      return;
+    }
     Get.to(
       () => FutureHistoryFullScreen(
         ctrl: widget.ctrl,
@@ -1318,27 +1324,53 @@ class _FuturePositionsSectionState extends State<FuturePositionsSection> {
                 ],
               ),
             ),
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: widget.hideHeader ? 0 : 12,
-              vertical: 8,
-            ),
-            child: widget.bottomTab == 'Position'
-                ? _PositionsTab(
-                    pair: widget.pair,
-                    pp: widget.pp,
-                    ctrl: widget.ctrl,
-                    onTpSlTap: widget.onTpSlTap,
-                    onLeverageTap: widget.onLeverageTap,
-                  )
-                : widget.bottomTab == 'Open Orders'
-                ? _OpenOrdersTab(
-                    pair: widget.pair,
-                    pp: widget.pp,
-                    ctrl: widget.ctrl,
-                  )
-                : _AssetsTab(ctrl: widget.ctrl),
-          ),
+          Obx(() => gUserRx.value.id <= 0
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: RichText(
+                    text: TextSpan(
+                      text: "Want to trade? ",
+                      style: const TextStyle(color: Color(0xFF848E9C), fontSize: 13, fontFamily: futureDmSans),
+                      children: [
+                        WidgetSpan(
+                          child: GestureDetector(
+                            onTap: () => Get.to(() => const SignInPage()),
+                            child: const Text(
+                              "Login",
+                              style: TextStyle(
+                                color: Color(0xFF00B897),
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: futureDmSans,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: widget.hideHeader ? 0 : 12,
+                    vertical: 8,
+                  ),
+                  child: widget.bottomTab == 'Position'
+                      ? _PositionsTab(
+                          pair: widget.pair,
+                          pp: widget.pp,
+                          ctrl: widget.ctrl,
+                          onTpSlTap: widget.onTpSlTap,
+                          onLeverageTap: widget.onLeverageTap,
+                        )
+                      : widget.bottomTab == 'Open Orders'
+                      ? _OpenOrdersTab(
+                          pair: widget.pair,
+                          pp: widget.pp,
+                          ctrl: widget.ctrl,
+                        )
+                      : _AssetsTab(ctrl: widget.ctrl),
+                )),
         ],
       ),
     );
