@@ -1705,142 +1705,237 @@ class _WalletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color borderColor = isReward ? const Color(0xFFFFD700) : Colors.white.withOpacity(0.08);
-    final Color titleColor = isReward ? const Color(0xFFFFD700) : Colors.white;
-    final Color equityColor = isReward ? const Color(0xFFFFD700) : Colors.white;
-    final Color availColor = isReward ? const Color(0xFFFFD700) : Colors.white;
     final pnlPositive = unrealizedPnl >= 0;
-    final Color pnlColor = pnlPositive ? const Color(0xFF4ED78E) : const Color(0xFFD73C3C);
+    final Color pnlColor = pnlPositive ? const Color(0xFFCCFF00) : const Color(0xFFD73C3C);
+    final String pnlSign = pnlPositive ? '+' : '';
+    final Color equityColor = isReward ? const Color(0xFFFFDD00) : Colors.white;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 1),
+      height: 236,
+      decoration: ShapeDecoration(
+        gradient: isReward
+            ? const RadialGradient(
+                center: Alignment(-0.98, -0.95),
+                radius: 3.12,
+                colors: [Color(0xFF808080), Color(0xFF1A1A1A)],
+              )
+            : null,
+        color: isReward ? null : const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Header: icon + name + Reward badge
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: isReward ? const Color(0xFFFFD700).withOpacity(0.15) : const Color(0xFF26A17B).withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text('T', style: TextStyle(color: isReward ? const Color(0xFFFFD700) : const Color(0xFF26A17B), fontSize: 14, fontWeight: FontWeight.w700)),
-              ),
-              const SizedBox(width: 8),
-              Text('USDT', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: titleColor, fontFamily: _dmSans)),
-              const SizedBox(width: 4),
-              Text('Tether', style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4), fontFamily: _dmSans)),
-              if (isReward) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFF8C00)]),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text('Reward', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.black, fontFamily: _dmSans)),
-                ),
-              ],
-            ],
+          // Coin icon
+          Positioned(
+            left: 20,
+            top: 20,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: const ShapeDecoration(color: Color(0xFF50AF95), shape: OvalBorder()),
+            ),
           ),
-          const SizedBox(height: 12),
-          // Total Equity + Unrealized PNL row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text('Total Equity', style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans)),
-                      if (isReward) const Text(' 🎁', style: TextStyle(fontSize: 10)),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isHide ? '****' : totalEquity.toStringAsFixed(4),
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: equityColor, fontFamily: _dmSans),
-                  ),
-                  Text(
-                    isHide ? '' : '≈ \$${totalEquity.toStringAsFixed(2)}',
-                    style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4), fontFamily: _dmSans),
-                  ),
-                ],
+          // USDT label
+          Positioned(
+            left: 60,
+            top: 23,
+            child: Text(
+              'USDT',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isReward ? const Color(0xFF998400) : Colors.white,
+                fontSize: 16,
+                fontFamily: _dmSans,
+                fontWeight: isReward ? FontWeight.w700 : FontWeight.w400,
+                height: 1.50,
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('Unrealized PNL', style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans)),
-                  const SizedBox(height: 2),
-                  Text(
-                    isHide ? '****' : '${pnlPositive ? '+' : ''}${unrealizedPnl.toStringAsFixed(4)}',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: pnlColor, fontFamily: _dmSans),
-                  ),
-                  Text(
-                    isHide ? '' : '(${pnlPositive ? '+' : ''}\$${unrealizedPnl.abs().toStringAsFixed(2)})',
-                    style: TextStyle(fontSize: 11, color: pnlColor, fontFamily: _dmSans),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Divider(color: isReward ? const Color(0xFFFFD700).withOpacity(0.1) : Colors.white.withOpacity(0.07), height: 1),
-          const SizedBox(height: 10),
-          // Available / Position Margin / Order Margin row
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Available Balance', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans)),
-                    const SizedBox(height: 2),
-                    Text(
-                      isHide ? '****' : availableBalance.toStringAsFixed(4),
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: availColor, fontFamily: _dmSans),
-                    ),
-                    Text(isHide ? '' : '\$${availableBalance.toStringAsFixed(2)}', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.4), fontFamily: _dmSans)),
-                  ],
+          // Tether subtitle
+          Positioned(
+            left: 105,
+            top: 28,
+            child: Text(
+              'Tether',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.50),
+                fontSize: 12,
+                fontFamily: _dmSans,
+                fontWeight: FontWeight.w400,
+                height: 1.33,
+              ),
+            ),
+          ),
+          // Reward badge (only for reward card)
+          if (isReward)
+            Positioned(
+              left: 152,
+              top: 22,
+              child: Container(
+                height: 26,
+                padding: const EdgeInsets.all(5),
+                decoration: ShapeDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment(0, 0),
+                    end: Alignment(1, 1),
+                    colors: [Color(0xFF998400), Color(0xFFEDCE00)],
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text(
+                  'Reward',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF111111),
+                    fontSize: 12,
+                    fontFamily: _dmSans,
+                    fontWeight: FontWeight.w400,
+                    height: 2,
+                  ),
                 ),
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Position Margin', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans)),
-                    const SizedBox(height: 2),
-                    Text(
-                      isHide ? '****' : positionMargin.toStringAsFixed(4),
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFCCFF00), fontFamily: _dmSans),
-                    ),
-                    Text(isHide ? '' : '\$${positionMargin.toStringAsFixed(2)}', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.4), fontFamily: _dmSans)),
-                  ],
+            ),
+          // Total Equity label
+          Positioned(
+            left: 20,
+            top: 70,
+            child: Text(
+              'Total Equity',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33),
+            ),
+          ),
+          // Total Equity value
+          Positioned(
+            left: 20,
+            top: 91,
+            child: Text(
+              isHide ? '****' : totalEquity.toStringAsFixed(4),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: equityColor, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600),
+            ),
+          ),
+          // Total Equity USD
+          Positioned(
+            left: 20,
+            top: 117,
+            child: Text(
+              isHide ? '' : '\$${totalEquity.toStringAsFixed(4)}',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400),
+            ),
+          ),
+          // Unrealized PNL label
+          Positioned(
+            left: 259,
+            top: 70,
+            child: Text(
+              'Unrealized PNL',
+              textAlign: TextAlign.right,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33),
+            ),
+          ),
+          // Unrealized PNL value
+          Positioned(
+            left: 274,
+            top: 91,
+            child: Text(
+              isHide ? '****' : '$pnlSign${unrealizedPnl.toStringAsFixed(4)}',
+              textAlign: TextAlign.right,
+              style: TextStyle(color: pnlColor, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600),
+            ),
+          ),
+          // Unrealized PNL USD
+          Positioned(
+            left: 293,
+            top: 117,
+            child: Text(
+              isHide ? '' : '($pnlSign\$${unrealizedPnl.abs().toStringAsFixed(2)})',
+              textAlign: TextAlign.right,
+              style: TextStyle(color: pnlColor, fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400),
+            ),
+          ),
+          // Divider line
+          Positioned(
+            left: 20,
+            top: 143,
+            child: Container(
+              width: 322,
+              decoration: ShapeDecoration(
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(width: 1, strokeAlign: BorderSide.strokeAlignCenter, color: Colors.white.withValues(alpha: 0.10)),
                 ),
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Order Margin', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.5), fontFamily: _dmSans)),
-                    const SizedBox(height: 2),
-                    const Text('0.00', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white, fontFamily: _dmSans)),
-                    Text('\$0.00', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.4), fontFamily: _dmSans)),
-                  ],
-                ),
-              ),
-            ],
+            ),
+          ),
+          // Available label
+          Positioned(
+            left: 20,
+            top: 153,
+            child: Text('Available', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
+          ),
+          // Available value
+          Positioned(
+            left: 20,
+            top: 174,
+            child: Text(
+              isHide ? '****' : availableBalance.toStringAsFixed(4),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: equityColor, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600),
+            ),
+          ),
+          // Available USD
+          Positioned(
+            left: 20,
+            top: 200,
+            child: Text(
+              isHide ? '' : '\$${availableBalance.toStringAsFixed(4)}',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400),
+            ),
+          ),
+          // Position Margin label
+          Positioned(
+            left: 143,
+            top: 153,
+            child: Text('Position Margin', style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
+          ),
+          // Position Margin value
+          Positioned(
+            left: 143,
+            top: 174,
+            child: Text(
+              isHide ? '****' : positionMargin.toStringAsFixed(4),
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600),
+            ),
+          ),
+          // Position Margin USD
+          Positioned(
+            left: 143,
+            top: 200,
+            child: Text(
+              isHide ? '' : '\$${positionMargin.toStringAsFixed(2)}',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400),
+            ),
+          ),
+          // Order Margin label
+          Positioned(
+            left: 268,
+            top: 153,
+            child: Text('Order Margin', textAlign: TextAlign.right, style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400, height: 1.33)),
+          ),
+          // Order Margin value
+          Positioned(
+            left: 305,
+            top: 174,
+            child: Text('0.00', textAlign: TextAlign.right, style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: _dmSans, fontWeight: FontWeight.w600)),
+          ),
+          // Order Margin USD
+          Positioned(
+            left: 309,
+            top: 200,
+            child: Text('\$0.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.white.withValues(alpha: 0.50), fontSize: 12, fontFamily: _dmSans, fontWeight: FontWeight.w400)),
           ),
         ],
       ),
