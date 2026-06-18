@@ -778,19 +778,27 @@ class FutureTradeForm extends StatelessWidget {
         const SizedBox(height: 10),
         Obx(
           () => GestureDetector(
-            onTap: ctrl.orderLoading.value ? null : () => onPlaceOrder(),
+            onTap: () {
+              if (gUserRx.value.id <= 0) {
+                Get.to(() => const SignInPage());
+                return;
+              }
+              if (!ctrl.orderLoading.value) onPlaceOrder();
+            },
             child: Container(
               width: double.infinity,
               height: 40,
               decoration: BoxDecoration(
-                color: buySell == 'Buy' ? futureGreen : futureRed,
+                color: gUserRx.value.id <= 0 ? futureRed : (buySell == 'Buy' ? futureGreen : futureRed),
                 borderRadius: BorderRadius.circular(5),
               ),
               alignment: Alignment.center,
               child: Text(
-                ctrl.orderLoading.value
-                    ? 'Processing...'
-                    : (buySell == 'Buy' ? 'Buy' : 'Sell'),
+                gUserRx.value.id <= 0
+                    ? 'Login'
+                    : ctrl.orderLoading.value
+                        ? 'Processing...'
+                        : (buySell == 'Buy' ? 'Buy' : 'Sell'),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
@@ -1326,27 +1334,31 @@ class _FuturePositionsSectionState extends State<FuturePositionsSection> {
             ),
           Obx(() => gUserRx.value.id <= 0
               ? Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: RichText(
-                    text: TextSpan(
-                      text: "Want to trade? ",
-                      style: const TextStyle(color: Color(0xFF848E9C), fontSize: 13, fontFamily: futureDmSans),
-                      children: [
-                        WidgetSpan(
-                          child: GestureDetector(
-                            onTap: () => Get.to(() => const SignInPage()),
-                            child: const Text(
-                              "Login",
-                              style: TextStyle(
-                                color: Color(0xFF00B897),
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: futureDmSans,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: RichText(
+                      textAlign: TextAlign.left,
+                      text: TextSpan(
+                        text: "Want to trade? ",
+                        style: const TextStyle(color: Color(0xFF848E9C), fontSize: 13, fontFamily: futureDmSans),
+                        children: [
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () => Get.to(() => const SignInPage()),
+                              child: const Text(
+                                "Login",
+                                style: TextStyle(
+                                  color: Color(0xFF00B897),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: futureDmSans,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 )
