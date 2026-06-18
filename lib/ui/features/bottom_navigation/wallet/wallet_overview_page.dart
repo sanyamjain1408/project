@@ -1793,25 +1793,33 @@ class _WalletCard extends StatelessWidget {
               left: 152,
               top: 22,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                height: 26,
+                padding: const EdgeInsets.all(5),
                 decoration: ShapeDecoration(
                   gradient: const LinearGradient(
-                    begin: Alignment(0, 0),
-                    end: Alignment(1, 1),
+                    begin: Alignment(-0.00, -0.00),
+                    end: Alignment(1.00, 1.00),
                     colors: [Color(0xFF998400), Color(0xFFEDCE00)],
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text(
-                  'Reward',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF111111),
-                    fontSize: 12,
-                    fontFamily: _dmSans,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: const [
+                    Text(
+                      'Reward',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF111111),
+                        fontSize: 12,
+                        fontFamily: _dmSans,
+                        fontWeight: FontWeight.w400,
+                        height: 2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
