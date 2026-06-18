@@ -1711,7 +1711,7 @@ class _WalletCard extends StatelessWidget {
     final Color equityColor = isReward ? const Color(0xFFFFDD00) : Colors.white;
 
     return Container(
-      width: 362,
+      width: double.infinity,
       height: 236,
       decoration: ShapeDecoration(
         gradient: isReward
