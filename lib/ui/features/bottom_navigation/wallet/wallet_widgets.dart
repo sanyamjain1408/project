@@ -30,6 +30,7 @@ import 'wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 import 'wallet_crypto_withdraw/wallet_crypto_withdraw_screen.dart';
 import 'wallet_fiat_deposit/wallet_fiat_deposit_screen.dart';
 import 'wallet_fiat_withdrawal/wallet_fiat_withdrawal_screen.dart';
+import 'spot_coin_details_screen.dart';
 
 const Color _primary = Color(0xFF111111);
 const Color _secondary = Color(0xFF1A1A1A);
@@ -54,11 +55,13 @@ class WalletNameView extends StatelessWidget {
     return Row(
       children: [
         if (hideImage != true)
-          showImageNetwork(
-            imagePath: wallet.coinIcon,
-            width: 30,
-            height: 30,
-            bgColor: Colors.transparent,
+          ClipOval(
+            child: showImageNetwork(
+              imagePath: wallet.coinIcon,
+              width: 30,
+              height: 30,
+              bgColor: Colors.transparent,
+            ),
           ),
         if (hideImage != true) hSpacer10(),
         isExpanded ? Expanded(child: _nameView(context)) : _nameView(context),
@@ -277,11 +280,7 @@ class SpotWalletItemView extends StatelessWidget {
             onTap ??
             () {
               hideKeyboard();
-              showBottomSheetDynamic(
-                context,
-                SpotWalletDetailsView(wallet: wallet),
-                title: "Wallet Details".tr,
-              );
+              Get.to(() => SpotCoinDetailsScreen(wallet: wallet));
             },
         child: Row(
           children: [
