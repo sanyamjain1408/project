@@ -20,6 +20,8 @@ import '../../../../utils/spacers.dart';
 import '../../../../utils/text_util.dart';
 import '../../../../utils/web_view.dart';
 import '../../../../ui/features/side_navigation/blog/blog_details_view.dart';
+import '../../../../ui/features/bottom_navigation/landing/live_chat_screen.dart';
+import '../../../../ui/features/auth/sign_in/sign_in_screen.dart';
 
 const _bg        = Color(0xFF0A0B0D);
 const _card      = Color(0xFF111318);
@@ -37,88 +39,100 @@ class AppBarHomeView extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.black,
       elevation: 0,
       scrolledUnderElevation: 0,
-      
-      // --- LEFT SIDE: MENU ICON ---
-      leading: Center(
+      toolbarHeight: kToolbarHeight,
+
+      // ── LEFT: icon.png → drawer ──
+      leading: GestureDetector(
+        onTap: () => Scaffold.of(context).openDrawer(),
+        behavior: HitTestBehavior.opaque,
         child: Container(
-          decoration: boxDecorationRoundCorner(),
-          width: Dimens.btnHeightMid,
-          height: Dimens.btnHeightMid,
+          color: Colors.transparent,
           alignment: Alignment.center,
-          child: buttonOnlyIcon(
-            visualDensity: minimumVisualDensity,
-            iconData: Icons.widgets,
-            size: Dimens.iconSizeMid,
-            iconColor: context.theme.primaryColor,
-            onPress: () => Scaffold.of(context).openDrawer(),
+          child: Image.asset(
+            'assets/images/icon.png',
+            width: 30,
+            height: 30,
+            errorBuilder: (ctx, err, st) =>
+                const Icon(Icons.widgets, color: Colors.white, size: 26),
           ),
         ),
       ),
-      // -----------------------------
 
-      // --- CENTER: LOGO + TEXT ---
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(
-            'assets/images/tlogo.png', // <--- APNA LOGO PATH
-            height: 30,
-            fit: BoxFit.contain,
-          ),
-          
-        ],
-      ),
+      // ── CENTER: nothing ──
+      title: const SizedBox.shrink(),
       centerTitle: true,
-      // ---------------------------
 
+      // ── RIGHT: headphone + bell ──
       actions: [
-        if (gUserRx.value.id > 0 && getSettingsLocal()?.liveChatStatus == 1)
-          InkWell(
-            onTap: () => openCrispChatView(),
-            child: buttonOnlyIcon(
-              iconData: Icons.support_agent_outlined,
-              iconColor: context.theme.primaryColor,
-              size: Dimens.iconSizeMid,
-              visualDensity: minimumVisualDensity,
+        // Headphone → LiveChat (always visible)
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LiveChatScreen()),
+          ),
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Image.asset(
+              'assets/icons/help.png',
+              width: 22,
+              height: 22,
+              errorBuilder: (ctx, err, st) =>
+                  const Icon(Icons.headset_mic_outlined, color: Colors.white, size: 22),
             ),
           ),
-        InkWell(
-          onTap: () => Get.to(() => const NotificationsPage()),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              buttonOnlyIcon(
-                iconData: Icons.notifications_none_outlined,
-                iconColor: context.theme.primaryColor,
-                size: Dimens.iconSizeMid,
-                visualDensity: minimumVisualDensity,
-              ),
-              Obx(() {
-                int count = Get.find<RootController>().notificationCount.value;
-                return count > 0
-                    ? Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: boxDecorationRoundCorner(color: context.theme.colorScheme.error, radius: 10),
-                          height: 20,
-                          width: 20,
-                          padding: const EdgeInsets.all(2),
-                          child: AutoSizeText(
-                            count.toString(),
-                            minFontSize: 5,
-                            style: Get.textTheme.displaySmall!.copyWith(color: Colors.white),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      )
-                    : const SizedBox();
-              }),
-            ],
+        ),
+
+        // Bell → notifications (login check)
+        GestureDetector(
+          onTap: () {
+            if (gUserRx.value.id > 0) {
+              Get.to(() => const NotificationsPage());
+            } else {
+              Get.offAll(() => const SignInPage());
+            }
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 16),
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Image.asset(
+                  'assets/images/notification.png',
+                  width: 22,
+                  height: 22,
+                  errorBuilder: (ctx, err, st) =>
+                      const Icon(Icons.notifications_none_outlined, color: Colors.white, size: 22),
+                ),
+                Obx(() {
+                  final count = Get.find<RootController>().notificationCount.value;
+                  if (count <= 0) return const SizedBox();
+                  return Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      height: 16,
+                      width: 16,
+                      child: AutoSizeText(
+                        count.toString(),
+                        minFontSize: 5,
+                        style: const TextStyle(color: Colors.white, fontSize: 10),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
         ),
-        hSpacer10(),
       ],
     );
   }
