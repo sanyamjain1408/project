@@ -114,6 +114,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
           Scaffold(
             backgroundColor: context.theme.scaffoldBackgroundColor,
             extendBody: true,
+            extendBodyBehindAppBar: true,
             drawerScrimColor: Colors.transparent,
             drawer: _getDrawerNew(),
             bottomNavigationBar: _getBottomNavigationBar(),

@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../data/local/constants.dart';
@@ -40,8 +41,13 @@ class AppBarHomeView extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       toolbarHeight: kToolbarHeight,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.black,
+        statusBarIconBrightness: Brightness.light,
+      ),
 
-      // ── LEFT: icon.png → drawer ──
+      // ── LEFT: X logo → drawer ──
+      leadingWidth: 56,
       leading: GestureDetector(
         onTap: () => Scaffold.of(context).openDrawer(),
         behavior: HitTestBehavior.opaque,
@@ -50,8 +56,8 @@ class AppBarHomeView extends StatelessWidget implements PreferredSizeWidget {
           alignment: Alignment.center,
           child: Image.asset(
             'assets/images/icon.png',
-            width: 30,
-            height: 30,
+            width: 28,
+            height: 28,
             errorBuilder: (ctx, err, st) =>
                 const Icon(Icons.widgets, color: Colors.white, size: 26),
           ),
@@ -62,76 +68,72 @@ class AppBarHomeView extends StatelessWidget implements PreferredSizeWidget {
       title: const SizedBox.shrink(),
       centerTitle: true,
 
-      // ── RIGHT: headphone + bell ──
+      // ── RIGHT: headphone + bell close together ──
       actions: [
-        // Headphone → LiveChat (always visible)
-        GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LiveChatScreen()),
-          ),
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Image.asset(
-              'assets/icons/help.png',
-              width: 22,
-              height: 22,
-              errorBuilder: (ctx, err, st) =>
-                  const Icon(Icons.headset_mic_outlined, color: Colors.white, size: 22),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Headphone
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LiveChatScreen()),
+              ),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 17,
+                height: 15,
+                alignment: Alignment.center,
+                child: const Icon(Icons.headphones, color: Colors.white, size: 20),
+              ),
             ),
-          ),
-        ),
-
-        // Bell → notifications (login check)
-        GestureDetector(
-          onTap: () {
-            if (gUserRx.value.id > 0) {
-              Get.to(() => const NotificationsPage());
-            } else {
-              Get.offAll(() => const SignInPage());
-            }
-          },
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 8, right: 16),
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                Image.asset(
-                  'assets/images/notification.png',
-                  width: 22,
-                  height: 22,
-                  errorBuilder: (ctx, err, st) =>
-                      const Icon(Icons.notifications_none_outlined, color: Colors.white, size: 22),
-                ),
-                Obx(() {
-                  final count = Get.find<RootController>().notificationCount.value;
-                  if (count <= 0) return const SizedBox();
-                  return Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10),
+            const SizedBox(width: 14),
+            // Bell
+            GestureDetector(
+              onTap: () {
+                if (gUserRx.value.id > 0) {
+                  Get.to(() => const NotificationsPage());
+                } else {
+                  Get.offAll(() => const SignInPage());
+                }
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 15,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.notifications_none_outlined, color: Colors.white, size: 20),
+                  ),
+                  Obx(() {
+                    final count = Get.find<RootController>().notificationCount.value;
+                    if (count <= 0) return const SizedBox();
+                    return Positioned(
+                      right: -6,
+                      top: -6,
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(8)),
+                        height: 14,
+                        width: 14,
+                        child: AutoSizeText(
+                          count.toString(),
+                          minFontSize: 5,
+                          style: const TextStyle(color: Colors.white, fontSize: 9),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      height: 16,
-                      width: 16,
-                      child: AutoSizeText(
-                        count.toString(),
-                        minFontSize: 5,
-                        style: const TextStyle(color: Colors.white, fontSize: 10),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  );
-                }),
-              ],
+                    );
+                  }),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: 16),
+          ],
         ),
       ],
     );
