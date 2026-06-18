@@ -1734,7 +1734,25 @@ class _WalletCard extends StatelessWidget {
             child: Container(
               width: 30,
               height: 30,
-              decoration: const ShapeDecoration(color: Color(0xFF50AF95), shape: OvalBorder()),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: isReward ? Border.all(color: const Color(0xFFEDCE00), width: 1.5) : null,
+              ),
+              child: ClipOval(
+                child: Image.network(
+                  'https://api.trapix.com/uploaded_file/uploads/coin/657c66c3067d81702651587.png',
+                  width: 30,
+                  height: 30,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 30,
+                    height: 30,
+                    decoration: const BoxDecoration(color: Color(0xFF50AF95), shape: BoxShape.circle),
+                    alignment: Alignment.center,
+                    child: const Text('T', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ),
             ),
           ),
           // USDT label
