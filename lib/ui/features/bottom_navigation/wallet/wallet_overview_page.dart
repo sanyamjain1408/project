@@ -1816,7 +1816,7 @@ class _WalletCard extends StatelessWidget {
                         fontSize: 12,
                         fontFamily: _dmSans,
                         fontWeight: FontWeight.w400,
-                        height: 2,
+                        height: 1,
                       ),
                     ),
                   ],
