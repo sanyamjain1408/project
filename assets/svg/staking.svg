@@ -1,9 +1,43 @@
 <svg width="362" height="284" viewBox="0 0 362 284" fill="none" xmlns="http://www.w3.org/2000/svg">
-<foreignObject x="0" y="0" width="362" height="284"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(50px);clip-path:url(#bgblur_0_886_19231_clip_path);height:100%;width:100%"></div></foreignObject><g data-figma-bg-blur-radius="100">
-<path d="M0 20C0 8.9543 8.95431 0 20 0H220C231.046 0 240 8.9543 240 20V41.8231C240 52.8688 248.954 61.8231 260 61.8231H342C353.046 61.8231 362 70.7774 362 81.8231V264C362 275.046 353.046 284 342 284H20C8.9543 284 0 275.046 0 264V20Z" fill="#1A1A1A" fill-opacity="0.2"/>
-<path d="M20 0.25H220C230.908 0.25 239.75 9.09238 239.75 20V41.8232C239.75 53.007 248.816 62.0732 260 62.0732H342C352.908 62.0732 361.75 70.9156 361.75 81.8232V264C361.75 274.908 352.908 283.75 342 283.75H20C9.09238 283.75 0.25 274.908 0.25 264V20C0.25 9.09238 9.09238 0.25 20 0.25Z" stroke="white" stroke-opacity="0.5" stroke-width="0.5"/>
+<foreignObject x="0" y="0" width="362" height="284"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(50px);clip-path:url(#bgblur_0_886_19231_clip_path);height:100%;width:100%"></div></foreignObject>
+<g data-figma-bg-blur-radius="100">
+
+  <!-- Background fill -->
+  <path d="M0 20C0 8.9543 8.95431 0 20 0H220C231.046 0 240 8.9543 240 20V41.8231C240 52.8688 248.954 61.8231 260 61.8231H342C353.046 61.8231 362 70.7774 362 81.8231V264C362 275.046 353.046 284 342 284H20C8.9543 284 0 275.046 0 264V20Z" fill="#1A1A1A" fill-opacity="0.2"/>
+
+  <!-- Top border: full path from top-left corner through notch to notch end -->
+  <path
+    d="M20 0.5C9.09 0.5 0.5 9.09 0.5 20V20C0.5 9.09 9.09 0.5 20 0.5H220C231.046 0.5 239.5 9.09 239.5 20V41.8231C239.5 53 248.5 61.5 260 61.5H342C353 61.5 361.5 70.9 361.5 81.8"
+    stroke="url(#topGradient)" stroke-width="1" fill="none" stroke-linecap="round"/>
+
+  <!-- Bottom border: full bottom edge left corner to right corner -->
+  <path
+    d="M0.5 264C0.5 275.046 9.09 283.5 20 283.5H342C353 283.5 361.5 275.046 361.5 264"
+    stroke="url(#bottomGradient)" stroke-width="1" fill="none" stroke-linecap="round"/>
+
 </g>
 <defs>
-<clipPath id="bgblur_0_886_19231_clip_path" transform="translate(0 0)"><path d="M0 20C0 8.9543 8.95431 0 20 0H220C231.046 0 240 8.9543 240 20V41.8231C240 52.8688 248.954 61.8231 260 61.8231H342C353.046 61.8231 362 70.7774 362 81.8231V264C362 275.046 353.046 284 342 284H20C8.9543 284 0 275.046 0 264V20Z"/>
-</clipPath></defs>
+
+  <!-- Top: fade in from left corner, solid through middle, fade out at notch end -->
+  <linearGradient id="topGradient" x1="0" y1="0" x2="362" y2="0" gradientUnits="userSpaceOnUse">
+    <stop offset="0%"   stop-color="white" stop-opacity="0"/>
+    <stop offset="12%"  stop-color="white" stop-opacity="0.55"/>
+    <stop offset="55%"  stop-color="white" stop-opacity="0.55"/>
+    <stop offset="75%"  stop-color="white" stop-opacity="0.3"/>
+    <stop offset="100%" stop-color="white" stop-opacity="0"/>
+  </linearGradient>
+
+  <!-- Bottom: fade in from both corners, solid in center -->
+  <linearGradient id="bottomGradient" x1="0" y1="0" x2="362" y2="0" gradientUnits="userSpaceOnUse">
+    <stop offset="0%"   stop-color="white" stop-opacity="0"/>
+    <stop offset="12%"  stop-color="white" stop-opacity="0.55"/>
+    <stop offset="50%"  stop-color="white" stop-opacity="0.55"/>
+    <stop offset="88%"  stop-color="white" stop-opacity="0.55"/>
+    <stop offset="100%" stop-color="white" stop-opacity="0"/>
+  </linearGradient>
+
+  <clipPath id="bgblur_0_886_19231_clip_path" transform="translate(0 0)">
+    <path d="M0 20C0 8.9543 8.95431 0 20 0H220C231.046 0 240 8.9543 240 20V41.8231C240 52.8688 248.954 61.8231 260 61.8231H342C353.046 61.8231 362 70.7774 362 81.8231V264C362 275.046 353.046 284 342 284H20C8.9543 284 0 275.046 0 264V20Z"/>
+  </clipPath>
+</defs>
 </svg>
