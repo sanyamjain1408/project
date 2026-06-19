@@ -20,7 +20,6 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_
 import 'package:tradexpro_flutter/ui/features/side_navigation/spin_win/spin_win_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/referrals/referral_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/profile/profile_screen.dart';
-import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/airdrop/airdrop_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/buy_crypto_screen.dart';
@@ -890,7 +889,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         Get.to(() => const ProfileScreen(initialTab: 3));
         break;
       case "Easy Earn":
-        Get.to(() => const EarnScreen(initialTab: 1));
+        if (!Get.isRegistered<WalletController>()) Get.put(WalletController());
+        Get.to(() => const WalletDetailScreen(initialType: WalletViewType.earn));
         break;
       case "Airdrop":
         Get.to(() => const AirdropScreen());

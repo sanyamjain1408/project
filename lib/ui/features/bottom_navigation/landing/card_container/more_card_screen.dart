@@ -7,7 +7,6 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_cr
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/transfer_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_overview_page.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_controller.dart';
-import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/referrals/referral_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/spin_win/spin_win_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/profile/profile_screen.dart';
@@ -16,6 +15,9 @@ import 'package:tradexpro_flutter/ui/features/root/root_controller.dart';
 import 'package:tradexpro_flutter/helper/bottom_nav_helper.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/live_chat_screen.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/price_alerts/price_alerts_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/history_sheet.dart';
 
 const _bgcolor = Color(0xFF111111);
 const _green = Color(0xFFCCFF00);
@@ -58,22 +60,34 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
       case "Security":
         Get.to(() => const ProfileScreen(initialTab: 0));
         break;
+      case "Price Alert":
+        Get.to(() => const PriceAlertsScreen());
+        break;
+      case "Deposit Fiat":
+        Get.to(() => WalletCryptoDepositScreen());
+        break;
       case "History":
-        Get.to(() => const ProfileScreen(initialTab: 1));
+        showHistorySheet();
         break;
       case "Buy":
         Get.to(() => const BuyCryptoScreen());
         break;
+      case "Help":
+        Get.to(() => const LiveChatScreen());
+        break;
       case "Easy Earn":
-        Get.to(() => const EarnScreen(initialTab: 1));
+        if (!Get.isRegistered<WalletController>()) Get.put(WalletController());
+        Get.to(() => const WalletDetailScreen(initialType: WalletViewType.earn));
         break;
       case "Airdrop":
         Get.to(() => const AirdropScreen());
         break;
       case "Future":
+        Get.back();
         Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
         break;
       case "Spot":
+        Get.back();
         Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.trade);
         break;
       default:
