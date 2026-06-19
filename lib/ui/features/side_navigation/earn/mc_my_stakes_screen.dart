@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/mc_network_screen.dart';
 import 'mc_staking_controller.dart' show McStakingController, mcLogoUrl;
@@ -50,91 +51,84 @@ class McMyStakesScreen extends StatefulWidget {
 class _McMyStakesScreenState extends State<McMyStakesScreen> {
   late McStakingController _c;
   int _page = 1;
-  String _statusFilter = '';
+  String _statusFilter = '';   // '' = all, '1' = active, '2' = completed, '3' = cancelled
+  String? _coinFilter;         // null = all coins
+  String? _planFilter;         // null = all plans, else duration days as string e.g. '30'
 
-  OverlayEntry? _dropdownOverlay;
-  final _dropdownKey = GlobalKey();
+  // Overlay keys for each dropdown
+  final _coinKey = GlobalKey();
+  final _planKey = GlobalKey();
+  final _statusKey = GlobalKey();
+  OverlayEntry? _activeOverlay;
 
-  void _closeDropdown() {
-    _dropdownOverlay?.remove();
-    _dropdownOverlay = null;
+  void _closeOverlay() {
+    _activeOverlay?.remove();
+    _activeOverlay = null;
   }
 
-  void _showDropdown() {
-    final box = _dropdownKey.currentContext?.findRenderObject() as RenderBox?;
+  void _showOverlayMenu(GlobalKey key, List<_DropItem> items, String selected, void Function(String) onSelect) {
+    _closeOverlay();
+    final box = key.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
     final offset = box.localToGlobal(Offset.zero);
     final size = box.size;
+    const menuWidth = 180.0;
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Clamp so menu never goes off the right edge, min 8px margin
+    final left = (offset.dx + menuWidth > screenWidth - 8)
+        ? screenWidth - menuWidth - 8
+        : offset.dx;
 
-    _dropdownOverlay = OverlayEntry(
+    _activeOverlay = OverlayEntry(
       builder: (_) => GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onTap: _closeDropdown,
+        onTap: _closeOverlay,
         child: Stack(
           children: [
             Positioned(
-              left: offset.dx,
+              left: left,
               top: offset.dy + size.height + 6,
-              width: size.width,
+              width: menuWidth,
               child: Material(
                 color: Colors.transparent,
                 child: Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFF1E1E1E),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 20,
-                      ),
-                    ],
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 20)],
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: _statusLabels.entries.map((e) {
-                      final isSelected = _statusFilter == e.key;
+                    children: items.map((item) {
+                      final isSel = item.value == selected;
                       return GestureDetector(
                         onTap: () {
-                          setState(() {
-                            _statusFilter = e.key;
-                            _page = 1;
-                          });
-                          _load();
-                          _closeDropdown();
+                          onSelect(item.value);
+                          _closeOverlay();
                         },
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 13,
-                          ),
-                          color: isSelected
-                              ? _kGreen.withValues(alpha: 0.08)
-                              : Colors.transparent,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          color: isSel ? _kGreen.withValues(alpha: 0.08) : Colors.transparent,
                           child: Row(
                             children: [
+                              if (item.logo != null) ...[
+                                _coinImg(null, size: 20, symbol: item.symbol),
+                                const SizedBox(width: 8),
+                              ],
                               Text(
-                                e.value,
+                                item.label,
                                 style: TextStyle(
-                                  color: isSelected ? _kGreen : Colors.white,
+                                  color: isSel ? _kGreen : Colors.white,
                                   fontSize: 14,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
+                                  fontWeight: isSel ? FontWeight.w600 : FontWeight.w400,
                                   fontFamily: 'DMSans',
                                 ),
                               ),
                               const Spacer(),
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check_rounded,
-                                  color: _kGreen,
-                                  size: 16,
-                                ),
+                              if (isSel) const Icon(Icons.check_rounded, color: _kGreen, size: 16),
                             ],
                           ),
                         ),
@@ -148,7 +142,7 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
         ),
       ),
     );
-    Overlay.of(context).insert(_dropdownOverlay!);
+    Overlay.of(context).insert(_activeOverlay!);
   }
 
   @override
@@ -162,7 +156,7 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
 
   @override
   void dispose() {
-    _closeDropdown();
+    _closeOverlay();
     super.dispose();
   }
 
@@ -171,30 +165,58 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
     if (_c.coins.isEmpty) _c.fetchCoins();
   }
 
-  static const _statusLabels = {
-    '': 'All Stakes',
-    '1': 'Active',
-    '2': 'Completed',
-    '3': 'Cancelled',
-  };
+  // All unique coins from loaded stakes
+  List<_DropItem> get _coinItems {
+    final seen = <String>{};
+    final items = <_DropItem>[_DropItem('', 'All Coins')];
+    for (final s in _c.stakes) {
+      final sym = s.coin?.symbol ?? '';
+      if (sym.isEmpty || seen.contains(sym)) continue;
+      seen.add(sym);
+      items.add(_DropItem(sym, sym, logo: s.coin?.logo, symbol: sym));
+    }
+    return items;
+  }
+
+  // Unique plan durations from stakes filtered by selected coin
+  List<_DropItem> get _planItems {
+    final seen = <String>{};
+    final items = <_DropItem>[_DropItem('', 'All Plans')];
+    for (final s in _c.stakes) {
+      if (_coinFilter != null && (s.coin?.symbol ?? '') != _coinFilter) continue;
+      final days = s.plan?.durationDays ?? 0;
+      final key = days.toString();
+      if (seen.contains(key)) continue;
+      seen.add(key);
+      final label = days > 0 ? '$days Days' : 'Flexible';
+      items.add(_DropItem(key, label));
+    }
+    return items;
+  }
+
+  // Filtered + grouped stakes
+  List<McStake> get _filteredStakes {
+    return _c.stakes.where((s) {
+      if (_coinFilter != null && (s.coin?.symbol ?? '') != _coinFilter) return false;
+      if (_planFilter != null) {
+        final days = (s.plan?.durationDays ?? 0).toString();
+        if (days != _planFilter) return false;
+      }
+      return true;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: const Color(0xFF111111),
       body: SafeArea(
         child: Obx(() {
           if (_c.isLoadingStakes.value) {
-            return const Center(
-              child: CircularProgressIndicator(color: _kGreen),
-            );
+            return const Center(child: CircularProgressIndicator(color: _kGreen));
           }
 
-          final grouped = <String, List<McStake>>{};
-          for (final s in _c.stakes) {
-            final sym = s.coin?.symbol ?? '—';
-            grouped.putIfAbsent(sym, () => []).add(s);
-          }
+          final filtered = _filteredStakes;
 
           return RefreshIndicator(
             color: _kGreen,
@@ -204,19 +226,19 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
               padding: EdgeInsets.zero,
               children: [
                 _buildHeader(),
-                if (_c.stakes.isEmpty)
+                if (filtered.isEmpty)
                   _buildEmpty()
                 else
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                     child: Column(
                       children: [
-                        ...grouped.entries.map(
-                          (e) => Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: _CoinGroupWidget(
-                              symbol: e.key,
-                              stakes: e.value,
+                        ...filtered.map(
+                          (s) => Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: _StakeCardWidget(
+                              key: ValueKey(s.uid),
+                              stake: s,
                               c: _c,
                               onReload: _load,
                             ),
@@ -224,7 +246,6 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
                         ),
                         _buildPagination(),
                         const SizedBox(height: 20),
-                        // _buildNavCards(),
                       ],
                     ),
                   ),
@@ -242,31 +263,19 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── App bar row ──────────────────────────────────────────────────
           Row(
             children: [
               GestureDetector(
                 onTap: () => Get.back(),
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 25,
-                ),
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 25),
               ),
-
               const SizedBox(width: 20),
-
               const Text(
                 'My Stakes',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'DMSans',
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
               ),
-
               const Spacer(),
-
               GestureDetector(
                 onTap: () => Get.to(() => const McWithdrawHistoryScreen(initialTab: 0)),
                 child: Container(
@@ -282,14 +291,121 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
             ],
           ),
           const SizedBox(height: 20),
-
-          Row(
-            children: [
-              SizedBox(width: 170, height: 36, child: _buildStatusDropdown()),
-            ],
-          ),
-          const SizedBox(height: 30),
           _buildStatsGrid(),
+          const SizedBox(height: 16),
+
+          // ── Filter row: Coin | Plan | Status (below stats cards) ────────
+          Obx(() {
+            final coinItems = _coinItems;
+            final planItems = _planItems;
+            final coinLabel = _coinFilter ?? 'Coins';
+            final planLabel = _planFilter != null
+                ? (_planFilter == '0' ? 'Flexible' : '$_planFilter Days')
+                : 'Plan';
+            final statusLabel = _statusFilter == '1'
+                ? 'Active'
+                : _statusFilter == '2'
+                    ? 'Completed'
+                    : _statusFilter == '3'
+                        ? 'Cancelled'
+                        : 'Status';
+
+            final selCoin = _coinFilter != null
+                ? _c.coins.firstWhereOrNull((c) => c.symbol == _coinFilter)
+                : null;
+
+            return Row(
+              children: [
+                // Coin dropdown
+                GestureDetector(
+                  key: _coinKey,
+                  onTap: () => _showOverlayMenu(
+                    _coinKey,
+                    coinItems,
+                    _coinFilter ?? '',
+                    (val) => setState(() {
+                      _coinFilter = val.isEmpty ? null : val;
+                      _planFilter = null;
+                    }),
+                  ),
+                  child: Row(
+                    children: [
+                      if (selCoin != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: _coinImg(selCoin.logo, size: 22, symbol: selCoin.symbol),
+                        )
+                      else
+                        Container(
+                          height: 22,
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2A2A2A),
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                          child: const Center(
+                            child: Text('ALL', style: TextStyle(color: Colors.white, fontSize: 9, fontFamily: 'DMSans', fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                      Text(coinLabel, style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w400)),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 18),
+                    ],
+                  ),
+                ),
+
+                const Spacer(),
+
+                // Plan dropdown
+                GestureDetector(
+                  key: _planKey,
+                  onTap: () => _showOverlayMenu(
+                    _planKey,
+                    planItems,
+                    _planFilter ?? '',
+                    (val) => setState(() => _planFilter = val.isEmpty ? null : val),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(planLabel, style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w400)),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 18),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 24),
+
+                // Status dropdown
+                GestureDetector(
+                  key: _statusKey,
+                  onTap: () => _showOverlayMenu(
+                    _statusKey,
+                    const [
+                      _DropItem('', 'All Status'),
+                      _DropItem('1', 'Active'),
+                      _DropItem('2', 'Completed'),
+                      _DropItem('3', 'Cancelled'),
+                    ],
+                    _statusFilter,
+                    (val) => setState(() {
+                      _statusFilter = val;
+                      _page = 1;
+                      _load();
+                    }),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(statusLabel, style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w400)),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 18),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }),
         ],
       ),
     );
@@ -447,45 +563,6 @@ class _McMyStakesScreenState extends State<McMyStakesScreen> {
     );
   }
 
-  Widget _buildStatusDropdown() {
-    final selectedLabel = _statusLabels[_statusFilter] ?? 'All Stakes';
-    return GestureDetector(
-      key: _dropdownKey,
-      onTap: () =>
-          _dropdownOverlay == null ? _showDropdown() : _closeDropdown(),
-      child: Container(
-         height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.transparent),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                selectedLabel,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontFamily: 'DMSans',
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Colors.white.withValues(alpha: 0.5),
-              size: 18,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildEmpty() => SizedBox(
     height: 400,
@@ -694,270 +771,13 @@ class _NavItem {
   _NavItem(this.image, this.label, this.desc, this.icon, this.onTap);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Plan tab derived from actual stakes (mirrors website MobileStakingHistory)
-// ─────────────────────────────────────────────────────────────────────────────
-class _StakePlanTab {
-  final String key;
-  final String planName;
-  final double dailyRate;
-  final int? planId;
-
-  const _StakePlanTab({
-    required this.key,
-    required this.planName,
-    required this.dailyRate,
-    this.planId,
-  });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COIN GROUP WIDGET — website jaisa accordion
-// ─────────────────────────────────────────────────────────────────────────────
-class _CoinGroupWidget extends StatefulWidget {
-  final String symbol;
-  final List<McStake> stakes;
-  final McStakingController c;
-  final VoidCallback onReload;
-  const _CoinGroupWidget({
-    required this.symbol,
-    required this.stakes,
-    required this.c,
-    required this.onReload,
-  });
-
-  @override
-  State<_CoinGroupWidget> createState() => _CoinGroupWidgetState();
-}
-
-class _CoinGroupWidgetState extends State<_CoinGroupWidget> {
-  bool _expanded = false;
-  _StakePlanTab? _selectedTab;
-
-  McStakingController get _c => widget.c;
-  String get symbol => widget.symbol;
-
-  // Derive plan tabs from actual stakes — same as website MobileStakingHistory
-  List<_StakePlanTab> get _planTabs {
-    final tabs = <_StakePlanTab>[];
-    final seen = <String>{};
-    for (final s in widget.stakes) {
-      final key =
-          '${s.plan?.id ?? s.plan?.planName ?? 'custom'}_${s.dailyRate}';
-      if (seen.contains(key)) continue;
-      seen.add(key);
-      String name;
-      if (s.plan?.planName.isNotEmpty == true) {
-        name = s.plan!.planName;
-      } else if (s.plan?.planType == 1) {
-        name = 'Flexible';
-      } else {
-        name = 'Custom';
-      }
-      tabs.add(
-        _StakePlanTab(
-          key: key,
-          planName: name,
-          dailyRate: s.dailyRate,
-          planId: s.plan?.id,
-        ),
-      );
-    }
-    return tabs;
-  }
-
-  void _onCoinTap() {
-    setState(() => _expanded = !_expanded);
-    if (_expanded && _selectedTab == null) {
-      final tabs = _planTabs;
-      if (tabs.isNotEmpty) _selectedTab = tabs.first;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final stake = widget.stakes.first;
-    final logo =
-        stake.coin?.logo ??
-        _c.coins.firstWhereOrNull((c) => c.symbol == symbol)?.logo;
-    final coinName = stake.coin?.coinName ?? symbol;
-    final activeCount = widget.stakes.where((s) => s.status == 1).length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Coin row ──────────────────────────────────────────────────────────
-        GestureDetector(
-          onTap: _onCoinTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
-
-            child: Row(
-              children: [
-                // Coin icon
-                _coinImg(logo, size: 30, symbol: symbol),
-                const SizedBox(width: 15),
-                // Symbol
-                Expanded(
-                  child: Text(
-                    symbol,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'DMSans',
-                    ),
-                  ),
-                ),
-                // Coin full name (right side, like Figma)
-                Text(
-                  coinName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'DMSans',
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Expand arrow
-                AnimatedRotation(
-                  turns: _expanded ? 0.5 : 0.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: _expanded
-                          ? Colors.transparent
-                          : Colors.transparent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: _expanded
-                          ? Colors.white.withValues(alpha: 0.5)
-                          : Colors.white.withValues(alpha: 0.5),
-                      size: 18,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // ── Expanded content ──────────────────────────────────────────────────
-        if (_expanded) ...[
-          const SizedBox(height: 15),
-
-          // Plan tabs derived from actual stakes
-          if (_planTabs.isNotEmpty) ...[
-            SizedBox(
-              height: 90,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.zero,
-                itemCount: _planTabs.length,
-                itemBuilder: (_, i) {
-                  final tab = _planTabs[i];
-                  final isSelected = _selectedTab?.key == tab.key;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedTab = tab),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      width: 130,
-                      margin: const EdgeInsets.only(right: 10),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 15,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.transparent
-                            : const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? _kGreen : Colors.transparent,
-                          width: isSelected ? 0.5 : 0,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            tab.planName,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'DMSans',
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: '${tab.dailyRate.toStringAsFixed(3)}% ',
-                                  style: TextStyle(
-                                    color: isSelected ? _kGreen : Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: 'DMSans',
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: '/day',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.5),
-                                    fontSize: 12,
-                                    fontFamily: 'DMSans',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          // Stake cards for ALL stakes matching selected plan (or all if no plan filter)
-          ..._filteredStakes.map(
-            (s) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: _StakeCardWidget(
-                key: ValueKey(s.uid),
-                stake: s,
-                c: _c,
-                onReload: widget.onReload,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
-      ],
-    );
-  }
-
-  List<McStake> get _filteredStakes {
-    if (_selectedTab == null) return widget.stakes;
-    final matching = widget.stakes.where((s) {
-      final key =
-          '${s.plan?.id ?? s.plan?.planName ?? 'custom'}_${s.dailyRate}';
-      return key == _selectedTab!.key;
-    }).toList();
-    return matching.isEmpty ? widget.stakes : matching;
-  }
+// Simple dropdown item model
+class _DropItem {
+  final String value;
+  final String label;
+  final String? logo;
+  final String? symbol;
+  const _DropItem(this.value, this.label, {this.logo, this.symbol});
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1133,314 +953,297 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
     final remaining = totalDays > 0 ? (totalDays - elapsed).clamp(0, totalDays) : 0;
     final progress = stake.progressFraction;
     final progressPct = (progress * 100).toStringAsFixed(0);
-    final statusLabel = isActive ? 'Active' : (stake.status == 2 ? 'Completed' : 'Cancelled');
+    final statusLabel = isActive ? 'Active' : (stake.status == 2 ? 'Done' : 'Cancel');
     final startStr = _fmtDate(stake.startDate);
     final endStr = _fmtDate(stake.endDate);
 
-    // Live earned USDT value
     final portfolioPrice = _c.portfolio.value?.portfolio
         .firstWhereOrNull((p) => p.stakeUid == stake.uid)?.coinPriceUsdt ?? 0;
     final coinPrice = portfolioPrice > 0 ? portfolioPrice : (stake.coinPriceUsdt > 0 ? stake.coinPriceUsdt : 0.0);
-    final liveEarnedUsdt = coinPrice > 0 ? _liveEarned * coinPrice : 0.0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Row 1: coin icon + name/subtitle + withdraw button ────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _coinImg(
-                stake.coin?.logo ?? _c.coins.firstWhereOrNull((c) => c.symbol == symbol)?.logo,
-                size: 30,
-                symbol: symbol,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            '$symbol-USDT',
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: statusLabel == 'Cancelled'
-                                ? const Color(0x4CFF3B30)
-                                : const Color(0x4C00FF04),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            statusLabel,
-                            style: TextStyle(
-                              color: statusLabel == 'Cancelled'
-                                  ? const Color(0xFFFF3B30)
-                                  : const Color(0xFF00FF04),
-                              fontSize: 12,
-                              fontFamily: 'DMSans',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${totalDays > 0 ? '$totalDays Days' : 'Open'} · ${planType == 1 ? 'Flexible' : 'Fixed'}',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Withdraw button — fixed size so it doesn't shift with live amount
-              if (isActive)
-                Obx(() {
+    Color statusBgColor;
+    Color statusTextColor;
+    if (statusLabel == 'Cancel') {
+      statusBgColor = const Color(0x4CFF3B30);
+      statusTextColor = const Color(0xFFFF3B30);
+    } else if (statusLabel == 'Completed') {
+      statusBgColor = const Color(0x4C00B0FF);
+      statusTextColor = const Color(0xFF00B0FF);
+    } else {
+      statusBgColor = const Color(0x4C00FF04);
+      statusTextColor = const Color(0xFF00FF04);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── SVG card ─────────────────────────────────────────────────────────
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cardW = constraints.maxWidth;
+            // SVG notch: from x=240 to x=362, y=0 to y=62 (in 362px design space)
+            final notchX = cardW * (250 / 362);
+            final notchW = cardW - notchX;
+            final notchH = cardW * (52 / 352);
+            return Stack(
+          children: [
+            SvgPicture.asset(
+              'assets/svg/staking.svg',
+              width: cardW,
+              fit: BoxFit.fill,
+            ),
+            // Withdraw button — scaled to SVG notch position
+            if (isActive)
+              Positioned(
+                top: 0,
+                right: 0,
+                width: notchW,
+                height: notchH,
+                child: Obx(() {
                   final withdrawing = _c.isWithdrawing.value == stake.uid;
                   return GestureDetector(
                     onTap: withdrawing || _availableCoin <= 0.000001 ? null : _openWithdrawConfirm,
-                    child: SizedBox(
-                      width: 90,
-                      height: 52,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: _availableCoin > 0.000001 ? const Color(0xFFCCFF00) : Colors.grey.shade700,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          withdrawing ? 'Wait...\n$symbol' : 'Withdraw\n${_availableCoin.toStringAsFixed(4)} $symbol',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Color(0xFF111111), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
-                        ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _availableCoin > 0.000001 ? const Color(0xCCCCFF00) : Colors.grey.shade700,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        withdrawing ? 'Wait...\n$symbol' : 'Withdraw\n${_availableCoin.toStringAsFixed(4)} $symbol',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Color(0xFF111111), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w700),
                       ),
                     ),
                   );
                 }),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          // ── Row 2: Live Price | Earnings Schedule | Certificate | Cancel Stake ──
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
+              ),
+            Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isActive) ...[
-                  _pill('Live Price', const Color(0xFF77D215), () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))?.then((_) => widget.onReload())),
-                  const SizedBox(width: 6),
-                ],
-                _pill('Earnings Schedule', const Color(0xFFCCFF00), () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid))),
-                const SizedBox(width: 6),
-                _pill('Certificate', const Color(0xFFCCFF00), () {
-                  Get.to(() => McCertificateScreen(stake: {
-                    'plan_name': stake.plan?.planName ?? '',
-                    'coin_symbol': symbol,
-                    'amount': stake.amount,
-                    'daily_rate': stake.dailyRate,
-                    'total_return': stake.plan != null && stake.plan!.durationDays > 0
-                        ? (stake.dailyRate * stake.plan!.durationDays).toStringAsFixed(2)
-                        : null,
-                    'duration_days': stake.plan?.durationDays ?? 0,
-                    'start_date': stake.startDate ?? '',
-                    'end_date': stake.endDate ?? '',
-                    'plan_type': stake.plan?.planType ?? 1,
-                    'user_name': 'Valued Staker',
-                    'cert_no': 'TRPX-${stake.uid.length >= 8 ? stake.uid.substring(0, 8).toUpperCase() : stake.uid.toUpperCase()}',
-                  }));
-                }),
-                if (isActive) ...[
-                  const SizedBox(width: 6),
-                  Obx(() {
-                    final cancelling = _c.isCancelling.value == stake.uid;
-                    return _pill(
-                      cancelling ? 'Wait...' : 'Cancel Stake',
-                      const Color(0xFFFF0000),
-                      cancelling ? null : () => _openCancelConfirm(),
-                    );
-                  }),
-                ],
+                // ── Row 1: coin icon + name/status ───────────────────────────
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _coinImg(
+                      stake.coin?.logo ?? _c.coins.firstWhereOrNull((c) => c.symbol == symbol)?.logo,
+                      size: 40,
+                      symbol: symbol,
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  '$symbol-USDT',
+                                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: statusBgColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  statusLabel,
+                                  style: TextStyle(color: statusTextColor, fontSize: 12,fontWeight: FontWeight.w400, fontFamily: 'DMSans'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            '${totalDays > 0 ? '$totalDays Days' : 'Open'} · ${planType == 1 ? 'Flexible' : 'Fixed'}',
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // ── Stats: 2-column grid ──────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(child: _statCol('Live Earned', _liveEarnedWidget(symbol, coinPrice))),
+                    Expanded(child: _statCol('Staked Amount',
+                      Text('${stake.amount.toStringAsFixed(2)} $symbol',
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(color: Color(0xFF4DD78D), fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w400)),
+                      crossEnd: true)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(child: _statCol('Day Completed',
+                      Text('$elapsed / $totalDays days',
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w400)))),
+                    Expanded(child: _statCol('Day Remaining',
+                      Text(totalDays > 0 ? '$remaining days' : 'Flexible',
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w400)),
+                      crossEnd: true)),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // ── Progress ──────────────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Progress', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+                    Text('$progressPct% · Day $elapsed of $totalDays',
+                      style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 12, fontFamily: 'DMSans')),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(5),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 6,
+                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFCCFF00)),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(startStr, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+                    Text(endStr.isEmpty ? 'Flexible' : endStr,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+                  ],
+                ),
+
               ],
             ),
           ),
+          ],
+        );
+          },
+        ),
 
-          const SizedBox(height: 16),
-
-          // ── Stats rows ────────────────────────────────────────────────────
-          _liveEarnedRow(symbol),
-          _statRow('Staked Amount', '${stake.amount.toStringAsFixed(2)} $symbol', const Color(0xFF4DD78D)),
-          _statRow('Day Completed', '$elapsed / $totalDays days', Colors.white),
-          _statRow('Day Remaining', totalDays > 0 ? '$remaining days' : 'Flexible', Colors.white),
-
-          const SizedBox(height: 12),
-
-          // ── Progress ──────────────────────────────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Progress', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
-              Text('$progressPct% · Day $elapsed of $totalDays', style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 12, fontFamily: 'DMSans')),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Progress bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 5,
-              backgroundColor: Colors.white.withValues(alpha: 0.2),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFCCFF00)),
+        // ── Action buttons 2×2 — SVG card ke BAHAR ──────────────────────────
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _actionBtn(
+                'Live Dashboard',
+                const Color(0xFF77D215),
+                isActive
+                    ? () => Get.to(() => McPortfolioScreen(stakeUid: stake.uid, coinId: stake.coin?.id, coinSymbol: stake.coin?.symbol))
+                        ?.then((_) => widget.onReload())
+                    : null,
+                disabled: !isActive,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-
-          // Start — End dates
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(startStr, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
-              Text(endStr.isEmpty ? 'Flexible' : endStr, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
-            ],
-          ),
-        ],
-      ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _actionBtn(
+                'Earnings Schedule',
+                Colors.white,
+                () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _actionBtn('Certificate', Colors.white, () {
+                Get.to(() => McCertificateScreen(stake: {
+                  'plan_name': stake.plan?.planName ?? '',
+                  'coin_symbol': symbol,
+                  'amount': stake.amount,
+                  'daily_rate': stake.dailyRate,
+                  'total_return': stake.plan != null && stake.plan!.durationDays > 0
+                      ? (stake.dailyRate * stake.plan!.durationDays).toStringAsFixed(2)
+                      : null,
+                  'duration_days': stake.plan?.durationDays ?? 0,
+                  'start_date': stake.startDate ?? '',
+                  'end_date': stake.endDate ?? '',
+                  'plan_type': stake.plan?.planType ?? 1,
+                  'user_name': 'Valued Staker',
+                  'cert_no': 'TRPX-${stake.uid.length >= 8 ? stake.uid.substring(0, 8).toUpperCase() : stake.uid.toUpperCase()}',
+                }));
+              }),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Obx(() {
+                final cancelling = _c.isCancelling.value == stake.uid;
+                return _actionBtn(
+                  cancelling ? 'Wait...' : 'Cancel Stake',
+                  const Color(0xFFFF0000),
+                  isActive && !cancelling ? _openCancelConfirm : null,
+                  disabled: !isActive,
+                );
+              }),
+            ),
+          ],
+        ),
+        SizedBox(height: 20),
+      ],
     );
   }
 
-  Widget _pill(String label, Color fg, VoidCallback? onTap) =>
-      GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFF111111),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          alignment: Alignment.center,
-          child: Text(label, style: TextStyle(color: fg, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400), maxLines: 1),
-        ),
-      );
+  Widget _statCol(String label, Widget valueWidget, {bool crossEnd = false}) {
+    return Column(
+      crossAxisAlignment: crossEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
+        const SizedBox(height: 2),
+        valueWidget,
+      ],
+    );
+  }
 
-  Widget _pillFixed(String label, Color fg, double width, VoidCallback? onTap) =>
-      GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: width,
-          height: 36,
-          decoration: BoxDecoration(
-            color: const Color(0xFF111111),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          alignment: Alignment.center,
-          child: Text(label, style: TextStyle(color: fg, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400), textAlign: TextAlign.center),
-        ),
-      );
-
-  // keep for backward compat
-  Widget _actionPill(String label, Color fg, VoidCallback? onTap) => _pill(label, fg, onTap);
-
-  Widget _statRow(String label, String value, Color? valueColor) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _liveEarnedWidget(String symbol, double coinPrice) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'DMSans',
-          ),
-        ),
-        const SizedBox(width: 16),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              color: valueColor ?? Colors.white,
-              fontSize: 12,
-              fontFamily: 'DMSans',
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          '${_liveEarned.toStringAsFixed(8)} $symbol',
+          style: const TextStyle(color: Color(0xFF00B052), fontSize: 13, fontFamily: 'DMSans', fontWeight: FontWeight.w700),
         ),
       ],
-    ),
-  );
+    );
+  }
 
-  // Live Earned row with optional USD sub-line (matches website ≈ $X.XXXX USDT)
-  Widget _liveEarnedRow(String symbol) {
-    final portfolioPrice = _c.portfolio.value?.portfolio
-        .firstWhereOrNull((p) => p.stakeUid == stake.uid)
-        ?.coinPriceUsdt ?? 0;
-    final trpxPrice = _c.trpxPrice.value;
-    final isTrpx = (stake.coin?.symbol ?? '').toUpperCase() == 'TRPX';
-    final coinPrice = portfolioPrice > 0
-        ? portfolioPrice
-        : (stake.coinPriceUsdt > 0
-            ? stake.coinPriceUsdt
-            : (isTrpx && trpxPrice > 0 ? trpxPrice : 0.0));
-    final usdVal = coinPrice > 0 ? _liveEarned * coinPrice : 0.0;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Live Earned',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
-              fontSize: 12,
-              fontFamily: 'DMSans',
-            ),
+  Widget _actionBtn(String label, Color textColor, VoidCallback? onTap, {bool disabled = false}) {
+    final effectiveColor = disabled ? textColor.withValues(alpha: 0.3) : textColor;
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color:  Color(0xFF1A1A1A).withOpacity(0.2),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withValues(alpha: disabled ? 0.08 : 0.18), width: 0.5),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: effectiveColor, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400),
           ),
-          const SizedBox(width: 16),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${_liveEarned.toStringAsFixed(8)} $symbol',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    color: Color(0xFF00B052),
-                    fontSize: 12,
-                    fontFamily: 'DMSans',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (usdVal > 0)
-                  Text(
-                    '≈ \$${usdVal.toStringAsFixed(4)} USDT',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.4),
-                      fontSize: 11,
-                      fontFamily: 'DMSans',
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1779,3 +1582,4 @@ class _CancelSuccessDialog extends StatelessWidget {
     ]),
   );
 }
+
