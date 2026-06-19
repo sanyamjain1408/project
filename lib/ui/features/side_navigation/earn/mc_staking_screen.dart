@@ -405,29 +405,37 @@ class _McStakingScreenState extends State<McStakingScreen>
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Staking Coins',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'DMSans',
-            ),
-          ),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (int i = 0; i < symbols.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 8),
-                  SizedBox(
-                    width: 120,
-                    child: Obx(() => _buildTickerTile(symbols[i])),
-                  ),
-                ],
-              ],
-            ),
+         
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final totalWidth = constraints.maxWidth;
+              final tileW = (totalWidth - 16) / 3; // 3 tiles with 2 gaps of 8
+              // Group into pages of 3
+              final pages = <List<String>>[];
+              for (int i = 0; i < symbols.length; i += 3) {
+                pages.add(symbols.sublist(i, i + 3 > symbols.length ? symbols.length : i + 3));
+              }
+              return SizedBox(
+                height: 90,
+                child: PageView.builder(
+                itemCount: pages.length,
+                itemBuilder: (context, pageIndex) {
+                  final pageSymbols = pages[pageIndex];
+                  return Row(
+                    children: [
+                      for (int i = 0; i < pageSymbols.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 8),
+                        SizedBox(
+                          width: tileW,
+                          child: Obx(() => _buildTickerTile(pageSymbols[i])),
+                        ),
+                      ],
+                    ],
+                  );
+                },
+              ),
+              );
+            },
           ),
         ],
       );
@@ -442,7 +450,6 @@ class _McStakingScreenState extends State<McStakingScreen>
     final price = (ticker['price'] as double?) ?? 0;
     final change = (ticker['change'] as double?) ?? 0;
     final isPositive = (ticker['goingUp'] as bool?) ?? (change >= 0);
-    final coin = _c.coins.firstWhereOrNull((c) => c.symbol == symbol);
     final changeColor = isPositive ? const Color(0xFF77D215) : const Color(0xFFFF453A);
 
     String fmtPrice(double p) {
@@ -452,102 +459,98 @@ class _McStakingScreenState extends State<McStakingScreen>
       return p.toStringAsFixed(6);
     }
 
-    return GestureDetector(
-      onTap: () {
-        getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          TradesScreen.switchToTab(1); // Spot tab
-          if (Get.isRegistered<SpotTradeController>()) {
-            Get.find<SpotTradeController>().selectPairBySymbol(symbol);
-          } else {
-            TemporaryData.selectedCurrencyPair = CoinPair(
-              coinPair: '${symbol}USDT',
-              coinPairName: '$symbol/USDT',
-              lastPrice: price,
-            );
-          }
-        });
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Coin icon + pair name
-            Row(
-              children: [
-                _coinImg(coin?.logo, size: 18, symbol: symbol),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: RichText(
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(children: [
-                      TextSpan(
-                        text: symbol,
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w600),
-                      ),
-                      TextSpan(
-                        text: '/USDT',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10, fontFamily: 'DMSans'),
-                      ),
-                    ]),
-                  ),
+    void goToTrade() {
+      getRootController().changeBottomNavIndex(AppBottomNavKey.trade);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        TradesScreen.switchToTab(1);
+        if (Get.isRegistered<SpotTradeController>()) {
+          Get.find<SpotTradeController>().selectPairBySymbol(symbol);
+        } else {
+          TemporaryData.selectedCurrencyPair = CoinPair(
+            coinPair: '${symbol}USDT',
+            coinPairName: '$symbol/USDT',
+            lastPrice: price,
+          );
+        }
+      });
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Row 1: TRPX/USDT bold + % badge
+          Row(
+            children: [
+              Expanded(
+                child: RichText(
+                  overflow: TextOverflow.ellipsis,
+                  text: TextSpan(children: [
+                    TextSpan(
+                      text: '${symbol}/USDT',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontFamily: 'DMSans', fontWeight: FontWeight.w700),
+                    ),
+                    // TextSpan(
+                    //   text: '/USDT',
+                    //   style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 9, fontFamily: 'DMSans', fontWeight: FontWeight.w700),
+                    // ),
+                  ]),
                 ),
-              ],
-            ),
-            // % change
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              ),
+              const SizedBox(width: 0),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                decoration: BoxDecoration(
+                  color: changeColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${isPositive ? '' : ''}${change.toStringAsFixed(2)}%',
+                  style: TextStyle(color: changeColor, fontSize: 9, fontWeight: FontWeight.w600, fontFamily: 'DMSans'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // Row 2: Price
+          Text(
+            fmtPrice(price),
+            style: TextStyle(color: changeColor, fontSize: 13, fontWeight: FontWeight.w700, fontFamily: 'DMSans'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          // Row 3: ≈ $USD
+          Text(
+            '≈ \$${fmtPrice(price)}',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 9, fontFamily: 'DMSans'),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          // Row 4: Trade button
+          GestureDetector(
+            onTap: goToTrade,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 2),
               decoration: BoxDecoration(
-                color: changeColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
+                color: Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
-                '${isPositive ? '+' : ''}${change.toStringAsFixed(2)}%',
-                style: TextStyle(
-                  color: changeColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'DMSans',
-                ),
+                'Trade ->',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: _green, fontSize: 10, fontWeight: FontWeight.w600, fontFamily: 'DMSans'),
               ),
             ),
-            // Price
-            Text(
-              fmtPrice(price),
-              style: TextStyle(
-                color: changeColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'DMSans',
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            // ≈ USD + To trade
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Text(
-                    '≈ \$${fmtPrice(price)}',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 9, fontFamily: 'DMSans'),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  'Trade →',
-                  style: TextStyle(color: _green, fontSize: 9, fontWeight: FontWeight.w600, fontFamily: 'DMSans'),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
