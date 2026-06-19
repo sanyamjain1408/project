@@ -23,6 +23,7 @@ import 'package:tradexpro_flutter/ui/features/side_navigation/profile/profile_sc
 import 'package:tradexpro_flutter/ui/features/side_navigation/earn/earn_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/airdrop/airdrop_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/buy_crypto_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_screen.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -398,48 +399,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                           }),
                           const SizedBox(height: 0),
                           Obx(() {
-                            List<Map<String, dynamic>> userItems =
+                            final List<Map<String, dynamic>> userItems =
                                 _gridController.selectedIcons.isNotEmpty
-                                ? _gridController.selectedIcons
-                                      .cast<Map<String, dynamic>>()
-                                : [
-                                    {
-                                      "image": "assets/images/deposit.png",
-                                      "title": "Deposit",
-                                    },
-                                    {
-                                      "image": "assets/images/champion.png",
-                                      "title": "Champion",
-                                    },
-                                    {
-                                      "image": "assets/images/swap.png",
-                                      "title": "Swap",
-                                    },
-                                    {
-                                      "image": "assets/images/earn.png",
-                                      "title": "Earn",
-                                    },
-                                    {
-                                      "image": "assets/images/buy.png",
-                                      "title": "Buy",
-                                    },
-                                    {
-                                      "image": "assets/images/future.png",
-                                      "title": "Future",
-                                    },
-                                    {
-                                      "image": "assets/images/transfer.png",
-                                      "title": "Transfer",
-                                    },
-                                    {
-                                      "image": "assets/images/spot.png",
-                                      "title": "Spot",
-                                    },
-                                    {
-                                      "image": "assets/images/funds.png",
-                                      "title": "Funds",
-                                    },
-                                  ];
+                                    ? _gridController.selectedIcons.cast<Map<String, dynamic>>()
+                                    : HomeGridController.defaultIcons;
 
                             List<Map<String, dynamic>> finalGridItems = [];
                             for (var item in userItems) {
@@ -906,6 +869,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         Get.to(() => const SwapScreen());
         break;
       case "Buy":
+        Get.to(() => const BuyCryptoScreen());
         break;
       case "Future":
         Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
