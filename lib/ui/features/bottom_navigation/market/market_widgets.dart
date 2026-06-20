@@ -51,13 +51,12 @@ class SpotMarketHeaderView extends StatelessWidget {
             Expanded(
                 flex: 3,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _getUpDownView("Price".tr, sort.price, () => _updateValue(SortKey.price), MainAxisAlignment.start),
+                    _getUpDownView("Price".tr, sort.price, () => _updateValue(SortKey.price), MainAxisAlignment.center),
                     if (hideCap != true) _getUpDownView(" / ${"Cap".tr}", sort.capital, () => _updateValue(SortKey.capital), MainAxisAlignment.end)
                   ],
                 )),
-            hSpacer10(),
             Expanded(flex: 2, child: _getUpDownView("24h Change".tr, sort.change, () => _updateValue(SortKey.change), MainAxisAlignment.end)),
           ],
         ),
@@ -145,10 +144,9 @@ class MarketCoinPairItemView extends StatelessWidget {
               ],
             ),
           ),
-          hSpacer5(),
           Expanded(
             flex: 3,
-            child: TextRobotoAutoBold(currencyFormat(pair.lastPrice), textAlign: TextAlign.start),
+            child: TextRobotoAutoBold(currencyFormat(pair.lastPrice), textAlign: TextAlign.center),
           ),
           Expanded(
             flex: 2,
