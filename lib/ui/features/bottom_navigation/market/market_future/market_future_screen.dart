@@ -418,11 +418,11 @@ class _FuturePairItem extends StatelessWidget {
                               child: Text.rich(
                                 TextSpan(
                                   text: pair.baseAsset,
-                                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.25),
+                                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.25),
                                   children: [
                                     TextSpan(
                                       text: '/${pair.quoteAsset}',
-                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.25),
+                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.25),
                                     ),
                                   ],
                                 ),
