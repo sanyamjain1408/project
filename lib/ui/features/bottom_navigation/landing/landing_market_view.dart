@@ -133,7 +133,9 @@ class _MarketRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (sign, color) = getNumberData(coin.priceChange);
+    final isUp = !isNegativeNum(coin.priceChange);
+    final sign = isUp ? '+' : '';
+    final color = isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
     final price = coinFormat(coin.lastPrice);
     final change = "$sign${coinFormat(coin.priceChange, fixed: 2)}%";
 
