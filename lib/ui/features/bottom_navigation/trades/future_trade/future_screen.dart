@@ -364,7 +364,7 @@ class _NewFutureScreenState extends State<NewFutureScreen>
       if (_subTab == 'Earn') return Column(children: [if (widget.showTopTabs) _buildTopTabs(), Expanded(child: EarnScreen(key: const ValueKey('future_earn')))]);
       if (_subTab == 'Staking') return Column(children: [if (widget.showTopTabs) _buildTopTabs(), Expanded(child: EarnScreen(key: const ValueKey('future_staking'), initialTab: 3))]);
 
-      final colWidth = (MediaQuery.of(context).size.width - 24) * 0.42;
+      final colWidth = (MediaQuery.of(context).size.width - 24) * 0.375;
 
       return Container(
         color: const Color(0xFF111111),
