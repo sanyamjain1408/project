@@ -26,6 +26,7 @@ class SpotTradeController extends GetxController implements SocketListener {
   Rx<SelfBalance> selfBalance = SelfBalance().obs;
   Rx<CoinPair> selectedCoinPair = CoinPair().obs;
   RxList<CoinPair> coinPairs = <CoinPair>[].obs;
+  List<CoinPair> _allCoinPairs = [];
   Map<String, String> coinIconMap = {};
   List<SpotPair> spotPairsMeta = [];
   RxInt pricePrecision = 2.obs;
@@ -371,7 +372,8 @@ class SpotTradeController extends GetxController implements SocketListener {
       spotPairsMeta = pairs;
       // Convert SpotPair → CoinPair for UI compatibility
       coinPairs.value = pairs.map(_spotPairToCoinPair).toList();
-      dashboardData.value.coinPairs = coinPairs.toList();
+      _allCoinPairs = coinPairs.toList();
+      dashboardData.value.coinPairs = _allCoinPairs;
       // Select BTC/USDT by default, fallback to first pair
       selectedCoinPair.value = coinPairs.firstWhere(
         (p) => (p.parentCoinName ?? '').toUpperCase() == 'BTC' && (p.childCoinName ?? '').toUpperCase() == 'USDT',
@@ -490,7 +492,6 @@ class SpotTradeController extends GetxController implements SocketListener {
               priceOrderType: ticker.priceChange24h >= 0 ? FromKey.buy : FromKey.sell,
             ),
           ];
-          dashboardData.value.coinPairs = coinPairs.toList();
           dashboardData.refresh();
 
           selfBalance.value.buyPrice = ticker.price;
@@ -862,9 +863,7 @@ class SpotTradeController extends GetxController implements SocketListener {
   }
 
   void getCoinPairList(String searchText) {
-    final allPairs = (dashboardData.value.coinPairs?.isNotEmpty ?? false)
-        ? dashboardData.value.coinPairs!
-        : coinPairs.toList();
+    final allPairs = _allCoinPairs.isNotEmpty ? _allCoinPairs : coinPairs.toList();
 
     List<CoinPair> list;
     if (searchText.isEmpty) {
