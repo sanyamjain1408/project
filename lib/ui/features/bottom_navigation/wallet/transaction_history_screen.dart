@@ -300,7 +300,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
             child: Icon(
               (isTransfer || isSwap) ? Icons.swap_horiz : isDep ? Icons.arrow_downward : Icons.arrow_upward,
-              size: 14, color: iconColor,
+              size: 22, color: iconColor,
             ),
           ),
           const SizedBox(width: 20),

@@ -505,7 +505,7 @@ class _TransferScreenState extends State<TransferScreen>
 
             // ── AVAILABLE ───────────────────────────────────────────────────
             Text(
-              'Available: ${_availableBalance.toStringAsFixed(8)} ${_selectedCoin?['coin_type'] ?? 'USDT'}',
+              'Available: ${_availableBalance.toStringAsFixed(2)} ${_selectedCoin?['coin_type'] ?? 'USDT'}',
               style: TextStyle(
                 color: Colors.white.withOpacity(0.5),
                 fontSize: 12,
@@ -716,7 +716,7 @@ class _CoinSelectSheet extends StatelessWidget {
                         ),
                         const Spacer(),
                         Text(
-                          '${(coin['balance'] as double).toStringAsFixed(4)}',
+                          '${(coin['balance'] as double).toStringAsFixed(2)}',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.7),
                             fontSize: 13,
