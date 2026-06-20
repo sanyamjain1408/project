@@ -64,8 +64,6 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       initialIndex: _controller.selectedBuySellTab.value,
     );
     super.initState();
-    String _activePair = _controller.selectedCoinPair.value.coinPair ?? '';
-
     void _applyPrice(double price) {
       final formatted = price.toStringAsFixed(2);
       final subIndex = _controller.selectedBuySellTab.value == 0
@@ -78,20 +76,21 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       }
     }
 
-    // When coin pair changes, reset so next dashboardData with new pair applies
+    // When coin pair changes, immediately set price from the pair's lastPrice
     ever(_controller.selectedCoinPair, (pair) {
-      _activePair = pair.coinPair ?? '';
       _priceInitialized = false;
+      final price = pair.lastPrice ?? 0;
+      if (price > 0) {
+        _applyPrice(price);
+        _priceInitialized = true;
+      }
     });
 
     _priceWorker = ever(_controller.dashboardData, (data) {
-      // Only apply if this data belongs to the currently selected pair
-      final currentPair = _controller.selectedCoinPair.value.coinPair ?? '';
-      if (currentPair != _activePair) return;
+      if (_priceInitialized) return;
       final prices = data.lastPriceData;
       final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
       if (price == null || price <= 0) return;
-      if (_priceInitialized) return;
       _applyPrice(price);
       _priceInitialized = true;
     });
