@@ -126,76 +126,82 @@ class MarketCoinPairItemView extends StatelessWidget {
       onLongPressStart: (lpDetails) =>
           FavoriteHelper.showFavoritePopup(context, lpDetails.globalPosition, pair.setCoinPairKey(), fromKey, onFavChange),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Icon
-            SizedBox(
-              width: 30, height: 30,
-              child: Stack(children: [
-                Container(
-                  width: 30, height: 30,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF2A2A2A)),
-                  child: Center(child: Text(
-                    (pair.childCoinName ?? '?').isNotEmpty ? (pair.childCoinName ?? '?')[0] : '?',
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))),
-                ),
-                ClipOval(child: showImageNetwork(imagePath: pair.icon ?? '', width: 30, height: 30, bgColor: Colors.transparent)),
-              ]),
-            ),
-            const SizedBox(width: 8),
-            // Pair name + vol
+            // Pair/Volume
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text.rich(TextSpan(children: [
-                    TextSpan(
-                      text: '${pair.childCoinName ?? ""}${pair.parentCoinName ?? ""} ',
-                      style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33),
+                  ClipOval(
+                    child: showImageNetwork(
+                      imagePath: pair.icon,
+                      width: 30, height: 30,
+                      bgColor: const Color(0xFFD9D9D9),
                     ),
-                    TextSpan(
-                      text: 'Perp',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.20),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            text: pair.childCoinName ?? '',
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.25),
+                            children: [
+                              TextSpan(
+                                text: '/${pair.parentCoinName ?? ''}',
+                                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.25),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          numberFormatCompact(pair.volume, symbol: '\$'),
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33),
+                          maxLines: 1,
+                        ),
+                      ],
                     ),
-                  ]), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text('\$${numberFormatCompact(pair.volume, decimals: 2)}',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
                 ],
               ),
             ),
-            // Price
+            // Last Price
             SizedBox(
-              width: 100,
+              width: 90,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(currencyFormat(pair.lastPrice),
-                    style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w600, height: 1.33),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text('\$${currencyFormat(pair.lastPrice)}',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(coinFormat(pair.lastPrice),
+                    textAlign: TextAlign.right, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w700, height: 1.25)),
+                  Text('\$${coinFormat(pair.lastPrice)}',
+                    textAlign: TextAlign.right, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33)),
                 ],
               ),
             ),
-            // % pill
-            Container(
+            const SizedBox(width: 18),
+            // 24H Change badge
+            SizedBox(
               width: 83, height: 30,
-              decoration: BoxDecoration(
-                color: getNumberColor(pair.priceChange),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text('${(pair.priceChange ?? 0) >= 0 ? '+' : ''}${coinFormat(pair.priceChange, fixed: 2)}%',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w600, height: 1.33),
+              child: Container(
+                decoration: BoxDecoration(color: getNumberColor(pair.priceChange), borderRadius: BorderRadius.circular(5)),
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '${(pair.priceChange ?? 0) >= 0 ? '+' : ''}${coinFormat(pair.priceChange, fixed: 2)}%',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w600, height: 1.33),
+                    ),
                   ),
                 ),
               ),
