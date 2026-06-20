@@ -64,11 +64,13 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       initialIndex: _controller.selectedBuySellTab.value,
     );
     super.initState();
+    // Reset price when coin pair changes so new coin's price loads
+    ever(_controller.selectedCoinPair, (_) { _priceInitialized = false; });
     _priceWorker = ever(_controller.dashboardData, (data) {
-      if (_priceInitialized) return;
       final prices = data.lastPriceData;
       final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
       if (price == null || price <= 0) return;
+      if (_priceInitialized) return;
       final formatted = price.toStringAsFixed(2);
       final subIndex = _controller.selectedBuySellTab.value == 0
           ? selectedBuySubTabIndex.value
