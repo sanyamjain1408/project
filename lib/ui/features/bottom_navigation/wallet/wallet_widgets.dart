@@ -599,7 +599,7 @@ class TotalBalanceView extends StatelessWidget {
                           textBaseline: TextBaseline.alphabetic, //  important
                           children: [
                             Text(
-                              "\$${currencyFormat(balance.total)}",
+                              "\$${currencyFormat(balance.total, fixed: 2)}",
                               style: const TextStyle(
                                 fontSize: 30,
                                 fontWeight: FontWeight.w700,
@@ -626,7 +626,7 @@ class TotalBalanceView extends StatelessWidget {
 
                   if (!isHide)
                     Text(
-                      "≈ \$${currencyFormat(totalUsd)} ",
+                      "≈ \$${currencyFormat(totalUsd, fixed: 2)} ",
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,

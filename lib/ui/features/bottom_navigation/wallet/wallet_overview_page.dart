@@ -1382,7 +1382,7 @@ class _FutureWalletBody extends StatelessWidget {
                                         children: [
                                           Flexible(
                                             child: Text(
-                                              '\$${currencyFormat(balance)}',
+                                              '\$${currencyFormat(balance, fixed: 2)}',
                                               style: const TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.w700, fontFamily: _dmSans, height: 1.2),
                                               overflow: TextOverflow.ellipsis,
                                             ),

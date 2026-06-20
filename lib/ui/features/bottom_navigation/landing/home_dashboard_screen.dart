@@ -328,7 +328,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                   textBaseline: TextBaseline.alphabetic,
                                   children: [
                                     Text(
-                                      "\$ ${currencyFormat(balance.total)}",
+                                      "\$ ${currencyFormat(balance.total, fixed: 2)}",
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w700,
@@ -353,7 +353,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                 const SizedBox(height: 2),
                                 // ≈ same price repeated below (Figma)
                                 Text(
-                                  "≈ \$${currencyFormat(balance.total)}",
+                                  "≈ \$${currencyFormat(balance.total, fixed: 2)}",
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,

@@ -823,7 +823,7 @@ class _SpotHeroCard extends StatelessWidget {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      "\$${currencyFormat(total?.total)}",
+                                      "\$${currencyFormat(total?.total, fixed: 2)}",
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 25,
@@ -855,7 +855,7 @@ class _SpotHeroCard extends StatelessWidget {
                         if (!isHide) ...[
                           const SizedBox(height: 2),
                           Text(
-                            "≈ \$${currencyFormat(total?.total)}",
+                            "≈ \$${currencyFormat(total?.total, fixed: 2)}",
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.5),
                               fontSize: 12,
