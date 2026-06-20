@@ -20,6 +20,7 @@ class McEarningsScheduleScreen extends StatefulWidget {
 class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
   late McStakingController _c;
   McStake? _stake;
+  Set<String> _creditedDates = {};
   bool _loading = true;
 
   @override
@@ -32,13 +33,35 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
   }
 
   Future<void> _load() async {
-    // First check already-loaded stakes, avoid re-fetching if possible
+    // Load stake
     var found = _c.stakes.firstWhereOrNull((s) => s.uid == widget.stakeUid);
     if (found == null) {
       await _c.fetchMyStakes(page: 1);
       found = _c.stakes.firstWhereOrNull((s) => s.uid == widget.stakeUid);
     }
-    setState(() { _stake = found; _loading = false; });
+
+    // Fetch real reward history from API
+    Set<String> credited = {};
+    try {
+      final res = await _c.fetchStakeRewards(widget.stakeUid);
+      for (final r in res) {
+        final dateStr = r['reward_date']?.toString() ?? '';
+        if (dateStr.isNotEmpty) {
+          // Parse "YYYY-MM-DD" and normalize to midnight
+          try {
+            final d = DateTime.parse(dateStr);
+            final normalized = DateTime(d.year, d.month, d.day);
+            credited.add(normalized.toString());
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+
+    setState(() {
+      _stake = found;
+      _creditedDates = credited;
+      _loading = false;
+    });
   }
 
   @override
@@ -94,15 +117,19 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
     final remaining = (totalReward - earnedSoFar).clamp(0.0, double.infinity);
 
     final daysElapsed = today.difference(startDate).inDays + 1;
-    final daysCompleted = (today.difference(startDate).inDays).clamp(0, totalDays);
+    // Use actual credited dates count for daysCompleted
+    final daysCompleted = _creditedDates.length.clamp(0, totalDays);
     final daysRemaining = (totalDays - daysElapsed).clamp(0, totalDays);
-    final progressPct = (daysCompleted / totalDays * 100).clamp(0.0, 100.0);
+    final progressPct = totalDays > 0
+        ? (daysCompleted / totalDays * 100).clamp(0.0, 100.0)
+        : 0.0;
 
-    // Build schedule rows
+    // Build schedule rows — isDone based on actual credited dates
     final rows = List.generate(totalDays, (i) {
       final rowDate = startDate.add(Duration(days: i));
-      final isToday = rowDate.year == today.year && rowDate.month == today.month && rowDate.day == today.day;
-      final isDone = rowDate.isBefore(today);
+      final rowDateNormalized = DateTime(rowDate.year, rowDate.month, rowDate.day);
+      final isToday = rowDateNormalized == today;
+      final isDone = _creditedDates.contains(rowDateNormalized.toString());
       return _ScheduleRow(
         day: i + 1,
         date: _fmtDate(rowDate),
@@ -116,12 +143,10 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Header subtitle
         Text('${stake.coin?.symbol ?? ''} · $totalDays Days · ${stake.dailyRate.toStringAsFixed(2)}% daily',
             style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
         const SizedBox(height: 16),
 
-        // Summary cards
         GridView.count(
           shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.6,
@@ -134,7 +159,6 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Progress bar
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(16)),
@@ -163,11 +187,9 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Schedule table
         Container(
           decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(16)),
           child: Column(children: [
-            // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(children: [
@@ -190,7 +212,6 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Totals footer
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(16)),
@@ -244,8 +265,7 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(16)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w500,
-              letterSpacing: 0.3)),
+          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w500, letterSpacing: 0.3)),
           const SizedBox(height: 6),
           Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w800), overflow: TextOverflow.ellipsis),
         ]),
