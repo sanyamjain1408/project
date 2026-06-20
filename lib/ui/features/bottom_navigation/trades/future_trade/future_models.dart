@@ -38,6 +38,7 @@ class FuturePair {
   final int leverageMin;
   final int leverageMax;
   final int leverageStep;
+  final String? icon;
 
   FuturePair({
     required this.id,
@@ -59,6 +60,7 @@ class FuturePair {
     required this.leverageMin,
     required this.leverageMax,
     required this.leverageStep,
+    this.icon,
   });
 
   factory FuturePair.fromJson(Map<String, dynamic> j) => FuturePair(
@@ -81,6 +83,7 @@ class FuturePair {
     leverageMin: j['leverage_min'] ?? 1,
     leverageMax: j['leverage_max'] ?? 100,
     leverageStep: j['leverage_step'] ?? 1,
+    icon: j['icon'] as String?,
   );
 }
 

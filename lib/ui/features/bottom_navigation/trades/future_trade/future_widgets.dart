@@ -3113,7 +3113,8 @@ const _kFutureCoinColors = <String, Color>{
 // ── Coin icon widget with CDN fallbacks (matches spot _CoinIcon) ──────────────
 class _FutureCoinIcon extends StatefulWidget {
   final String symbol;
-  const _FutureCoinIcon({required this.symbol});
+  final String? iconUrl;
+  const _FutureCoinIcon({required this.symbol, this.iconUrl});
 
   @override
   State<_FutureCoinIcon> createState() => _FutureCoinIconState();
@@ -3131,10 +3132,14 @@ class _FutureCoinIconState extends State<_FutureCoinIcon> {
 
   String? _urlForAttempt(int attempt, String sym) {
     final slug = sym.toLowerCase();
-    if (attempt == 0)
+    if (attempt == 0 && widget.iconUrl != null) return widget.iconUrl;
+    final cdnAttempt = widget.iconUrl != null ? attempt - 1 : attempt;
+    if (cdnAttempt == 0) {
       return 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa/128/color/$slug.png';
-    if (attempt == 1)
-      return 'https://assets.coincap.io/assets/icons/${slug}@2x.png';
+    }
+    if (cdnAttempt == 1) {
+      return 'https://assets.coincap.io/assets/icons/$slug@2x.png';
+    }
     return null;
   }
 
@@ -3443,7 +3448,7 @@ class _FuturePairDrawerState extends State<FuturePairDrawer> {
                             flex: 2,
                             child: Row(
                               children: [
-                                _FutureCoinIcon(symbol: p.baseCurrency),
+                                _FutureCoinIcon(symbol: p.baseCurrency, iconUrl: p.icon),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
