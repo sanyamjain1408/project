@@ -167,21 +167,22 @@ class MarketCoinPairItemView extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
             // Price
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(currencyFormat(pair.lastPrice),
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w600, height: 1.33),
-                  maxLines: 1),
-                Text('\$${currencyFormat(pair.lastPrice)}',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33),
-                  maxLines: 1),
-              ],
+            SizedBox(
+              width: 100,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(currencyFormat(pair.lastPrice),
+                    style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w600, height: 1.33),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text('\$${currencyFormat(pair.lastPrice)}',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ),
             ),
-            const SizedBox(width: 8),
             // % pill
             Container(
               width: 83, height: 30,
