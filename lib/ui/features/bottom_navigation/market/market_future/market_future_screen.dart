@@ -350,10 +350,10 @@ class MarketFutureState extends State<MarketFutureScreen> {
             child: Text('Pair/Vol',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
           SizedBox(
-            width: 80,
+            width: 90,
             child: Text('Price', textAlign: TextAlign.end,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
-          const SizedBox(width: 8),
+          const SizedBox(width: 18),
           SizedBox(
             width: 83,
             child: Text('24h Change', textAlign: TextAlign.end,
@@ -446,9 +446,9 @@ class _FuturePairItem extends StatelessWidget {
               ),
             ),
 
-            // Price — fixed 80px right-aligned
+            // Price — fixed 90px right-aligned
             SizedBox(
-              width: 80,
+              width: 90,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
@@ -463,7 +463,7 @@ class _FuturePairItem extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: 18),
 
             // Change badge — fixed 83px
             SizedBox(
