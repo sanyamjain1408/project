@@ -131,17 +131,18 @@ class MarketCoinPairItemView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Icon
-            ClipOval(
-              child: showImageNetwork(
-                imagePath: pair.icon ?? '',
-                width: 30, height: 30,
-                errorWidget: Container(
+            SizedBox(
+              width: 30, height: 30,
+              child: Stack(children: [
+                Container(
                   width: 30, height: 30,
                   decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF2A2A2A)),
-                  child: Center(child: Text((pair.childCoinName ?? '?').substring(0, 1),
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))),
+                  child: Center(child: Text(
+                    (pair.childCoinName ?? '?').isNotEmpty ? (pair.childCoinName ?? '?')[0] : '?',
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))),
                 ),
-              ),
+                ClipOval(child: showImageNetwork(imagePath: pair.icon ?? '', width: 30, height: 30, bgColor: Colors.transparent)),
+              ]),
             ),
             const SizedBox(width: 8),
             // Pair name + vol
