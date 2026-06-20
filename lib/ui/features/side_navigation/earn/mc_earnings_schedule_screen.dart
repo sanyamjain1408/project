@@ -40,20 +40,13 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
       found = _c.stakes.firstWhereOrNull((s) => s.uid == widget.stakeUid);
     }
 
-    // Fetch real reward history from API
+    // Fetch real reward history from API — store as "YYYY-MM-DD" strings
     Set<String> credited = {};
     try {
       final res = await _c.fetchStakeRewards(widget.stakeUid);
       for (final r in res) {
-        final dateStr = r['reward_date']?.toString() ?? '';
-        if (dateStr.isNotEmpty) {
-          // Parse "YYYY-MM-DD" and normalize to midnight
-          try {
-            final d = DateTime.parse(dateStr);
-            final normalized = DateTime(d.year, d.month, d.day);
-            credited.add(normalized.toString());
-          } catch (_) {}
-        }
+        final dateStr = (r['reward_date']?.toString() ?? '').substring(0, 10 < (r['reward_date']?.toString() ?? '').length ? 10 : (r['reward_date']?.toString() ?? '').length);
+        if (dateStr.length == 10) credited.add(dateStr);
       }
     } catch (_) {}
 
@@ -124,17 +117,20 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
         ? (daysCompleted / totalDays * 100).clamp(0.0, 100.0)
         : 0.0;
 
-    // Build schedule rows — isDone based on actual credited dates
-    final rows = List.generate(totalDays, (i) {
-      final rowDate = startDate.add(Duration(days: i));
+    // Build schedule rows — skip day 1 (stake day, no reward), start from day 2
+    final rows = List.generate(totalDays - 1, (i) {
+      final d = i + 1; // d=1 means day 2 (first reward day)
+      final rowDate = startDate.add(Duration(days: d));
       final rowDateNormalized = DateTime(rowDate.year, rowDate.month, rowDate.day);
-      final isToday = rowDateNormalized == today;
-      final isDone = _creditedDates.contains(rowDateNormalized.toString());
+      final rowYMD = '${rowDateNormalized.year}-${rowDateNormalized.month.toString().padLeft(2,'0')}-${rowDateNormalized.day.toString().padLeft(2,'0')}';
+      final todayYMD = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
+      final isToday = rowYMD == todayYMD;
+      final isDone = _creditedDates.contains(rowYMD);
       return _ScheduleRow(
-        day: i + 1,
+        day: d,
         date: _fmtDate(rowDate),
         earning: dailyEarning,
-        cumulative: dailyEarning * (i + 1),
+        cumulative: dailyEarning * d,
         isDone: isDone,
         isToday: isToday,
       );
