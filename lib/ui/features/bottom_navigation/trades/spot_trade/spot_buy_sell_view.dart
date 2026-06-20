@@ -138,7 +138,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
 
   void onBuySellChange(int index) {
     _controller.selectedBuySellTab.value = index;
-    _clearInputViews();
+    _clearInputViews(clearPrice: true);
   }
 
   Widget _buySellTabView(int tabIndex) {
@@ -173,7 +173,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                     ? selectedBuySubTabIndex.value = index
                     : selectedSellSubTabIndex.value = index;
 
-                _clearInputViews();
+                _clearInputViews(clearPrice: true);
 
                 final prices = _controller.dashboardData.value.lastPriceData;
                 final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
@@ -396,13 +396,15 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
     }
   }
 
-  void _clearInputViews() {
+  void _clearInputViews({bool clearPrice = false}) {
     amountEditController.text = "";
     totalEditController.text = "";
-    limitEditController.text = "";
-    priceEditController.text = "";
     takeProfitController.text = "";
     takeLossController.text = "";
+    if (clearPrice) {
+      limitEditController.text = "";
+      priceEditController.text = "";
+    }
   }
 
   void _checkInputData() {
@@ -440,7 +442,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         dData?.tradeCoinId ?? 0,
         price,
         amount,
-        () => _clearInputViews(),
+        () => _clearInputViews(clearPrice: true),
       );
     } else if ((isBuy && selectedBuySubTabIndex.value == 1) ||
         (!isBuy && selectedSellSubTabIndex.value == 1)) {
@@ -455,7 +457,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         dData?.tradeCoinId ?? 0,
         price,
         amount,
-        () => _clearInputViews(),
+        () => _clearInputViews(clearPrice: true),
       );
     } else if ((isBuy && selectedBuySubTabIndex.value == 2) ||
         (!isBuy && selectedSellSubTabIndex.value == 2)) {
@@ -485,7 +487,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         amount,
         limit,
         stop,
-        () => _clearInputViews(),
+        () => _clearInputViews(clearPrice: true),
       );
     }
   }
