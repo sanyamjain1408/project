@@ -85,16 +85,23 @@ class _SpotCoinDetailsScreenState extends State<SpotCoinDetailsScreen> {
         }
       }
 
-      // sort by created_at desc, keep first 5
+      // sort by created_at desc, keep only today's entries
       combined.sort((a, b) {
         final da = DateTime.tryParse(a['created_at']?.toString() ?? '') ?? DateTime(0);
         final db = DateTime.tryParse(b['created_at']?.toString() ?? '') ?? DateTime(0);
         return db.compareTo(da);
       });
 
+      final now = DateTime.now();
+      final todayOnly = combined.where((e) {
+        final dt = DateTime.tryParse(e['created_at']?.toString() ?? '')?.toLocal();
+        if (dt == null) return false;
+        return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+      }).toList();
+
       if (mounted) {
         setState(() {
-          _history = combined.take(5).toList();
+          _history = todayOnly;
           _historyLoading = false;
         });
       }
