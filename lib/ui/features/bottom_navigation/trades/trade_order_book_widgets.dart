@@ -57,7 +57,7 @@ class OderBookFixedView extends StatelessWidget {
     this.baseCoin,
     this.tradeCoin,
     this.priceDecimal = 2,
-    this.amountDecimal = 6,
+    this.amountDecimal = 5,
   });
 
   final String selectedOrderSort;
@@ -560,7 +560,7 @@ class OderBookItemMinView extends StatelessWidget {
     this.priceColor,
     this.rowIndex = 0,
     this.priceDecimal = 2,
-    this.amountDecimal = 6,
+    this.amountDecimal = 5,
     this.fillPct,
   });
 
@@ -648,7 +648,7 @@ class DetailsOrderBookView extends StatelessWidget {
     this.tradeCoinOverride,
     this.baseCoinOverride,
     this.priceDecimal = 2,
-    this.amountDecimal = 6,
+    this.amountDecimal = 5,
   });
 
   final Total? total;
