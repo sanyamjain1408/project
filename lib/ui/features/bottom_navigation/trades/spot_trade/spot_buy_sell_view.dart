@@ -76,7 +76,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       }
     }
 
-    // When coin pair changes, immediately set price from the pair's lastPrice
+    // When coin pair changes, set price immediately from pair.lastPrice
     ever(_controller.selectedCoinPair, (pair) {
       _priceInitialized = false;
       final price = pair.lastPrice ?? 0;
@@ -86,6 +86,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       }
     });
 
+    // On first load or after pair change cleared lastPriceData, fill from API response
     _priceWorker = ever(_controller.dashboardData, (data) {
       if (_priceInitialized) return;
       final prices = data.lastPriceData;
