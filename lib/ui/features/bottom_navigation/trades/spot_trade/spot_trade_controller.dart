@@ -431,10 +431,6 @@ class SpotTradeController extends GetxController implements SocketListener {
       getDefaultPairData();
       return;
     }
-    // Clear stale price data so buy/sell view doesn't flicker with old price
-    dashboardData.value.lastPriceData = [];
-    dashboardData.refresh();
-
     final sym = _spotSymbol;
 
     // Update precision from spot pair metadata
