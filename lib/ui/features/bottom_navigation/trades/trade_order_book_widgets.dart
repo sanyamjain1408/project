@@ -22,7 +22,7 @@ import 'trade_widgets.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 const int _kMaxOrderBookRows = 15; // greendot/reddot mode
 const int _kAllModeRows = 8; // dot (all) mode
-const int _kOrderDecimal = 4;
+const int _kOrderDecimal = 5;
 const double _kMinFillPercent = 0.05;
 
 // Price: exactly 2 decimal. Amount: exactly 5 decimal.
@@ -57,7 +57,7 @@ class OderBookFixedView extends StatelessWidget {
     this.baseCoin,
     this.tradeCoin,
     this.priceDecimal = 2,
-    this.amountDecimal = 4,
+    this.amountDecimal = 5,
   });
 
   final String selectedOrderSort;
@@ -560,7 +560,7 @@ class OderBookItemMinView extends StatelessWidget {
     this.priceColor,
     this.rowIndex = 0,
     this.priceDecimal = 2,
-    this.amountDecimal = 4,
+    this.amountDecimal = 5,
     this.fillPct,
   });
 
@@ -648,7 +648,7 @@ class DetailsOrderBookView extends StatelessWidget {
     this.tradeCoinOverride,
     this.baseCoinOverride,
     this.priceDecimal = 2,
-    this.amountDecimal = 4,
+    this.amountDecimal = 5,
   });
 
   final Total? total;
