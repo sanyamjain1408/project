@@ -113,7 +113,7 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
                               baseCoin: _controller.selectedCoinPair.value.childCoinName,
                               tradeCoin: _controller.selectedCoinPair.value.parentCoinName,
                               priceDecimal: _controller.pricePrecision.value,
-                              amountDecimal: _controller.amountPrecision.value,
+                              amountDecimal: _controller.amountPrecision.value.clamp(0, 5),
                             );
                           }),
                         ),
