@@ -49,7 +49,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
   bool isLoggedIn = false;
   Worker? _priceWorker;
   final FocusNode _priceFocus = FocusNode();
-  bool _priceUserEdited = false;
+  bool _priceInitialized = false;
 
   @override
   void initState() {
@@ -64,11 +64,8 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       initialIndex: _controller.selectedBuySellTab.value,
     );
     super.initState();
-    _priceFocus.addListener(() {
-      if (!_priceFocus.hasFocus) _priceUserEdited = false;
-    });
     _priceWorker = ever(_controller.dashboardData, (data) {
-      if (_priceUserEdited || _priceFocus.hasFocus) return;
+      if (_priceInitialized) return;
       final prices = data.lastPriceData;
       final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
       if (price == null || price <= 0) return;
@@ -81,6 +78,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       } else if (subIndex == 2) {
         limitEditController.text = formatted;
       }
+      _priceInitialized = true;
     });
     setSelectedPrice.addListener(() {
       if (setSelectedPrice.value != null && setSelectedPrice.value! > 0) {
