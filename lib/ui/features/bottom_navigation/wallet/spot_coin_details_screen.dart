@@ -182,7 +182,7 @@ class _SpotCoinDetailsScreenState extends State<SpotCoinDetailsScreen> {
                     children: [
                       Flexible(
                         child: Text(
-                          coinFormat(total),
+                          coinFormat(total, fixed: 2),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 30,
@@ -295,8 +295,8 @@ class _StatsGrid extends StatelessWidget {
         const SizedBox(height: 2),
         Row(
           children: [
-            Expanded(child: _statValue(coinFormat(available), Colors.white.withValues(alpha: 0.50))),
-            Expanded(child: _statValue(coinFormat(locked), Colors.white.withValues(alpha: 0.50))),
+            Expanded(child: _statValue(coinFormat(available, fixed: 2), Colors.white.withValues(alpha: 0.50))),
+            Expanded(child: _statValue(coinFormat(locked, fixed: 2), Colors.white.withValues(alpha: 0.50))),
           ],
         ),
         const SizedBox(height: 16),
