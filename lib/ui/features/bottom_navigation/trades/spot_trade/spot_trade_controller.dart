@@ -30,7 +30,7 @@ class SpotTradeController extends GetxController implements SocketListener {
   Map<String, String> coinIconMap = {};
   List<SpotPair> spotPairsMeta = [];
   RxInt pricePrecision = 2.obs;
-  RxInt amountPrecision = 6.obs;
+  RxInt amountPrecision = 5.obs;
   RxList<ExchangeOrder> buyExchangeOrder = <ExchangeOrder>[].obs;
   RxList<ExchangeOrder> sellExchangeOrder = <ExchangeOrder>[].obs;
   RxList<ExchangeTrade> exchangeTrades = <ExchangeTrade>[].obs;
@@ -441,7 +441,7 @@ class SpotTradeController extends GetxController implements SocketListener {
       );
       if (meta != null) {
         pricePrecision.value = meta.pricePrecision;
-        amountPrecision.value = meta.amountPrecision;
+        amountPrecision.value = (meta.amountPrecision > 5) ? 5 : meta.amountPrecision;
       }
     };
     if (spotPairsMeta.isEmpty) {
