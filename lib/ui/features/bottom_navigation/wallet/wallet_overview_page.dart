@@ -1391,6 +1391,16 @@ class _FutureWalletBody extends StatelessWidget {
                                           Text('USDT', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
                                         ],
                                       ),
+                                if (!isHide) const SizedBox(height: 2),
+                                if (!isHide)
+                                  Text(
+                                    "≈ \$${currencyFormat(balance, fixed: 2)}",
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.5),
+                                      fontSize: 12,
+                                      fontFamily: _dmSans,
+                                    ),
+                                  ),
                                 if (!isHide) const SizedBox(height: 4),
                                 if (!isHide)
                                   GestureDetector(
