@@ -100,6 +100,12 @@ class OderBookFixedView extends StatelessWidget {
     const double rowH = 18.0;
     final double sectionH = maxRows * rowH;
 
+    // Compute max amount across both sides for relative fill bar
+    final allAmounts = [...sList, ...bList]
+        .map((e) => (e.amount ?? 0).toDouble())
+        .toList();
+    final maxAmt = allAmounts.isEmpty ? 1.0 : allAmounts.reduce((a, b) => a > b ? a : b);
+
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
       child: Column(
@@ -173,6 +179,7 @@ class OderBookFixedView extends StatelessWidget {
                       rowIndex: index,
                       priceDecimal: priceDecimal,
                       amountDecimal: amountDecimal,
+                      fillPct: ((sList[index].amount ?? 0).toDouble() / maxAmt).clamp(0.0, 1.0),
                     );
                   }),
                 ),
@@ -205,6 +212,7 @@ class OderBookFixedView extends StatelessWidget {
                       rowIndex: index,
                       priceDecimal: priceDecimal,
                       amountDecimal: amountDecimal,
+                      fillPct: ((bList[index].amount ?? 0).toDouble() / maxAmt).clamp(0.0, 1.0),
                     );
                   }),
                 ),
@@ -553,6 +561,7 @@ class OderBookItemMinView extends StatelessWidget {
     this.rowIndex = 0,
     this.priceDecimal = 2,
     this.amountDecimal = 6,
+    this.fillPct,
   });
 
   final ExchangeOrder order;
@@ -562,72 +571,62 @@ class OderBookItemMinView extends StatelessWidget {
   final int rowIndex;
   final int priceDecimal;
   final int amountDecimal;
+  final double? fillPct;
 
   @override
   Widget build(BuildContext context) {
     final isBuy = type == FromKey.buy;
     final bgColor = isBuy
-        ? const Color(0xFF22C55E).withValues(alpha: 0.1)
-        : const Color(0xFFEF4444).withValues(alpha: 0.1);
+        ? const Color(0x1F0ECB81)
+        : const Color(0x1FF6465D);
 
-    final pct = getPercentageValue(1, order.percentage).clamp(0.0, 1.0);
+    final pct = (fillPct ?? getPercentageValue(1, order.percentage)).clamp(0.0, 1.0);
 
     final value = isTotal
         ? numberFormatCompact(order.total, decimals: amountDecimal)
         : _fmt2(order.amount, fixed: amountDecimal);
 
-    return SizedBox(
-      height: 18,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final barWidth = constraints.maxWidth * pct;
-          return Stack(
-            children: [
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                width: barWidth,
-                child: Container(color: bgColor),
-              ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => setSelectedPrice.value = order.price,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _fmtPrice(order.price, fixed: priceDecimal),
-                          style: TextStyle(
-                            color: priceColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            fontFamily: 'monospace',
-                          ),
-                          textAlign: TextAlign.start,
-                          maxLines: 1,
-                        ),
-                      ),
-                      Text(
-                        value,
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.w400,
-                        ),
-                        textAlign: TextAlign.right,
-                        maxLines: 1,
-                      ),
-                    ],
-                  ),
+    return GestureDetector(
+      onTap: () => setSelectedPrice.value = order.price,
+      child: Container(
+        height: 18,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
+            stops: [0.0, pct, pct],
+            colors: [bgColor, bgColor, Colors.transparent],
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                _fmtPrice(order.price, fixed: priceDecimal),
+                style: TextStyle(
+                  color: priceColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'monospace',
                 ),
+                textAlign: TextAlign.start,
+                maxLines: 1,
               ),
-            ],
-          );
-        },
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+                fontSize: 12,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w400,
+              ),
+              textAlign: TextAlign.right,
+              maxLines: 1,
+            ),
+          ],
+        ),
       ),
     );
   }

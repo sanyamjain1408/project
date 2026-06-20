@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/coin_pair.dart';
@@ -24,18 +23,6 @@ class SpotTradeScreen extends StatefulWidget {
 class SpotTradeScreenState extends State<SpotTradeScreen> {
   final _controller = Get.put(SpotTradeController());
   final isChartShow = false.obs;
-  double _buySellViewHeight = 0;
-
-  void _updateBuySellHeight(double height) {
-    if (_buySellViewHeight != height) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _buySellViewHeight != height) {
-          setState(() => _buySellViewHeight = height);
-        }
-      });
-    }
-  }
-
   @override
   void initState() {
     tradeDecimal = DefaultValue.decimal;
@@ -109,7 +96,7 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
                       Expanded(
                         flex: 3,
                         child: SizedBox(
-                          height: _buySellViewHeight > 0 ? _buySellViewHeight : null,
+                          height: null,
                           child: Obx(() {
                             return OderBookFixedView(
                               _controller.selectedOrderSort.value,
@@ -132,13 +119,10 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
                         ),
                       ),
                       hSpacer5(),
-                      // Buy/Sell form (right) — reports its height to left column
+                      // Buy/Sell form (right)
                       Expanded(
                         flex: 5,
-                        child: _HeightReporter(
-                          onHeight: _updateBuySellHeight,
-                          child: const SpotTradeBuySellView(fromPage: FromKey.buy),
-                        ),
+                        child: SpotTradeBuySellView(fromPage: FromKey.buy),
                       ),
                     ],
                   ),
@@ -189,33 +173,5 @@ class SpotTradeScreenState extends State<SpotTradeScreen> {
             },
           )),
     );
-  }
-}
-
-// Reports its render height after every layout pass via [onHeight].
-// Avoids IntrinsicHeight (which breaks when a LayoutBuilder is in the tree).
-class _HeightReporter extends SingleChildRenderObjectWidget {
-  const _HeightReporter({required this.onHeight, required super.child});
-  final ValueChanged<double> onHeight;
-
-  @override
-  RenderObject createRenderObject(BuildContext context) =>
-      _HeightReporterBox(onHeight);
-
-  @override
-  void updateRenderObject(BuildContext context, _HeightReporterBox renderObject) {
-    renderObject.onHeight = onHeight;
-  }
-}
-
-class _HeightReporterBox extends RenderProxyBox {
-  _HeightReporterBox(this.onHeight);
-  ValueChanged<double> onHeight;
-
-  @override
-  void performLayout() {
-    super.performLayout();
-    final h = size.height;
-    WidgetsBinding.instance.addPostFrameCallback((_) => onHeight(h));
   }
 }
