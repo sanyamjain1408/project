@@ -1389,41 +1389,99 @@ class WithdrawConfirmView extends StatelessWidget {
     final subTitle =
         "${"You will withdrawal".tr} ${withdrawal.amount} ${withdrawal.coinType} ${"to this address".tr} ${withdrawal.address}";
     final codeEditController = TextEditingController();
-    return Column(
-      children: [
-        vSpacer10(),
-        TextRobotoAutoBold(
-          "Withdrawal Currency".tr,
-          fontSize: Dimens.fontSizeLarge,
-        ),
-        vSpacer10(),
-        TextRobotoAutoBold(subTitle, maxLines: 3),
-        vSpacer10(),
-        if (is2FActive)
-          textFieldWithSuffixIcon(
-            controller: codeEditController,
-            hint: "Input 2FA code".tr,
-            labelText: "2FA code".tr,
+    return Container(
+      color: const Color(0xFF111111),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
-        vSpacer15(),
-        buttonRoundedMain(
-          text: "Withdraw".tr,
-          onPress: () {
-            final code = codeEditController.text.trim();
-            if (is2FActive && code.length < DefaultValue.codeLength) {
-              showToast(
-                "Code length must be".trParams(
-                  {"count": DefaultValue.codeLength.toString()},
+          vSpacer10(),
+          Center(
+            child: Text(
+              "Withdrawal Currency".tr,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'DMSans',
+              ),
+            ),
+          ),
+          vSpacer15(),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              subTitle,
+              maxLines: 3,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.80),
+                fontSize: 14,
+                fontFamily: 'DMSans',
+                height: 1.5,
+              ),
+            ),
+          ),
+          vSpacer15(),
+          if (is2FActive) ...[
+            textFieldWithSuffixIcon(
+              controller: codeEditController,
+              hint: "Input 2FA code".tr,
+              labelText: "2FA code".tr,
+            ),
+            vSpacer15(),
+          ],
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: () {
+                final code = codeEditController.text.trim();
+                if (is2FActive && code.length < DefaultValue.codeLength) {
+                  showToast(
+                    "Code length must be".trParams(
+                      {"count": DefaultValue.codeLength.toString()},
+                    ),
+                  );
+                  return;
+                }
+                withdrawal.verifyCode = code;
+                onWithdrawal(withdrawal);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFCCFF00),
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              );
-              return;
-            }
-            withdrawal.verifyCode = code;
-            onWithdrawal(withdrawal);
-          },
-        ),
-        vSpacer10(),
-      ],
+                elevation: 0,
+              ),
+              child: Text(
+                "Withdraw".tr,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'DMSans',
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1113,17 +1113,36 @@ class WalletRecentTransactionItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusData = AppChecker.getStatusData(history.status ?? 0);
-    final statusText = statusData.first as String;
-    final statusColor = statusData.last as Color;
-    final isPending = (history.status ?? 0) == 0;
-
     final label = type == HistoryType.withdraw ? 'Withdraw' : 'Deposit';
     final date = formatDate(
       history.createdAt,
       format: dateTimeFormatDdMMMYyyyHhMm,
     );
     final amount = '\$${(history.amount ?? 0).toStringAsFixed(2)}';
+
+    final isWithdraw = type == HistoryType.withdraw;
+    final status = history.status ?? 0;
+    debugPrint('WalletRecentTx: status=$status amount=${history.amount} type=$type');
+    final Color iconColor;
+    final Color iconBg;
+    final String statusText;
+    if (status == 1) {
+      iconColor = const Color(0xFF4ED78E);
+      iconBg = const Color(0xFF015629).withValues(alpha: 0.4);
+      statusText = 'Success';
+    } else if (status == 2 || status == 3) {
+      iconColor = const Color(0xFFD73C3C);
+      iconBg = const Color(0xFF920000).withValues(alpha: 0.5);
+      statusText = 'Failed';
+    } else if (status == 5) {
+      iconColor = const Color(0xFFE0B341);
+      iconBg = const Color(0xFF7A5800).withValues(alpha: 0.4);
+      statusText = 'Processing';
+    } else {
+      iconColor = const Color(0xFFE0B341);
+      iconBg = const Color(0xFF7A5800).withValues(alpha: 0.4);
+      statusText = 'Pending';
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -1133,12 +1152,12 @@ class WalletRecentTransactionItemView extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.15),
+              color: iconBg,
               shape: BoxShape.circle,
             ),
             child: Icon(
-              isPending ? Icons.arrow_upward : Icons.arrow_downward,
-              color: statusColor,
+              isWithdraw ? Icons.arrow_upward : Icons.arrow_downward,
+              color: iconColor,
               size: 22,
             ),
           ),
@@ -1188,7 +1207,7 @@ class WalletRecentTransactionItemView extends StatelessWidget {
               Text(
                 statusText,
                 style: TextStyle(
-                  color: statusColor,
+                  color: iconColor,
                   fontSize: 12,
                   fontFamily: _dmSans,
                   fontWeight: FontWeight.w400,
