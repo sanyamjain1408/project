@@ -64,13 +64,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       initialIndex: _controller.selectedBuySellTab.value,
     );
     super.initState();
-    // Reset price when coin pair changes so new coin's price loads
-    ever(_controller.selectedCoinPair, (_) { _priceInitialized = false; });
-    _priceWorker = ever(_controller.dashboardData, (data) {
-      final prices = data.lastPriceData;
-      final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
-      if (price == null || price <= 0) return;
-      if (_priceInitialized) return;
+    void _applyPrice(double price) {
       final formatted = price.toStringAsFixed(2);
       final subIndex = _controller.selectedBuySellTab.value == 0
           ? selectedBuySubTabIndex.value
@@ -80,6 +74,23 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       } else if (subIndex == 2) {
         limitEditController.text = formatted;
       }
+    }
+    // When coin pair changes, immediately fill price from current dashboard data
+    ever(_controller.selectedCoinPair, (_) {
+      _priceInitialized = false;
+      final prices = _controller.dashboardData.value.lastPriceData;
+      final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
+      if (price != null && price > 0) {
+        _applyPrice(price);
+        _priceInitialized = true;
+      }
+    });
+    _priceWorker = ever(_controller.dashboardData, (data) {
+      final prices = data.lastPriceData;
+      final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
+      if (price == null || price <= 0) return;
+      if (_priceInitialized) return;
+      _applyPrice(price);
       _priceInitialized = true;
     });
     setSelectedPrice.addListener(() {
