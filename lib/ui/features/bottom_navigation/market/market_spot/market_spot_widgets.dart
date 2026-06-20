@@ -189,7 +189,9 @@ class MarketCoinItemViewBottom extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (sign, cColor) = getNumberData(coin.change);
+    final isUp = !isNegativeNum(coin.change);
+    final sign = isUp ? '+' : '';
+    final cColor = isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
     String formattedPrice = coinFormat(coin.price); // LandingMarketView jaisa
 
     return GestureDetector(
