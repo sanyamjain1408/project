@@ -125,38 +125,81 @@ class MarketCoinPairItemView extends StatelessWidget {
       onTap: () => Get.to(() => CurrencyPairDetailsScreen(pair: pair.setCoinPairKey(), fromKey: fromKey, onFavChange: onFavChange)),
       onLongPressStart: (lpDetails) =>
           FavoriteHelper.showFavoritePopup(context, lpDetails.globalPosition, pair.setCoinPairKey(), fromKey, onFavChange),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: Dimens.paddingMin),
-        color: Colors.transparent,
-        child: Row(children: [
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    TextRobotoAutoBold(pair.childCoinName ?? "", maxLines: 1),
-                    TextRobotoAutoNormal("/${pair.parentCoinName}", fontSize: Dimens.fontSizeSmall),
-                  ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Icon
+            ClipOval(
+              child: showImageNetwork(
+                imagePath: pair.icon ?? '',
+                width: 30, height: 30,
+                errorWidget: Container(
+                  width: 30, height: 30,
+                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF2A2A2A)),
+                  child: Center(child: Text((pair.childCoinName ?? '?').substring(0, 1),
+                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))),
                 ),
-                TextRobotoAutoNormal("${"Vol".tr} ${numberFormatCompact(pair.volume, decimals: 2, symbol: "\$")}"),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Pair name + vol
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text.rich(TextSpan(children: [
+                    TextSpan(
+                      text: '${pair.childCoinName ?? ""}${pair.parentCoinName ?? ""} ',
+                      style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33),
+                    ),
+                    TextSpan(
+                      text: 'Perp',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.20),
+                    ),
+                  ]), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text('\$${numberFormatCompact(pair.volume, decimals: 2)}',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Price
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(currencyFormat(pair.lastPrice),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w600, height: 1.33),
+                  maxLines: 1),
+                Text('\$${currencyFormat(pair.lastPrice)}',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans', fontWeight: FontWeight.w400, height: 1.33),
+                  maxLines: 1),
               ],
             ),
-          ),
-          Expanded(
-            flex: 3,
-            child: TextRobotoAutoBold(currencyFormat(pair.lastPrice), textAlign: TextAlign.center),
-          ),
-          Expanded(
-            flex: 2,
-            child: buttonText("${coinFormat(pair.priceChange, fixed: 2)}%",
-                textColor: Colors.white,
-                radius: Dimens.radiusCorner,
-                bgColor: getNumberColor(pair.priceChange),
-                visualDensity: VisualDensity.compact),
-          )
-        ]),
+            const SizedBox(width: 8),
+            // % pill
+            Container(
+              width: 83, height: 30,
+              decoration: BoxDecoration(
+                color: getNumberColor(pair.priceChange),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('${(pair.priceChange ?? 0) >= 0 ? '+' : ''}${coinFormat(pair.priceChange, fixed: 2)}%',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DMSans', fontWeight: FontWeight.w600, height: 1.33),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
