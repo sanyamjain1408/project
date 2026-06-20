@@ -24,7 +24,7 @@ class TxDetailScreen extends StatelessWidget {
 
   String _fmtAmt(dynamic v) {
     final d = double.tryParse(v?.toString() ?? '0') ?? 0;
-    return d.toStringAsFixed(8).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+    return d.toStringAsFixed(2);
   }
 
   String _statusLabel(dynamic status) {
@@ -80,17 +80,13 @@ class TxDetailScreen extends StatelessWidget {
 
     final network = tx['network']?.toString().isNotEmpty == true ? tx['network'].toString() : coin;
     final account = tx['wallet_type']?.toString().isNotEmpty == true ? tx['wallet_type'].toString() : 'Funding Account';
-    final remarks = tx['remarks']?.toString().isNotEmpty == true ? tx['remarks'].toString() : '—';
+    final remarks = tx['message']?.toString().isNotEmpty == true
+        ? tx['message'].toString()
+        : (tx['reject_note']?.toString().isNotEmpty == true ? tx['reject_note'].toString() : '—');
 
-    final orderNo = tx['order_number']?.toString().isNotEmpty == true
-        ? tx['order_number'].toString()
-        : (tx['trx']?.toString().isNotEmpty == true ? tx['trx'].toString() : '—');
-    final address = tx['address']?.toString().isNotEmpty == true
-        ? tx['address'].toString()
-        : (tx['wallet_address']?.toString().isNotEmpty == true ? tx['wallet_address'].toString() : '—');
-    final txHash = tx['transaction_id']?.toString().isNotEmpty == true
-        ? tx['transaction_id'].toString()
-        : (tx['tx_hash']?.toString().isNotEmpty == true ? tx['tx_hash'].toString() : (tx['trx']?.toString() ?? '—'));
+    final orderNo = tx['id']?.toString().isNotEmpty == true ? tx['id'].toString() : '—';
+    final address = tx['address']?.toString().isNotEmpty == true ? tx['address'].toString() : '—';
+    final txHash = tx['transaction_hash']?.toString().isNotEmpty == true ? tx['transaction_hash'].toString() : '—';
 
     return Scaffold(
       backgroundColor: _bg,
