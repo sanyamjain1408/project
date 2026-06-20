@@ -555,7 +555,6 @@ class McStakingController extends GetxController {
       isLoadingWithdraw.value = false;
     }
   }
-}
 
   // ── Stake reward history (for schedule tick marks) ─────────────────────────
   Future<List<Map<String, dynamic>>> fetchStakeRewards(String uid) async {
