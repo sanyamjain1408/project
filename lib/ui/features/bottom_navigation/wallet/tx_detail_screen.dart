@@ -68,17 +68,19 @@ class TxDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final coin = tx['coin_type']?.toString() ?? 'USDT';
     final rawAmt = double.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
-    // received = amount - fee for withdraw, just amount for deposit
     final fee = double.tryParse((tx['fees'] ?? tx['fee'] ?? 0).toString()) ?? 0;
-    final received = _isDep ? rawAmt : (rawAmt - fee).clamp(0.0, double.infinity);
-    final amtDisplay = _fmtAmt(received == 0 ? rawAmt : received);
+    final amtDisplay = _fmtAmt(rawAmt);
     final feeDisplay = fee.toStringAsFixed(2);
 
     final statusLabel = _statusLabel(tx['status']);
     final statusColor = _statusColor(statusLabel);
     final time = _formatDate(tx['created_at']);
 
-    final network = tx['network']?.toString().isNotEmpty == true ? tx['network'].toString() : coin;
+    final network = tx['network_type']?.toString().isNotEmpty == true
+        ? tx['network_type'].toString()
+        : (tx['network']?.toString().isNotEmpty == true && int.tryParse(tx['network'].toString()) == null
+            ? tx['network'].toString()
+            : coin);
     final account = tx['wallet_type']?.toString().isNotEmpty == true ? tx['wallet_type'].toString() : 'Funding Account';
     final remarks = tx['message']?.toString().isNotEmpty == true
         ? tx['message'].toString()
@@ -87,6 +89,7 @@ class TxDetailScreen extends StatelessWidget {
     final orderNo = tx['id']?.toString().isNotEmpty == true ? tx['id'].toString() : '—';
     final address = tx['address']?.toString().isNotEmpty == true ? tx['address'].toString() : '—';
     final txHash = tx['transaction_hash']?.toString().isNotEmpty == true ? tx['transaction_hash'].toString() : '—';
+
 
     return Scaffold(
       backgroundColor: _bg,
