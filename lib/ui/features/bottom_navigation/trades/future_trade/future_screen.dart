@@ -48,6 +48,7 @@ class _NewFutureScreenState extends State<NewFutureScreen>
   late final TextEditingController _limitPxCtrl;
   final FocusNode _limitPxFocus = FocusNode();
   bool _limitPxUserEdited = false;
+  bool _limitPxInitialized = false;
   Worker? _priceWorker;
 
   String _bottomTab = 'Position';
@@ -85,14 +86,15 @@ class _NewFutureScreenState extends State<NewFutureScreen>
     });
     _limitPxCtrl = TextEditingController();
     _limitPxFocus.addListener(() {
-      if (!_limitPxFocus.hasFocus) _limitPxUserEdited = false;
+      if (_limitPxFocus.hasFocus) _limitPxUserEdited = true;
     });
     _priceWorker = ever(_ctrl.currentPair, (FuturePair? pair) {
       if (pair == null) return;
-      if ((_orderType == 'limit' || _orderType == 'stop_limit') && !_limitPxFocus.hasFocus && !_limitPxUserEdited) {
+      if (!_limitPxInitialized) {
         final formatted = pair.currentPrice.toStringAsFixed(pair.pricePrecision);
         _limitPxCtrl.text = formatted;
         setState(() => _limitPx = formatted);
+        _limitPxInitialized = true;
       }
     });
     _startCountdown();
