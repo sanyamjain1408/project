@@ -266,7 +266,7 @@ class MarketHeaderRow extends StatelessWidget {
           ),
           // Price — fixed width right-aligned
           SizedBox(
-            width: 80,
+            width: 90,
             child: Text(
               "Price",
               textAlign: TextAlign.end,
@@ -279,7 +279,7 @@ class MarketHeaderRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 18),
           // 24h Change — fixed width right
           SizedBox(
             width: 83,
