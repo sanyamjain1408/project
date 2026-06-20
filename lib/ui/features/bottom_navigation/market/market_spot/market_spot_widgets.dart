@@ -307,9 +307,9 @@ class MarketCoinItemViewBottom extends StatelessWidget {
               ),
             ),
 
-            // Price — fixed 80px right-aligned
+            // Price — fixed 90px right-aligned
             SizedBox(
-              width: 80,
+              width: 90,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
@@ -344,7 +344,7 @@ class MarketCoinItemViewBottom extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: 18),
 
             // Change badge — fixed 83px
             SizedBox(
