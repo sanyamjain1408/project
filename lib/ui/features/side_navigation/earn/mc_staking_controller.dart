@@ -555,4 +555,15 @@ class McStakingController extends GetxController {
       isLoadingWithdraw.value = false;
     }
   }
+
+  // ── Stake reward history (for schedule tick marks) ─────────────────────────
+  Future<List<Map<String, dynamic>>> fetchStakeRewards(String uid) async {
+    try {
+      final j = _decode(await _get('/api/mc-staking/stake-rewards?uid=$uid'));
+      if (j['success'] == true) {
+        return List<Map<String, dynamic>>.from(j['data'] ?? []);
+      }
+    } catch (_) {}
+    return [];
+  }
 }
