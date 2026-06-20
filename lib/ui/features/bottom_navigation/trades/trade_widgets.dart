@@ -1354,7 +1354,7 @@ class TradeBalanceView extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                coinFormat(balance, fixed: DefaultValue.cryptoDecimal),
+                coinFormat(balance, fixed: 2),
                 textAlign: TextAlign.end,
                 maxLines: 1,
                 style: const TextStyle(
