@@ -2267,9 +2267,6 @@ class _KycTabViewState extends State<KycTabView> {
                 IdVerificationType.passport,
               ),
             ),
-          _selfieItem(),
-          const SizedBox(height: 30),
-          _submitBtn(),
         ],
       );
     });
