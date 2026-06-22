@@ -198,6 +198,7 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
             context,
             icon: Icons.credit_card_outlined,
             title: "Upload your ID Card",
+            status: widget.details.nid?.status,
             onTap: () => _goToUpload(
               context,
               title: "ID Card",
@@ -210,6 +211,7 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
             context,
             icon: Icons.book_outlined,
             title: "Upload your Passport",
+            status: widget.details.passport?.status,
             onTap: () => _goToUpload(
               context,
               title: "Passport",
@@ -222,6 +224,7 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
             context,
             icon: Icons.drive_eta_outlined,
             title: "Upload your Driving License",
+            status: widget.details.driving?.status,
             onTap: () => _goToUpload(
               context,
               title: "Driving License",
@@ -234,6 +237,7 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
             context,
             icon: Icons.how_to_vote_outlined,
             title: "Upload your Voter Card",
+            status: widget.details.voter?.status,
             onTap: () => _goToUpload(
               context,
               title: "Voter Card",
@@ -254,6 +258,12 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
     KycObject? kyc,
     required IdVerificationType type,
   }) {
+    // Check if document is already approved or pending
+    if (kyc?.status != null && kyc!.status!.isNotEmpty) {
+      showToast("Document already uploaded with status: ${kyc.status}", isError: false);
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -273,6 +283,7 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    String? status,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -283,26 +294,89 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
           color: _bg,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
+        child: Stack(
           children: [
-            Icon(icon, color: Colors.white, size: 22),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: _dmSans,
+            Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 22),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: _dmSans,
+                        ),
+                      ),
+                      if (status != null && status.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            "✓ Uploaded",
+                            style: TextStyle(
+                              color: _getStatusColor(status),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: _dmSans,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, color: _green, size: 16),
+              ],
+            ),
+            if (status != null && status.isNotEmpty)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getStatusBackgroundColor(status),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      color: _getStatusColor(status),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: _dmSans,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const Icon(Icons.arrow_forward_ios, color: _green, size: 16),
           ],
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    if (status.toLowerCase() == "approved" || status == "1") {
+      return const Color(0xFF73FFAA); // Green
+    } else if (status.toLowerCase() == "pending" || status == "0") {
+      return const Color(0xFFF7D774); // Yellow
+    } else {
+      return const Color(0xFFFF8F8F); // Red (Rejected)
+    }
+  }
+
+  Color _getStatusBackgroundColor(String status) {
+    if (status.toLowerCase() == "approved" || status == "1") {
+      return const Color(0xFF153021); // Dark Green
+    } else if (status.toLowerCase() == "pending" || status == "0") {
+      return const Color(0xFF302912); // Dark Yellow
+    } else {
+      return const Color(0xFF301616); // Dark Red
+    }
   }
 
   Widget _selfieInlineTile(BuildContext context) {
