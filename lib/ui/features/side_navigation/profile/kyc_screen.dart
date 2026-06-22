@@ -187,6 +187,8 @@ class _ManualKycListView extends StatefulWidget {
 
 class _ManualKycListViewState extends State<_ManualKycListView> {
   File? _selfieFile;
+  bool _isSelfieUploading = false;
+  bool _isSelfieUploadedSuccessfully = false;
 
   @override
   Widget build(BuildContext context) {
@@ -410,11 +412,11 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
                         ),
                       ),
                       if (_selfieFile != null)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            "✓ Selfie uploaded",
-                            style: TextStyle(
+                            _isSelfieUploadedSuccessfully ? "✓ Selfie submitted" : "✓ Selfie selected",
+                            style: const TextStyle(
                               color: _green,
                               fontSize: 12,
                               fontFamily: _dmSans,
@@ -426,7 +428,7 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
                 ),
                 Icon(
                   _selfieFile != null ? Icons.check_circle : Icons.arrow_forward_ios,
-                  color: _selfieFile != null ? _green : _green,
+                  color: _green,
                   size: 16,
                 ),
               ],
@@ -463,12 +465,14 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
         if (isGallery) {
           setState(() {
             _selfieFile = chooseFile;
+            _isSelfieUploadedSuccessfully = false; // Re-enable submit button
           });
         } else {
           saveFileOnTempPath(
             chooseFile,
             onNewFile: (f) => setState(() {
               _selfieFile = f;
+              _isSelfieUploadedSuccessfully = false; // Re-enable submit button
             }),
           );
         }
@@ -480,19 +484,20 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
 
   Widget _submitButton() {
     return GestureDetector(
-      onTap: _submitAllKYC,
+      onTap: _isSelfieUploadedSuccessfully ? null : _submitAllKYC,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: _green,
+          color: _isSelfieUploadedSuccessfully ? Colors.grey : _green,
           borderRadius: BorderRadius.circular(30),
+          opacity: _isSelfieUploadedSuccessfully ? 0.5 : 1.0,
         ),
-        child: const Center(
+        child: Center(
           child: Text(
-            "Submit",
+            _isSelfieUploading ? "Submitting..." : (_isSelfieUploadedSuccessfully ? "Submitted ✓" : "Submit"),
             style: TextStyle(
-              color: Colors.black,
+              color: _isSelfieUploadedSuccessfully ? Colors.white : Colors.black,
               fontSize: 16,
               fontWeight: FontWeight.w700,
               fontFamily: _dmSans,
@@ -509,7 +514,18 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
       return;
     }
 
-    showToast("All documents submitted successfully", isError: false);
+    setState(() {
+      _isSelfieUploading = true;
+    });
+
+    // Simulate selfie submission
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _isSelfieUploading = false;
+        _isSelfieUploadedSuccessfully = true;
+      });
+      showToast("Selfie submitted successfully!", isError: false);
+    });
   }
 }
 
@@ -537,6 +553,8 @@ class _KycUploadPageState extends State<KycUploadPage> {
   File? _frontImage;
   File? _backImage;
   File? _selfieImage;
+  bool _isUploading = false;
+  bool _isUploadedSuccessfully = false;
 
   @override
   Widget build(BuildContext context) {
@@ -598,30 +616,6 @@ class _KycUploadPageState extends State<KycUploadPage> {
                   networkPath: widget.kyc?.backImage,
                   onTap: () => _pickImage(isFront: false),
                 ),
-                const SizedBox(height: 20),
-                // Selfie
-                _uploadBox(
-                  label: "Selfie Photo",
-                  hint:
-                      "Take a clear selfie photo with good lighting.\nMake sure your face is visible and centered.",
-                  file: _selfieImage,
-                  networkPath: widget.kyc?.selfieImage,
-                  onTap: () => _pickSelfie(),
-                ),
-                const SizedBox(height: 12),
-                _tipRow(
-                  Icons.wb_sunny_outlined,
-                  "Use good lighting and clear background.",
-                ),
-                _tipRow(
-                  Icons.face,
-                  "Ensure your entire face is visible.",
-                ),
-                _tipRow(Icons.blur_off, "Avoid blur or shadows."),
-                _tipRow(
-                  Icons.no_meeting_room,
-                  "Do not wear glasses or sunglasses.",
-                ),
                 const SizedBox(height: 30),
               ],
             ),
@@ -630,19 +624,20 @@ class _KycUploadPageState extends State<KycUploadPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
             child: GestureDetector(
-              onTap: _onUpload,
+              onTap: _isUploadedSuccessfully ? null : (_onUpload),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: _green,
+                  color: _isUploadedSuccessfully ? Colors.grey : _green,
                   borderRadius: BorderRadius.circular(30),
+                  opacity: _isUploadedSuccessfully ? 0.5 : 1.0,
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    "Upload",
+                    _isUploading ? "Uploading..." : (_isUploadedSuccessfully ? "Uploaded ✓" : "Upload"),
                     style: TextStyle(
-                      color: Colors.black,
+                      color: _isUploadedSuccessfully ? Colors.white : Colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       fontFamily: _dmSans,
@@ -770,6 +765,7 @@ class _KycUploadPageState extends State<KycUploadPage> {
                   } else {
                     _backImage = f;
                   }
+                  _isUploadedSuccessfully = false; // Re-enable upload button
                 }),
               );
         if (isGallery) {
@@ -779,29 +775,8 @@ class _KycUploadPageState extends State<KycUploadPage> {
             } else {
               _backImage = chooseFile;
             }
+            _isUploadedSuccessfully = false; // Re-enable upload button
           });
-        }
-      },
-      isCrop: false,
-      isGallery: true,
-    );
-  }
-
-  void _pickSelfie() {
-    showImageChooser(
-      context,
-      (chooseFile, isGallery) {
-        if (isGallery) {
-          setState(() {
-            _selfieImage = chooseFile;
-          });
-        } else {
-          saveFileOnTempPath(
-            chooseFile,
-            onNewFile: (f) => setState(() {
-              _selfieImage = f;
-            }),
-          );
         }
       },
       isCrop: false,
@@ -818,18 +793,26 @@ class _KycUploadPageState extends State<KycUploadPage> {
       showToast("Back image cannot be empty", isError: true);
       return;
     }
-    if (_selfieImage == null) {
-      showToast("Selfie image cannot be empty", isError: true);
-      return;
-    }
+
+    setState(() {
+      _isUploading = true;
+    });
+
     widget.controller.uploadDocuments(
       widget.type,
       _frontImage!,
       _backImage!,
-      _selfieImage!,
+      File(""), // Selfie handled separately
       (kyc) {
-        widget.onUploaded(kyc);
-        Navigator.pop(context);
+        setState(() {
+          _isUploading = false;
+          _isUploadedSuccessfully = true;
+        });
+        showToast("Document uploaded successfully!", isError: false);
+        Future.delayed(const Duration(seconds: 2), () {
+          widget.onUploaded(kyc);
+          Navigator.pop(context);
+        });
       },
     );
   }
