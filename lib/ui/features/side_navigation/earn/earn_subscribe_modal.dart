@@ -120,7 +120,7 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Amount', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w400)),
+                const Text('Amount', style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DM Sans', fontWeight: FontWeight.w400, height: 1.50)),
                 Text(
                   'Available: ${coinFormat(_balance)} ${widget.product.coin}',
                   style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
@@ -264,7 +264,7 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
             // ── Subscription Schedule ──
             const Text(
               'Subscription Schedule',
-              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+              style: TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'DM Sans', fontWeight: FontWeight.w600, height: 1.33),
             ),
             const SizedBox(height: 16),
             _buildSchedule(),
@@ -290,9 +290,19 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
                   ),
                   const SizedBox(width: 10),
                   const Expanded(
-                    child: Text(
-                      'I have read and agree to the Trapix Earn User Agreement.',
-                      style: TextStyle(color: Color(0xFF6B7280), fontSize: 12, height: 1.5),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'I have read and agree to ',
+                            style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'DM Sans', fontWeight: FontWeight.w400, height: 1.33),
+                          ),
+                          TextSpan(
+                            text: 'Trapix Earn User Agreement',
+                            style: TextStyle(color: Color(0xFFCCFF00), fontSize: 12, fontFamily: 'DM Sans', fontWeight: FontWeight.w400, height: 1.33, decoration: TextDecoration.underline, decorationColor: Color(0xFFCCFF00)),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -335,11 +345,11 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
         : null;
 
     String fmtDate(DateTime dt) {
-      final mm = dt.month.toString().padLeft(2, '0');
+      final mo = dt.month.toString().padLeft(2, '0');
       final dd = dt.day.toString().padLeft(2, '0');
       final hh = dt.hour.toString().padLeft(2, '0');
-      final min = dt.minute.toString().padLeft(2, '0');
-      return '$dd/$mm/${dt.year} $hh:$min';
+      final mn = dt.minute.toString().padLeft(2, '0');
+      return '${dt.year}-$mo-$dd $hh:$mn';
     }
 
     return Row(
@@ -366,18 +376,18 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Subscription Time', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
-                  Text(fmtDate(now), style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
+                  const Text('Subscription Time', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12, fontFamily: 'DM Sans', fontWeight: FontWeight.w400, height: 1.33)),
+                  Text(fmtDate(now), style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12, fontFamily: 'DM Sans', fontWeight: FontWeight.w400, height: 1.33)),
                 ],
               ),
               const SizedBox(height: 22),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Subscription Maturity Time', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
+                  const Text('Subscription Maturity Time', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12, fontFamily: 'DM Sans', fontWeight: FontWeight.w400, height: 1.33)),
                   Text(
                     maturity != null ? fmtDate(maturity) : 'Flexible',
-                    style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                    style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12, fontFamily: 'DM Sans', fontWeight: FontWeight.w400, height: 1.33),
                   ),
                 ],
               ),

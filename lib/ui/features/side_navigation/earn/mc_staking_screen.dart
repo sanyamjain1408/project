@@ -2028,13 +2028,11 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                                       style: TextStyle(
                                         color: isA
                                             ? Colors.white
-                                            : Colors.white.withValues(
-                                                alpha: 0.5,
-                                              ),
+                                            : Colors.white.withValues(alpha: 0.5),
                                         fontSize: 16,
                                         fontWeight: FontWeight.w400,
-                                        fontFamily: "DMSans",
-                                        height: 24 / 16,
+                                        fontFamily: "DM Sans",
+                                        height: 1.50,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -2043,12 +2041,11 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                                       style: TextStyle(
                                         color: isA
                                             ? _green
-                                            : Colors.white.withValues(
-                                                alpha: 0.5,
-                                              ),
-                                        fontSize: 11,
-                                        fontFamily: "DMSans",
-                                        height: 24 / 16,
+                                            : Colors.white.withValues(alpha: 0.5),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        fontFamily: "DM Sans",
+                                        height: 1.50,
                                       ),
                                     ),
                                   ],
@@ -2070,8 +2067,8 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
-                              fontFamily: "DMSans",
-                              height: 24 / 16,
+                              fontFamily: "DM Sans",
+                              height: 1.50,
                             ),
                           ),
                           if (_loadingBal)
@@ -2099,16 +2096,13 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
 
                       // Amount input box
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 20,
-                        ),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color: const Color(0xFF1A1A1A),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.transparent),
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
@@ -2127,55 +2121,53 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                                       color: Colors.white,
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      fontFamily: "DMSans",
-                                      height: 24 / 16,
+                                      fontFamily: "DM Sans",
+                                      height: 1.50,
                                     ),
                                     decoration: InputDecoration(
                                       border: InputBorder.none,
-                                      hintText:
-                                          "${_fmtNum(plan.minStake)} Minimum",
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                      hintText: "${_fmtNum(plan.minStake)} Minimum",
                                       hintStyle: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.5,
-                                        ),
+                                        color: Colors.white.withValues(alpha: 0.5),
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
-                                        fontFamily: "DMSans",
-                                        height: 24 / 16,
+                                        fontFamily: "DM Sans",
+                                        height: 1.50,
                                       ),
                                     ),
                                   ),
                                 ),
-
                                 Text(
                                   coin.symbol,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    fontFamily: "DMSans",
-                                    height: 20 / 15,
+                                    fontFamily: "DM Sans",
+                                    height: 1.33,
                                   ),
                                 ),
                               ],
                             ),
                             Container(
                               height: 1,
+                              margin: const EdgeInsets.symmetric(vertical: 10),
                               width: double.infinity,
-                              color: Colors.white.withValues(alpha: 0.3),
+                              color: Colors.white.withValues(alpha: 0.5),
                             ),
-                            const SizedBox(height: 10),
                             _rewardRow(
                               "Plan type",
                               _planTypeLabel(plan.planType),
-                              valColor: Colors.white,
+                              valColor: Colors.white.withValues(alpha: 0.5),
                             ),
                             _rewardRow(
                               "Lock Period",
                               plan.durationDays > 0
                                   ? '${plan.durationDays} Days'
                                   : 'No Lock',
-                              valColor: Colors.white,
+                              valColor: Colors.white.withValues(alpha: 0.5),
                             ),
                             _rewardRow(
                               "Reward Coin",
@@ -2192,13 +2184,13 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                         "Live Reward Estimate",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
-                          height: 20 / 16,
+                          fontSize: 15,
+                          height: 1.33,
                           fontWeight: FontWeight.w600,
-                          fontFamily: "DMSans",
+                          fontFamily: "DM Sans",
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       Obx(() {
                         final cr = _c.calcResult.value;
                         final dailyRate = cr?.dailyRate ?? rule.dailyRate;
@@ -2236,7 +2228,8 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                           color: Colors.white,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          fontFamily: "DMSans",
+                          fontFamily: "DM Sans",
+                          height: 1.33,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -2384,21 +2377,20 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.white.withValues(alpha: 0.5),
             fontSize: 12,
             fontWeight: FontWeight.w400,
-            height: 16 / 12,
-            fontFamily: 'DMSans',
+            height: 1.33,
+            fontFamily: 'DM Sans',
           ),
         ),
         Text(
           val,
           style: TextStyle(
-            color: valColor ?? const Color(0xFF4ED78E),
-            fontSize: 15,
+            color: valColor ?? const Color(0xFF4DD78D),
+            fontSize: 12,
             fontWeight: FontWeight.w600,
-            height: 16 / 15,
-            fontFamily: 'DMSans',
+            fontFamily: 'DM Sans',
           ),
         ),
       ],
@@ -2412,10 +2404,11 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
         : null;
 
     String fmtDate(DateTime dt) {
-      final mm = dt.month.toString().padLeft(2, '0');
+      final mo = dt.month.toString().padLeft(2, '0');
+      final dd = dt.day.toString().padLeft(2, '0');
       final hh = dt.hour.toString().padLeft(2, '0');
-      final min = dt.minute.toString().padLeft(2, '0');
-      return '${dt.day}/$mm/${dt.year} $hh:$min';
+      final mn = dt.minute.toString().padLeft(2, '0');
+      return '${dt.year}-$mo-$dd $hh:$mn';
     }
 
     return Column(
