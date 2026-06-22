@@ -343,7 +343,7 @@ class MarketFutureState extends State<MarketFutureScreen> {
 
   Widget _buildHeaderRow() {
     return Padding(
-      padding: const EdgeInsets.symmetric(left: 12, right: 4),
+      padding: const EdgeInsets.only(left: 12, right: 4),
       child: Row(
         children: [
           Expanded(
