@@ -76,20 +76,19 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       }
     }
 
-    // Set price immediately when pair changes — never let dashboardData overwrite it
+    // Pair change hone pe: price ek baar set karo, fir lock
     ever(_controller.selectedCoinPair, (pair) {
+      _priceInitialized = false; // naya pair = fresh start
       final price = pair.lastPrice ?? 0;
       if (price > 0) {
         _applyPrice(price);
         _priceInitialized = true;
-      } else {
-        _priceInitialized = false;
       }
     });
 
-    // Only used on very first load when pair.lastPrice is 0
+    // Fallback: agar pair.lastPrice 0 tha, pehli dashboardData update se set karo
     _priceWorker = ever(_controller.dashboardData, (data) {
-      if (_priceInitialized) return;
+      if (_priceInitialized) return; // already set — ignore sab live updates
       final prices = data.lastPriceData;
       final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
       if (price == null || price <= 0) return;
