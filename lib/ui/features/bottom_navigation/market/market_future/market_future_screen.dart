@@ -343,22 +343,21 @@ class MarketFutureState extends State<MarketFutureScreen> {
 
   Widget _buildHeaderRow() {
     return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           Expanded(
             child: Text('Pair/Vol',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
           SizedBox(
-            width: 80,
+            width: 90,
             child: Text('Price', textAlign: TextAlign.end,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
-          const SizedBox(width: 10),
+          const SizedBox(width: 18),
           SizedBox(
-            width: 75,
+            width: 83,
             child: Text('24h Change', textAlign: TextAlign.end,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
-          const SizedBox(width: 20),
         ],
       ),
     );
@@ -396,7 +395,7 @@ class _FuturePairItem extends StatelessWidget {
         Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
       },
       child: Padding(
-        padding: const EdgeInsets.only(left: 12, right: 4, top: 10, bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -464,11 +463,11 @@ class _FuturePairItem extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(width: 10),
+            const SizedBox(width: 18),
 
             // Change badge — fixed 83px
             SizedBox(
-              width: 75,
+              width: 83,
               height: 30,
               child: Container(
                 decoration: BoxDecoration(color: cColor, borderRadius: BorderRadius.circular(5)),
