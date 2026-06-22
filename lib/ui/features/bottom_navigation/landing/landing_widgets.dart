@@ -46,7 +46,7 @@ class AppBarHomeView extends StatelessWidget implements PreferredSizeWidget {
         statusBarIconBrightness: Brightness.light,
       ),
 
-      // ── LEFT: X logo → drawer ──
+      // ── LEFT: hamburger → drawer ──
       leadingWidth: 56,
       leading: GestureDetector(
         onTap: () => Scaffold.of(context).openDrawer(),
@@ -54,18 +54,17 @@ class AppBarHomeView extends StatelessWidget implements PreferredSizeWidget {
         child: Container(
           color: Colors.transparent,
           alignment: Alignment.center,
-          child: Image.asset(
-            'assets/images/icon.png',
-            width: 28,
-            height: 28,
-            errorBuilder: (ctx, err, st) =>
-                const Icon(Icons.widgets, color: Colors.white, size: 26),
-          ),
+          child: const Icon(Icons.menu, color: Colors.white, size: 26),
         ),
       ),
 
-      // ── CENTER: nothing ──
-      title: const SizedBox.shrink(),
+      // ── CENTER: trapix logo ──
+      title: Image.asset(
+        'assets/images/trapix.png',
+        height: 28,
+        fit: BoxFit.contain,
+        errorBuilder: (ctx, err, st) => const SizedBox.shrink(),
+      ),
       centerTitle: true,
 
       // ── RIGHT: headphone + bell close together ──

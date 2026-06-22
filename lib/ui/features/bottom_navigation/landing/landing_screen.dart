@@ -106,16 +106,15 @@ class _LandingScreenState extends State<LandingScreen> {
                         child: Container(
                           color: Colors.transparent,
                           alignment: Alignment.center,
-                          child: Image.asset(
-                            'assets/images/icon.png',
-                            width: 28,
-                            height: 28,
-                            errorBuilder: (ctx, err, st) =>
-                                const Icon(Icons.widgets, color: Colors.white, size: 26),
-                          ),
+                          child: const Icon(Icons.menu, color: Colors.white, size: 26),
                         ),
                       ),
-                      title: const SizedBox.shrink(),
+                      title: Image.asset(
+                        'assets/images/trapix.png',
+                        height: 28,
+                        fit: BoxFit.contain,
+                        errorBuilder: (ctx, err, st) => const SizedBox.shrink(),
+                      ),
                       centerTitle: true,
                       actions: [
                         Row(
