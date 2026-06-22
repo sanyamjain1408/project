@@ -25,6 +25,7 @@ import '../../../../utils/spacers.dart';
 import '../../../../utils/text_util.dart';
 import '../../../../utils/web_view.dart';
 import '../../side_navigation/activity/activity_screen.dart';
+import '../wallet/history_sheet.dart';
 import '../../side_navigation/blog/blog_screen.dart';
 import '../../side_navigation/faq/faq_page.dart';
 import '../../side_navigation/gift_cards/gift_cards_screen.dart';
@@ -367,7 +368,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 ExploreItemView(
                   title: "Reports".tr,
                   icon: Icons.history,
-                  onTap: () => Get.to(() => const ActivityScreen()),
+                  onTap: () => showHistorySheet(),
                 ),
               if (hasUser)
                 ExploreItemView(
