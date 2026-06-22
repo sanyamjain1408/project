@@ -627,9 +627,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     _menuRow("assets/icons/api.png", "API Setting", () {}),
                     _menuRow("assets/images/community.png", "Community", () => Get.to(() => const CommunityScreen())),
 
-                    const SizedBox(height: 6),
-                    Divider(color: _divider, thickness: 1, height: 1),
-
                     // ── ORIGINAL MENUS — KEPT EXACTLY ────────────────────────
                     // if (hasUser)
                     //   _menuRow(
