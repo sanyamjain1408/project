@@ -2782,8 +2782,9 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Amount label + auto subscribe toggle
+                    // Amount label + available balance
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
                           "Amount",
@@ -2795,7 +2796,22 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
                             height: 24 / 16,
                           ),
                         ),
-                        if (!isFlexible) ...[
+                        Obx(() {
+                          final bal = _earnCtrl.balances[widget.coin] ?? 0;
+                          return Text(
+                            "Available: ${coinFormat(bal)} ${widget.coin}",
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              fontSize: 12,
+                              fontFamily: "DMSans",
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                    if (!isFlexible)
+                      Row(
+                        children: [
                           const Spacer(),
                           GestureDetector(
                             onTap: () =>
@@ -2841,8 +2857,7 @@ class _EasyEarnModalState extends State<EasyEarnModal> {
                             ),
                           ),
                         ],
-                      ],
-                    ),
+                      ),
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(

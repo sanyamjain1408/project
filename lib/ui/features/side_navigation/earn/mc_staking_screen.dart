@@ -1877,12 +1877,26 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
   late McRateRule _selectedRule;
   double _perSec = 0;
   Timer? _calcTimer;
+  double? _availableBal;
+  bool _loadingBal = false;
 
   @override
   void initState() {
     super.initState();
     _selectedPlan = widget.initialPlan;
     _selectedRule = widget.initialRule;
+    _fetchBalance();
+  }
+
+  Future<void> _fetchBalance() async {
+    debugPrint('_fetchBalance called for ${widget.coin.symbol}');
+    if (mounted) setState(() => _loadingBal = true);
+    await _c.fetchCoinBalance(widget.coin.symbol);
+    debugPrint('fetchCoinBalance done, val=${_c.coinBalance.value}');
+    if (mounted) setState(() {
+      _availableBal = _c.coinBalance.value;
+      _loadingBal = false;
+    });
   }
 
   @override
@@ -2046,16 +2060,40 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Amount label
-                      const Text(
-                        "Amount",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "DMSans",
-                          height: 24 / 16,
-                        ),
+                      // Amount label + available balance
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Amount",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: "DMSans",
+                              height: 24 / 16,
+                            ),
+                          ),
+                          if (_loadingBal)
+                            const SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                color: _green,
+                                strokeWidth: 1.5,
+                              ),
+                            )
+                          else if (_availableBal != null)
+                            Text(
+                              "Available: ${_availableBal! >= 1000 ? _availableBal!.toStringAsFixed(2) : _availableBal! >= 1 ? _availableBal!.toStringAsFixed(4) : _availableBal!.toStringAsFixed(6)} ${widget.coin.symbol}",
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                fontSize: 12,
+                                fontFamily: "DMSans",
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 10),
 
@@ -2189,6 +2227,20 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
                           ],
                         );
                       }),
+                      const SizedBox(height: 20),
+
+                      // Subscription Schedule
+                      const Text(
+                        "Subscription Schedule",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: "DMSans",
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSubscriptionSchedule(plan),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -2352,6 +2404,106 @@ class _StakingSubscribeScreenState extends State<_StakingSubscribeScreen> {
       ],
     ),
   );
+
+  Widget _buildSubscriptionSchedule(McStakingPlan plan) {
+    final now = DateTime.now();
+    final maturity = plan.durationDays > 0
+        ? now.add(Duration(days: plan.durationDays))
+        : null;
+
+    String fmtDate(DateTime dt) {
+      final mm = dt.month.toString().padLeft(2, '0');
+      final hh = dt.hour.toString().padLeft(2, '0');
+      final min = dt.minute.toString().padLeft(2, '0');
+      return '${dt.day}/$mm/${dt.year} $hh:$min';
+    }
+
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD9D9D9),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 30,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD9D9D9),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Subscription Time',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                      Text(
+                        fmtDate(now),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Subscription Maturity Time',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                      Text(
+                        maturity != null ? fmtDate(maturity) : 'Flexible',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _PlanRow {

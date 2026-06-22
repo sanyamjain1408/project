@@ -116,6 +116,51 @@ class McStakingController extends GetxController {
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
 
+  // ── Coin spot balance ────────────────────────────────────────────────────
+  final coinBalance = Rx<double?>(null);
+  final isLoadingBalance = false.obs;
+
+  Future<void> fetchCoinBalance(String coinType) async {
+    coinBalance.value = null;
+    isLoadingBalance.value = true;
+    try {
+      // Try coin-swap-app first (faster)
+      final res1 = await _get('/api/coin-swap-app');
+      if (res1.statusCode == 200) {
+        final body = jsonDecode(res1.body);
+        final wallets = (body['data'] is Map ? body['data']['wallets'] : null) as List? ?? [];
+        for (final w in wallets) {
+          final coin = (w['coin_type'] ?? '').toString().toUpperCase();
+          if (coin == coinType.toUpperCase()) {
+            coinBalance.value = double.tryParse(w['balance']?.toString() ?? '') ??
+                double.tryParse(w['available_balance']?.toString() ?? '') ?? 0;
+            isLoadingBalance.value = false;
+            return;
+          }
+        }
+      }
+      // Fallback: wallet-list
+      final res = await _get('/api/wallet-list?page=1&per_page=200');
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        final List wallets = body['data']?['wallets']?['data'] ??
+            body['data']?['data'] ??
+            body['data'] ?? [];
+        for (final w in wallets) {
+          final coin = (w['coin_type'] ?? '').toString().toUpperCase();
+          if (coin == coinType.toUpperCase()) {
+            coinBalance.value = double.tryParse(w['balance']?.toString() ?? '') ??
+                double.tryParse(w['available_balance']?.toString() ?? '') ?? 0;
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('BALANCE ERROR: $e');
+    }
+    isLoadingBalance.value = false;
+  }
+
   // ── Coins ─────────────────────────────────────────────────────────────────
   Future<void> fetchCoins() async {
     isLoadingCoins.value = true;

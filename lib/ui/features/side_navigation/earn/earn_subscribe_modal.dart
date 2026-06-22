@@ -117,7 +117,16 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
             const SizedBox(height: 16),
 
             // ── Amount Input ──
-            const Text('Amount', style: TextStyle(color: Color(0xFF6B7280), fontSize: 13)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Amount', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w400)),
+                Text(
+                  'Available: ${coinFormat(_balance)} ${widget.product.coin}',
+                  style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -165,13 +174,7 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Max ${coinFormat(widget.product.maxAmount)} ${widget.product.coin}', style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11)),
-                Text('Available ${coinFormat(_balance)}', style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11)),
-              ],
-            ),
+            Text('Max ${coinFormat(widget.product.maxAmount)} ${widget.product.coin}', style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11)),
             const SizedBox(height: 16),
 
             // ── Profit Box ──
@@ -258,6 +261,15 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
 
             if (_isFixed) const SizedBox(height: 16),
 
+            // ── Subscription Schedule ──
+            const Text(
+              'Subscription Schedule',
+              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            _buildSchedule(),
+            const SizedBox(height: 16),
+
             // ── Agreement ──
             GestureDetector(
               onTap: () => setState(() => _agreed = !_agreed),
@@ -313,6 +325,66 @@ class _EarnSubscribeModalState extends State<EarnSubscribeModal> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSchedule() {
+    final now = DateTime.now();
+    final maturity = widget.product.lockDays > 0
+        ? now.add(Duration(days: widget.product.lockDays))
+        : null;
+
+    String fmtDate(DateTime dt) {
+      final mm = dt.month.toString().padLeft(2, '0');
+      final dd = dt.day.toString().padLeft(2, '0');
+      final hh = dt.hour.toString().padLeft(2, '0');
+      final min = dt.minute.toString().padLeft(2, '0');
+      return '$dd/$mm/${dt.year} $hh:$min';
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          children: [
+            Container(
+              width: 10, height: 10,
+              decoration: const BoxDecoration(color: Color(0xFFD9D9D9), shape: BoxShape.circle),
+            ),
+            Container(width: 1, height: 28, color: const Color(0x4DFFFFFF)),
+            Container(
+              width: 10, height: 10,
+              decoration: const BoxDecoration(color: Color(0xFFD9D9D9), shape: BoxShape.circle),
+            ),
+          ],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Subscription Time', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
+                  Text(fmtDate(now), style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
+                ],
+              ),
+              const SizedBox(height: 22),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Subscription Maturity Time', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
+                  Text(
+                    maturity != null ? fmtDate(maturity) : 'Flexible',
+                    style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
