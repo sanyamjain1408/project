@@ -2,7 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
-import 'package:tradexpro_flutter/addons/ico/ico_ui/ico_screen.dart';
+// import 'package:tradexpro_flutter/addons/ico/ico_ui/ico_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/history_sheet.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
@@ -26,16 +26,16 @@ import '../bottom_navigation/trades/future_trade/new_future_screen.dart';
 import '../bottom_navigation/trades/trade_screen.dart';
 import '../bottom_navigation/wallet/wallet_screen.dart';
 import '../side_navigation/activity/activity_screen.dart';
-import '../side_navigation/blog/blog_screen.dart';
+// import '../side_navigation/blog/blog_screen.dart';
 import '../side_navigation/faq/faq_page.dart';
-import '../side_navigation/fiat/fiat_screen.dart';
-import '../side_navigation/gift_cards/gift_cards_screen.dart';
-import '../side_navigation/news/news_screen.dart';
+// import '../side_navigation/fiat/fiat_screen.dart';
+// import '../side_navigation/gift_cards/gift_cards_screen.dart';
+// import '../side_navigation/news/news_screen.dart';
 import '../side_navigation/profile/profile_screen.dart';
 import '../side_navigation/referrals/referral_screen.dart';
 import '../side_navigation/ib_program/ib_screen.dart';
-import '../side_navigation/settings/settings_screen.dart';
-import '../side_navigation/staking/staking_screen.dart';
+// import '../side_navigation/settings/settings_screen.dart';
+// import '../side_navigation/staking/staking_screen.dart';
 import '../side_navigation/airdrop/airdrop_screen.dart';
 import '../side_navigation/about/about_trapix_screen.dart';
 import '../side_navigation/community/community_screen.dart';
@@ -631,47 +631,47 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     Divider(color: _divider, thickness: 1, height: 1),
 
                     // ── ORIGINAL MENUS — KEPT EXACTLY ────────────────────────
-                    if (hasUser)
-                      _menuRow(
-                        "assets/icons/help.png",
-                        "Reports",
-                        () { Navigator.of(context).pop(); Future.delayed(const Duration(milliseconds: 300), () => showHistorySheet()); },
-                      ),
-                    if (hasUser)
-                      _menuRow(
-                        "assets/icons/help.png",
-                        "Fiat",
-                        () => Get.to(() => const FiatScreen()),
-                      ),
-                    if (hasUser)
-                      _menuRow(
-                        "assets/icons/help.png",
-                        "Settings",
-                        () => Get.to(() => const SettingsScreen()),
-                      ),
+                    // if (hasUser)
+                    //   _menuRow(
+                    //     "assets/icons/help.png",
+                    //     "Reports",
+                    //     () { Navigator.of(context).pop(); Future.delayed(const Duration(milliseconds: 300), () => showHistorySheet()); },
+                    //   ),
+                    // if (hasUser)
+                    //   _menuRow(
+                    //     "assets/icons/help.png",
+                    //     "Fiat",
+                    //     () => Get.to(() => const FiatScreen()),
+                    //   ),
+                    // if (hasUser)
+                    //   _menuRow(
+                    //     "assets/icons/help.png",
+                    //     "Settings",
+                    //     () => Get.to(() => const SettingsScreen()),
+                    //   ),
                     if (hasUser && settings?.liveChatStatus == 1)
                       _menuRow("assets/icons/help.png", "Support", () {
                         Get.back();
                         openCrispChatView();
                       }),
-                    if (settings?.enableStaking == 1)
-                      _menuRow(
-                        "assets/icons/help.png",
-                        "Staking",
-                        () => Get.to(() => const StakingScreen()),
-                      ),
-                    if (settings?.enableGiftCard == 1)
-                      _menuRow(
-                        "assets/icons/help.png",
-                        "Gift Cards",
-                        () => Get.to(() => const GiftCardsScreen()),
-                      ),
-                    if (settings?.navbar?["ico"]?.status == true)
-                      _menuRow(
-                        "assets/icons/help.png",
-                        "ICO",
-                        () => Get.to(() => const ICOScreen()),
-                      ),
+                    // if (settings?.enableStaking == 1)
+                    //   _menuRow(
+                    //     "assets/icons/help.png",
+                    //     "Staking",
+                    //     () => Get.to(() => const StakingScreen()),
+                    //   ),
+                    // if (settings?.enableGiftCard == 1)
+                    //   _menuRow(
+                    //     "assets/icons/help.png",
+                    //     "Gift Cards",
+                    //     () => Get.to(() => const GiftCardsScreen()),
+                    //   ),
+                    // if (settings?.navbar?["ico"]?.status == true)
+                    //   _menuRow(
+                    //     "assets/icons/help.png",
+                    //     "ICO",
+                    //     () => Get.to(() => const ICOScreen()),
+                    //   ),
                     // if (settings?.p2pModule == 1)
                     //   _menuRow("assets/icons/help.png", "P2P", () {
                     //     TemporaryData.changingPageId = 1;
@@ -680,18 +680,18 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     //       AppBottomNavKey.trade,
                     //     );
                     //   }),
-                    if (settings?.blogNewsModule == 1)
-                      _menuRow(
-                        "assets/icons/help.png",
-                        "Blog",
-                        () => Get.to(() => const BlogScreen()),
-                      ),
-                    if (settings?.blogNewsModule == 1)
-                      _menuRow(
-                        "assets/icons/help.png",
-                        "News",
-                        () => Get.to(() => const NewsScreen()),
-                      ),
+                    // if (settings?.blogNewsModule == 1)
+                    //   _menuRow(
+                    //     "assets/icons/help.png",
+                    //     "Blog",
+                    //     () => Get.to(() => const BlogScreen()),
+                    //   ),
+                    // if (settings?.blogNewsModule == 1)
+                    //   _menuRow(
+                    //     "assets/icons/help.png",
+                    //     "News",
+                    //     () => Get.to(() => const NewsScreen()),
+                    //   ),
 
                     // ── LOGOUT ───────────────────────────────────────────────
                     if (hasUser)
