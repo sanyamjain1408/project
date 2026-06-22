@@ -343,7 +343,7 @@ class MarketFutureState extends State<MarketFutureScreen> {
 
   Widget _buildHeaderRow() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(left: 12, right: 4),
       child: Row(
         children: [
           Expanded(
@@ -395,7 +395,7 @@ class _FuturePairItem extends StatelessWidget {
         Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.only(left: 12, right: 4, top: 10, bottom: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
