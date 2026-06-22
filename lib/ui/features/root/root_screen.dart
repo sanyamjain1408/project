@@ -635,7 +635,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       _menuRow(
                         "assets/icons/help.png",
                         "Reports",
-                        () => Get.to(() => const ActivityScreen()),
+                        () => showHistorySheet(),
                       ),
                     if (hasUser)
                       _menuRow(
