@@ -358,6 +358,7 @@ class MarketFutureState extends State<MarketFutureScreen> {
             width: 75,
             child: Text('24h Change', textAlign: TextAlign.end,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
+          const SizedBox(width: 20),
         ],
       ),
     );
