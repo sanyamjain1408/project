@@ -351,7 +351,7 @@ class MarketFutureState extends State<MarketFutureScreen> {
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
           SizedBox(
             width: 80,
-            child: Text('Price', textAlign: TextAlign.center,
+            child: Text('Price', textAlign: TextAlign.end,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33))),
           const SizedBox(width: 10),
           SizedBox(
@@ -450,14 +450,14 @@ class _FuturePairItem extends StatelessWidget {
             SizedBox(
               width: 80,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(priceStr,
-                    textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end, maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600, fontFamily: _dm, height: 1.25)),
                   Text('\$$priceStr',
-                    textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end, maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dm, height: 1.33)),
                 ],
               ),
