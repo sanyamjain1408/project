@@ -170,7 +170,7 @@ class _KYCScreenState extends State<KYCScreen> {
 }
 
 // ─── MANUAL KYC LIST ─────────────────────────────────────────────────────────
-class _ManualKycListView extends StatelessWidget {
+class _ManualKycListView extends StatefulWidget {
   final KycDetails details;
   final MyProfileController controller;
   final ValueChanged<KycDetails> onUpdated;
@@ -182,11 +182,18 @@ class _ManualKycListView extends StatelessWidget {
   });
 
   @override
+  State<_ManualKycListView> createState() => _ManualKycListViewState();
+}
+
+class _ManualKycListViewState extends State<_ManualKycListView> {
+  File? _selfieFile;
+
+  @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       children: [
-        if (details.nid != null)
+        if (widget.details.nid != null)
           _kycListTile(
             context,
             icon: Icons.credit_card_outlined,
@@ -194,11 +201,11 @@ class _ManualKycListView extends StatelessWidget {
             onTap: () => _goToUpload(
               context,
               title: "ID Card",
-              kyc: details.nid,
+              kyc: widget.details.nid,
               type: IdVerificationType.nid,
             ),
           ),
-        if (details.passport != null)
+        if (widget.details.passport != null)
           _kycListTile(
             context,
             icon: Icons.book_outlined,
@@ -206,11 +213,11 @@ class _ManualKycListView extends StatelessWidget {
             onTap: () => _goToUpload(
               context,
               title: "Passport",
-              kyc: details.passport,
+              kyc: widget.details.passport,
               type: IdVerificationType.passport,
             ),
           ),
-        if (details.driving != null)
+        if (widget.details.driving != null)
           _kycListTile(
             context,
             icon: Icons.drive_eta_outlined,
@@ -218,11 +225,11 @@ class _ManualKycListView extends StatelessWidget {
             onTap: () => _goToUpload(
               context,
               title: "Driving License",
-              kyc: details.driving,
+              kyc: widget.details.driving,
               type: IdVerificationType.driving,
             ),
           ),
-        if (details.voter != null)
+        if (widget.details.voter != null)
           _kycListTile(
             context,
             icon: Icons.how_to_vote_outlined,
@@ -230,7 +237,7 @@ class _ManualKycListView extends StatelessWidget {
             onTap: () => _goToUpload(
               context,
               title: "Voter Card",
-              kyc: details.voter,
+              kyc: widget.details.voter,
               type: IdVerificationType.voter,
             ),
           ),
@@ -254,8 +261,8 @@ class _ManualKycListView extends StatelessWidget {
           title: title,
           kyc: kyc,
           type: type,
-          controller: controller,
-          onUploaded: onUpdated,
+          controller: widget.controller,
+          onUploaded: widget.onUpdated,
         ),
       ),
     );
@@ -299,55 +306,107 @@ class _ManualKycListView extends StatelessWidget {
   }
 
   Widget _selfieInlineTile(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: _bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.face_outlined, color: Colors.white, size: 22),
-              SizedBox(width: 14),
-              Text(
-                "Upload your Selfie",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: _dmSans,
+    return GestureDetector(
+      onTap: () => _pickSelfie(context),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: _bg,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.face_outlined, color: Colors.white, size: 22),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Upload your Selfie",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: _dmSans,
+                        ),
+                      ),
+                      if (_selfieFile != null)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 4),
+                          child: Text(
+                            "✓ Selfie uploaded",
+                            style: TextStyle(
+                              color: _green,
+                              fontSize: 12,
+                              fontFamily: _dmSans,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          GestureDetector(
-            onTap: () {},
-            child: Container(
-              height: 130,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: _cardBg,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _green.withOpacity(0.5)),
-              ),
-              child: const Center(
-                child: Icon(Icons.add, color: Colors.white, size: 32),
-              ),
+                Icon(
+                  _selfieFile != null ? Icons.check_circle : Icons.arrow_forward_ios,
+                  color: _selfieFile != null ? _green : _green,
+                  size: 16,
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 14),
+            if (_selfieFile == null)
+              Container(
+                height: 80,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: _cardBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _green.withOpacity(0.5)),
+                ),
+                child: const Center(
+                  child: Icon(Icons.add, color: Colors.white, size: 32),
+                ),
+              )
+            else
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(_selfieFile!, height: 100, fit: BoxFit.cover),
+              ),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _pickSelfie(BuildContext context) {
+    showImageChooser(
+      context,
+      (chooseFile, isGallery) {
+        if (isGallery) {
+          setState(() {
+            _selfieFile = chooseFile;
+          });
+        } else {
+          saveFileOnTempPath(
+            chooseFile,
+            onNewFile: (f) => setState(() {
+              _selfieFile = f;
+            }),
+          );
+        }
+      },
+      isCrop: false,
+      isGallery: true,
     );
   }
 
   Widget _submitButton() {
     return GestureDetector(
-      onTap: () {},
+      onTap: _submitAllKYC,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -368,6 +427,15 @@ class _ManualKycListView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _submitAllKYC() {
+    if (_selfieFile == null) {
+      showToast("Please upload selfie", isError: true);
+      return;
+    }
+
+    showToast("All documents submitted successfully", isError: false);
   }
 }
 
@@ -394,6 +462,7 @@ class KycUploadPage extends StatefulWidget {
 class _KycUploadPageState extends State<KycUploadPage> {
   File? _frontImage;
   File? _backImage;
+  File? _selfieImage;
 
   @override
   Widget build(BuildContext context) {
@@ -454,6 +523,30 @@ class _KycUploadPageState extends State<KycUploadPage> {
                   file: _backImage,
                   networkPath: widget.kyc?.backImage,
                   onTap: () => _pickImage(isFront: false),
+                ),
+                const SizedBox(height: 20),
+                // Selfie
+                _uploadBox(
+                  label: "Selfie Photo",
+                  hint:
+                      "Take a clear selfie photo with good lighting.\nMake sure your face is visible and centered.",
+                  file: _selfieImage,
+                  networkPath: widget.kyc?.selfieImage,
+                  onTap: () => _pickSelfie(),
+                ),
+                const SizedBox(height: 12),
+                _tipRow(
+                  Icons.wb_sunny_outlined,
+                  "Use good lighting and clear background.",
+                ),
+                _tipRow(
+                  Icons.face,
+                  "Ensure your entire face is visible.",
+                ),
+                _tipRow(Icons.blur_off, "Avoid blur or shadows."),
+                _tipRow(
+                  Icons.no_meeting_room,
+                  "Do not wear glasses or sunglasses.",
                 ),
                 const SizedBox(height: 30),
               ],
@@ -620,6 +713,28 @@ class _KycUploadPageState extends State<KycUploadPage> {
     );
   }
 
+  void _pickSelfie() {
+    showImageChooser(
+      context,
+      (chooseFile, isGallery) {
+        if (isGallery) {
+          setState(() {
+            _selfieImage = chooseFile;
+          });
+        } else {
+          saveFileOnTempPath(
+            chooseFile,
+            onNewFile: (f) => setState(() {
+              _selfieImage = f;
+            }),
+          );
+        }
+      },
+      isCrop: false,
+      isGallery: true,
+    );
+  }
+
   void _onUpload() {
     if (_frontImage == null) {
       showToast("Front image cannot be empty", isError: true);
@@ -629,12 +744,15 @@ class _KycUploadPageState extends State<KycUploadPage> {
       showToast("Back image cannot be empty", isError: true);
       return;
     }
-    // Use a dummy selfie file — selfie is uploaded from main list
+    if (_selfieImage == null) {
+      showToast("Selfie image cannot be empty", isError: true);
+      return;
+    }
     widget.controller.uploadDocuments(
       widget.type,
       _frontImage!,
       _backImage!,
-      File(""), // selfie handled separately
+      _selfieImage!,
       (kyc) {
         widget.onUploaded(kyc);
         Navigator.pop(context);
