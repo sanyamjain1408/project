@@ -740,11 +740,8 @@ class _McStakingScreenState extends State<McStakingScreen>
                           final durationLabel = r.plan.durationDays == 0
                               ? 'Flexible'
                               : '${r.plan.durationDays} Days';
-                          final totalRate =
-                              r.rule.dailyRate * r.plan.durationDays;
-                          final totalRateLabel = r.plan.durationDays == 0
-                              ? '${r.rule.dailyRate.toStringAsFixed(2)}% Daily'
-                              : '${totalRate.toStringAsFixed(2)}% Total';
+                          final totalRate = r.rule.dailyRate * r.plan.durationDays;
+                          final typeLabel = _planTypeLabel(r.plan.planType);
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: Container(
@@ -774,40 +771,40 @@ class _McStakingScreenState extends State<McStakingScreen>
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          totalRateLabel,
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(
-                                              0.5,
-                                            ),
-                                            fontSize: 12,
+                                          typeLabel,
+                                           style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
                                             fontFamily: 'DMSans',
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  RichText(
-                                    text: TextSpan(
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        TextSpan(
-                                          text:
-                                              '${r.rule.dailyRate.toStringAsFixed(2)}%',
+                                        Text(
+                                          r.plan.durationDays == 0
+                                              ? '${r.rule.dailyRate.toStringAsFixed(2)}%'
+                                              : '${totalRate.toStringAsFixed(2)}%',
                                           style: const TextStyle(
                                             color: Color(0xFF4ED78E),
-                                            fontSize: 16,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.w700,
                                             fontFamily: 'DMSans',
-                                            height: 24 / 16,
                                           ),
                                         ),
-                                        TextSpan(
-                                          text: ' /day',
-                                          style: TextStyle(
+                                        Text(
+                                          r.plan.durationDays == 0 ? 'Daily' : 'Total',
+                                          style: const TextStyle(
                                             color: Color(0xFF4ED78E),
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w400,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
                                             fontFamily: 'DMSans',
-                                            height: 16 / 12,
                                           ),
                                         ),
                                       ],

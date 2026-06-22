@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
@@ -181,9 +182,11 @@ class McStakingController extends GetxController {
     try {
       final j = _decode(await _get('/api/mc-staking/plans?coin_id=$coinId'));
       if (j['success'] == true) {
-        plans.assignAll(
-          (j['data'] as List).map((e) => McStakingPlan.fromJson(e)),
-        );
+        final parsed = (j['data'] as List).map((e) => McStakingPlan.fromJson(e)).toList();
+        for (final p in parsed) {
+          debugPrint('PLAN: id=${p.id} name=${p.planName} plan_type=${p.planType} duration_days=${p.durationDays}');
+        }
+        plans.assignAll(parsed);
       }
     } catch (e) {
       showToast('Error loading plans');
