@@ -635,7 +635,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       _menuRow(
                         "assets/icons/help.png",
                         "Reports",
-                        () => showHistorySheet(),
+                        () { Navigator.of(context).pop(); Future.delayed(const Duration(milliseconds: 300), () => showHistorySheet()); },
                       ),
                     if (hasUser)
                       _menuRow(
