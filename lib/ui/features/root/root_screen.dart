@@ -288,29 +288,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const SizedBox(width: 10),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              color: Colors.transparent,
-                              child: ClipOval(child: showCircleAvatar(user.photo, size: 52)),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Color(0xFF015629).withValues(alpha: 0.4),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Text(
-                                "Verified",
-                                style: TextStyle(color: Color(0xFF00FF4D), fontSize: 10, fontWeight: FontWeight.w400, fontFamily: _dmSans),
-                              ),
-                            ),
-                          ],
-                        ),
+                        VerificationAvatar(user: user, size: 50),
                         const SizedBox(width: 20),
                         Expanded(
                           child: Column(
@@ -1088,4 +1066,137 @@ class _AnimatedReferralCardState
       ),
     );
   }
+}
+
+// ── Verification Progress Avatar ─────────────────────────────────────────────
+class VerificationAvatar extends StatelessWidget {
+  final dynamic user;
+  final double size;
+  const VerificationAvatar({super.key, required this.user, this.size = 50});
+
+  @override
+  Widget build(BuildContext context) {
+    final phoneDone = (user.phoneVerified ?? 0) == 1;
+    final emailDone = (user.isVerified ?? 0) == 1;
+    final kycDone   = (user.g2FEnabled ?? 0) == 1;
+
+    final steps = [phoneDone, emailDone, kycDone];
+    final doneCount = steps.where((v) => v).length;
+    final allDone = doneCount == steps.length;
+    final percent = (doneCount / steps.length * 100).round();
+    const pi = 3.14159265;
+    const fullSweep = 2 * pi;
+    final sweepPerStep = fullSweep / steps.length;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: size + 14,
+          height: size + 14,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Background track
+              SizedBox(
+                width: size + 14,
+                height: size + 14,
+                child: const CircularProgressIndicator(
+                  value: 1,
+                  strokeWidth: 3,
+                  color: Color(0xFF2A2A2A),
+                ),
+              ),
+              // Filled arc per verified step
+              ...List.generate(steps.length, (i) {
+                if (!steps[i]) return const SizedBox.shrink();
+                return SizedBox(
+                  width: size + 14,
+                  height: size + 14,
+                  child: CustomPaint(
+                    painter: _ArcPainter(
+                      startAngle: -pi / 2 + sweepPerStep * i,
+                      sweepAngle: sweepPerStep - 0.1,
+                      color: const Color(0xFFCCFF00),
+                      strokeWidth: 3,
+                    ),
+                  ),
+                );
+              }),
+              // Avatar
+              ClipOval(
+                child: SizedBox(
+                  width: size,
+                  height: size,
+                  child: showCircleAvatar(user.photo, size: size),
+                ),
+              ),
+              // % badge at bottom
+              Positioned(
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1A1A),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF2A2A2A)),
+                  ),
+                  child: Text(
+                    '$percent%',
+                    style: const TextStyle(
+                      color: Color(0xFFCCFF00),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          decoration: BoxDecoration(
+            color: allDone
+                ? const Color(0xFF015629).withValues(alpha: 0.4)
+                : const Color(0xFF5A1A1A).withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            allDone ? 'Verified' : 'Not Verified',
+            style: TextStyle(
+              color: allDone ? const Color(0xFF00FF4D) : const Color(0xFFFF4D4D),
+              fontSize: 10,
+              fontWeight: FontWeight.w400,
+              fontFamily: 'DMSans',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ArcPainter extends CustomPainter {
+  final double startAngle;
+  final double sweepAngle;
+  final Color color;
+  final double strokeWidth;
+  const _ArcPainter({required this.startAngle, required this.sweepAngle, required this.color, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final rect = Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2, size.width - strokeWidth, size.height - strokeWidth);
+    canvas.drawArc(rect, startAngle, sweepAngle, false, paint);
+  }
+
+  @override
+  bool shouldRepaint(_ArcPainter old) => old.startAngle != startAngle || old.sweepAngle != sweepAngle || old.color != color;
 }

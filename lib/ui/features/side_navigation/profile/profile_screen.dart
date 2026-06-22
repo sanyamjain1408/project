@@ -17,6 +17,7 @@ import 'package:tradexpro_flutter/utils/extensions.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
 import 'package:tradexpro_flutter/ui/features/auth/change_password/change_password_screen.dart';
 import 'kyc_screen.dart';
+import '../../root/root_screen.dart' show VerificationAvatar;
 import 'my_profile_controller.dart';
 import 'my_profile_edit_screen.dart';
 import 'user_banks/user_bank_controller.dart';
@@ -129,31 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: ClipOval(child: showCircleAvatar(user.photo)),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF015629).withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      "Verified",
-                      style: TextStyle(
-                        color: Color(0xFF00FF4D),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: _dmSans,
-                      ),
-                    ),
-                  ),
+                  VerificationAvatar(user: user, size: 60),
                   const SizedBox(height: 10),
                   Text(
                     getName(user.firstName, user.lastName),
