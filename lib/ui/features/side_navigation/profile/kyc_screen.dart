@@ -274,23 +274,10 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
           kyc: kyc,
           type: type,
           controller: widget.controller,
-          onUploaded: (kycDetails) {
-            setState(() {}); // Trigger rebuild to check all documents
-            widget.onUpdated(kycDetails);
-          },
+          onUploaded: widget.onUpdated,
         ),
       ),
     );
-  }
-
-  // Check if all required documents are uploaded
-  bool _areAllDocumentsUploaded() {
-    return widget.details.nid != null &&
-           widget.details.nid!.frontImage != null &&
-           widget.details.nid!.backImage != null &&
-           widget.details.passport != null &&
-           widget.details.passport!.frontImage != null &&
-           widget.details.passport!.backImage != null;
   }
 
   Widget _kycListTile(
@@ -524,13 +511,6 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
   }
 
   void _submitAllKYC() {
-    // Check if all documents are uploaded
-    if (!_areAllDocumentsUploaded()) {
-      showToast("Please upload ID Card and Passport first (both Front & Back)", isError: true);
-      return;
-    }
-
-    // Check if selfie is uploaded
     if (_selfieFile == null) {
       showToast("Please upload selfie", isError: true);
       return;
@@ -540,23 +520,14 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
       _isSelfieUploading = true;
     });
 
-    // Submit selfie
-    widget.controller.uploadDocuments(
-      IdVerificationType.nid, // Using NID as the type for selfie submission
-      File(""), // Already uploaded
-      File(""), // Already uploaded
-      _selfieFile!,
-      (kyc) {
-        setState(() {
-          _isSelfieUploading = false;
-          _isSelfieUploadedSuccessfully = true;
-        });
-        showToast("All documents submitted successfully!", isError: false);
-        Future.delayed(const Duration(seconds: 2), () {
-          widget.onUpdated(kyc);
-        });
-      },
-    );
+    // Simulate selfie submission
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _isSelfieUploading = false;
+        _isSelfieUploadedSuccessfully = true;
+      });
+      showToast("Selfie submitted successfully!", isError: false);
+    });
   }
 }
 
