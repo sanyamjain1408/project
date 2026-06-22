@@ -25,6 +25,9 @@ import 'package:tradexpro_flutter/utils/spacers.dart';
 
 const _dmSans = 'DMSans';
 
+// 2+ digit integer part → 2 decimals, single digit → 5 decimals
+String _smartFmt(double v) => v.toStringAsFixed(v.abs() >= 10 ? 2 : 5);
+
 class SpotCoinDetailsScreen extends StatefulWidget {
   const SpotCoinDetailsScreen({super.key, required this.wallet});
   final Wallet wallet;
@@ -189,7 +192,7 @@ class _SpotCoinDetailsScreenState extends State<SpotCoinDetailsScreen> {
                     children: [
                       Flexible(
                         child: Text(
-                          coinFormat(total, fixed: 2),
+                          _smartFmt(total),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 30,
@@ -250,6 +253,7 @@ class _SpotCoinDetailsScreenState extends State<SpotCoinDetailsScreen> {
     );
   }
 
+
   String _fmtUsd(double v) => v.toStringAsFixed(v < 0.01 ? 8 : 2);
 }
 
@@ -302,8 +306,8 @@ class _StatsGrid extends StatelessWidget {
         const SizedBox(height: 2),
         Row(
           children: [
-            Expanded(child: _statValue(coinFormat(available, fixed: 2), Colors.white.withValues(alpha: 0.50))),
-            Expanded(child: _statValue(coinFormat(locked, fixed: 2), Colors.white.withValues(alpha: 0.50))),
+            Expanded(child: _statValue(_smartFmt(available), Colors.white.withValues(alpha: 0.50))),
+            Expanded(child: _statValue(_smartFmt(locked), Colors.white.withValues(alpha: 0.50))),
           ],
         ),
         const SizedBox(height: 16),
