@@ -483,26 +483,24 @@ class _ManualKycListViewState extends State<_ManualKycListView> {
   }
 
   Widget _submitButton() {
-    return Opacity(
-      opacity: _isSelfieUploadedSuccessfully ? 0.6 : 1.0,
-      child: GestureDetector(
-        onTap: _isSelfieUploadedSuccessfully ? null : _submitAllKYC,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: _isSelfieUploadedSuccessfully ? Colors.grey : _green,
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Center(
-            child: Text(
-              _isSelfieUploading ? "Submitting..." : (_isSelfieUploadedSuccessfully ? "Submitted ✓" : "Submit"),
-              style: TextStyle(
-                color: _isSelfieUploadedSuccessfully ? Colors.white : Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                fontFamily: _dmSans,
-              ),
+    return GestureDetector(
+      onTap: _isSelfieUploadedSuccessfully ? null : _submitAllKYC,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: _isSelfieUploadedSuccessfully ? Colors.grey : _green,
+          borderRadius: BorderRadius.circular(30),
+          opacity: _isSelfieUploadedSuccessfully ? 0.5 : 1.0,
+        ),
+        child: Center(
+          child: Text(
+            _isSelfieUploading ? "Submitting..." : (_isSelfieUploadedSuccessfully ? "Submitted ✓" : "Submit"),
+            style: TextStyle(
+              color: _isSelfieUploadedSuccessfully ? Colors.white : Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              fontFamily: _dmSans,
             ),
           ),
         ),
@@ -625,26 +623,24 @@ class _KycUploadPageState extends State<KycUploadPage> {
           // Upload Button
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-            child: Opacity(
-              opacity: _isUploadedSuccessfully ? 0.6 : 1.0,
-              child: GestureDetector(
-                onTap: _isUploadedSuccessfully ? null : (_onUpload),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: _isUploadedSuccessfully ? Colors.grey : _green,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _isUploading ? "Uploading..." : (_isUploadedSuccessfully ? "Uploaded ✓" : "Upload"),
-                      style: TextStyle(
-                        color: _isUploadedSuccessfully ? Colors.white : Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: _dmSans,
-                      ),
+            child: GestureDetector(
+              onTap: _isUploadedSuccessfully ? null : (_onUpload),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: _isUploadedSuccessfully ? Colors.grey : _green,
+                  borderRadius: BorderRadius.circular(30),
+                  opacity: _isUploadedSuccessfully ? 0.5 : 1.0,
+                ),
+                child: Center(
+                  child: Text(
+                    _isUploading ? "Uploading..." : (_isUploadedSuccessfully ? "Uploaded ✓" : "Upload"),
+                    style: TextStyle(
+                      color: _isUploadedSuccessfully ? Colors.white : Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: _dmSans,
                     ),
                   ),
                 ),
