@@ -18,6 +18,7 @@ import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_cr
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_fiat_deposit/wallet_fiat_deposit_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_fiat_withdrawal/wallet_fiat_withdrawal_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_overview_page.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/tx_detail_screen.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
 import 'package:tradexpro_flutter/utils/image_util.dart';
 import 'package:tradexpro_flutter/utils/number_util.dart';
@@ -64,47 +65,77 @@ class _SpotCoinDetailsScreenState extends State<SpotCoinDetailsScreen> {
     try {
       final results = await Future.wait([
         http.get(
-          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=deposit&page=1&per_page=10&coin_type=$coinType'),
+          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=deposit&page=1&per_page=20&coin_type=$coinType'),
           headers: _authHeaders(),
         ),
         http.get(
-          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=withdraw&page=1&per_page=10&coin_type=$coinType'),
+          Uri.parse('${APIURLConstants.baseUrl}/api/wallet-history-app?type=withdraw&page=1&per_page=20&coin_type=$coinType'),
+          headers: _authHeaders(),
+        ),
+        http.get(
+          Uri.parse('${APIURLConstants.baseUrl}/api/v1/swap/history'),
+          headers: _authHeaders(),
+        ),
+        http.get(
+          Uri.parse('${APIURLConstants.baseUrl}/api/v1/transfer-history?page=1&per_page=20'),
           headers: _authHeaders(),
         ),
       ]);
 
       final List<Map<String, dynamic>> combined = [];
-      for (int i = 0; i < results.length; i++) {
-        final resp = results[i];
-        final tab = i == 0 ? 'deposit' : 'withdraw';
-        if (resp.statusCode == 200) {
-          final body = jsonDecode(resp.body);
-          final raw = body['data']?['histories']?['data'];
-          if (raw is List) {
-            for (final e in raw) {
-              combined.add({...Map<String, dynamic>.from(e), '_type': tab});
+
+      // deposit
+      if (results[0].statusCode == 200) {
+        final raw = jsonDecode(results[0].body)['data']?['histories']?['data'];
+        if (raw is List) {
+          for (final e in raw) combined.add({...Map<String, dynamic>.from(e), '_type': 'deposit'});
+        }
+      }
+
+      // withdraw
+      if (results[1].statusCode == 200) {
+        final raw = jsonDecode(results[1].body)['data']?['histories']?['data'];
+        if (raw is List) {
+          for (final e in raw) combined.add({...Map<String, dynamic>.from(e), '_type': 'withdraw'});
+        }
+      }
+
+      // swap — filter by coinType (from_coin or to_coin)
+      if (results[2].statusCode == 200) {
+        final data = jsonDecode(results[2].body)['data'];
+        if (data is List) {
+          for (final e in data) {
+            final m = Map<String, dynamic>.from(e);
+            if (m['from_coin']?.toString() == coinType || m['to_coin']?.toString() == coinType) {
+              combined.add({...m, '_type': 'swap'});
             }
           }
         }
       }
 
-      // sort by created_at desc, keep only today's entries
+      // transfer — filter by coinType
+      if (results[3].statusCode == 200) {
+        final data = jsonDecode(results[3].body)['data'];
+        if (data is List) {
+          for (final e in data) {
+            final m = Map<String, dynamic>.from(e);
+            if (m['coin_type']?.toString() == coinType) {
+              combined.add({...m, '_type': 'transfer'});
+            }
+          }
+        }
+      }
+
+      // sort by created_at desc — saari history, koi filter nahi
       combined.sort((a, b) {
         final da = DateTime.tryParse(a['created_at']?.toString() ?? '') ?? DateTime(0);
         final db = DateTime.tryParse(b['created_at']?.toString() ?? '') ?? DateTime(0);
         return db.compareTo(da);
       });
 
-      final now = DateTime.now();
-      final todayOnly = combined.where((e) {
-        final dt = DateTime.tryParse(e['created_at']?.toString() ?? '')?.toLocal();
-        if (dt == null) return false;
-        return dt.year == now.year && dt.month == now.month && dt.day == now.day;
-      }).toList();
-
       if (mounted) {
         setState(() {
-          _history = todayOnly;
+          _history = combined;
           _historyLoading = false;
         });
       }
@@ -538,15 +569,16 @@ class _HistorySection extends StatelessWidget {
             ),
           )
         else
-          ...history.map((tx) => _HistoryRow(tx: tx)),
+          ...history.map((tx) => _HistoryRow(tx: tx, onTap: () => Get.to(() => TxDetailScreen(tx: tx)))),
       ],
     );
   }
 }
 
 class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.tx});
+  const _HistoryRow({required this.tx, this.onTap});
   final Map<String, dynamic> tx;
+  final VoidCallback? onTap;
 
   String _statusLabel(dynamic status) {
     switch (status?.toString()) {
@@ -585,81 +617,77 @@ class _HistoryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = tx['_type']?.toString() ?? 'deposit';
     final isDep = type == 'deposit';
+    final isSwap = type == 'swap';
+    final isTransfer = type == 'transfer';
     final coinType = tx['coin_type']?.toString() ?? '';
-    final amount = tx['amount'];
-    final status = _statusLabel(tx['status']);
+    final status = (isSwap || isTransfer) ? 'Success' : _statusLabel(tx['status']);
     final statusColor = _statusColor(status);
     final date = _formatDate(tx['created_at']);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: isDep
-                  ? const Color(0xFF015629).withValues(alpha: 0.4)
-                  : const Color(0xFF920000).withValues(alpha: 0.5),
-              shape: BoxShape.circle,
+    // Title
+    String title;
+    if (isSwap) title = '${tx['from_coin']} → ${tx['to_coin']}';
+    else if (isTransfer) title = 'Transfer $coinType';
+    else title = isDep ? 'Deposit $coinType' : 'Withdraw $coinType';
+
+    // Amount
+    String amountStr;
+    if (isSwap) {
+      final toAmt = double.tryParse(tx['to_amount']?.toString() ?? '0') ?? 0;
+      amountStr = '+${_fmtAmt(toAmt)} ${tx['to_coin']}';
+    } else {
+      final amt = tx['amount'];
+      final prefix = isDep ? '+' : (isTransfer ? '' : '-');
+      amountStr = '$prefix${_fmtAmt(amt)} $coinType';
+    }
+
+    // Icon
+    final iconBg = isSwap || isTransfer
+        ? const Color(0xFFCCFF00).withValues(alpha: 0.18)
+        : isDep
+            ? const Color(0xFF015629).withValues(alpha: 0.4)
+            : const Color(0xFF920000).withValues(alpha: 0.5);
+    final iconColor = isSwap || isTransfer
+        ? const Color(0xFFCCFF00)
+        : isDep ? const Color(0xFF4ED78E) : const Color(0xFFD73C3C);
+    final iconData = isSwap || isTransfer
+        ? Icons.swap_horiz
+        : isDep ? Icons.arrow_downward : Icons.arrow_upward;
+    final amtColor = isSwap || isDep ? const Color(0xFF4ED78E) : const Color(0xFFD73C3C);
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+              child: Icon(iconData, color: iconColor, size: 18),
             ),
-            child: Icon(
-              isDep ? Icons.arrow_downward : Icons.arrow_upward,
-              color: isDep ? const Color(0xFF4ED78E) : const Color(0xFFD73C3C),
-              size: 18,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: _dmSans, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 2),
+                  Text(date, style: TextStyle(color: Colors.white.withValues(alpha: 0.40), fontSize: 11, fontFamily: _dmSans)),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  isDep ? 'Deposit $coinType' : 'Withdraw $coinType',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontFamily: _dmSans,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(amountStr, style: TextStyle(color: amtColor, fontSize: 13, fontFamily: _dmSans, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
-                Text(
-                  date,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.40),
-                    fontSize: 11,
-                    fontFamily: _dmSans,
-                  ),
-                ),
+                Text(status, style: TextStyle(color: statusColor, fontSize: 11, fontFamily: _dmSans)),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${isDep ? '+' : '-'}${_fmtAmt(amount)} $coinType',
-                style: TextStyle(
-                  color: isDep ? const Color(0xFF4ED78E) : const Color(0xFFD73C3C),
-                  fontSize: 13,
-                  fontFamily: _dmSans,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                status,
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 11,
-                  fontFamily: _dmSans,
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
