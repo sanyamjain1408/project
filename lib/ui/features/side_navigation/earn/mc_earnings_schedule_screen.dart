@@ -103,7 +103,7 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
 
     final dailyEarning = stake.amount * (stake.dailyRate / 100);
     final totalDays = endDate != null
-        ? (endDate.difference(startDate).inDays).clamp(1, 9999)
+        ? (endDate.difference(startDate).inDays + 1).clamp(1, 9999)
         : 100;
     final totalReward = dailyEarning * totalDays;
     final earnedSoFar = stake.totalRewardEarned;
