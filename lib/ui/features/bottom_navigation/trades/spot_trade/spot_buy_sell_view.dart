@@ -137,7 +137,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
 
   void onBuySellChange(int index) {
     _controller.selectedBuySellTab.value = index;
-    _clearInputViews(clearPrice: true);
+    _clearInputViews(clearPrice: false);
   }
 
   Widget _buySellTabView(int tabIndex) {
@@ -171,21 +171,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
                 tabIndex == 0
                     ? selectedBuySubTabIndex.value = index
                     : selectedSellSubTabIndex.value = index;
-
-                _clearInputViews(clearPrice: true);
-
-                final prices = _controller.dashboardData.value.lastPriceData;
-                final price = (prices?.isNotEmpty ?? false) ? prices!.first.price : null;
-
-                if (index == 0 || index == 1) {
-                  if (price != null && price > 0) {
-                    priceEditController.text = price.toStringAsFixed(2);
-                  }
-                } else if (index == 2) {
-                  if (price != null && price > 0) {
-                    limitEditController.text = price.toStringAsFixed(2);
-                  }
-                }
+                _clearInputViews(clearPrice: false);
               },
             ),
             vSpacer5(),
