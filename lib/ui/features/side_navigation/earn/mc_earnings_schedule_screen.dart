@@ -11,7 +11,8 @@ const _kCard2 = Color(0xFF111111);
 
 class McEarningsScheduleScreen extends StatefulWidget {
   final String stakeUid;
-  const McEarningsScheduleScreen({super.key, required this.stakeUid});
+  final double? liveEarned;
+  const McEarningsScheduleScreen({super.key, required this.stakeUid, this.liveEarned});
 
   @override
   State<McEarningsScheduleScreen> createState() => _McEarningsScheduleScreenState();
@@ -106,7 +107,7 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
         ? (endDate.difference(startDate).inDays + 1).clamp(1, 9999)
         : 100;
     final totalReward = dailyEarning * totalDays;
-    final earnedSoFar = stake.totalRewardEarned;
+    final earnedSoFar = widget.liveEarned ?? stake.liveEarned;
     final remaining = (totalReward - earnedSoFar).clamp(0.0, double.infinity);
 
     final daysElapsed = today.difference(startDate).inDays + 1;

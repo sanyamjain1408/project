@@ -1157,7 +1157,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
               child: _actionBtn(
                 'Earnings Schedule',
                 Colors.white,
-                () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid)),
+                () => Get.to(() => McEarningsScheduleScreen(stakeUid: stake.uid, liveEarned: _liveEarned)),
               ),
             ),
           ],
