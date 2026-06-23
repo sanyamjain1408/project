@@ -110,7 +110,7 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
     final earnedSoFar = widget.liveEarned ?? stake.liveEarned;
     final remaining = (totalReward - earnedSoFar).clamp(0.0, double.infinity);
 
-    final daysElapsed = today.difference(startDate).inDays + 1;
+    final daysElapsed = today.difference(startDate).inDays;
     // Use actual credited dates count for daysCompleted
     final todayYMDStr = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
     final daysCompleted = _creditedDates.where((d) => d != todayYMDStr).length.clamp(0, totalDays);
