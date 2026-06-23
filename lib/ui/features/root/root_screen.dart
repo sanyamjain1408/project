@@ -118,7 +118,14 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return KeyboardDismissOnTap(
-      child: Stack(
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (_) {
+          if (Get.isRegistered<InactivityController>()) {
+            InactivityController.to.onUserInteraction();
+          }
+        },
+        child: Stack(
         children: [
           Scaffold(
             backgroundColor: context.theme.scaffoldBackgroundColor,
@@ -142,6 +149,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
             child: DepositContestPopup(),
           ),
         ],
+        ),
       ),
     );
   }
