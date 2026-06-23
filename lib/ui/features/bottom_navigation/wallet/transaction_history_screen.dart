@@ -298,10 +298,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           Container(
             width: 30, height: 30,
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(
-              (isTransfer || isSwap) ? Icons.swap_horiz : isDep ? Icons.arrow_downward : Icons.arrow_upward,
-              size: 22, color: iconColor,
-            ),
+            child: isTransfer
+                ? ClipOval(child: Image.asset('assets/images/transferlogo.png', width: 30, height: 30, fit: BoxFit.cover))
+                : isSwap
+                    ? ClipOval(child: Image.asset('assets/images/swaplogo.png', width: 30, height: 30, fit: BoxFit.cover))
+                    : Icon(isDep ? Icons.arrow_downward : Icons.arrow_upward, size: 22, color: iconColor),
           ),
           const SizedBox(width: 20),
           Expanded(
