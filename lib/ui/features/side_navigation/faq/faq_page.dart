@@ -74,13 +74,39 @@ class FAQPageState extends State<FAQPage> {
   }
 }
 
+// Hardcoded FAQs shown when API returns empty list
+const _depositFaqs = [
+  {'q': 'What is the minimum deposit amount?', 'a': 'The minimum deposit amount varies by coin and network. Please check the network details on the deposit page for the exact minimum.'},
+  {'q': 'How long does it take for a deposit to be credited?', 'a': 'Most deposits are credited within 10–30 minutes depending on blockchain confirmations. Some networks may take longer during high traffic.'},
+  {'q': "Why hasn't my deposit arrived yet?", 'a': 'If your deposit has not arrived, please check the transaction status on the blockchain explorer. You can also use the "Check Deposit" feature to verify manually.'},
+  {'q': 'Do I need a memo for my deposit?', 'a': 'Some coins (e.g. XRP, XLM) require a memo/tag in addition to the wallet address. Sending without a memo may result in loss of funds.'},
+];
+
+const _withdrawFaqs = [
+  {'q': 'What is the minimum withdrawal amount?', 'a': 'The minimum withdrawal amount varies by coin and network. Please check the network details before submitting a withdrawal.'},
+  {'q': 'How long does a withdrawal take?', 'a': 'Most withdrawals are processed within 30 minutes. Processing time depends on the blockchain network and current traffic.'},
+  {'q': 'Why is my withdrawal pending?', 'a': 'Withdrawals may be pending due to manual review, network congestion, or security checks. Contact support if it stays pending for more than 24 hours.'},
+  {'q': 'What are the withdrawal fees?', 'a': 'Network fees are shown on the withdrawal page before you confirm. Fees vary by coin and selected network.'},
+];
+
 class FAQRelatedView extends StatelessWidget {
-  const FAQRelatedView(this.faqList, {super.key});
+  const FAQRelatedView(this.faqList, {super.key, this.type = 'deposit'});
 
   final List<FAQ> faqList;
+  final String type;
 
   @override
   Widget build(BuildContext context) {
+    final fallback = type == 'withdraw' ? _withdrawFaqs : _depositFaqs;
+    final items = faqList.isNotEmpty
+        ? faqList.map((f) => FAQItemView(faq: f, margin: const EdgeInsets.symmetric(vertical: Dimens.paddingMin))).toList()
+        : fallback.map((f) => FAQItemView(
+              faq: FAQ()
+                ..question = f['q']
+                ..answer = f['a'],
+              margin: const EdgeInsets.symmetric(vertical: Dimens.paddingMin),
+            )).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -96,11 +122,7 @@ class FAQRelatedView extends StatelessWidget {
           ),
         ),
         vSpacer10(),
-        if (faqList.isEmpty)
-          showEmptyView(message: "Related FAQ not found".tr)
-        else
-          for (final faq in faqList)
-            FAQItemView(faq: faq, margin: const EdgeInsets.symmetric(vertical: Dimens.paddingMin)),
+        ...items,
       ],
     );
   }

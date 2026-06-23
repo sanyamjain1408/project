@@ -897,7 +897,7 @@ class _WalletCryptoDepositDetailScreenState
           }),
 
           // ── FAQ ──────────────────────────────────────────────────────────
-          Obx(() => FAQRelatedView(_controller.faqList.toList())),
+          Obx(() => FAQRelatedView(_controller.faqList.toList(), type: 'deposit')),
           const SizedBox(height: 32),
         ],
       ),

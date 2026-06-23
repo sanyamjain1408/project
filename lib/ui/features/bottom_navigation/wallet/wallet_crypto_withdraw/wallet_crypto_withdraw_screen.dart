@@ -1041,7 +1041,7 @@ class _WalletCryptoWithdrawDetailScreenState
             }),
 
             // ── FAQ ───────────────────────────────────────────────────────
-            Obx(() => FAQRelatedView(_controller.faqList.toList())),
+            Obx(() => FAQRelatedView(_controller.faqList.toList(), type: 'withdraw')),
             const SizedBox(height: 32),
           ],
         ),
