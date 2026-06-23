@@ -246,9 +246,9 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: _kGreen, width: 2),
-              color: (row.isDone || row.isToday) ? _kGreen : Colors.transparent,
+              color: row.isDone ? _kGreen : Colors.transparent,
             ),
-            child: (row.isDone || row.isToday)
+            child: row.isDone
                 ? const Icon(Icons.check, size: 10, color: Colors.black)
                 : null,
           ))),
