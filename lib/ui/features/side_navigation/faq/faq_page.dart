@@ -7,7 +7,6 @@ import 'package:tradexpro_flutter/utils/spacers.dart';
 import 'faq_controller.dart';
 
 const _bg   = Color(0xFF111111);
-const _card = Color(0xFF1A1A1A);
 const _white = Colors.white;
 const _grey  = Color(0xFF8A8A8A);
 const _green = Color(0xFFCCFF00);
@@ -166,19 +165,18 @@ class _FAQItemViewState extends State<FAQItemView> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     return Container(
       margin: widget.margin ??
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: _card,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InkWell(
+          GestureDetector(
             onTap: _toggle,
-            borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: Row(
                 children: [
                   Expanded(
@@ -186,7 +184,7 @@ class _FAQItemViewState extends State<FAQItemView> with SingleTickerProviderStat
                       widget.faq.question ?? '',
                       style: TextStyle(
                         color: _expanded ? _green : _white,
-                        fontSize: 15,
+                        fontSize: 12,
                         fontFamily: _font,
                         fontWeight: FontWeight.w500,
                       ),
@@ -197,7 +195,7 @@ class _FAQItemViewState extends State<FAQItemView> with SingleTickerProviderStat
                     child: Icon(
                       Icons.keyboard_arrow_down,
                       color: _expanded ? _green : _grey,
-                      size: 22,
+                      size: 20,
                     ),
                   ),
                 ],
@@ -206,7 +204,7 @@ class _FAQItemViewState extends State<FAQItemView> with SingleTickerProviderStat
           ),
           if (_expanded)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -216,7 +214,7 @@ class _FAQItemViewState extends State<FAQItemView> with SingleTickerProviderStat
                     widget.faq.answer ?? '',
                     style: TextStyle(
                       color: _white.withValues(alpha: 0.75),
-                      fontSize: 13,
+                      fontSize: 10,
                       fontFamily: _font,
                       fontWeight: FontWeight.w400,
                       height: 1.6,

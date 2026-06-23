@@ -74,7 +74,7 @@ Widget handleEmptyViewWithLoading(
     height: height,
     child: Center(
       child: isLoading
-          ? CircularProgressIndicator(color: Color(0xFF00B052))
+          ? CircularProgressIndicator(color: Color(0xFFCCFF00))
           : TextRobotoAutoNormal(
               message,
               maxLines: 3,
