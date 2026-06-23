@@ -151,9 +151,10 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
       final rowDateNormalized = DateTime(rowDate.year, rowDate.month, rowDate.day);
       final rowYMD = '${rowDateNormalized.year}-${rowDateNormalized.month.toString().padLeft(2,'0')}-${rowDateNormalized.day.toString().padLeft(2,'0')}';
       final todayYMD = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
-      final isToday = rowYMD == todayYMD;
       final cumulativeEarning = dailyEarning * d;
-      final isDone = cumulativeEarning <= (_liveEarned > 0 ? _liveEarned : stake.liveEarned);
+      final currentLiveForRow = _liveEarned > 0 ? _liveEarned : stake.liveEarned;
+      final isDone = cumulativeEarning <= currentLiveForRow;
+      final isToday = !isDone && (d == daysCompleted + 1);
       return _ScheduleRow(
         day: d,
         date: _fmtDate(rowDate),
