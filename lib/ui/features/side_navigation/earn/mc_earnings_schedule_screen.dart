@@ -88,6 +88,8 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
       backgroundColor: _kBg,
       appBar: AppBar(
         backgroundColor: _kBg,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: _kBg,
         title: const Text('Earnings Schedule', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Get.back()),
         actions: [
