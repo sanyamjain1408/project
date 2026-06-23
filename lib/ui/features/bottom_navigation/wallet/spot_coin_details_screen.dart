@@ -669,7 +669,7 @@ class _HistoryRow extends StatelessWidget {
                   ? ClipOval(child: Image.asset('assets/images/transferlogo.png', width: 30, height: 30, fit: BoxFit.cover))
                   : isSwap
                       ? ClipOval(child: Image.asset('assets/images/swaplogo.png', width: 30, height: 30, fit: BoxFit.cover))
-                      : Icon(iconData, color: iconColor, size: 18),
+                      : Icon(iconData, color: iconColor, size: 28),
             ),
             const SizedBox(width: 12),
             Expanded(
