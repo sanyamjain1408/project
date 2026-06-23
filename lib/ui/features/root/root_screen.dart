@@ -79,8 +79,9 @@ class RootScreen extends StatefulWidget {
 
 class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   final RootController _controller = Get.put(RootController());
-  // Show popup once per app launch (in-memory flag, not persisted)
-  bool _showPopup = true;
+  // Static flag — set to true once popup is shown this app session, never resets on rebuild
+  static bool _popupShownThisSession = false;
+  bool _showPopup = false;
   int _popupKey = 0;
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
@@ -92,6 +93,11 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     _controller.changeBottomNavIndex = changeBottomNavTab;
     // Pre-fetch banners immediately so popup is fast when it mounts
     BannerPopup.prefetch();
+    // Show popup only once per app session — static flag prevents re-showing on rebuild
+    if (!_popupShownThisSession) {
+      _popupShownThisSession = true;
+      _showPopup = true;
+    }
   }
 
   @override

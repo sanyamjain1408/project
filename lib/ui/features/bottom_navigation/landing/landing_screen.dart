@@ -59,8 +59,6 @@ class LandingScreen extends StatefulWidget {
 
 class _LandingScreenState extends State<LandingScreen> {
   final _controller = Get.put(LandingController());
-  bool _showPopup = true;
-
   @override
   void initState() {
     super.initState();
@@ -80,9 +78,7 @@ class _LandingScreenState extends State<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Obx(() {
+    return Obx(() {
           final lData = _controller.landingData.value;
           return _controller.isLoading.value
               ? const ShimmerViewLanding()
@@ -188,15 +184,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     ),
                   ],
                 );
-        }),
-        if (_showPopup)
-          Positioned.fill(
-            child: BannerPopup(
-              onClose: () => setState(() => _showPopup = false),
-            ),
-          ),
-      ],
-    );
+        });
   }
 
   Widget buildViewCard() {
