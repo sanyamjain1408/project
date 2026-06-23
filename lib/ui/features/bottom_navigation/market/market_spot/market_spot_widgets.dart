@@ -15,6 +15,7 @@ import 'package:tradexpro_flutter/utils/text_util.dart';
 import '../../../root/root_controller.dart';
 import '../../../../../helper/bottom_nav_helper.dart';
 import '../../trades/spot_trade/spot_trade_controller.dart';
+import '../../trades/future_trade/future_controller.dart';
 
 class MarketSort {
   bool? price;
@@ -196,14 +197,32 @@ class MarketCoinItemViewBottom extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        final pair = coin.convertCoinPair();
-        pair.coinPair = pair.getCoinPairKey();
-        pair.coinPairName = pair.getCoinPairName();
-        Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.trade);
-        if (Get.isRegistered<SpotTradeController>()) {
-          final ctrl = Get.find<SpotTradeController>();
-          ctrl.selectedCoinPair.value = pair;
-          ctrl.getDashBoardData();
+        if (showPerp) {
+          // Future coin — open future trade screen with this coin selected
+          final symbol = '${coin.coinType ?? ''}${coin.baseCoinType ?? ''}'.toUpperCase();
+          if (Get.isRegistered<NewFutureController>()) {
+            final ctrl = Get.find<NewFutureController>();
+            final match = ctrl.pairs.firstWhereOrNull((p) => p.symbol == symbol);
+            if (match != null) {
+              ctrl.selectPair(match);
+            } else {
+              TemporaryData.pendingFutureSymbol = symbol;
+            }
+          } else {
+            TemporaryData.pendingFutureSymbol = symbol;
+          }
+          Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.future);
+        } else {
+          // Spot coin — open spot trade screen
+          final pair = coin.convertCoinPair();
+          pair.coinPair = pair.getCoinPairKey();
+          pair.coinPairName = pair.getCoinPairName();
+          Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.trade);
+          if (Get.isRegistered<SpotTradeController>()) {
+            final ctrl = Get.find<SpotTradeController>();
+            ctrl.selectedCoinPair.value = pair;
+            ctrl.getDashBoardData();
+          }
         }
       },
       onLongPressStart: (lpDetails) => FavoriteHelper.showFavoritePopup(
@@ -329,19 +348,22 @@ class MarketCoinItemViewBottom extends StatelessWidget {
                       height: 1.25,
                     ),
                   ),
-                  Text(
-                    "\$$formattedPrice",
-                    textAlign: TextAlign.end,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: "DMSans",
-                      height: 1.33,
+                  if ((coin.baseCoinType ?? '').toUpperCase() == 'USDT' ||
+                      (coin.baseCoinType ?? '').toUpperCase() == 'USDC' ||
+                      (coin.baseCoinType ?? '').toUpperCase() == 'USD')
+                    Text(
+                      "\$$formattedPrice",
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: "DMSans",
+                        height: 1.33,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

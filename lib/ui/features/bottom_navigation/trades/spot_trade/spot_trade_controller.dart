@@ -116,6 +116,10 @@ class SpotTradeController extends GetxController implements SocketListener {
   }
 
   void _onSpotWsMsg(Map<String, dynamic> msg) {
+    // Discard messages for a different symbol (stale update after pair change)
+    final msgSymbol = (msg['symbol'] as String? ?? '').toUpperCase();
+    if (msgSymbol.isNotEmpty && msgSymbol != _spotSymbol.toUpperCase()) return;
+
     _wsLive = true;
     if (msg['ticker'] is Map) {
       _applyTicker(SpotTicker.fromJson(msg['ticker'] as Map<String, dynamic>));
@@ -164,6 +168,18 @@ class SpotTradeController extends GetxController implements SocketListener {
   }
 
   void _applyOrderBook(SpotOrderBook ob) {
+    if (ob.bids.isEmpty && ob.asks.isEmpty) return;
+
+    // Reject stale/wrong orderbook: if prices are wildly off from known ticker price
+    final knownPrice = (dashboardData.value.orderData?.buyPrice ?? 0) > 0
+        ? dashboardData.value.orderData!.buyPrice!
+        : (dashboardData.value.lastPriceData?.firstOrNull?.price ?? 0);
+
+    if (knownPrice > 0 && ob.bids.isNotEmpty) {
+      final firstBid = ob.bids.first[0];
+      if (firstBid > 0 && (firstBid / knownPrice < 0.1 || firstBid / knownPrice > 10)) return;
+    }
+
     handleOrderBookList(FromKey.buy, _bidsToOrders(ob.bids));
     handleOrderBookList(FromKey.sell, _asksToOrders(ob.asks));
   }
@@ -433,8 +449,15 @@ class SpotTradeController extends GetxController implements SocketListener {
     }
     final sym = _spotSymbol;
 
+    // Clear stale order book data from previous pair immediately
+    buyExchangeOrder.clear();
+    sellExchangeOrder.clear();
+    exchangeTrades.clear();
+    dashboardData.value.lastPriceData = null;
+    dashboardData.refresh();
+
     // Update precision from spot pair metadata
-    final _updatePrecision = () {
+    void updatePrecision() {
       final meta = spotPairsMeta.firstWhereOrNull(
         (p) => '${p.baseCurrency ?? ''}_${p.quoteCurrency ?? ''}' == selectedCoinPair.value.coinPair,
       );
@@ -442,7 +465,7 @@ class SpotTradeController extends GetxController implements SocketListener {
         pricePrecision.value = meta.pricePrecision;
         amountPrecision.value = (meta.amountPrecision > 5) ? 5 : meta.amountPrecision;
       }
-    };
+    }
     if (spotPairsMeta.isEmpty) {
       // Pairs not loaded yet (e.g. navigated from home) — load them first
       APIRepository().getSpotPairs().then((resp) {
@@ -455,11 +478,11 @@ class SpotTradeController extends GetxController implements SocketListener {
             pairs = (raw['pairs'] as List).map((e) => SpotPair.fromJson(Map<String, dynamic>.from(e as Map))).toList();
           }
           spotPairsMeta = pairs;
-          _updatePrecision();
+          updatePrecision();
         }
       }, onError: (_) {});
     } else {
-      _updatePrecision();
+      updatePrecision();
     }
 
     isLoading.value = true;
@@ -508,6 +531,16 @@ class SpotTradeController extends GetxController implements SocketListener {
 
     // Load spot balances
     getSpotBalances();
+
+    // Load orderbook via HTTP immediately (fills screen before WS arrives)
+    APIRepository().getSpotOrderBook(sym).then((obResp) {
+      if (!obResp.success) return;
+      if (_spotSymbol != sym) return;
+      final obPayload = _unwrapSpotData(obResp.data);
+      if (obPayload is Map) {
+        _applyOrderBook(SpotOrderBook.fromJson(Map<String, dynamic>.from(obPayload)));
+      }
+    });
 
     // Fetch exchange coin IDs for legacy order API, then load orders
     _fetchCoinIdsAndLoadOrders(sym);
