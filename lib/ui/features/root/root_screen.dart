@@ -1121,7 +1121,6 @@ class _VerificationAvatarState extends State<VerificationAvatar> {
     final percent = (doneCount / steps.length * 100).round();
     const pi = 3.14159265;
     const fullSweep = 2 * pi;
-    final sweepPerStep = fullSweep / steps.length;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1142,22 +1141,19 @@ class _VerificationAvatarState extends State<VerificationAvatar> {
                   color: Color(0xFF2A2A2A),
                 ),
               ),
-              // Filled arc per verified step
-              ...List.generate(steps.length, (i) {
-                if (!steps[i]) return const SizedBox.shrink();
-                return SizedBox(
-                  width: widget.size + 14,
-                  height: widget.size + 14,
-                  child: CustomPaint(
-                    painter: _ArcPainter(
-                      startAngle: -pi / 2 + sweepPerStep * i,
-                      sweepAngle: sweepPerStep - 0.1,
-                      color: const Color(0xFFCCFF00),
-                      strokeWidth: 3,
-                    ),
+              // Filled arc — continuous from top, clockwise, proportional to done steps
+              SizedBox(
+                width: widget.size + 14,
+                height: widget.size + 14,
+                child: CustomPaint(
+                  painter: _ArcPainter(
+                    startAngle: -pi / 2,
+                    sweepAngle: fullSweep * doneCount / steps.length,
+                    color: allDone ? const Color(0xFF22C55E) : const Color(0xFFCCFF00),
+                    strokeWidth: 3,
                   ),
-                );
-              }),
+                ),
+              ),
               // Avatar
               ClipOval(
                 child: SizedBox(
