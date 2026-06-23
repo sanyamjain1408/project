@@ -21,6 +21,7 @@ class DepositBonusScreen extends StatefulWidget {
 class _DepositBonusScreenState extends State<DepositBonusScreen> {
   String _tab = 'bonus';
   bool _loading = true;
+  bool _leaderboardOpen = true;
   Map<String, dynamic> _bonusStatus = {};
   List<dynamic> _leaderboard = [];
   List<dynamic> _depositHistory = [];
@@ -59,38 +60,74 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
     if (mounted) setState(() => _loading = false);
   }
 
+  String _userId() {
+    final obj = GetStorage().read(PreferenceKey.userObject);
+    if (obj != null) {
+      try { return obj['id']?.toString() ?? ''; } catch (_) {}
+    }
+    return '';
+  }
+
   Future<void> _fetchBonus() async {
     try {
-      final r = await http.get(Uri.parse('https://api.trapix.com/api/deposit-bonus/status'), headers: _headers());
-      if (r.statusCode == 200) _bonusStatus = jsonDecode(r.body) ?? {};
-    } catch (_) {}
+      final uid = _userId();
+      final url = uid.isNotEmpty
+          ? 'https://api.trapix.com/api/deposit-bonus/status?user_id=$uid'
+          : 'https://api.trapix.com/api/deposit-bonus/status';
+      final r = await http.get(Uri.parse(url), headers: _headers());
+      print('=== BONUS STATUS [${r.statusCode}] === ${r.body}');
+      if (r.statusCode == 200) {
+        final b = jsonDecode(r.body);
+        if (b['success'] == true) _bonusStatus = b;
+      }
+    } catch (e) { print('=== BONUS STATUS ERROR === $e'); }
   }
 
   Future<void> _fetchLeaderboard() async {
     try {
-      final r = await http.get(Uri.parse('https://api.trapix.com/api/deposit-bonus/leaderboard'), headers: _headers());
+      final r = await http.get(Uri.parse('https://api.trapix.com/api/trade-earn/leaderboard'), headers: _headers());
+      print('=== LEADERBOARD [${r.statusCode}] === ${r.body}');
       if (r.statusCode == 200) {
         final b = jsonDecode(r.body);
-        _leaderboard = b['data'] ?? b ?? [];
+        if (b['success'] == true) {
+          _leaderboard = b['leaderboard'] ?? [];
+          if (mounted) setState(() => _leaderboardOpen = true);
+        } else {
+          if (mounted) setState(() => _leaderboardOpen = false);
+        }
       }
-    } catch (_) {}
+    } catch (e) { print('=== LEADERBOARD ERROR === $e'); }
   }
 
   Future<void> _fetchHistory() async {
     try {
-      final r = await http.get(Uri.parse('https://api.trapix.com/api/deposit-bonus/history'), headers: _headers());
+      final uid = _userId();
+      final url = uid.isNotEmpty
+          ? 'https://api.trapix.com/api/deposit-bonus/history?user_id=$uid'
+          : 'https://api.trapix.com/api/deposit-bonus/history';
+      final r = await http.get(Uri.parse(url), headers: _headers());
+      print('=== HISTORY [${r.statusCode}] === ${r.body}');
       if (r.statusCode == 200) {
         final b = jsonDecode(r.body);
-        _depositHistory = b['data'] ?? b ?? [];
+        if (b['success'] == true) _depositHistory = b['history'] ?? [];
       }
-    } catch (_) {}
+    } catch (e) { print('=== HISTORY ERROR === $e'); }
   }
 
   Future<void> _fetchMyStats() async {
     try {
-      final r = await http.get(Uri.parse('https://api.trapix.com/api/deposit-bonus/my-stats'), headers: _headers());
-      if (r.statusCode == 200) _myStats = jsonDecode(r.body) ?? {};
-    } catch (_) {}
+      final uid = _userId();
+      final url = uid.isNotEmpty
+          ? 'https://api.trapix.com/api/trade-earn/my-stats?user_id=$uid'
+          : 'https://api.trapix.com/api/trade-earn/my-stats';
+      final r = await http.get(Uri.parse(url), headers: _headers());
+      print('=== MY STATS [${r.statusCode}] === ${r.body}');
+      if (r.statusCode == 200) {
+        final b = jsonDecode(r.body);
+        _myStats = b;
+        if (b['success'] == false && mounted) setState(() => _leaderboardOpen = false);
+      }
+    } catch (e) { print('=== MY STATS ERROR === $e'); }
   }
 
   @override
@@ -317,7 +354,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
       ),
       const SizedBox(height: 15),
 
-      if (_leaderboard.isNotEmpty) ...[
+      if (_leaderboardOpen && _leaderboard.isNotEmpty) ...[
         _card2(
           title: 'Leaderboard',
           chip: 'Overall Ranking',

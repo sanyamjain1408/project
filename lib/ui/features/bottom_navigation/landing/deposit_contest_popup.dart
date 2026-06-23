@@ -137,16 +137,16 @@ class _DepositContestPopupState extends State<DepositContestPopup>
   }
 
   Future<void> _checkParticipation() async {
-    // Default to true so popup always shows "Deposit Contest — Leaderboard"
-    if (mounted) setState(() => _participated = true);
-
     try {
-      final token = GetStorage().read(PreferenceKey.accessToken) ?? '';
-      if (token.toString().isEmpty) return;
+      final storage = GetStorage();
+      final token = storage.read(PreferenceKey.accessToken) ?? '';
+      final userObj = storage.read(PreferenceKey.userObject);
+      final uid = userObj != null ? (userObj['id']?.toString() ?? '') : '';
+      if (uid.isEmpty) return;
 
       final res = await http.get(
-        Uri.parse('https://api.trapix.com/api/deposit-bonus/status'),
-        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        Uri.parse('https://api.trapix.com/api/deposit-bonus/status?user_id=$uid'),
+        headers: {'Accept': 'application/json', if (token.toString().isNotEmpty) 'Authorization': 'Bearer $token'},
       );
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
