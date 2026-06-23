@@ -11,6 +11,7 @@ import 'package:tradexpro_flutter/ui/features/side_navigation/referrals/referral
 import 'package:tradexpro_flutter/ui/features/side_navigation/spin_win/spin_win_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/profile/profile_screen.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/airdrop/airdrop_screen.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/giveaway/giveaway_screen.dart';
 import 'package:tradexpro_flutter/ui/features/root/root_controller.dart';
 import 'package:tradexpro_flutter/helper/bottom_nav_helper.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -65,6 +66,12 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
         break;
       case "Deposit Fiat":
         Get.to(() => WalletCryptoDepositScreen());
+        break;
+      case "Withdraw":
+        Get.to(() => WalletCryptoDepositScreen());
+        break;
+      case "Giveaway":
+        Get.to(() => const GiveawayScreen());
         break;
       case "History":
         showHistorySheet();
@@ -162,7 +169,6 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
               _buildGridItem("assets/images/swap.png", "Swap"),
               _buildGridItem("assets/images/spot.png", "Spot"),
               _buildGridItem("assets/images/future.png", "Future"),
-              _buildGridItem("assets/images/funds.png", "Funds"),
             ]),
 
             _buildSectionTitle("Other"),
@@ -173,8 +179,8 @@ class _MoreCardScreenState extends State<MoreCardScreen> {
               _buildGridItem("assets/icons/spin.png", "Spin"),
               _buildGridItem("assets/icons/help.png", "Help"),
               _buildGridItem("assets/icons/airdrop.png", "Airdrop"),
-              _buildGridItem("assets/icons/self.png", "Self Service"),
               _buildGridItem("assets/icons/deposit_withdraw.png", "Withdraw"),
+              _buildGridItem("assets/images/giveaway.png", "Giveaway"),
             ]),
           ],
         ),
