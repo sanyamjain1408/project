@@ -789,8 +789,10 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     final parts = email.split("@");
     if (parts.length != 2) return email;
     final name = parts[0];
-    final visible = name.length >= 4 ? name.substring(0, 4) : name;
-    return "$visible***@${parts[1]}";
+    final masked = name.length > 6
+        ? "${name.substring(0, 4)}***${name.substring(name.length - 2)}"
+        : name;
+    return "$masked@${parts[1]}";
   }
 
   // ── LOGOUT ALERT — UNCHANGED ─────────────────────────────────────────────

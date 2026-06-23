@@ -1400,8 +1400,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     final parts = email.split("@");
     if (parts.length != 2) return email;
     final name = parts[0];
-    final masked = name.length > 4
-        ? "${name.substring(0, 4)}${"*" * (name.length - 4)}tel"
+    final masked = name.length > 6
+        ? "${name.substring(0, 4)}***${name.substring(name.length - 2)}"
         : name;
     return "$masked@${parts[1]}";
   }
