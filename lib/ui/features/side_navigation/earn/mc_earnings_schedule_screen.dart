@@ -111,7 +111,8 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
 
     final daysElapsed = today.difference(startDate).inDays + 1;
     // Use actual credited dates count for daysCompleted
-    final daysCompleted = _creditedDates.length.clamp(0, totalDays);
+    final todayYMDStr = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
+    final daysCompleted = _creditedDates.where((d) => d != todayYMDStr).length.clamp(0, totalDays);
     final daysRemaining = (totalDays - daysElapsed).clamp(0, totalDays);
     final progressPct = totalDays > 0
         ? (daysCompleted / totalDays * 100).clamp(0.0, 100.0)
@@ -125,7 +126,7 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
       final rowYMD = '${rowDateNormalized.year}-${rowDateNormalized.month.toString().padLeft(2,'0')}-${rowDateNormalized.day.toString().padLeft(2,'0')}';
       final todayYMD = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
       final isToday = rowYMD == todayYMD;
-      final isDone = _creditedDates.contains(rowYMD);
+      final isDone = _creditedDates.contains(rowYMD) && !isToday;
       return _ScheduleRow(
         day: d,
         date: _fmtDate(rowDate),
