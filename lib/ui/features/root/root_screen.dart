@@ -51,6 +51,7 @@ import '../bottom_navigation/champion/champion_screen.dart';
 import '../side_navigation/price_alerts/price_alerts_screen.dart';
 import 'root_controller.dart';
 import '../bottom_navigation/landing/banner_popup.dart';
+import '../bottom_navigation/landing/deposit_contest_popup.dart';
 import 'dart:ui';
 
 // ── EXACT FIGMA COLORS ───────────────────────────────────────────────────────
@@ -135,6 +136,11 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                 onClose: () => setState(() => _showPopup = false),
               ),
             ),
+          const Positioned(
+            right: 0,
+            bottom: 90,
+            child: DepositContestPopup(),
+          ),
         ],
       ),
     );
