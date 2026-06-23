@@ -313,6 +313,14 @@ class _NewFutureScreenState extends State<NewFutureScreen>
     return const _FutureMarqueeTicker();
   }
 
+  String _fmtAmt(double val) {
+    if (val == 0 || val.isNaN) return "0.0000";
+    if (val >= 1000000000) return "${(val / 1000000000).toStringAsFixed(2)}B";
+    if (val >= 1000000) return "${(val / 1000000).toStringAsFixed(2)}M";
+    if (val >= 1000) return "${(val / 1000).toStringAsFixed(2)}K";
+    return val.toStringAsFixed(4);
+  }
+
   Map<String, dynamic> _processOrderBook(List<List<String>> rawBids, List<List<String>> rawAsks, int pp, int qp, int maxRows) {
     final bidsSorted = [...rawBids]..sort((a, b) => double.parse(b[0]).compareTo(double.parse(a[0])));
     final asksSorted = [...rawAsks]..sort((a, b) => double.parse(a[0]).compareTo(double.parse(b[0])));
@@ -322,7 +330,8 @@ class _NewFutureScreenState extends State<NewFutureScreen>
     double bidCum = 0;
     final bids = bidsSlice.map((b) {
       bidCum += double.tryParse(b[1]) ?? 0;
-      return {'price': double.tryParse(b[0])?.toStringAsFixed(pp) ?? b[0], 'amount': double.tryParse(b[1])?.toStringAsFixed(qp) ?? b[1], 'cum': bidCum};
+      final amt = double.tryParse(b[1]) ?? 0;
+      return {'price': double.tryParse(b[0])?.toStringAsFixed(pp) ?? b[0], 'amount': _fmtAmt(amt), 'cum': bidCum};
     }).toList();
     final maxBidCum = bidCum > 0 ? bidCum : 1.0;
     for (final b in bids) { b['pct'] = (b['cum'] as double) / maxBidCum * 100; }
@@ -330,7 +339,8 @@ class _NewFutureScreenState extends State<NewFutureScreen>
     double askCum = 0;
     final asks = asksSlice.map((a) {
       askCum += double.tryParse(a[1]) ?? 0;
-      return {'price': double.tryParse(a[0])?.toStringAsFixed(pp) ?? a[0], 'amount': double.tryParse(a[1])?.toStringAsFixed(qp) ?? a[1], 'cum': askCum};
+      final amt = double.tryParse(a[1]) ?? 0;
+      return {'price': double.tryParse(a[0])?.toStringAsFixed(pp) ?? a[0], 'amount': _fmtAmt(amt), 'cum': askCum};
     }).toList();
     final maxAskCum = askCum > 0 ? askCum : 1.0;
     for (final a in asks) { a['pct'] = (a['cum'] as double) / maxAskCum * 100; }

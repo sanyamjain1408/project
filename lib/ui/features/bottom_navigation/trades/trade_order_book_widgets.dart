@@ -25,11 +25,32 @@ const int _kAllModeRows = 8; // dot (all) mode
 const int _kOrderDecimal = 5;
 const double _kMinFillPercent = 0.05;
 
-// Price: exactly 2 decimal. Amount: exactly 5 decimal.
-// If integer part > 7 digits (overflow), show integer only.
+// Detect how many decimals a value actually has (max 8)
+int _detectDecimals(num? n) {
+  if (n == null || n == 0) return 4;
+  final s = n.toStringAsFixed(8);
+  final dec = s.split('.').last.replaceAll(RegExp(r'0+$'), '');
+  return dec.isEmpty ? 0 : dec.length.clamp(2, 8);
+}
+
+// Calculate consistent decimal places for an entire list
+int _listDecimals(List<ExchangeOrder> list) {
+  if (list.isEmpty) return 4;
+  int max = 0;
+  for (final e in list) {
+    final d = _detectDecimals(e.amount);
+    if (d > max) max = d;
+  }
+  return max.clamp(2, 8);
+}
+
+// Binance-style: K/M/B for large, fixed decimals for small — no hilna
 String _fmt2(num? n, {int fixed = _kOrderDecimal}) {
   final val = (n ?? 0).toDouble();
-  if (val >= 1000) return numberFormatCompact(val, decimals: 2);
+  if (val == 0 || val.isNaN) return "0.${'0' * fixed}";
+  if (val >= 1000000000) return "${(val / 1000000000).toStringAsFixed(2)}B";
+  if (val >= 1000000) return "${(val / 1000000).toStringAsFixed(2)}M";
+  if (val >= 1000) return "${(val / 1000).toStringAsFixed(2)}K";
   return val.toStringAsFixed(fixed);
 }
 
@@ -99,6 +120,9 @@ class OderBookFixedView extends StatelessWidget {
 
     const double rowH = 18.0;
     final double sectionH = maxRows * rowH;
+
+    // Dynamic decimal: use max precision across all visible rows so column stays stable
+    final int effectiveAmtDecimal = _listDecimals([...sList, ...bList]);
 
     // Compute max amount across both sides for relative fill bar
     final allAmounts = [...sList, ...bList]
@@ -178,7 +202,7 @@ class OderBookFixedView extends StatelessWidget {
                       priceColor: const Color(0xFFD05858),
                       rowIndex: index,
                       priceDecimal: priceDecimal,
-                      amountDecimal: amountDecimal,
+                      amountDecimal: effectiveAmtDecimal,
                       fillPct: ((sList[index].amount ?? 0).toDouble() / maxAmt).clamp(0.0, 1.0),
                     );
                   }),
@@ -211,7 +235,7 @@ class OderBookFixedView extends StatelessWidget {
                       priceColor: const Color(0xFF4ED78E),
                       rowIndex: index,
                       priceDecimal: priceDecimal,
-                      amountDecimal: amountDecimal,
+                      amountDecimal: effectiveAmtDecimal,
                       fillPct: ((bList[index].amount ?? 0).toDouble() / maxAmt).clamp(0.0, 1.0),
                     );
                   }),
