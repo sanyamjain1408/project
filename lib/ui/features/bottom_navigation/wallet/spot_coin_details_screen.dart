@@ -161,6 +161,9 @@ class _SpotCoinDetailsScreenState extends State<SpotCoinDetailsScreen> {
       backgroundColor: const Color(0xFF111111),
       appBar: AppBar(
         backgroundColor: const Color(0xFF111111),
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         elevation: 0,
         automaticallyImplyLeading: false,
         titleSpacing: 16,
