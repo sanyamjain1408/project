@@ -189,7 +189,7 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
           child: Column(children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text('Progress', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13)),
-              Text('${progressPct.toStringAsFixed(0)}% · Day ${daysElapsed + 1} of $totalDays · $daysCompleted completed',
+              Text('${progressPct.toStringAsFixed(0)}% · Day $daysCompleted of $totalDays · $daysCompleted completed',
                   style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 12, fontWeight: FontWeight.w600)),
             ]),
             const SizedBox(height: 10),
