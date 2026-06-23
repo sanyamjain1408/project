@@ -951,9 +951,9 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
     final totalDays = stake.plan?.durationDays ?? 0;
     final dailyEarning = stake.amount * (stake.dailyRate / 100);
     final completedDays = dailyEarning > 0 ? (_liveEarned / dailyEarning).floor().clamp(0, totalDays) : 0;
-    final currentDay = completedDays + 1;
     final elapsed = stake.daysElapsed;
-    final remaining = totalDays > 0 ? (totalDays - completedDays).clamp(0, totalDays) : 0;
+    final currentDay = elapsed + 1;
+    final remaining = totalDays > 0 ? (totalDays - elapsed).clamp(0, totalDays) : 0;
     final progress = stake.progressFraction;
     final progressPct = (progress * 100).toStringAsFixed(0);
     final statusLabel = isActive ? 'Active' : (stake.status == 2 ? 'Done' : 'Cancel');
