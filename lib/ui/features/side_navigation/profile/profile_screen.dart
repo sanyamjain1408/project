@@ -2249,41 +2249,34 @@ class _KycTabViewState extends State<KycTabView> {
             _kycListItem(
               iconPath: "assets/icons/id_card.png",
               title: "Upload your ID Card",
-              onTap: () => _goUpload(
-                context,
-                "ID Card",
-                details.nid,
-                IdVerificationType.nid,
-              ),
+              kyc: details.nid,
+              onTap: () => _handleKycTap(context, "ID Card", details.nid, IdVerificationType.nid),
             ),
           if (details.passport != null)
             _kycListItem(
               iconPath: "assets/icons/passport.png",
               title: "Upload your Passport",
-              onTap: () => _goUpload(
-                context,
-                "Passport",
-                details.passport,
-                IdVerificationType.passport,
-              ),
+              kyc: details.passport,
+              onTap: () => _handleKycTap(context, "Passport", details.passport, IdVerificationType.passport),
             ),
         ],
       );
     });
   }
 
-  void _goUpload(
-    BuildContext context,
-    String title,
-    KycObject? kyc,
-    IdVerificationType type,
-  ) {
+  void _handleKycTap(BuildContext context, String title, KycObject? kyc, IdVerificationType type) {
+    final status = (kyc?.status ?? '').toLowerCase();
+    if (status == 'approved') return; // disabled
+    // Rejected: clear images so user re-uploads fresh
+    final kycToPass = status == 'rejected'
+        ? KycObject(frontImage: null, backImage: null, selfieImage: null, status: kyc?.status)
+        : kyc;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => KycUploadPage(
           title: title,
-          kyc: kyc,
+          kyc: kycToPass,
           type: type,
           controller: widget.controller,
           onUploaded: (d) => kycDetailsRx.value = d,
@@ -2295,10 +2288,23 @@ class _KycTabViewState extends State<KycTabView> {
   Widget _kycListItem({
     required String iconPath,
     required String title,
+    required KycObject? kyc,
     required VoidCallback onTap,
   }) {
+    final rawStatus = (kyc?.status ?? '').toLowerCase();
+    final isApproved = rawStatus == 'approved';
+    final isPending = rawStatus == 'pending' || (kyc?.frontImage != null && rawStatus != 'approved' && rawStatus != 'rejected');
+    final isRejected = rawStatus == 'rejected';
+
+    Color statusColor = const Color(0xFFFFAA00);
+    String statusLabel = 'Pending';
+    if (isApproved) { statusColor = const Color(0xFFCCFF00); statusLabel = 'Approved'; }
+    else if (isRejected) { statusColor = const Color(0xFFFF4D4D); statusLabel = 'Rejected'; }
+
+    final showStatus = isApproved || isPending || isRejected;
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: isApproved ? null : onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -2308,23 +2314,41 @@ class _KycTabViewState extends State<KycTabView> {
         ),
         child: Row(
           children: [
-            Image.asset(iconPath, height: 22, width: 22),
+            Image.asset(iconPath, height: 22, width: 22,
+              color: isApproved ? Colors.white38 : null),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'DMSans',
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'DMSans',
+                      color: isApproved ? Colors.white38 : Colors.white,
+                    ),
+                  ),
+                  if (showStatus) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      statusLabel,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'DMSans',
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Color(0xFFCCFF00),
-              size: 16,
-            ),
+            if (!isApproved)
+              const Icon(Icons.arrow_forward_ios, color: Color(0xFFCCFF00), size: 16)
+            else
+              const Icon(Icons.check_circle, color: Color(0xFFCCFF00), size: 18),
           ],
         ),
       ),

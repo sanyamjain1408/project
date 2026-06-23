@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -28,7 +29,29 @@ class RootController extends GetxController implements SocketListener {
   void onDataGet(channel, event, data) {
     if (event == SocketConstants.eventNotification) {
       notificationCount.value++;
-      if (data is NotificationData) showToast(data.notifyMessage(), isError: false, gravity: ToastGravity.TOP);
+      if (data is NotificationData) {
+        final title = data.title ?? "";
+        final msg = data.notifyMessage();
+        final isKycReject = title.toLowerCase().contains("kyc") && title.toLowerCase().contains("reject");
+        if (isKycReject && Get.context != null) {
+          Get.dialog(
+            AlertDialog(
+              backgroundColor: const Color(0xFF1A1A1A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(title, style: const TextStyle(color: Color(0xFFFF4D4D), fontFamily: 'DMSans', fontWeight: FontWeight.w700)),
+              content: Text(msg, style: const TextStyle(color: Colors.white70, fontFamily: 'DMSans')),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text("OK", style: TextStyle(color: Color(0xFFCCFF00), fontFamily: 'DMSans')),
+                ),
+              ],
+            ),
+          );
+        } else {
+          showToast(msg.isNotEmpty ? msg : title, isError: false, gravity: ToastGravity.TOP);
+        }
+      }
     }
   }
 
