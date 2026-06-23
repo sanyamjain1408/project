@@ -949,8 +949,11 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
     final isActive = stake.status == 1;
     final planType = stake.plan?.planType ?? 1;
     final totalDays = stake.plan?.durationDays ?? 0;
+    final dailyEarning = stake.amount * (stake.dailyRate / 100);
+    final completedDays = dailyEarning > 0 ? (_liveEarned / dailyEarning).floor().clamp(0, totalDays) : 0;
+    final currentDay = completedDays + 1;
     final elapsed = stake.daysElapsed;
-    final remaining = totalDays > 0 ? (totalDays - elapsed).clamp(0, totalDays) : 0;
+    final remaining = totalDays > 0 ? (totalDays - completedDays).clamp(0, totalDays) : 0;
     final progress = stake.progressFraction;
     final progressPct = (progress * 100).toStringAsFixed(0);
     final statusLabel = isActive ? 'Active' : (stake.status == 2 ? 'Done' : 'Cancel');
@@ -1088,7 +1091,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
                 Row(
                   children: [
                     Expanded(child: _statCol('Day Completed',
-                      Text('${elapsed + 1} / $totalDays days',
+                      Text('$currentDay / $totalDays days',
                         style: const TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'DMSans', fontWeight: FontWeight.w400)))),
                     Expanded(child: _statCol('Day Remaining',
                       Text(totalDays > 0 ? '$remaining days' : 'Flexible',
@@ -1105,7 +1108,7 @@ class _StakeCardWidgetState extends State<_StakeCardWidget> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Progress', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'DMSans')),
-                    Text('$progressPct% · Day ${elapsed + 1} of $totalDays',
+                    Text('$progressPct% · Day $currentDay of $totalDays',
                       style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 12, fontFamily: 'DMSans')),
                   ],
                 ),
