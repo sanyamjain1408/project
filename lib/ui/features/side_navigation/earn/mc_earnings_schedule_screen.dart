@@ -137,7 +137,8 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
     final daysElapsed = today.difference(startDate).inDays;
     // Use actual credited dates count for daysCompleted
     final todayYMDStr = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
-    final daysCompleted = _creditedDates.length.clamp(0, totalDays);
+    final currentLive = _liveEarned > 0 ? _liveEarned : stake.liveEarned;
+    final daysCompleted = dailyEarning > 0 ? (currentLive / dailyEarning).floor().clamp(0, totalDays) : 0;
     final daysRemaining = (totalDays - daysElapsed).clamp(0, totalDays);
     final progressPct = totalDays > 0
         ? (daysCompleted / totalDays * 100).clamp(0.0, 100.0)
@@ -151,7 +152,8 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
       final rowYMD = '${rowDateNormalized.year}-${rowDateNormalized.month.toString().padLeft(2,'0')}-${rowDateNormalized.day.toString().padLeft(2,'0')}';
       final todayYMD = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
       final isToday = rowYMD == todayYMD;
-      final isDone = _creditedDates.contains(rowYMD);
+      final cumulativeEarning = dailyEarning * d;
+      final isDone = cumulativeEarning <= (_liveEarned > 0 ? _liveEarned : stake.liveEarned);
       return _ScheduleRow(
         day: d,
         date: _fmtDate(rowDate),
