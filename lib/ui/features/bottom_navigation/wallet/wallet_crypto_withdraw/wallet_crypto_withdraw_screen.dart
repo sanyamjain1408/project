@@ -1112,31 +1112,38 @@ class _WalletCryptoWithdrawDetailScreenState
     return Container(
       padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad > 0 ? bottomPad : 16),
       color: const Color(0xFF111111),
-      child: SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton(
-          onPressed: _checkInputData,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1A1A1A),
-            elevation: 0,
-            overlayColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+      child: Obx(() {
+        final hasAddress = _addressEditController.text.trim().isNotEmpty;
+        final hasNetwork = (_controller.selectedNetwork.value.networkType?.isNotEmpty ?? false) ||
+            (_controller.selectedNetwork.value.id ?? 0) > 0;
+        final hasAmount = _enteredAmount.value > 0;
+        final isReady = hasAddress && hasNetwork && hasAmount;
+        return SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: _checkInputData,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isReady ? _green : const Color(0xFF1A1A1A),
+              elevation: 0,
+              overlayColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              'Withdraw',
+              style: TextStyle(
+                color: isReady ? Colors.black : Colors.white,
+                fontSize: 16,
+                fontWeight: isReady ? FontWeight.w700 : FontWeight.w400,
+                fontFamily: _dmSans,
+                height: 24 / 16,
+              ),
             ),
           ),
-          child: const Text(
-            'Withdraw',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              fontFamily: _dmSans,
-              height: 24 / 16,
-            ),
-          ),
-        ),
-      ),
+        );
+      }),
     );
   }
 }
