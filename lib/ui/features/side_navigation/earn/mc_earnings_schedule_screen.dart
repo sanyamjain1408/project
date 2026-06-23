@@ -120,7 +120,7 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
     // Build schedule rows — days 1 to totalDays
     final rows = List.generate(totalDays, (i) {
       final d = i + 1; // day number 1..totalDays
-      final rowDate = startDate.add(Duration(days: i));
+      final rowDate = startDate.add(Duration(days: i + 1));
       final rowDateNormalized = DateTime(rowDate.year, rowDate.month, rowDate.day);
       final rowYMD = '${rowDateNormalized.year}-${rowDateNormalized.month.toString().padLeft(2,'0')}-${rowDateNormalized.day.toString().padLeft(2,'0')}';
       final todayYMD = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
