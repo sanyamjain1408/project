@@ -302,7 +302,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 ? ClipOval(child: Image.asset('assets/images/transferlogo.png', width: 30, height: 30, fit: BoxFit.cover))
                 : isSwap
                     ? ClipOval(child: Image.asset('assets/images/swaplogo.png', width: 30, height: 30, fit: BoxFit.cover))
-                    : Icon(isDep ? Icons.arrow_downward : Icons.arrow_upward, size: 22, color: iconColor),
+                    : Icon(isDep ? Icons.arrow_downward : Icons.arrow_upward, size: 28, color: iconColor),
           ),
           const SizedBox(width: 20),
           Expanded(
