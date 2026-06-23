@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'mc_staking_controller.dart';
@@ -23,14 +24,36 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
   McStake? _stake;
   Set<String> _creditedDates = {};
   bool _loading = true;
+  Timer? _liveTimer;
+  double _liveEarned = 0.0;
+  double _perSec = 0.0;
+  int _startMs = 0;
 
   @override
   void initState() {
     super.initState();
+    _liveEarned = widget.liveEarned ?? 0.0;
     _c = Get.isRegistered<McStakingController>()
         ? Get.find<McStakingController>()
         : Get.put(McStakingController());
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  void _startLiveTicker(McStake stake) {
+    _perSec = (stake.amount * (stake.dailyRate / 100)) / 86400.0;
+    final stakedAt = DateTime.tryParse(stake.startDate ?? '') ?? DateTime.now();
+    _startMs = stakedAt.millisecondsSinceEpoch;
+    _liveTimer?.cancel();
+    _liveTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      final secs = ((DateTime.now().millisecondsSinceEpoch - _startMs) / 1000.0).clamp(0.0, double.infinity);
+      if (mounted) setState(() => _liveEarned = _perSec * secs);
+    });
+  }
+
+  @override
+  void dispose() {
+    _liveTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -56,6 +79,7 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
       _creditedDates = credited;
       _loading = false;
     });
+    if (found != null) _startLiveTicker(found);
   }
 
   @override
@@ -107,7 +131,7 @@ class _McEarningsScheduleScreenState extends State<McEarningsScheduleScreen> {
         ? (endDate.difference(startDate).inDays + 1).clamp(1, 9999)
         : 100;
     final totalReward = dailyEarning * totalDays;
-    final earnedSoFar = widget.liveEarned ?? stake.liveEarned;
+    final earnedSoFar = _liveEarned > 0 ? _liveEarned : stake.liveEarned;
     final remaining = (totalReward - earnedSoFar).clamp(0.0, double.infinity);
 
     final daysElapsed = today.difference(startDate).inDays;
