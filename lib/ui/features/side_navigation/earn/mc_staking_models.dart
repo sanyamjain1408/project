@@ -117,7 +117,7 @@ class McStake {
   int get daysElapsed {
     if (startDate == null) return 0;
     final start = DateTime.tryParse(startDate!) ?? DateTime.now();
-    return DateTime.now().difference(start).inDays;
+    return DateTime.now().difference(start).inDays + 1;
   }
 
   /// Days remaining until end (0 if flexible/no end)
