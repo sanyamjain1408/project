@@ -75,20 +75,22 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
           ? 'https://api.trapix.com/api/deposit-bonus/status?user_id=$uid'
           : 'https://api.trapix.com/api/deposit-bonus/status';
       final r = await http.get(Uri.parse(url), headers: _headers());
-      print('=== BONUS STATUS [${r.statusCode}] === ${r.body}');
       if (r.statusCode == 200) {
         final b = jsonDecode(r.body);
         if (b['success'] == true) _bonusStatus = b;
       }
-    } catch (e) { print('=== BONUS STATUS ERROR === $e'); }
+    } catch (_) {}
   }
 
   Future<void> _fetchLeaderboard() async {
     try {
       final r = await http.get(Uri.parse('https://api.trapix.com/api/trade-earn/leaderboard'), headers: _headers());
-      print('=== LEADERBOARD [${r.statusCode}] === ${r.body}');
       if (r.statusCode == 200) {
         final b = jsonDecode(r.body);
+        // Always store volume_rewards, top_3_prizes, leaderboard_rewards regardless of success
+        if (b['volume_rewards'] != null) _myStats['volume_rewards'] = b['volume_rewards'];
+        if (b['top_3_prizes'] != null) _myStats['top_3_prizes'] = b['top_3_prizes'];
+        if (b['leaderboard_rewards'] != null) _myStats['leaderboard_rewards'] = b['leaderboard_rewards'];
         if (b['success'] == true) {
           _leaderboard = b['leaderboard'] ?? [];
           if (mounted) setState(() => _leaderboardOpen = true);
@@ -96,7 +98,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
           if (mounted) setState(() => _leaderboardOpen = false);
         }
       }
-    } catch (e) { print('=== LEADERBOARD ERROR === $e'); }
+    } catch (_) {}
   }
 
   Future<void> _fetchHistory() async {
@@ -106,12 +108,11 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
           ? 'https://api.trapix.com/api/deposit-bonus/history?user_id=$uid'
           : 'https://api.trapix.com/api/deposit-bonus/history';
       final r = await http.get(Uri.parse(url), headers: _headers());
-      print('=== HISTORY [${r.statusCode}] === ${r.body}');
       if (r.statusCode == 200) {
         final b = jsonDecode(r.body);
         if (b['success'] == true) _depositHistory = b['history'] ?? [];
       }
-    } catch (e) { print('=== HISTORY ERROR === $e'); }
+    } catch (_) {}
   }
 
   Future<void> _fetchMyStats() async {
@@ -121,13 +122,12 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
           ? 'https://api.trapix.com/api/trade-earn/my-stats?user_id=$uid'
           : 'https://api.trapix.com/api/trade-earn/my-stats';
       final r = await http.get(Uri.parse(url), headers: _headers());
-      print('=== MY STATS [${r.statusCode}] === ${r.body}');
       if (r.statusCode == 200) {
         final b = jsonDecode(r.body);
         _myStats = b;
         if (b['success'] == false && mounted) setState(() => _leaderboardOpen = false);
       }
-    } catch (e) { print('=== MY STATS ERROR === $e'); }
+    } catch (_) {}
   }
 
   @override
@@ -299,9 +299,70 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
         children: [
           _statCard('Your Deposit', '${_bonusStatus['your_deposits'] ?? 0}', Colors.white),
           _statCard('Total Deposited', '${double.tryParse(_bonusStatus['total_deposited']?.toString() ?? '0')?.toStringAsFixed(2) ?? '0.00'} USDT', const Color(0xFF60A5FA)),
-          _statCard('Available Bonus', '${_bonusStatus['available_bonus'] ?? 20}%', _accent),
-          _statCard('Next Bonus', '${_bonusStatus['next_bonus'] ?? 0}', const Color(0xFFFBBF24)),
+          _statCard('Available Bonus', '${_bonusStatus['available_bonus'] ?? 0}%', _accent),
+          _statCard('Next Bonus', '${_bonusStatus['next_bonus'] ?? 'N/A'}', const Color(0xFFFBBF24)),
         ],
+      ),
+      const SizedBox(height: 15),
+
+      // Next deposit target card (website: bonusStatus.next_deposit !== 'Max reached')
+      if (_bonusStatus.isNotEmpty && _bonusStatus['next_deposit'] != 'Max reached')
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            border: Border.all(color: _accent, width: 1.5),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '🎯 ${_bonusStatus['example'] ?? ''}',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14, fontFamily: _font),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Min: ${_bonusStatus['min_deposit'] ?? ''} • Leverage: ${_bonusStatus['max_leverage'] ?? ''} • Valid: ${_bonusStatus['bonus_valid_days'] ?? ''} days',
+                style: const TextStyle(color: Colors.white38, fontSize: 12, fontFamily: _font),
+              ),
+            ],
+          ),
+        ),
+      if (_bonusStatus.isNotEmpty && _bonusStatus['next_deposit'] != 'Max reached')
+        const SizedBox(height: 15),
+
+      // Active Bonuses card
+      _card2(
+        title: 'Active Bonuses',
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            if (_bonusStatus['active_bonuses'] == null || (_bonusStatus['active_bonuses'] as List).isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Text('No active bonuses found.', style: TextStyle(color: Colors.white38, fontSize: 13, fontFamily: _font)),
+              )
+            else
+              ...(_bonusStatus['active_bonuses'] as List).map((b) => Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${b['deposit']} Deposit • ${b['bonus']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14, fontFamily: _font)),
+                        const SizedBox(height: 4),
+                        Text('Expires in ${b['expires_in']}', style: const TextStyle(color: Colors.white38, fontSize: 12, fontFamily: _font)),
+                      ],
+                    ),
+                    Text('${b['amount']}', style: const TextStyle(color: _accent, fontWeight: FontWeight.w700, fontSize: 14, fontFamily: _font)),
+                  ],
+                ),
+              )),
+          ],
+        ),
       ),
       const SizedBox(height: 15),
 
@@ -411,6 +472,65 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
         ),
         const SizedBox(height: 15),
       ],
+
+      // Trade & Earn Volume Reward (from myStats.volume_rewards)
+      if (_myStats['volume_rewards'] != null)
+        _card2(
+          title: 'Trade & Earn Volume Reward',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 6),
+              const Text(
+                'Participants are divided into 3 tiers, based on trading volume achieved during the event:',
+                style: TextStyle(color: Colors.white60, fontSize: 12, fontFamily: _font),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: Text('TRADING VOLUME', style: const TextStyle(color: Colors.white38, fontSize: 11, fontFamily: _font))),
+                  Text('REWARD (USDT) WITHDRAWABLE', style: const TextStyle(color: Colors.white38, fontSize: 11, fontFamily: _font)),
+                ],
+              ),
+              const Divider(color: Color(0xFF1E1E1E)),
+              ...() {
+                final rewards = Map<String, dynamic>.from(_myStats['volume_rewards'] as Map);
+                final myVol = double.tryParse(_myStats['total_volume']?.toString() ?? '0') ?? 0;
+                final sorted = rewards.entries.toList()
+                  ..sort((a, b) => double.parse(a.key).compareTo(double.parse(b.key)));
+                return sorted.map((e) {
+                  final vol = double.tryParse(e.key) ?? 0;
+                  final reward = double.tryParse(e.value.toString()) ?? 0;
+                  final completed = myVol >= vol;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 16, height: 16,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: completed ? const Color(0xFF00C850).withValues(alpha: 0.2) : Colors.transparent,
+                            border: completed ? null : Border.all(color: Colors.white24, style: BorderStyle.solid),
+                          ),
+                          child: completed ? const Icon(Icons.check, size: 10, color: Color(0xFF00C850)) : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text('${vol.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} USDT',
+                            style: const TextStyle(color: Colors.white70, fontSize: 13, fontFamily: _font)),
+                        ),
+                        Text('${reward.toStringAsFixed(0)} USDT',
+                          style: TextStyle(color: completed ? const Color(0xFF00C850) : _accent, fontWeight: FontWeight.w700, fontSize: 13, fontFamily: _font)),
+                      ],
+                    ),
+                  );
+                }).toList();
+              }(),
+            ],
+          ),
+        ),
+      if (_myStats['volume_rewards'] != null) const SizedBox(height: 15),
 
       // Prize Pools
       _card2(
