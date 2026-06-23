@@ -35,6 +35,7 @@ class User {
     this.emailNotificationStatus,
     this.google2Fa,
     this.g2FEnabled,
+    this.kycVerified,
     this.affiliate,
   });
 
@@ -57,6 +58,7 @@ class User {
   int? status;
   int? isVerified;
   int? g2FEnabled;
+  int? kycVerified;
   String? google2FaSecret;
   int? phoneVerified;
   String? language;
@@ -94,6 +96,7 @@ class User {
         emailNotificationStatus: json["email_notification_status"],
         google2Fa: json["google2fa"],
         g2FEnabled: makeInt(json["g2f_enabled"]),
+        kycVerified: makeInt(json["is_kyc_verified"] ?? json["kyc_verified"]),
         affiliate: json["affiliate"] == null ? null : Affiliate.fromJson(json["affiliate"]),
       );
 
@@ -124,6 +127,7 @@ class User {
         "email_notification_status": emailNotificationStatus,
         "google2fa": google2Fa,
         "g2f_enabled": g2FEnabled,
+        "is_kyc_verified": kycVerified,
         "affiliate": affiliate?.toJson(),
       };
 

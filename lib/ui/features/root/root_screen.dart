@@ -6,7 +6,9 @@ import 'package:get/get.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/history_sheet.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
+import 'package:tradexpro_flutter/data/models/kyc_details.dart';
 import 'package:tradexpro_flutter/data/models/settings.dart';
+import 'package:tradexpro_flutter/data/remote/api_repository.dart';
 import 'package:tradexpro_flutter/helper/bottom_nav_helper.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/helper/app_helper.dart';
@@ -1069,16 +1071,49 @@ class _AnimatedReferralCardState
 }
 
 // ── Verification Progress Avatar ─────────────────────────────────────────────
-class VerificationAvatar extends StatelessWidget {
+class VerificationAvatar extends StatefulWidget {
   final dynamic user;
   final double size;
   const VerificationAvatar({super.key, required this.user, this.size = 50});
 
   @override
+  State<VerificationAvatar> createState() => _VerificationAvatarState();
+}
+
+class _VerificationAvatarState extends State<VerificationAvatar> {
+  bool _kycApproved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadKycStatus();
+  }
+
+  void _loadKycStatus() {
+    APIRepository().getUserKYCSettingsDetails().then((resp) {
+      if (!mounted || !resp.success) return;
+      try {
+        final settings = KycSettings.fromJson(resp.data);
+        final kd = settings.enabledKycUserDetails;
+        bool approved = false;
+        if (kd is KycDetails) {
+          approved = [kd.nid, kd.passport, kd.driving, kd.voter].any((k) {
+            final s = k?.status?.toLowerCase() ?? '';
+            return s == 'approved' || s == '1';
+          });
+        } else if (kd is EnabledKycUserDetails) {
+          approved = (kd.persona?.isVerified ?? 0) == 1;
+        }
+        setState(() => _kycApproved = approved);
+      } catch (_) {}
+    }).catchError((_) {});
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final phoneDone = (user.phoneVerified ?? 0) == 1;
-    final emailDone = (user.isVerified ?? 0) == 1;
-    final kycDone   = (user.g2FEnabled ?? 0) == 1;
+    final phoneDone = (widget.user.phoneVerified ?? 0) == 1;
+    final emailDone = (widget.user.isVerified ?? 0) == 1;
+    final kycDone = _kycApproved;
 
     final steps = [phoneDone, emailDone, kycDone];
     final doneCount = steps.where((v) => v).length;
@@ -1092,15 +1127,15 @@ class VerificationAvatar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          width: size + 14,
-          height: size + 14,
+          width: widget.size + 14,
+          height: widget.size + 14,
           child: Stack(
             alignment: Alignment.center,
             children: [
               // Background track
               SizedBox(
-                width: size + 14,
-                height: size + 14,
+                width: widget.size + 14,
+                height: widget.size + 14,
                 child: const CircularProgressIndicator(
                   value: 1,
                   strokeWidth: 3,
@@ -1111,8 +1146,8 @@ class VerificationAvatar extends StatelessWidget {
               ...List.generate(steps.length, (i) {
                 if (!steps[i]) return const SizedBox.shrink();
                 return SizedBox(
-                  width: size + 14,
-                  height: size + 14,
+                  width: widget.size + 14,
+                  height: widget.size + 14,
                   child: CustomPaint(
                     painter: _ArcPainter(
                       startAngle: -pi / 2 + sweepPerStep * i,
@@ -1126,9 +1161,9 @@ class VerificationAvatar extends StatelessWidget {
               // Avatar
               ClipOval(
                 child: SizedBox(
-                  width: size,
-                  height: size,
-                  child: showCircleAvatar(user.photo, size: size),
+                  width: widget.size,
+                  height: widget.size,
+                  child: showCircleAvatar(widget.user.photo, size: widget.size),
                 ),
               ),
               // % badge at bottom
