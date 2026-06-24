@@ -331,9 +331,7 @@ class _RewardHubScreenState extends State<RewardHubScreen>
           child: isUsed
             ? const Text('Used', style: TextStyle(color: _kMuted, fontSize: 12))
             : GestureDetector(
-                onTap: () => isReferral
-                    ? _post('/api/v1/rewards/use-coupon', {'coupon_id': c['id']})
-                    : _snack('Go to Signup Bonus page to use this coupon', true),
+                onTap: () => _post('/api/v1/rewards/use-coupon', {'coupon_id': c['id']}),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(99)),
