@@ -159,7 +159,7 @@ class WalletController extends GetxController
     earnWalletTotal.value = earnTotal;
     futureWalletBalance.value = futureVal;
 
-    final grandTotal = spotVal + futureVal + earnTotal + p2pVal;
+    final grandTotal = spotVal + futureVal + earnTotal;
     final cur = totalBalance.value;
     totalBalance.value = TotalBalance(
       currency: currency ?? cur.currency,
