@@ -116,6 +116,10 @@ class SpotTradeController extends GetxController implements SocketListener {
   }
 
   void _onSpotWsMsg(Map<String, dynamic> msg) {
+    // Discard messages that arrived for a different symbol
+    final msgSym = (msg['symbol'] as String? ?? '').replaceAll('/', '').replaceAll('-', '').toUpperCase();
+    if (msgSym.isNotEmpty && msgSym != _spotSymbol.toUpperCase()) return;
+
     _wsLive = true;
     if (msg['ticker'] is Map) {
       _applyTicker(SpotTicker.fromJson(msg['ticker'] as Map<String, dynamic>));
@@ -298,6 +302,7 @@ class SpotTradeController extends GetxController implements SocketListener {
     if (sym.isEmpty) return;
 
     APIRepository().getSpotTicker(sym).then((resp) {
+      if (_spotSymbol != sym) return; // symbol changed — discard stale response
       if (!resp.success) return;
       final payload = _unwrapSpotData(resp.data);
       if (payload is Map) {
@@ -306,6 +311,7 @@ class SpotTradeController extends GetxController implements SocketListener {
     });
 
     APIRepository().getSpotOrderBook(sym).then((resp) {
+      if (_spotSymbol != sym) return;
       if (!resp.success) return;
       final payload = _unwrapSpotData(resp.data);
       if (payload is Map) {
@@ -314,6 +320,7 @@ class SpotTradeController extends GetxController implements SocketListener {
     });
 
     APIRepository().getSpotTrades(sym).then((resp) {
+      if (_spotSymbol != sym) return;
       if (!resp.success) return;
       final payload = _unwrapSpotData(resp.data);
       if (payload is List) {
@@ -463,6 +470,17 @@ class SpotTradeController extends GetxController implements SocketListener {
     }
 
     isLoading.value = true;
+
+    // Clear stale data immediately so previous pair's garbage doesn't show
+    dashboardData.value.orderData = null;
+    dashboardData.value.lastPriceData = null;
+    dashboardData.refresh();
+    selfBalance.value.buyPrice = null;
+    selfBalance.value.sellPrice = null;
+    selfBalance.refresh();
+    buyExchangeOrder.value = [];
+    sellExchangeOrder.value = [];
+    exchangeTrades.value = [];
 
     // Clear orders immediately so previous pair's data doesn't show
     allMyHistories.value = SpotAllMyHistories();

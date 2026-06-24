@@ -396,13 +396,23 @@ class _MidPriceBlockState extends State<MidPriceBlock> {
         _priceColor = _isUp ? _green : _red;
       });
     }
-    _lastPrice = newPrice ?? _lastPrice;
+    if (newPrice == null) {
+      // Symbol changed — reset cached state so stale price doesn't flash
+      setState(() {
+        _lastPrice = null;
+        _priceColor = widget.priceColor;
+      });
+    } else {
+      _lastPrice = newPrice;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final priceStr = _fmtPrice(widget.lastPData?.price, fixed: widget.priceDecimal);
-    final usdStr   = "≈ \$${_fmtPrice(widget.lastPData?.lastPrice, fixed: widget.priceDecimal)}";
+    final rawPrice = widget.lastPData?.price;
+    final hasPrice = rawPrice != null && rawPrice > 0;
+    final priceStr = hasPrice ? _fmtPrice(rawPrice, fixed: widget.priceDecimal) : '';
+    final usdStr   = hasPrice ? "≈ \$${_fmtPrice(widget.lastPData?.lastPrice, fixed: widget.priceDecimal)}" : '';
 
     return Container(
       width: double.infinity,
@@ -427,15 +437,16 @@ class _MidPriceBlockState extends State<MidPriceBlock> {
                 ),
                 child: Text(priceStr, maxLines: 1),
               ),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: Icon(
-                  _isUp ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                  key: ValueKey(_isUp),
-                  color: _priceColor,
-                  size: 18,
+              if (hasPrice)
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: Icon(
+                    _isUp ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                    key: ValueKey(_isUp),
+                    color: _priceColor,
+                    size: 18,
+                  ),
                 ),
-              ),
             ],
           ),
           // ── USD equivalent below price ─────────────────────────
