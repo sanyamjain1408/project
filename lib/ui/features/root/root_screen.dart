@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 // import 'package:tradexpro_flutter/addons/ico/ico_ui/ico_screen.dart';
@@ -596,12 +597,12 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     // ── REWARDS ──────────────────────────────────────────────
                     _sectionHeader("Rewards"),
                     _menuRow(
-                      "assets/icons/ic_ribbon.png",
+                      "assets/icons/reward_hub.svg",
                       "Reward Hub",
                       () => hasUser ? Get.to(() => const RewardHubScreen()) : Get.offAll(() => const SignInPage()),
                     ),
                     _menuRow(
-                      "assets/icons/ic_gift.png",
+                      "assets/icons/signupbonus.svg",
                       "Signup Bonus",
                       () => hasUser ? Get.to(() => const SignupBonusScreen()) : Get.offAll(() => const SignInPage()),
                     ),
@@ -769,12 +770,9 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         child: Row(
           children: [
-            Image.asset(
-              iconPath, // 👈 asset icon
-              width: 20, // 👈 size control
-              height: 20,
-              // optional tint
-            ),
+            iconPath.endsWith('.svg')
+              ? SvgPicture.asset(iconPath, width: 20, height: 20, colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn))
+              : Image.asset(iconPath, width: 20, height: 20),
             const SizedBox(width: 20),
             Expanded(
               child: Text(
