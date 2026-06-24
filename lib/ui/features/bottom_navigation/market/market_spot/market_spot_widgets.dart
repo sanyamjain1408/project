@@ -197,7 +197,6 @@ class MarketCoinItemViewBottom extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         final pair = coin.convertCoinPair();
-        pair.coinPair = pair.getCoinPairKey();
         pair.coinPairName = pair.getCoinPairName();
         Get.find<RootController>().changeBottomNavIndex(AppBottomNavKey.trade);
         if (Get.isRegistered<SpotTradeController>()) {
