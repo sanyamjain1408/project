@@ -698,7 +698,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
             _historyRow('Amount', '\$${amount.toStringAsFixed(2)}', Colors.white),
             _historyRow('Coin', (item['coin_type']?.toString() ?? 'USDT').toUpperCase(), Colors.white),
             _historyRow('Status', statusText, statusColor),
-            _historyRow('Bonus', '+${bonus.toStringAsFixed(2)}', const Color(0xFF00C850)),
+            _historyRow('Bonus', '+${bonus.toStringAsFixed(2)}', const Color(0xFF00B052)),
           ],
         ),
       );
@@ -861,12 +861,31 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
   }
 
   Widget _historyRow(String label, String value, Color color) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(vertical: 5),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 14, fontFamily: _font)),
-            Text(value, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w500, fontFamily: _font)),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.50),
+                fontSize: 12,
+                fontFamily: _font,
+                fontWeight: FontWeight.w400,
+                height: 1.33,
+              ),
+            ),
+            Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: color,
+                fontSize: 15,
+                fontFamily: _font,
+                fontWeight: FontWeight.w400,
+                height: 1.07,
+              ),
+            ),
           ],
         ),
       );
