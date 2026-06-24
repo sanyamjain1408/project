@@ -8,6 +8,7 @@ import 'package:tradexpro_flutter/data/local/constants.dart';
 
 const _bg = Color(0xFF111111);
 const _card = Color(0xFF1A1A1A);
+const _innerCard = Color(0xFF111111);
 const _accent = Color(0xFFCCFF00);
 const _font = 'DMSans';
 
@@ -347,7 +348,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
       Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: _card,
+          color: _innerCard,
           border: Border.all(color: _accent, width: 1.5),
           borderRadius: BorderRadius.circular(20),
         ),
@@ -684,9 +685,13 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
       final bonus = double.tryParse(item['bonus_earned']?.toString() ?? '0') ?? 0;
 
       return Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16)),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: const BoxDecoration(
+          color: Colors.transparent,
+          border: Border(
+            bottom: BorderSide(color: Colors.white54, width: 0.5),
+          ),
+        ),
         child: Column(
           children: [
             _historyRow('Date', item['created_at']?.toString().substring(0, 19) ?? '', Colors.white),
@@ -763,7 +768,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
         width: 160,
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: _innerCard, borderRadius: BorderRadius.circular(16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -783,7 +788,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
   Widget _statCard(String label, String value, Color color) => Container(
 
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: _innerCard, borderRadius: BorderRadius.circular(12)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -797,7 +802,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
 
   Widget _card2({required String title, String? chip, required Widget child}) => Container(
         padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: _innerCard, borderRadius: BorderRadius.circular(16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -844,7 +849,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
         children: [
           Container(
             width: 52, height: 52,
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: ringColor, width: 2.5), color: _card),
+            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: ringColor, width: 2.5), color: _innerCard),
             child: Center(child: Text(uid.substring(0, 1).toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800))),
           ),
           const SizedBox(height: 6),
