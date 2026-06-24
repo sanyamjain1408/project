@@ -23,6 +23,7 @@ class SignupBonusScreen extends StatefulWidget {
 class _SignupBonusScreenState extends State<SignupBonusScreen> {
   Map<String, dynamic>? _status;
   List<dynamic> _referralCoupons = [];
+  List<dynamic> _referralNetwork = [];
   bool _loading = true;
   bool _claiming = false;
   int? _claimingCouponId;
@@ -42,7 +43,7 @@ class _SignupBonusScreenState extends State<SignupBonusScreen> {
 
   Future<void> _load() async {
     setState(() { _loading = true; });
-    await Future.wait([_fetchStatus(), _fetchCoupons()]);
+    await Future.wait([_fetchStatus(), _fetchCoupons(), _fetchReferralNetwork()]);
     if (mounted) setState(() { _loading = false; });
   }
 
@@ -65,6 +66,20 @@ class _SignupBonusScreenState extends State<SignupBonusScreen> {
           (c['coupon_label'] ?? '').toString().contains('Referral') &&
           c['status'] == 'unused'
         ).toList();
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _fetchReferralNetwork() async {
+    if (_userId.isEmpty) return;
+    try {
+      final r = await http.get(
+        Uri.parse('$_base/api/simple-referral/network?user_id=$_userId'),
+        headers: _hdrs,
+      );
+      final d = jsonDecode(r.body);
+      if (mounted) setState(() {
+        _referralNetwork = (d['success'] == true ? d['data'] : null) ?? [];
       });
     } catch (_) {}
   }
@@ -383,9 +398,8 @@ class _SignupBonusScreenState extends State<SignupBonusScreen> {
     ]),
   );
 
-  // ── REFERRAL LINK ──────────────────────────────────────────────────────────
+  // ── REFERRAL LINK + NETWORK ────────────────────────────────────────────────
   Widget _referralSection() {
-    // Try to get ref code from status API or user model
     final refCode = (_status?['referral_code'] ?? '').toString();
     if (refCode.isEmpty) return const SizedBox.shrink();
     final link = 'trapix.com/signup?ref_code=$refCode';
@@ -393,11 +407,17 @@ class _SignupBonusScreenState extends State<SignupBonusScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(16)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('🎁 Refer & Earn More', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 4),
-        const Text('Each friend who signs up gives you a 20 USDT futures coupon',
-          style: TextStyle(color: _kMuted, fontSize: 12)),
+        // Header row
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('🎁 Refer & Earn More', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+            SizedBox(height: 2),
+            Text('Each friend who signs up gives you a 20 USDT futures coupon',
+              style: TextStyle(color: _kMuted, fontSize: 12)),
+          ])),
+        ]),
         const SizedBox(height: 12),
+        // Referral link copy row
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(color: _kCard2, borderRadius: BorderRadius.circular(10)),
@@ -419,6 +439,65 @@ class _SignupBonusScreenState extends State<SignupBonusScreen> {
             ),
           ]),
         ),
+
+        // People you referred
+        if (_referralNetwork.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text('PEOPLE YOU REFERRED',
+            style: TextStyle(color: _kMuted, fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          ..._referralNetwork.map((m) {
+            final email = (m['email'] ?? m['username'] ?? '?').toString();
+            // Mask email: show first 1 char + *** + domain
+            String masked = email;
+            if (email.contains('@')) {
+              final parts = email.split('@');
+              masked = '${parts[0].substring(0, 1)}***@${parts[1]}';
+            } else if (email.length > 3) {
+              masked = '${email.substring(0, 1)}***';
+            }
+            final initial = masked[0].toUpperCase();
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(color: _kCard2, borderRadius: BorderRadius.circular(10)),
+              child: Row(children: [
+                Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kGreen.withOpacity(0.15),
+                  ),
+                  child: Center(child: Text(initial,
+                    style: const TextStyle(color: _kGreen, fontWeight: FontWeight.w800, fontSize: 15))),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(masked, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text(m['created_at'] != null ? 'Joined ${m['created_at'].toString().substring(0, 10)}' : 'Joined',
+                    style: const TextStyle(color: _kMuted, fontSize: 11)),
+                ])),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _kGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _kGreen.withOpacity(0.2)),
+                  ),
+                  child: const Text('+20 USDT Bonus',
+                    style: TextStyle(color: _kGreen, fontSize: 11, fontWeight: FontWeight.w700)),
+                ),
+              ]),
+            );
+          }),
+        ] else ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: const Center(child: Text('No referrals yet — share your link to start earning',
+              style: TextStyle(color: _kMuted, fontSize: 13), textAlign: TextAlign.center)),
+          ),
+        ],
       ]),
     );
   }
