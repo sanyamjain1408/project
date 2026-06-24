@@ -35,6 +35,7 @@ import '../side_navigation/faq/faq_page.dart';
 // import '../side_navigation/news/news_screen.dart';
 import '../side_navigation/profile/profile_screen.dart';
 import '../side_navigation/referrals/referral_screen.dart';
+import '../side_navigation/reward_hub/reward_hub_screen.dart';
 import '../side_navigation/ib_program/ib_screen.dart';
 // import '../side_navigation/settings/settings_screen.dart';
 // import '../side_navigation/staking/staking_screen.dart';
@@ -593,6 +594,11 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
 
                     // ── REWARDS ──────────────────────────────────────────────
                     _sectionHeader("Rewards"),
+                    _menuRow(
+                      "assets/icons/refer_earn.png",
+                      "Reward Hub",
+                      () => hasUser ? Get.to(() => const RewardHubScreen()) : Get.offAll(() => const SignInPage()),
+                    ),
                     _menuRow(
                       "assets/images/giveaway.png",
                       "Giveaways",
