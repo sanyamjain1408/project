@@ -1474,8 +1474,9 @@ class _PositionCard extends StatelessWidget {
     final pnlColor = pnl >= 0 ? futureGreen : futureRed;
     final sideColor = isLong ? futureGreen : futureRed;
     final sideLabel = isLong ? 'Buy' : 'Sell';
-    // Use marginRatio from API (profit_loss_calculation)
-    final marginRatio = pos.profitLossCalculation?.marginRatio ?? 0.0;
+    final marginRatio = pos.margin > 0
+        ? (pos.margin / (pos.quantity * pos.entryPrice) * 100)
+        : 0.0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
