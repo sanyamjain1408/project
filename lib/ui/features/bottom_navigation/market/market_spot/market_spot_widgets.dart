@@ -195,6 +195,7 @@ class MarketCoinItemViewBottom extends StatelessWidget {
     String formattedPrice = coinFormat(coin.price); // LandingMarketView jaisa
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         final pair = coin.convertCoinPair();
         pair.coinPairName = pair.getCoinPairName();
