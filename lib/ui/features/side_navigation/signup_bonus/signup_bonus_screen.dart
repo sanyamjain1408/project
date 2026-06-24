@@ -63,8 +63,7 @@ class _SignupBonusScreenState extends State<SignupBonusScreen> {
         final all = (d['data']?['coupons'] as List?) ?? [];
         _referralCoupons = all.where((c) =>
           c['coupon_type'] == 'coupon_futures' &&
-          (c['coupon_label'] ?? '').toString().contains('Referral') &&
-          c['status'] == 'unused'
+          (c['coupon_label'] ?? '').toString().contains('Referral')
         ).toList();
       });
     } catch (_) {}
