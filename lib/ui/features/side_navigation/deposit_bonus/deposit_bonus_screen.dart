@@ -19,47 +19,30 @@ class _TickerBanner extends StatefulWidget {
   State<_TickerBanner> createState() => _TickerBannerState();
 }
 
-class _TickerBannerState extends State<_TickerBanner> {
-  late final ScrollController _scroll;
+class _TickerBannerState extends State<_TickerBanner>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    _scroll = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startScroll());
-  }
-
-  void _startScroll() async {
-    while (mounted) {
-      // Reset to start instantly (no animation)
-      if (_scroll.hasClients) {
-        _scroll.jumpTo(0);
-      }
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (!mounted) break;
-      if (_scroll.hasClients) {
-        // Scroll smoothly to end
-        final max = _scroll.position.maxScrollExtent;
-        if (max > 0) {
-          await _scroll.animateTo(
-            max,
-            duration: Duration(milliseconds: (max * 18).toInt()),
-            curve: Curves.linear,
-          );
-        }
-      }
-      await Future.delayed(const Duration(milliseconds: 800));
-    }
+    // 60px per second speed — smooth linear loop
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 18),
+    )..repeat();
   }
 
   @override
   void dispose() {
-    _scroll.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Duplicate text so seamless loop: "text     text     "
+    final display = '${widget.text}               ${widget.text}               ';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -67,17 +50,28 @@ class _TickerBannerState extends State<_TickerBanner> {
           const Icon(Icons.volume_up_rounded, color: _accent, size: 16),
           const SizedBox(width: 10),
           Expanded(
-            child: SingleChildScrollView(
-              controller: _scroll,
-              scrollDirection: Axis.horizontal,
-              physics: const NeverScrollableScrollPhysics(),
-              child: Text(
-                '${widget.text}          ',
-                style: const TextStyle(
-                  color: _accent,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: _font,
+            child: ClipRect(
+              child: AnimatedBuilder(
+                animation: _ctrl,
+                builder: (_, child) {
+                  return FractionalTranslation(
+                    translation: Offset(-_ctrl.value, 0),
+                    child: child,
+                  );
+                },
+                child: RepaintBoundary(
+                  child: Text(
+                    display,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: const TextStyle(
+                      color: _accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: _font,
+                      height: 1.33,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -248,7 +242,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
     return Scaffold(
       backgroundColor: _bg,
       body: Builder(builder: (context) {
-        final bannerH = 210.0 + MediaQuery.of(context).padding.top;
+        final bannerH = 240.0 + MediaQuery.of(context).padding.top;
         return Stack(
         children: [
           // ── Hero Banner — full width, fixed height ────────────────────────
@@ -333,16 +327,6 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
                 fontFamily: _font,
               ),
             ),
-            const SizedBox(height: 4),
-            if (active)
-              Container(
-                height: 2,
-                width: label.length * 8.5,
-                decoration: BoxDecoration(
-                  color: _accent,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
           ],
         ),
       ),
@@ -721,7 +705,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
   Widget _buildBanner() {
     final bannerUrl = _bonusStatus['banner_image']?.toString() ?? '';
     final topPad = MediaQuery.of(context).padding.top;
-    final bannerH = 210.0 + topPad;
+    final bannerH = 240.0 + topPad;
     return Stack(
       children: [
         SizedBox(
