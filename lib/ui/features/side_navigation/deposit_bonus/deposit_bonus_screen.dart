@@ -547,27 +547,91 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
               // Table
               if (rest.isNotEmpty)
                 Table(
-                  columnWidths: const {0: FixedColumnWidth(40), 1: FlexColumnWidth(), 2: FlexColumnWidth(), 3: FlexColumnWidth()},
+                  columnWidths: const {
+                    0: FlexColumnWidth(1.2),
+                    1: FlexColumnWidth(1.5),
+                    2: FlexColumnWidth(1.5),
+                    3: FlexColumnWidth(1.5),
+                  },
                   children: [
                     TableRow(
-                      children: ['#', 'UID', 'Vol', 'Total']
+                      children: ['Ranking', 'UID', 'SPOT VOL', 'FUTURE VOL']
                           .map((h) => Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 8),
-                                child: Text(h, style: const TextStyle(color: Colors.white38, fontSize: 11, fontFamily: _font)),
+                                child: Text(
+                                  h,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.50),
+                                    fontSize: 12,
+                                    fontFamily: _font,
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.33,
+                                  ),
+                                ),
                               ))
                           .toList(),
                     ),
                     ...rest.map((row) {
                       final uid = _maskUid(row['email']?.toString() ?? row['user_id']?.toString() ?? '');
-                      final total = double.tryParse(row['total_volume']?.toString() ?? '0') ?? 0;
                       final spot = double.tryParse(row['spot_volume']?.toString() ?? '0') ?? 0;
+                      final future = double.tryParse(row['future_volume']?.toString() ?? '0') ?? 0;
+                      String fmt(double v) => v.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+                      final isMe = row['user_id']?.toString() == _userId();
                       return TableRow(
-                        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1A1A1A)))),
+                        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF222222), width: 0.5))),
                         children: [
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text('${row['rank']}', style: const TextStyle(color: Colors.white70, fontSize: 12, fontFamily: _font))),
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text(uid, style: const TextStyle(color: Colors.white70, fontSize: 12, fontFamily: _font))),
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text(spot.toStringAsFixed(0), style: const TextStyle(color: Colors.white70, fontSize: 12, fontFamily: _font))),
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text(total.toStringAsFixed(0), style: const TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700, fontFamily: _font))),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Text(
+                              '${row['rank']}',
+                              style: TextStyle(
+                                color: isMe ? _accent : Colors.white,
+                                fontSize: 12,
+                                fontFamily: _font,
+                                fontWeight: FontWeight.w700,
+                                height: 1.33,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Text(
+                              uid,
+                              style: TextStyle(
+                                color: isMe ? _accent : Colors.white,
+                                fontSize: 12,
+                                fontFamily: _font,
+                                fontWeight: FontWeight.w400,
+                                height: 1.33,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Text(
+                              fmt(spot),
+                              style: TextStyle(
+                                color: isMe ? _accent : Colors.white,
+                                fontSize: 12,
+                                fontFamily: _font,
+                                fontWeight: FontWeight.w400,
+                                height: 1.33,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Text(
+                              fmt(future),
+                              style: TextStyle(
+                                color: isMe ? _accent : Colors.white,
+                                fontSize: 12,
+                                fontFamily: _font,
+                                fontWeight: FontWeight.w400,
+                                height: 1.33,
+                              ),
+                            ),
+                          ),
                         ],
                       );
                     }).toList(),
@@ -802,19 +866,19 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
 
   Widget _card2({required String title, String? chip, required Widget child}) => Container(
         padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(color: _innerCard, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: _innerCard, borderRadius: BorderRadius.circular(10)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800, fontFamily: _font)),
+                Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _font, height: 1.25)),
                 if (chip != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(20)),
-                    child: Text(chip, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700, fontFamily: _font)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                    decoration: BoxDecoration(color: _accent, borderRadius: BorderRadius.circular(10)),
+                    child: Text(chip, style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _font, height: 1.33)),
                   ),
               ],
             ),
@@ -839,8 +903,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
   Widget _podiumItem(Map e, {double scale = 1.0, bool isFirst = false}) {
     final uid = _maskUid(e['email']?.toString() ?? e['user_id']?.toString() ?? '');
     final vol = double.tryParse(e['total_volume']?.toString() ?? '0') ?? 0;
-    final rank = e['rank'] ?? 0;
-    final ringColor = rank == 1 ? const Color(0xFFFBBF24) : rank == 2 ? const Color(0xFF9CA3AF) : const Color(0xFFD97706);
+    final volStr = vol.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
     return Transform.scale(
       scale: scale,
       alignment: Alignment.bottomCenter,
@@ -848,13 +911,16 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: ringColor, width: 2.5), color: _innerCard),
-            child: Center(child: Text(uid.substring(0, 1).toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800))),
+            width: 50, height: 50,
+            decoration: ShapeDecoration(
+              color: _innerCard,
+              shape: OvalBorder(side: BorderSide(width: 2, color: const Color(0xFFF8E375))),
+            ),
+            child: Center(child: Text(uid.substring(0, 1).toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: _font))),
           ),
           const SizedBox(height: 6),
-          Text(uid, style: const TextStyle(color: Colors.white, fontSize: 10, fontFamily: _font), overflow: TextOverflow.ellipsis),
-          Text(vol.toStringAsFixed(2), style: const TextStyle(color: _accent, fontSize: 10, fontWeight: FontWeight.w700, fontFamily: _font)),
+          Text(uid, style: const TextStyle(color: Colors.white, fontSize: 10, fontFamily: _font, fontWeight: FontWeight.w400), overflow: TextOverflow.ellipsis),
+          Text(volStr, style: const TextStyle(color: _accent, fontSize: 10, fontFamily: _font, fontWeight: FontWeight.w400)),
         ],
       ),
     );
