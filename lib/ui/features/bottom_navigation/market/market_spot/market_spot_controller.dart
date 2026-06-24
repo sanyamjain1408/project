@@ -27,6 +27,7 @@ class MarketSpotController extends GetxController implements SocketListener {
   bool hasMoreData = false;
   Timer? _searchTimer;
   Timer? _fallbackTimer;
+  Timer? _renderTimer; // debounce WS renders
 
   // Direct WebSocket for real-time ms updates
   WebSocket? _ws;
@@ -81,31 +82,24 @@ class MarketSpotController extends GetxController implements SocketListener {
       final msg = jsonDecode(raw as String) as Map<String, dynamic>;
       if (msg['type'] != 'update') return;
       final ticker = msg['ticker'] as Map<String, dynamic>?;
-      if (ticker == null) return;
+      if (ticker == null || marketFullList.isEmpty) return;
       final symbol = (msg['symbol'] as String? ?? '').toUpperCase();
       if (symbol.isEmpty) return;
 
-      // Parse base/quote from symbol (e.g. BTCUSDT → BTC + USDT)
       final price  = _toDouble(ticker['price']);
       final change = _toDouble(ticker['change_24h']);
       final volume = _toDouble(ticker['volume_24h']);
 
-      if (marketFullList.isEmpty) return;
       final idx = marketFullList.indexWhere((c) =>
           '${c.coinType ?? ''}${c.baseCoinType ?? ''}'.toUpperCase() == symbol);
       if (idx == -1) return;
-      final old = marketFullList[idx];
-      if (old.price == price && old.change == change) return;
-      final updated = MarketCoin()
-        ..coinType    = old.coinType
-        ..baseCoinType = old.baseCoinType
-        ..price       = price > 0 ? price  : old.price
-        ..change      = change
-        ..volume      = volume > 0 ? volume : old.volume
-        ..coinIcon    = old.coinIcon
-        ..totalBalance = old.totalBalance;
-      marketFullList[idx] = updated;
-      applyFiltersAndSort();
+
+      marketFullList[idx].price  = price  > 0 ? price  : marketFullList[idx].price!;
+      marketFullList[idx].change = change;
+      if (volume > 0) marketFullList[idx].volume = volume;
+      // Debounce: batch all ticks arriving within 100ms into one render
+      _renderTimer?.cancel();
+      _renderTimer = Timer(const Duration(milliseconds: 100), applyFiltersAndSort);
     } catch (_) {}
   }
 
@@ -241,6 +235,7 @@ class MarketSpotController extends GetxController implements SocketListener {
     _disconnectWs();
     _fallbackTimer?.cancel();
     _searchTimer?.cancel();
+    _renderTimer?.cancel();
     searchController.dispose();
     super.onClose();
   }
