@@ -596,12 +596,12 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                     // ── REWARDS ──────────────────────────────────────────────
                     _sectionHeader("Rewards"),
                     _menuRow(
-                      "assets/icons/ic_gift.png",
+                      "assets/icons/ic_ribbon.png",
                       "Reward Hub",
                       () => hasUser ? Get.to(() => const RewardHubScreen()) : Get.offAll(() => const SignInPage()),
                     ),
                     _menuRow(
-                      "assets/icons/airdrop.png",
+                      "assets/icons/ic_gift.png",
                       "Signup Bonus",
                       () => hasUser ? Get.to(() => const SignupBonusScreen()) : Get.offAll(() => const SignInPage()),
                     ),
