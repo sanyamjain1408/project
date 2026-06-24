@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/data/models/list_response.dart';
@@ -128,23 +129,25 @@ class MarketSpotController extends GetxController implements SocketListener {
   // ── REST fallback (30s — only to catch new pairs / missed updates) ──────────
   void _startFallback() {
     _fallbackTimer?.cancel();
-    _fallbackTimer = Timer.periodic(const Duration(seconds: 30), (_) => _silentRefresh());
+    _fallbackTimer = Timer.periodic(const Duration(seconds: 3), (_) => _silentRefresh());
   }
 
   void _silentRefresh() {
-    APIRepository().getSpotMarketPairs().then((resp) {
-      if (!resp.success) return;
-      List raw = resp.data is List ? resp.data as List
-          : (resp.data['data'] ?? resp.data['pairs'] ?? resp.data['markets'] ?? []) as List;
+    http.get(Uri.parse('https://api.trapix.com/api/v1/spot/pairs'))
+        .timeout(const Duration(seconds: 4))
+        .then((resp) {
+      if (resp.statusCode != 200) return;
+      final decoded = jsonDecode(resp.body);
+      final List raw = decoded is List ? decoded
+          : (decoded['data'] ?? decoded['pairs'] ?? decoded['markets'] ?? []);
       if (raw.isEmpty) return;
       bool changed = false;
       for (final p in raw) {
-        final base  = (p['base_currency']  ?? p['base']  ?? p['base_asset']  ?? '') as String;
-        final quote = (p['quote_currency'] ?? p['quote'] ?? p['quote_asset'] ?? '') as String;
+        final base  = (p['base_currency'] ?? p['base'] ?? '') as String;
+        final quote = (p['quote_currency'] ?? p['quote'] ?? '') as String;
         final price  = _toDouble(p['current_price'] ?? p['last_price'] ?? p['price']);
-        final change = _toDouble(p['price_change_24h'] ?? p['price_change_percent'] ?? p['change_24h'] ?? p['change']);
-        final idx = marketFullList.indexWhere(
-            (c) => c.coinType == base && c.baseCoinType == quote);
+        final change = _toDouble(p['price_change_24h'] ?? p['price_change_percent'] ?? p['change']);
+        final idx = marketFullList.indexWhere((c) => c.coinType == base && c.baseCoinType == quote);
         if (idx != -1) {
           marketFullList[idx].price  = price;
           marketFullList[idx].change = change;
@@ -152,7 +155,7 @@ class MarketSpotController extends GetxController implements SocketListener {
         }
       }
       if (changed) applyFiltersAndSort();
-    }, onError: (_) {});
+    }).catchError((_) {});
   }
 
   // ── Initial load ────────────────────────────────────────────────────────────
@@ -166,19 +169,26 @@ class MarketSpotController extends GetxController implements SocketListener {
     }
     isLoading.value = true;
 
-    APIRepository().getSpotMarketPairs().then((resp) {
-      isLoading.value = false;
-      if (resp.success) {
-        List raw = resp.data is List ? resp.data as List
-            : (resp.data['data'] ?? resp.data['pairs'] ?? resp.data['result'] ?? resp.data['markets'] ?? []) as List;
+    // Start WS immediately — will populate list as ticks arrive
+    _wsDisposed = false;
+    _connectWs();
 
-        // Build icon cache keyed by symbol e.g. "BTCUSDT"
+    // Direct HTTP — no middleware overhead
+    try {
+      final resp = await http.get(
+        Uri.parse('https://api.trapix.com/api/v1/spot/pairs'),
+      ).timeout(const Duration(seconds: 5));
+
+      if (resp.statusCode == 200) {
+        final decoded = jsonDecode(resp.body);
+        final List raw = decoded is List ? decoded
+            : (decoded['data'] ?? decoded['pairs'] ?? decoded['result'] ?? decoded['markets'] ?? []);
+
         for (final p in raw) {
           final base  = (p['base_currency']  ?? p['base']  ?? '') as String;
           final quote = (p['quote_currency'] ?? p['quote'] ?? '') as String;
-          final icon  = (p['icon'] ?? p['logo'] ?? p['image'] ?? '') as String;
           if (base.isNotEmpty && quote.isNotEmpty) {
-            _iconCache['$base$quote'.toUpperCase()] = icon;
+            _iconCache['$base$quote'.toUpperCase()] = (p['icon'] ?? p['logo'] ?? '') as String;
           }
         }
 
@@ -195,18 +205,11 @@ class MarketSpotController extends GetxController implements SocketListener {
 
         marketFullList..clear()..addAll(list);
         applyFiltersAndSort();
-
-        // Now connect WS for live ms-level updates on top of REST data
-        _wsDisposed = false;
-        _connectWs();
-        _startFallback();
-      } else {
-        showToast(resp.message);
       }
-    }, onError: (err) {
-      isLoading.value = false;
-      showToast(err.toString());
-    });
+    } catch (_) {}
+
+    isLoading.value = false;
+    _startFallback();
   }
 
   void applyFiltersAndSort() {
