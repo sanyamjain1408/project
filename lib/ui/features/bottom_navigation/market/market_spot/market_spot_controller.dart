@@ -63,7 +63,7 @@ class MarketSpotController extends GetxController implements SocketListener {
   void startAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(
-      const Duration(seconds: 30), // har 30 sec mein update
+      const Duration(seconds: 2), // har 2 sec mein update
       (_) => _refreshDataSilently(), // loading spinner nahi dikhega
     );
   }
