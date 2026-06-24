@@ -514,7 +514,8 @@ class _AddCoinDrawerState extends State<_AddCoinDrawer> {
           'price': mc.price,
           'change': mc.change,
         };
-      }).toList();
+      }).toList()
+        ..sort((a, b) => ((b['price'] as num?) ?? 0).compareTo((a['price'] as num?) ?? 0));
     } catch (_) {}
 
     if (mounted) setState(() => _loading = _spotPairs.isEmpty);
@@ -552,7 +553,8 @@ class _AddCoinDrawerState extends State<_AddCoinDrawer> {
             'price': p['current_price'] ?? p['last_price'] ?? p['price'] ?? 0,
             'change': p['price_change_24h'] ?? p['change_24h'] ?? p['price_change'] ?? 0,
           };
-        }).toList();
+        }).toList()
+          ..sort((a, b) => ((b['price'] as num?) ?? 0).compareTo((a['price'] as num?) ?? 0));
       }
     } catch (_) {}
 
@@ -588,7 +590,8 @@ class _AddCoinDrawerState extends State<_AddCoinDrawer> {
             'price': p['current_price'] ?? p['last_price'] ?? p['price'] ?? 0,
             'change': p['price_change_24h'] ?? p['change_24h'] ?? p['price_change'] ?? 0,
           };
-        }).toList();
+        }).toList()
+          ..sort((a, b) => ((b['price'] as num?) ?? 0).compareTo((a['price'] as num?) ?? 0));
       }
     } catch (_) {}
 
