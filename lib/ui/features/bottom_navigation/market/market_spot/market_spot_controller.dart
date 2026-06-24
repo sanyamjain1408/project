@@ -59,16 +59,15 @@ class MarketSpotController extends GetxController implements SocketListener {
     applyFiltersAndSort();
   }
 
-  // ── Auto refresh start karo ──
+  // ── WebSocket is primary — REST polls every 5s only as fallback ──
   void startAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(
-      const Duration(seconds: 2), // har 2 sec mein update
-      (_) => _refreshDataSilently(), // loading spinner nahi dikhega
+      const Duration(seconds: 5),
+      (_) => _refreshDataSilently(),
     );
   }
 
-  // ── Auto refresh band karo ──
   void stopAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = null;
@@ -310,8 +309,8 @@ class MarketSpotController extends GetxController implements SocketListener {
   void findAndUpdateListData(MarketCoin? coin) {
     if (coin == null) return;
     if (marketFullList.isNotEmpty) {
-      final index = marketFullList
-          .indexWhere((element) => element.coinType == coin.coinType);
+      final index = marketFullList.indexWhere((element) =>
+          element.coinType == coin.coinType && element.baseCoinType == coin.baseCoinType);
       if (index != -1) {
         coin.baseCoinType = marketFullList[index].baseCoinType;
         marketFullList[index] = coin;

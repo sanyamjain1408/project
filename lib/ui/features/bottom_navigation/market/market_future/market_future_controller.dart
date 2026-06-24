@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -17,6 +18,7 @@ class FutureController extends GetxController implements SocketListener {
   Rx<MarketSort> marketSort = MarketSort().obs;
   int loadedPage = 0;
   bool hasMoreData = false;
+  Timer? _refreshTimer;
 
   List<String> tabKeyList = [FutureMarketKey.assets, FutureMarketKey.hour, FutureMarketKey.new_];
 
@@ -42,6 +44,33 @@ class FutureController extends GetxController implements SocketListener {
 
   void unSubscribeChannel() {
     APIRepository().unSubscribeEvent(SocketConstants.channelFutureTradeGetExchangeMarketDetailsData, this);
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+  }
+
+  void startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!isLoadingList.value) {
+        APIRepository().getFutureExchangeMarketDetail(1, tabKeyList[selectedTab.value]).then((resp) {
+          if (resp.success) {
+            final mData = FutureMarketData.fromJson(resp.data);
+            final incoming = mData.coins ?? [];
+            bool changed = false;
+            for (final newPair in incoming) {
+              final idx = pairFullList.indexWhere((p) => p.coinPair == newPair.coinPair);
+              if (idx != -1) {
+                if (pairFullList[idx].lastPrice != newPair.lastPrice || pairFullList[idx].priceChange != newPair.priceChange) {
+                  pairFullList[idx] = newPair;
+                  changed = true;
+                }
+              }
+            }
+            if (changed) sortFutureMarketList();
+          }
+        }, onError: (_) {});
+      }
+    });
   }
 
   void changeTab(int index) {
@@ -70,6 +99,7 @@ class FutureController extends GetxController implements SocketListener {
         final mData = FutureMarketData.fromJson(resp.data);
         pairFullList.addAll(mData.coins ?? []);
         sortFutureMarketList();
+        if (loadedPage == 1) startAutoRefresh();
       } else {
         showToast(resp.message);
       }
