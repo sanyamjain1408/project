@@ -311,9 +311,14 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         (!isBuy && selectedSellSubTabIndex.value == 2)) {
       price = makeDouble(limitEditController.text.trim());
     }
-    final amount = Decimal.parse(amountEditController.text.trim());
-    totalEditController.text = (amount * Decimal.parse(price.toString()))
-        .toString();
+    // FIX: Match website logic - calculate total = amount * price with proper precision
+    final amount = makeDouble(amountEditController.text.trim());
+    if (amount > 0 && price > 0) {
+      final total = amount * price;
+      totalEditController.text = total.toStringAsFixed(2);
+    } else {
+      totalEditController.text = "";
+    }
   }
 
   void _tapOnPercentItem(String percentStr) {
@@ -339,20 +344,14 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         );
         return;
       }
-      final amount =
-          (_controller.selfBalance.value.total?.baseWallet?.balance ?? 0) /
-          price;
-      final feesPercentage =
-          ((dData.feesSettings?.makerFees ?? 0) >
-                  (dData.feesSettings?.takerFees ?? 0)
-              ? dData.feesSettings?.makerFees
-              : dData.feesSettings?.takerFees) ??
-          0;
-      final total = amount * percent * price;
-      final fees = (total * feesPercentage) / 100;
-      amountEditController.text = coinFormat((total - fees) / price);
+      // FIX: For BUY - use tradeWallet (quote currency) balance, not baseWallet
+      final quoteAvail = _controller.selfBalance.value.total?.baseWallet?.balance ?? 0;
+      final amountInQuote = quoteAvail * percent;
+      final amount = amountInQuote / price;
+
+      amountEditController.text = coinFormat(amount);
       if (selectedBuySubTabIndex.value != 1) {
-        totalEditController.text = coinFormat(total - fees);
+        totalEditController.text = coinFormat(amountInQuote);
       }
     } else {
       if (selectedSellSubTabIndex.value == 0 || selectedSellSubTabIndex.value == 1) {
@@ -371,9 +370,10 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
         );
         return;
       }
-      final amountPercentage =
-          (_controller.selfBalance.value.total?.tradeWallet?.balance ?? 0) *
-          percent;
+      // FIX: For SELL - use baseWallet (base currency) balance
+      final baseAvail = _controller.selfBalance.value.total?.tradeWallet?.balance ?? 0;
+      final amountPercentage = baseAvail * percent;
+
       amountEditController.text = coinFormat(amountPercentage);
       if (selectedSellSubTabIndex.value != 1) {
         totalEditController.text = coinFormat(amountPercentage * price);
