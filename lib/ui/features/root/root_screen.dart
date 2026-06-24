@@ -771,7 +771,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
         child: Row(
           children: [
             iconPath.endsWith('.svg')
-              ? SvgPicture.asset(iconPath, width: 20, height: 20, colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn))
+              ? SvgPicture.asset(iconPath, width: 20, height: 20)
               : Image.asset(iconPath, width: 20, height: 20),
             const SizedBox(width: 20),
             Expanded(
