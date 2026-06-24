@@ -61,8 +61,7 @@ class _TickerBannerState extends State<_TickerBanner> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Colors.white.withValues(alpha: 0.02),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
           const Icon(Icons.volume_up_rounded, color: _accent, size: 16),
@@ -248,82 +247,103 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
-      appBar: AppBar(
-        backgroundColor: _bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: GestureDetector(
-          onTap: () => Get.back(),
-          child: const Padding(
-            padding: EdgeInsets.only(left: 16),
-            child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
-          ),
-        ),
-        leadingWidth: 48,
-        title: const Text('Deposit Bonus', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: _font)),
-      ),
-      body: Column(
+      body: Builder(builder: (context) {
+        final bannerH = 210.0 + MediaQuery.of(context).padding.top;
+        return Stack(
         children: [
-          // ── Hero Banner ──────────────────────────────────────────────────
+          // ── Hero Banner — full width, fixed height ────────────────────────
           _buildBanner(),
 
-          // ── Ticker ───────────────────────────────────────────────────────
-          _TickerBanner(text: _tickerText),
+          // ── Rounded container overlaps banner by 20px from bottom ─────────
+          Column(
+            children: [
+              // Spacer = banner height minus 20px overlap
+              SizedBox(height: bannerH - 20),
 
-          // Tabs
-          Container(
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1E1E1E)))),
-            child: Row(
-              children: [
-                _tabBtn('bonus', 'Deposit Bonus'),
-                _tabBtn('leaderboard', 'Leaderboard'),
-                _tabBtn('history', 'History'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator(color: _accent, strokeWidth: 2))
-                : RefreshIndicator(
-                    color: _accent,
-                    backgroundColor: _card,
-                    onRefresh: _fetchAll,
-                    child: ListView(
-                      padding: const EdgeInsets.all(15),
-                      children: [
-                        if (_tab == 'bonus') ..._buildBonusTab(),
-                        if (_tab == 'leaderboard') ..._buildLeaderboardTab(),
-                        if (_tab == 'history') ..._buildHistoryTab(),
-                      ],
+              // Rounded-top container with ticker + tabs + content
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: _card,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
                     ),
                   ),
+                  child: Column(
+                    children: [
+                      // Ticker inside the container
+                      _TickerBanner(text: _tickerText),
+
+                      // Tabs row
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                        child: Row(
+                          children: [
+                            _tabBtn('bonus', 'Deposit Bonus'),
+                            _tabBtn('leaderboard', 'Leaderboard'),
+                            _tabBtn('history', 'History'),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: _loading
+                            ? const Center(child: CircularProgressIndicator(color: _accent, strokeWidth: 2))
+                            : RefreshIndicator(
+                                color: _accent,
+                                backgroundColor: _card,
+                                onRefresh: _fetchAll,
+                                child: ListView(
+                                  padding: const EdgeInsets.fromLTRB(15, 12, 15, 15),
+                                  children: [
+                                    if (_tab == 'bonus') ..._buildBonusTab(),
+                                    if (_tab == 'leaderboard') ..._buildLeaderboardTab(),
+                                    if (_tab == 'history') ..._buildHistoryTab(),
+                                  ],
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
-      ),
+      );
+      }),
     );
   }
 
   Widget _tabBtn(String id, String label) {
     final active = _tab == id;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _tab = id),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: active ? _accent : Colors.transparent, width: 2)),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: active ? Colors.white : Colors.white38,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-              fontSize: 13,
-              fontFamily: _font,
+    return GestureDetector(
+      onTap: () => setState(() => _tab = id),
+      child: Padding(
+        padding: const EdgeInsets.only(right: 24, bottom: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: active ? Colors.white : Colors.white.withValues(alpha: 0.50),
+                fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                fontSize: 16,
+                fontFamily: _font,
+              ),
             ),
-          ),
+            const SizedBox(height: 4),
+            if (active)
+              Container(
+                height: 2,
+                width: label.length * 8.5,
+                decoration: BoxDecoration(
+                  color: _accent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -700,26 +720,52 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
 
   Widget _buildBanner() {
     final bannerUrl = _bonusStatus['banner_image']?.toString() ?? '';
-    return SizedBox(
-      width: double.infinity,
-      height: 210,
-      child: bannerUrl.isNotEmpty
-          ? Image.network(
-              bannerUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Image.asset(
-                'assets/images/champion3.png',
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: 210,
+    final topPad = MediaQuery.of(context).padding.top;
+    final bannerH = 210.0 + topPad;
+    return Stack(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: bannerH,
+          child: bannerUrl.isNotEmpty
+              ? Image.network(
+                  bannerUrl,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                  errorBuilder: (_, e, s) => Image.asset(
+                    'assets/images/champion5.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
+                    width: double.infinity,
+                    height: bannerH,
+                  ),
+                )
+              : Image.asset(
+                  'assets/images/champion5.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                  width: double.infinity,
+                  height: bannerH,
+                ),
+        ),
+        // Back button over banner
+        Positioned(
+          top: topPad + 8,
+          left: 12,
+          child: GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.35),
+                shape: BoxShape.circle,
               ),
-            )
-          : Image.asset(
-              'assets/images/champion3.png',
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: 210,
+              child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
             ),
+          ),
+        ),
+      ],
     );
   }
 
