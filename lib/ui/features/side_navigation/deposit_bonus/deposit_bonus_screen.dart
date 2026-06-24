@@ -11,6 +11,84 @@ const _card = Color(0xFF1A1A1A);
 const _accent = Color(0xFFCCFF00);
 const _font = 'DMSans';
 
+// ── Scrolling ticker widget ──────────────────────────────────────────────────
+class _TickerBanner extends StatefulWidget {
+  final String text;
+  const _TickerBanner({required this.text});
+  @override
+  State<_TickerBanner> createState() => _TickerBannerState();
+}
+
+class _TickerBannerState extends State<_TickerBanner> {
+  late final ScrollController _scroll;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startScroll());
+  }
+
+  void _startScroll() async {
+    while (mounted) {
+      // Reset to start instantly (no animation)
+      if (_scroll.hasClients) {
+        _scroll.jumpTo(0);
+      }
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) break;
+      if (_scroll.hasClients) {
+        // Scroll smoothly to end
+        final max = _scroll.position.maxScrollExtent;
+        if (max > 0) {
+          await _scroll.animateTo(
+            max,
+            duration: Duration(milliseconds: (max * 18).toInt()),
+            curve: Curves.linear,
+          );
+        }
+      }
+      await Future.delayed(const Duration(milliseconds: 800));
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.white.withValues(alpha: 0.02),
+      child: Row(
+        children: [
+          const Icon(Icons.volume_up_rounded, color: _accent, size: 16),
+          const SizedBox(width: 10),
+          Expanded(
+            child: SingleChildScrollView(
+              controller: _scroll,
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              child: Text(
+                '${widget.text}          ',
+                style: const TextStyle(
+                  color: _accent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: _font,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class DepositBonusScreen extends StatefulWidget {
   const DepositBonusScreen({super.key});
 
@@ -27,6 +105,10 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
   List<dynamic> _depositHistory = [];
   Map<String, dynamic> _myStats = {};
 
+  // Ticker
+  int _tickerIndex = 0;
+  Timer? _tickerTimer;
+
   // Countdown
   Timer? _countdownTimer;
   Duration _remaining = Duration.zero;
@@ -37,6 +119,9 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
     super.initState();
     _fetchAll();
     _startCountdown();
+    _tickerTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (mounted) setState(() => _tickerIndex = (_tickerIndex + 1));
+    });
   }
 
   void _startCountdown() {
@@ -133,10 +218,20 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    _tickerTimer?.cancel();
     super.dispose();
   }
 
   String _pad(int n) => n.toString().padLeft(2, '0');
+
+  String get _tickerText {
+    if (_leaderboard.isNotEmpty) {
+      final item = _leaderboard[_tickerIndex % _leaderboard.length];
+      final name = item['email']?.toString() ?? item['user_id']?.toString() ?? 'User';
+      return '${_maskUid(name)} has registered for the contest.';
+    }
+    return '302*****08 has registered for the contest.';
+  }
 
   String _maskUid(String s) {
     if (s.contains('@')) {
@@ -170,6 +265,12 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
       ),
       body: Column(
         children: [
+          // ── Hero Banner ──────────────────────────────────────────────────
+          _buildBanner(),
+
+          // ── Ticker ───────────────────────────────────────────────────────
+          _TickerBanner(text: _tickerText),
+
           // Tabs
           Container(
             decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF1E1E1E)))),
@@ -596,6 +697,32 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
   }
 
   // ── HELPERS ────────────────────────────────────────────────────────────────
+
+  Widget _buildBanner() {
+    final bannerUrl = _bonusStatus['banner_image']?.toString() ?? '';
+    return SizedBox(
+      width: double.infinity,
+      height: 210,
+      child: bannerUrl.isNotEmpty
+          ? Image.network(
+              bannerUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Image.asset(
+                'assets/images/champion3.png',
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 210,
+              ),
+            )
+          : Image.asset(
+              'assets/images/champion3.png',
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: 210,
+            ),
+    );
+  }
+
   Widget _cdNum(String t) => Text(t, style: const TextStyle(color: _accent, fontSize: 36, fontWeight: FontWeight.w800, fontFamily: _font));
   Widget _cdUnit(String t, {bool last = false}) => Padding(
         padding: EdgeInsets.only(left: 3, right: last ? 0 : 12),
@@ -624,6 +751,7 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
       );
 
   Widget _statCard(String label, String value, Color color) => Container(
+
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(12)),
         child: Column(
@@ -708,3 +836,4 @@ class _DepositBonusScreenState extends State<DepositBonusScreen> {
         ),
       );
 }
+
