@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
+import 'package:tradexpro_flutter/ui/features/side_navigation/reward_hub/reward_hub_screen.dart';
 
 const _kBg    = Color(0xFF0A0B0D);
 const _kCard  = Color(0xFF1A1A1A);
@@ -365,9 +366,8 @@ class _SignupBonusScreenState extends State<SignupBonusScreen> {
         style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
       const SizedBox(height: 12),
       ..._referralCoupons.map((c) {
-        final value = _dbl(c['coupon_value']);
-        final id    = c['id'] as int;
-        final busy  = _claimingCouponId == id;
+        final value   = _dbl(c['coupon_value']);
+        final claimed = c['status'] != 'unused';
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -381,16 +381,17 @@ class _SignupBonusScreenState extends State<SignupBonusScreen> {
                 Text('Expires ${c['expires_at'].toString().substring(0, 10)}',
                   style: const TextStyle(color: _kMuted, fontSize: 10)),
             ])),
-            GestureDetector(
-              onTap: busy ? null : () => _useCoupon(id),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-                decoration: BoxDecoration(color: busy ? _kGreen.withOpacity(0.5) : _kGreen, borderRadius: BorderRadius.circular(99)),
-                child: busy
-                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                  : const Text('Claim', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 13)),
+            if (claimed)
+              const Text('Claimed', style: TextStyle(color: _kMuted, fontSize: 13))
+            else
+              GestureDetector(
+                onTap: () => Get.to(() => const RewardHubScreen()),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                  decoration: BoxDecoration(color: _kGreen, borderRadius: BorderRadius.circular(99)),
+                  child: const Text('Claim', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 13)),
+                ),
               ),
-            ),
           ]),
         );
       }),
