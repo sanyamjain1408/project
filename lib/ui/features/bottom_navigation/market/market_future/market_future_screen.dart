@@ -379,6 +379,7 @@ class _FuturePairItem extends StatelessWidget {
     final cColor     = isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         if (Get.isRegistered<NewFutureController>()) {
           final ctrl = Get.find<NewFutureController>();
