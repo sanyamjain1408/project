@@ -356,8 +356,8 @@ class _RewardHubScreenState extends State<RewardHubScreen>
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(h['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-        if (h['claimed_at'] != null)
-          Text(h['claimed_at'].toString().substring(0, 10), style: const TextStyle(color: _kMuted, fontSize: 11)),
+        if ((h['date'] ?? h['claimed_at']) != null)
+          Text((h['date'] ?? h['claimed_at']).toString().substring(0, 10), style: const TextStyle(color: _kMuted, fontSize: 11)),
       ])),
       Text('+${_toDouble(h['reward_amount']).toStringAsFixed(2)} USDT',
         style: const TextStyle(color: _kGreen, fontWeight: FontWeight.w700, fontSize: 13)),
