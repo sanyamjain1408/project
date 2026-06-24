@@ -84,26 +84,32 @@ class _RewardHubScreenState extends State<RewardHubScreen>
   );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: _kBg,
-    appBar: AppBar(
+  Widget build(BuildContext context) => PopScope(
+    canPop: true,
+    child: Scaffold(
       backgroundColor: _kBg,
-      scrolledUnderElevation: 0,
-      surfaceTintColor: _kBg,
-      title: const Text('Reward Hub', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
-      leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Get.back()),
-      bottom: TabBar(
-        controller: _tab,
-        labelColor: _kGreen,
-        unselectedLabelColor: _kMuted,
-        indicatorColor: _kGreen,
-        indicatorWeight: 2,
-        tabs: const [Tab(text: 'Daily Tasks'), Tab(text: 'My Rewards')],
+      appBar: AppBar(
+        backgroundColor: _kBg,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: _kBg,
+        title: const Text('Reward Hub', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        bottom: TabBar(
+          controller: _tab,
+          labelColor: _kGreen,
+          unselectedLabelColor: _kMuted,
+          indicatorColor: _kGreen,
+          indicatorWeight: 2,
+          tabs: const [Tab(text: 'Daily Tasks'), Tab(text: 'My Rewards')],
+        ),
       ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: _kGreen))
+          : _error != null ? _buildErr() : TabBarView(controller: _tab, children: [_buildTasks(), _buildMyRewards()]),
     ),
-    body: _loading
-        ? const Center(child: CircularProgressIndicator(color: _kGreen))
-        : _error != null ? _buildErr() : TabBarView(controller: _tab, children: [_buildTasks(), _buildMyRewards()]),
   );
 
   Widget _buildErr() => Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
