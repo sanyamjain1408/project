@@ -23,6 +23,7 @@ import 'package:tradexpro_flutter/ui/features/side_navigation/profile/profile_sc
 import 'package:tradexpro_flutter/ui/features/side_navigation/airdrop/airdrop_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/swap/swap_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/buy_crypto_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_pnl_screen.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_screen.dart';
 import 'package:tradexpro_flutter/ui/features/auth/sign_in/sign_in_screen.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -365,32 +366,37 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                                 const SizedBox(height: 4),
                                 // Today's PNL
                                 if (balance.todayPnl != null)
-                                  RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        const TextSpan(
-                                          text: "Today's PNL ",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w400,
-                                            fontFamily: "DMSans",
-                                            height: 1.33,
+                                  GestureDetector(
+                                    onTap: () => Get.to(() => WalletPnlScreen(
+                                      futureBalance: _walletController.futureWalletBalance.value,
+                                    )),
+                                    child: RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          const TextSpan(
+                                            text: "Today's PNL ",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w400,
+                                              fontFamily: "DMSans",
+                                              height: 1.33,
+                                            ),
                                           ),
-                                        ),
-                                        TextSpan(
-                                          text: formatPnl(balance.todayPnl, balance.todayPnlPercent),
-                                          style: TextStyle(
-                                            color: (balance.todayPnl ?? 0) >= 0
-                                                ? const Color(0xFF4ED78E)
-                                                : Colors.redAccent,
-                                            fontSize: 12,
-                                            fontFamily: "DMSans",
-                                            fontWeight: FontWeight.w400,
-                                            height: 1.33,
+                                          TextSpan(
+                                            text: formatPnl(balance.todayPnl, balance.todayPnlPercent),
+                                            style: TextStyle(
+                                              color: (balance.todayPnl ?? 0) >= 0
+                                                  ? const Color(0xFF4ED78E)
+                                                  : Colors.redAccent,
+                                              fontSize: 12,
+                                              fontFamily: "DMSans",
+                                              fontWeight: FontWeight.w400,
+                                              height: 1.33,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
                               ],
