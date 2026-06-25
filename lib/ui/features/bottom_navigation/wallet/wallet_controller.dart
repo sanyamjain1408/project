@@ -150,12 +150,11 @@ class WalletController extends GetxController
 
     if (spotResp.success) {
       final bal = TotalBalance.fromJson(spotResp.data);
+      spotVal = bal.total ?? 0;
       currency = bal.currency;
     }
     if (overviewResp.success) {
       final ov = WalletOverview.fromJson(overviewResp.data);
-      // Use spotWallet from overview API - has accurate spot balance
-      spotVal = ov.spotWallet ?? 0;
       // Don't use futureWallet from overview - use dedicated future API instead
       p2pVal = ov.p2PWallet ?? 0;
     }
