@@ -75,9 +75,9 @@ class FutureController extends GetxController implements SocketListener {
       final symbol = (msg['symbol'] as String? ?? '').toUpperCase();
       if (symbol.isEmpty || pairFullList.isEmpty) return;
 
-      final price  = _toDouble(ticker['price']);
-      final change = _toDouble(ticker['change_24h']);
-      final volume = _toDouble(ticker['volume_24h']);
+      final price  = _toDouble(ticker['price']  ?? ticker['last_price']  ?? ticker['close'] ?? ticker['mark_price']);
+      final change = _toDouble(ticker['change_percent'] ?? ticker['price_change_percent'] ?? ticker['change_24h']);
+      final volume = _toDouble(ticker['volume'] ?? ticker['volume_24h']);
 
       final idx = pairFullList.indexWhere((p) => (p.coinPair ?? '').toUpperCase().replaceAll('_', '') == symbol);
       if (idx == -1) return;

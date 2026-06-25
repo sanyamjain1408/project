@@ -86,9 +86,9 @@ class MarketSpotController extends GetxController implements SocketListener {
       if (symbol.isEmpty) return;
 
       // Parse base/quote from symbol (e.g. BTCUSDT → BTC + USDT)
-      final price  = _toDouble(ticker['price']);
-      final change = _toDouble(ticker['change_24h']);
-      final volume = _toDouble(ticker['volume_24h']);
+      final price  = _toDouble(ticker['price']  ?? ticker['last_price']  ?? ticker['close']);
+      final change = _toDouble(ticker['change_percent'] ?? ticker['price_change_percent'] ?? ticker['change_24h']);
+      final volume = _toDouble(ticker['volume'] ?? ticker['volume_24h']);
 
       if (marketFullList.isEmpty) return;
       final idx = marketFullList.indexWhere((c) =>
