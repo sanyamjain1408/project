@@ -38,7 +38,11 @@ workflows:
             archive \
             CODE_SIGN_STYLE=Automatic \
             PROVISIONING_PROFILE_SPECIFIER="" \
-            DEVELOPMENT_TEAM=2M5D9H262M
+            DEVELOPMENT_TEAM=2M5D9H262M \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$APP_STORE_CONNECT_PRIVATE_KEY" \
+            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
       - name: Export IPA
         script: |
           xcode-project build-ipa \
