@@ -300,8 +300,8 @@ class WalletController extends GetxController
           final avail = double.tryParse(d['balance']?.toString() ?? '0') ?? 0;
           final total = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
           return {
-            'total': total > 0 ? total : avail,
-            'available': avail > 0 ? avail : total,
+            'total': total,
+            'available': avail,
           };
         }
       }
