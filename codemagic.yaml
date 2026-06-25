@@ -12,7 +12,16 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.trapix.app
+      vars:
+        ENV_FILE_CONTENT: $ENV_FILE_CONTENT
     scripts:
+      - name: Create .env file
+        script: |
+          cat > "$CM_BUILD_DIR/.env" << 'EOF'
+          $ENV_FILE_CONTENT
+          EOF
+          echo ".env created at $CM_BUILD_DIR/.env"
+          ls -la "$CM_BUILD_DIR/.env"
       - name: Get Flutter packages
         script: |
           flutter pub get
