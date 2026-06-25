@@ -31,6 +31,7 @@ class WalletController extends GetxController
   RxDouble spotWalletTotal = 0.0.obs;
   RxDouble earnWalletTotal = 0.0.obs;
   RxDouble futureWalletBalance = 0.0.obs;
+  RxDouble futureWalletAvailable = 0.0.obs;
   int walletListFromType = 0;
   Timer? searchTimer;
   Timer? _spotTimer;
@@ -106,8 +107,11 @@ class WalletController extends GetxController
   }
 
   Future<void> _refreshFutureBalance() async {
-    final fb = await _fetchFutureBalance();
-    if (fb > 0) futureWalletBalance.value = fb;
+    final balMap = await _fetchFutureBalanceMap();
+    final total = balMap['total'] ?? 0;
+    final avail = balMap['available'] ?? 0;
+    if (total > 0) futureWalletBalance.value = total;
+    if (avail > 0) futureWalletAvailable.value = avail;
   }
 
   // Refresh spot total only (for tick)
@@ -130,16 +134,17 @@ class WalletController extends GetxController
       APIRepository().getWalletTotalValue(),
       APIRepository().getWalletBalanceDetails(""),
       _fetchEarnTotal(userId),
-      _fetchFutureBalance(),
+      _fetchFutureBalanceMap(),
     ]);
 
     final spotResp = results[0] as dynamic;
     final overviewResp = results[1] as dynamic;
     final earnTotal = results[2] as double;
-    final fetchedFutureVal = results[3] as double;
+    final futureBalanceMap = results[3] as Map<String, double>;
 
     double spotVal = 0;
     double futureVal = 0;
+    double futureAvail = 0;
     double p2pVal = 0;
     String? currency;
 
@@ -153,13 +158,21 @@ class WalletController extends GetxController
       futureVal = ov.futureWallet ?? 0;
       p2pVal = ov.p2PWallet ?? 0;
     }
-    if (fetchedFutureVal > 0) futureVal = fetchedFutureVal;
+
+    // Use total_balance for display card, available_balance for grand total
+    final fetchedTotalBal = futureBalanceMap['total'] ?? 0;
+    final fetchedAvailBal = futureBalanceMap['available'] ?? 0;
+
+    if (fetchedTotalBal > 0) futureVal = fetchedTotalBal;
+    if (fetchedAvailBal > 0) futureAvail = fetchedAvailBal;
 
     spotWalletTotal.value = spotVal;
     earnWalletTotal.value = earnTotal;
     futureWalletBalance.value = futureVal;
+    futureWalletAvailable.value = futureAvail;
 
-    final grandTotal = spotVal + futureVal + earnTotal;
+    // Grand total uses available_balance (like website line 816)
+    final grandTotal = spotVal + futureAvail + earnTotal;
     final cur = totalBalance.value;
     totalBalance.value = TotalBalance(
       currency: currency ?? cur.currency,
@@ -268,6 +281,32 @@ class WalletController extends GetxController
       }
     } catch (_) {}
     return 0;
+  }
+
+  // Returns both total_balance and available_balance
+  Future<Map<String, double>> _fetchFutureBalanceMap() async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return {'total': 0, 'available': 0};
+      // /v1/future/balance: balance = available, wallet_balance = total
+      final resp = await http.get(
+        Uri.parse('https://api.trapix.com/api/v1/future/balance'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (resp.statusCode == 200) {
+        final json = jsonDecode(resp.body);
+        if (json['success'] == true) {
+          final d = json['data'] ?? {};
+          final avail = double.tryParse(d['balance']?.toString() ?? '0') ?? 0;
+          final total = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
+          return {
+            'total': total > 0 ? total : avail,
+            'available': avail > 0 ? avail : total,
+          };
+        }
+      }
+    } catch (_) {}
+    return {'total': 0, 'available': 0};
   }
 
   Future<double> _fetchFutureBalance() async {
