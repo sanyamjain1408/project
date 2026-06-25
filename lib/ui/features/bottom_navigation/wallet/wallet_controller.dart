@@ -155,17 +155,16 @@ class WalletController extends GetxController
     }
     if (overviewResp.success) {
       final ov = WalletOverview.fromJson(overviewResp.data);
-      // Don't use futureWallet from overview - use dedicated future API instead
+      futureVal = ov.futureWallet ?? 0;
       p2pVal = ov.p2PWallet ?? 0;
     }
 
     // Use total_balance for display card, available_balance for grand total
-    // Both come from the dedicated future API (/v1/future/balance)
     final fetchedTotalBal = futureBalanceMap['total'] ?? 0;
     final fetchedAvailBal = futureBalanceMap['available'] ?? 0;
 
-    futureVal = fetchedTotalBal;
-    futureAvail = fetchedAvailBal;
+    if (fetchedTotalBal > 0) futureVal = fetchedTotalBal;
+    if (fetchedAvailBal > 0) futureAvail = fetchedAvailBal;
 
     spotWalletTotal.value = spotVal;
     earnWalletTotal.value = earnTotal;
