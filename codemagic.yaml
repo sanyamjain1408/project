@@ -9,43 +9,21 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      groups:
-        - ios_signing
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.trapix.app
       vars:
-        ENV_FILE_CONTENT: $ENV_FILE_CONTENT
+        BUNDLE_ID: com.trapix.app
     scripts:
       - name: Create .env file
         script: |
-          cat > "$CM_BUILD_DIR/.env" << 'EOF'
-          $ENV_FILE_CONTENT
-          EOF
-      - name: Set up code signing
-        script: |
-          echo $CM_CERTIFICATE | base64 --decode > /tmp/certificate.p12
-          echo $CM_PROVISIONING_PROFILE | base64 --decode > /tmp/profile.mobileprovision
-          keychain initialize
-          keychain add-certificates --certificate /tmp/certificate.p12 --certificate-password "$CM_CERTIFICATE_PASSWORD"
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-      - name: Create ExportOptions
-        script: |
-          mkdir -p $CM_BUILD_DIR/ios
-          cat > $CM_BUILD_DIR/ios/ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>teamID</key>
-            <string>2M5D9H262M</string>
-            <key>uploadSymbols</key>
-            <true/>
-            <key>compileBitcode</key>
-            <false/>
-          </dict>
-          </plist>
-          EOF
+          cat > "$CM_BUILD_DIR/.env" << 'ENVEOF'
+          apiSecret = h0vWu6MkInNlWHJVfIXmHbIbC66cQvlbSUQI09Whbp
+          stripKey = pk_live_51MxTPlESDHY5x8hMMF827y9oRnTiRRtK0R77i6akAfqdPnHeWklHldD3JDscECueAtLw7Wfc0MdGsni7B961W2uq00mSud6XMB
+          clientIdPaypal = AV-kpCdSGhgP7Cm-krKtmDsO3S1h4Os7cqd0_z78eEu-thao-XJ5SMY2KuuubLfAzHCEQKkOK6W1ufg4
+          secretPaypal = EH5HavBNDK58og9i8OiJH0HkWRLTPxDG-IL5yMHMLWUEbIguZIq45NJ-SlWmngUWN3r6sGmaNrwHZdCh
+          modePaypal = sandbox
+          ENVEOF
       - name: Get Flutter packages
         script: flutter pub get
       - name: Install CocoaPods
@@ -53,7 +31,7 @@ workflows:
       - name: Flutter build iOS
         script: |
           flutter build ipa --release \
-            --export-options-plist=$CM_BUILD_DIR/ios/ExportOptions.plist
+            --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
