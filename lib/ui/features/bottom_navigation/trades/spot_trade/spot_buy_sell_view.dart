@@ -65,7 +65,9 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
     );
     super.initState();
     void _applyPrice(double price) {
-      final formatted = price.toStringAsFixed(2);
+      // Use dynamic price precision from pair, default to 2
+      final pricePrecision = _controller.pricePrecision.value;
+      final formatted = price.toStringAsFixed(pricePrecision);
       final subIndex = _controller.selectedBuySellTab.value == 0
           ? selectedBuySubTabIndex.value
           : selectedSellSubTabIndex.value;

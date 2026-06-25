@@ -533,7 +533,19 @@ class _WalletCryptoWithdrawDetailScreenState
       return;
     }
     withdraw.amount = amount;
-    final total = amount + makeDecimal(_controller.preWithdrawal.value.fees);
+
+    // Calculate fees based on feesType: 1=fixed, 2=percentage
+    double fees = 0.0;
+    final preWith = _controller.preWithdrawal.value;
+    if (preWith.feesType == 2 && preWith.feesPercentage != null) {
+      // Percentage fee
+      fees = (amount.toDouble() * preWith.feesPercentage!) / 100;
+    } else if (preWith.feesType == 1 || preWith.feesType == null) {
+      // Fixed fee (default)
+      fees = preWith.fees ?? 0.0;
+    }
+
+    final total = amount + makeDecimal(fees.toString());
     if (total > _controller.walletBalance.value) {
       showToast("Insufficient balance".tr);
       return;
@@ -915,8 +927,18 @@ class _WalletCryptoWithdrawDetailScreenState
                   _controller.selectedCurrency.value.coinType ?? '';
               final balance = _controller.walletBalance.value;
               final preWith = _controller.preWithdrawal.value;
-              final fees = preWith.fees ?? 0.0;
               final entered = _enteredAmount.value;
+
+              // Calculate fees based on feesType: 1=fixed, 2=percentage
+              double fees = 0.0;
+              if (preWith.feesType == 2 && preWith.feesPercentage != null) {
+                // Percentage fee
+                fees = (entered * preWith.feesPercentage!) / 100;
+              } else if (preWith.feesType == 1 || preWith.feesType == null) {
+                // Fixed fee (default)
+                fees = preWith.fees ?? 0.0;
+              }
+
               final receive = entered > fees ? entered - fees : 0.0;
 
               return Column(
