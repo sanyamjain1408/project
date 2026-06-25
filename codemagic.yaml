@@ -3,16 +3,17 @@ workflows:
     name: iOS Release
     max_build_duration: 120
     instance_type: mac_mini_m2
-    integrations:
-      app_store_connect: Codemagic
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.trapix.app
+      vars:
+        BUNDLE_ID: "com.trapix.app"
+        APP_STORE_APPLE_ID: "technologiestrapix@gmail.com"
     scripts:
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
       - name: Get Flutter packages
         script: |
           flutter pub get
@@ -21,10 +22,12 @@ workflows:
           find . -name "Podfile" -execdir pod install \;
       - name: Flutter build iOS
         script: |
-          flutter build ipa --release
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
       app_store_connect:
-        auth: integration
-        submit_to_testflight: true
+        apple_id: technologiestrapix@gmail.com
+        password: tpak-rpsz-fwts-qdkx
+        submit_to_testflight: false
