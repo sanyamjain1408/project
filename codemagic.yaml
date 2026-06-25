@@ -9,9 +9,8 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.trapix.app
+      groups:
+        - ios_signing
       vars:
         ENV_FILE_CONTENT: $ENV_FILE_CONTENT
     scripts:
@@ -20,17 +19,19 @@ workflows:
           cat > "$CM_BUILD_DIR/.env" << 'EOF'
           $ENV_FILE_CONTENT
           EOF
-          echo ".env created at $CM_BUILD_DIR/.env"
-          ls -la "$CM_BUILD_DIR/.env"
+      - name: Set up code signing
+        script: |
+          echo $CM_CERTIFICATE | base64 --decode > /tmp/certificate.p12
+          echo $CM_PROVISIONING_PROFILE | base64 --decode > /tmp/profile.mobileprovision
+          keychain initialize
+          keychain add-certificates --certificate /tmp/certificate.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
+          xcode-project use-profiles --profile /tmp/profile.mobileprovision
       - name: Get Flutter packages
-        script: |
-          flutter pub get
+        script: flutter pub get
       - name: Install CocoaPods
-        script: |
-          find . -name "Podfile" -execdir pod install \;
+        script: find . -name "Podfile" -execdir pod install \;
       - name: Flutter build iOS
-        script: |
-          flutter build ipa --release
+        script: flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
