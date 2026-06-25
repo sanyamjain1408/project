@@ -114,13 +114,13 @@ class WalletController extends GetxController
     if (avail > 0) futureWalletAvailable.value = avail;
   }
 
-  // Refresh spot total only (for tick) - get from overview API to match _refreshBalances
+  // Refresh spot total only (for tick)
   Future<void> _refreshSpotTotal() async {
     try {
-      final resp = await APIRepository().getWalletBalanceDetails("");
+      final resp = await APIRepository().getWalletTotalValue();
       if (resp.success) {
-        final ov = WalletOverview.fromJson(resp.data);
-        spotWalletTotal.value = ov.spotWallet ?? spotWalletTotal.value;
+        final bal = TotalBalance.fromJson(resp.data);
+        spotWalletTotal.value = bal.total ?? spotWalletTotal.value;
       }
     } catch (_) {}
   }
