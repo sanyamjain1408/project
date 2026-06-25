@@ -774,7 +774,7 @@ class FutureTradeForm extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        FutureBalanceInfo(base: base, quote: quote, maxQty: maxQty, cost: cost, ctrl: ctrl),
+        FutureBalanceInfo(quote: quote, maxQty: maxQty, cost: cost, ctrl: ctrl),
         const SizedBox(height: 10),
         Obx(
           () => GestureDetector(
@@ -1146,7 +1146,6 @@ class _StepBtn extends StatelessWidget {
 
 // ── Balance Info ──────────────────────────────────────────────────────────────
 class FutureBalanceInfo extends StatelessWidget {
-  final String base;
   final String quote;
   final String maxQty;
   final String cost;
@@ -1154,7 +1153,6 @@ class FutureBalanceInfo extends StatelessWidget {
 
   const FutureBalanceInfo({
     super.key,
-    required this.base,
     required this.quote,
     required this.maxQty,
     required this.cost,
@@ -1204,7 +1202,7 @@ class FutureBalanceInfo extends StatelessWidget {
               ),
             ),
             Text(
-              '$maxQty $base',
+              maxQty,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
