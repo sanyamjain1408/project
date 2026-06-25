@@ -37,6 +37,10 @@ class NewFutureController extends GetxController {
   final bonusUnrealizedPnl = 0.0.obs; // data['bonus_unrealized_pnl']
   final futurePnlToday = 0.0.obs;   // from /api/future/pnl
   final futurePnlPct = 0.0.obs;
+  // /position/user-margin-summary (for Margin Ratio display)
+  final marginSummaryRatio = 0.0.obs;
+  final marginSummaryMaintenance = 0.0.obs;
+  final marginSummaryBalance = 0.0.obs;
   final isLoggedIn = false.obs;
   final orderLoading = false.obs;
   final priceGoingUp = true.obs;
@@ -159,6 +163,7 @@ class NewFutureController extends GetxController {
     fetchMaxLeverage(pair.symbol);
     fetchLeverageSettings(pair.id.toString());
     fetchOpenOrderAndPositionAmount(pair.id.toString());
+    fetchUserMarginSummary(pair.id.toString());
 
     if (_ws.isAlive) {
       _ws.changeSymbol(pair.symbol);
@@ -361,6 +366,26 @@ class NewFutureController extends GetxController {
           openPositionsTotalAmount.value = double.tryParse(d['open_positions_total_amount']?.toString() ?? '0') ?? 0;
           openBuyTotalAmount.value = double.tryParse(d['open_buy_total_amount']?.toString() ?? '0') ?? 0;
           openSellTotalAmount.value = double.tryParse(d['open_sell_total_amount']?.toString() ?? '0') ?? 0;
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> fetchUserMarginSummary(String coinPairUid) async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      final res = await http.get(
+        Uri.parse('$_base/position/user-margin-summary?coin_pair_uid=$coinPairUid'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          final d = data['data'] as Map<String, dynamic>;
+          marginSummaryRatio.value = double.tryParse(d['margin_ratio']?.toString() ?? '0') ?? 0;
+          marginSummaryMaintenance.value = double.tryParse(d['maintenance_margin']?.toString() ?? '0') ?? 0;
+          marginSummaryBalance.value = double.tryParse(d['margin_balance']?.toString() ?? '0') ?? 0;
         }
       }
     } catch (_) {}
