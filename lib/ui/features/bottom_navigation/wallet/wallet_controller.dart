@@ -232,9 +232,9 @@ class WalletController extends GetxController
 
   // Recompute PNL from stored values — pure math, no API call (like web's useEffect)
   void _recomputePnl() {
-    // Calculate PNL if we have yesterday's value; otherwise use current values
+    if (_spotYesterday <= 0) return;
     final spotVal = spotWalletTotal.value;
-    final yv = _spotYesterday > 0 ? _spotYesterday : spotVal;
+    final yv = _spotYesterday;
     final futureVal = futureWalletBalance.value;
 
     final spotPnl = spotVal - yv;
