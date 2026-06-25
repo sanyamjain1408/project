@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/api_constants.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
@@ -21,11 +19,6 @@ class FutureController extends GetxController implements SocketListener {
   int loadedPage = 0;
   bool hasMoreData = false;
   Timer? _refreshTimer;
-
-  // Direct WebSocket for ms-level updates
-  WebSocket? _ws;
-  bool _wsDisposed = false;
-  Timer? _wsReconnTimer;
 
   List<String> tabKeyList = [FutureMarketKey.assets, FutureMarketKey.hour, FutureMarketKey.new_];
 
@@ -53,67 +46,11 @@ class FutureController extends GetxController implements SocketListener {
     APIRepository().unSubscribeEvent(SocketConstants.channelFutureTradeGetExchangeMarketDetailsData, this);
     _refreshTimer?.cancel();
     _refreshTimer = null;
-    _disconnectWs();
-  }
-
-  // ── Direct WebSocket ────────────────────────────────────────────────────────
-  Future<void> _connectWs() async {
-    if (_wsDisposed) return;
-    try {
-      _ws = await WebSocket.connect('wss://trapix.com/ws/future');
-      _ws!.add(jsonEncode({'type': 'subscribe_all'}));
-      _ws!.listen(_onWsData, onDone: _onWsDone, onError: (_) => _onWsDone(), cancelOnError: true);
-    } catch (_) { _scheduleReconnect(); }
-  }
-
-  void _onWsData(dynamic raw) {
-    try {
-      final msg = jsonDecode(raw as String) as Map<String, dynamic>;
-      if (msg['type'] != 'update') return;
-      final ticker = msg['ticker'] as Map<String, dynamic>?;
-      if (ticker == null) return;
-      final symbol = (msg['symbol'] as String? ?? '').toUpperCase();
-      if (symbol.isEmpty || pairFullList.isEmpty) return;
-
-      final price  = _toDouble(ticker['price']  ?? ticker['last_price']  ?? ticker['close'] ?? ticker['mark_price']);
-      final change = _toDouble(ticker['change_percent'] ?? ticker['price_change_percent'] ?? ticker['change_24h']);
-      final volume = _toDouble(ticker['volume'] ?? ticker['volume_24h']);
-
-      final idx = pairFullList.indexWhere((p) => (p.coinPair ?? '').toUpperCase().replaceAll('_', '') == symbol);
-      if (idx == -1) return;
-      if (pairFullList[idx].lastPrice == price) return;
-      pairFullList[idx].lastPrice = price > 0 ? price : pairFullList[idx].lastPrice;
-      if (change != 0) pairFullList[idx].priceChange = change;
-      if (volume > 0) pairFullList[idx].volume = volume;
-      sortFutureMarketList();
-    } catch (_) {}
-  }
-
-  void _onWsDone() { _ws = null; _scheduleReconnect(); }
-
-  void _scheduleReconnect() {
-    if (_wsDisposed) return;
-    _wsReconnTimer?.cancel();
-    _wsReconnTimer = Timer(const Duration(seconds: 3), _connectWs);
-  }
-
-  void _disconnectWs() {
-    _wsDisposed = true;
-    _wsReconnTimer?.cancel();
-    try { _ws?.close(); } catch (_) {}
-    _ws = null;
-  }
-
-  double _toDouble(dynamic v) {
-    if (v == null) return 0.0;
-    if (v is double) return v;
-    if (v is int)    return v.toDouble();
-    return double.tryParse(v.toString()) ?? 0.0;
   }
 
   void startAutoRefresh() {
     _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!isLoadingList.value) {
         APIRepository().getFutureExchangeMarketDetail(1, tabKeyList[selectedTab.value]).then((resp) {
           if (resp.success) {
@@ -122,9 +59,11 @@ class FutureController extends GetxController implements SocketListener {
             bool changed = false;
             for (final newPair in incoming) {
               final idx = pairFullList.indexWhere((p) => p.coinPair == newPair.coinPair);
-              if (idx != -1 && (pairFullList[idx].lastPrice != newPair.lastPrice || pairFullList[idx].priceChange != newPair.priceChange)) {
-                pairFullList[idx] = newPair;
-                changed = true;
+              if (idx != -1) {
+                if (pairFullList[idx].lastPrice != newPair.lastPrice || pairFullList[idx].priceChange != newPair.priceChange) {
+                  pairFullList[idx] = newPair;
+                  changed = true;
+                }
               }
             }
             if (changed) sortFutureMarketList();
@@ -160,11 +99,7 @@ class FutureController extends GetxController implements SocketListener {
         final mData = FutureMarketData.fromJson(resp.data);
         pairFullList.addAll(mData.coins ?? []);
         sortFutureMarketList();
-        if (loadedPage == 1) {
-          _wsDisposed = false;
-          _connectWs();
-          startAutoRefresh();
-        }
+        if (loadedPage == 1) startAutoRefresh();
       } else {
         showToast(resp.message);
       }

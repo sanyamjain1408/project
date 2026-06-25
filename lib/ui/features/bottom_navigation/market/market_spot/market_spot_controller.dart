@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
@@ -26,17 +24,16 @@ class MarketSpotController extends GetxController implements SocketListener {
   int loadedPage = 0;
   bool hasMoreData = false;
   Timer? _searchTimer;
-  Timer? _fallbackTimer;
+  Timer? _autoRefreshTimer; // ← Auto refresh timer
 
-  // Direct WebSocket for real-time ms updates
-  WebSocket? _ws;
-  bool _wsDisposed = false;
-  Timer? _wsReconnTimer;
+  List<String> getFilterList() {
+    return ["ALL", "USDT", "USDC"];
+  }
 
-  List<String> getFilterList() => ["ALL", "USDT", "USDC"];
-
-  Map<int, String> getTypeMap() =>
-      {1: "All Crypto".tr, 2: "Spot Markets".tr, 3: "New Listing".tr};
+  Map<int, String> getTypeMap() {
+    var map = {1: "All Crypto".tr, 2: "Spot Markets".tr, 3: "New Listing".tr};
+    return map;
+  }
 
   void changeTab(int key) {
     selectedTab.value = key;
@@ -50,7 +47,10 @@ class MarketSpotController extends GetxController implements SocketListener {
 
   void onTextChanged(String text) {
     if (_searchTimer?.isActive ?? false) _searchTimer?.cancel();
-    _searchTimer = Timer(const Duration(seconds: 1), () => applyFiltersAndSort());
+    _searchTimer = Timer(
+      const Duration(seconds: 1),
+      () => applyFiltersAndSort(),
+    );
   }
 
   void onSortChanged(spot.MarketSort sort) {
@@ -59,103 +59,93 @@ class MarketSpotController extends GetxController implements SocketListener {
     applyFiltersAndSort();
   }
 
-  // ── Direct WebSocket ────────────────────────────────────────────────────────
-  Future<void> _connectWs() async {
-    if (_wsDisposed) return;
-    try {
-      _ws = await WebSocket.connect('wss://trapix.com/ws/spot');
-      _ws!.add(jsonEncode({'type': 'subscribe_all'}));
-      _ws!.listen(
-        _onWsData,
-        onDone: _onWsDone,
-        onError: (_) => _onWsDone(),
-        cancelOnError: true,
-      );
-    } catch (_) {
-      _scheduleWsReconnect();
-    }
+  // ── WebSocket is primary — REST polls every 5s only as fallback ──
+  void startAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _refreshDataSilently(),
+    );
   }
 
-  void _onWsData(dynamic raw) {
-    try {
-      final msg = jsonDecode(raw as String) as Map<String, dynamic>;
-      if (msg['type'] != 'update') return;
-      final ticker = msg['ticker'] as Map<String, dynamic>?;
-      if (ticker == null) return;
-      final symbol = (msg['symbol'] as String? ?? '').toUpperCase();
-      if (symbol.isEmpty) return;
-
-      // Parse base/quote from symbol (e.g. BTCUSDT → BTC + USDT)
-      final price  = _toDouble(ticker['price']  ?? ticker['last_price']  ?? ticker['close']);
-      final change = _toDouble(ticker['change_percent'] ?? ticker['price_change_percent'] ?? ticker['change_24h']);
-      final volume = _toDouble(ticker['volume'] ?? ticker['volume_24h']);
-
-      if (marketFullList.isEmpty) return;
-      final idx = marketFullList.indexWhere((c) =>
-          '${c.coinType ?? ''}${c.baseCoinType ?? ''}'.toUpperCase() == symbol);
-      if (idx == -1) return;
-      final old = marketFullList[idx];
-      if (old.price == price && old.change == change) return;
-      final updated = MarketCoin()
-        ..coinType    = old.coinType
-        ..baseCoinType = old.baseCoinType
-        ..price       = price > 0 ? price  : old.price
-        ..change      = change
-        ..volume      = volume > 0 ? volume : old.volume
-        ..coinIcon    = old.coinIcon
-        ..totalBalance = old.totalBalance;
-      marketFullList[idx] = updated;
-      applyFiltersAndSort();
-    } catch (_) {}
+  void stopAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = null;
   }
 
-  void _onWsDone() {
-    _ws = null;
-    _scheduleWsReconnect();
-  }
-
-  void _scheduleWsReconnect() {
-    if (_wsDisposed) return;
-    _wsReconnTimer?.cancel();
-    _wsReconnTimer = Timer(const Duration(seconds: 3), _connectWs);
-  }
-
-  void _disconnectWs() {
-    _wsDisposed = true;
-    _wsReconnTimer?.cancel();
-    try { _ws?.close(); } catch (_) {}
-    _ws = null;
-  }
-
-  // ── REST fallback (30s — only to catch new pairs / missed updates) ──────────
-  void _startFallback() {
-    _fallbackTimer?.cancel();
-    _fallbackTimer = Timer.periodic(const Duration(seconds: 30), (_) => _silentRefresh());
-  }
-
-  void _silentRefresh() {
+  // ── Silent refresh — loading show nahi hoga, sirf data update hoga ──
+  void _refreshDataSilently() {
     APIRepository().getSpotMarketPairs().then((resp) {
-      if (!resp.success) return;
-      List raw = resp.data is List ? resp.data as List
-          : (resp.data['data'] ?? resp.data['pairs'] ?? resp.data['markets'] ?? []) as List;
-      if (raw.isEmpty) return;
-      bool changed = false;
-      for (final p in raw) {
-        final base  = (p['base_currency']  ?? p['base']  ?? p['base_asset']  ?? '') as String;
-        final quote = (p['quote_currency'] ?? p['quote'] ?? p['quote_asset'] ?? '') as String;
-        final price = _toDouble(p['last_price'] ?? p['current_price'] ?? p['price']);
-        final idx = marketFullList.indexWhere(
-            (c) => c.coinType == base && c.baseCoinType == quote);
-        if (idx != -1 && marketFullList[idx].price != price) {
-          marketFullList[idx].price = price;
-          changed = true;
+      if (resp.success) {
+        List rawPairs = [];
+        if (resp.data is List) {
+          rawPairs = resp.data as List;
+        } else if (resp.data is Map) {
+          rawPairs = (resp.data['data'] as List?) ??
+              (resp.data['pairs'] as List?) ??
+              (resp.data['result'] as List?) ??
+              (resp.data['markets'] as List?) ??
+              [];
+        }
+
+        if (rawPairs.isEmpty) return;
+
+        final newList = rawPairs.map<MarketCoin>((p) {
+          final coin = MarketCoin();
+          coin.coinType = p['base_currency'] ?? p['base'] ?? p['base_asset'] ?? '';
+          coin.baseCoinType = p['quote_currency'] ?? p['quote'] ?? p['quote_asset'] ?? '';
+          coin.price = double.tryParse(
+                p['last_price']?.toString() ??
+                p['current_price']?.toString() ??
+                p['price']?.toString() ??
+                '0') ?? 0;
+          coin.change = double.tryParse(
+                p['price_change_percent']?.toString() ??
+                p['change_24h']?.toString() ??
+                p['price_change_24h']?.toString() ??
+                p['change']?.toString() ??
+                '0') ?? 0;
+          coin.volume = double.tryParse(
+                p['volume_24h']?.toString() ??
+                p['volume']?.toString() ??
+                p['base_volume']?.toString() ??
+                '0') ?? 0;
+          coin.coinIcon = p['icon'] ?? p['logo'] ?? p['image'] ?? p['icon_url'] ?? '';
+          return coin;
+        }).toList();
+
+        // Sirf changed data update karo — poori list replace nahi
+        bool hasChanges = false;
+        for (final newCoin in newList) {
+          final index = marketFullList.indexWhere(
+            (c) => c.coinType == newCoin.coinType && c.baseCoinType == newCoin.baseCoinType,
+          );
+          if (index != -1) {
+            final old = marketFullList[index];
+            if (old.price != newCoin.price ||
+                old.change != newCoin.change ||
+                old.volume != newCoin.volume) {
+              marketFullList[index] = newCoin;
+              hasChanges = true;
+            }
+          } else {
+            // Naya coin aaya toh add karo
+            marketFullList.add(newCoin);
+            hasChanges = true;
+          }
+        }
+
+        if (hasChanges) {
+          applyFiltersAndSort();
+          //print("=== AUTO REFRESH: Data updated ===");
         }
       }
-      if (changed) applyFiltersAndSort();
-    }, onError: (_) {});
+    }, onError: (err) {
+      // print("=== AUTO REFRESH ERROR: $err ===");
+      // Silent fail — user ko toast nahi dikhayenge
+    });
   }
 
-  // ── Initial load ────────────────────────────────────────────────────────────
   Future<void> getMarketOverviewTopCoinList(bool isLoadMore) async {
     if (!isLoadMore) {
       loadedPage = 0;
@@ -167,17 +157,45 @@ class MarketSpotController extends GetxController implements SocketListener {
 
     APIRepository().getSpotMarketPairs().then((resp) {
       isLoading.value = false;
-      if (resp.success) {
-        List raw = resp.data is List ? resp.data as List
-            : (resp.data['data'] ?? resp.data['pairs'] ?? resp.data['result'] ?? resp.data['markets'] ?? []) as List;
 
-        final list = raw.map<MarketCoin>((p) {
+      // print("=== TRAPIX DEBUG ===");
+      // print("Success: ${resp.success}");
+      // print("Message: ${resp.message}");
+      // print("Data: ${resp.data}");
+      // print("===================");
+
+      if (resp.success) {
+        List rawPairs = [];
+        if (resp.data is List) {
+          rawPairs = resp.data as List;
+        } else if (resp.data is Map) {
+          rawPairs = (resp.data['data'] as List?) ??
+              (resp.data['pairs'] as List?) ??
+              (resp.data['result'] as List?) ??
+              (resp.data['markets'] as List?) ??
+              [];
+        }
+
+        final list = rawPairs.map<MarketCoin>((p) {
           final coin = MarketCoin();
-          coin.coinType     = p['base_currency']  ?? p['base']  ?? p['base_asset']  ?? '';
+          coin.coinType = p['base_currency'] ?? p['base'] ?? p['base_asset'] ?? '';
           coin.baseCoinType = p['quote_currency'] ?? p['quote'] ?? p['quote_asset'] ?? '';
-          coin.price  = _toDouble(p['last_price'] ?? p['current_price'] ?? p['price']);
-          coin.change = _toDouble(p['price_change_percent'] ?? p['change_24h'] ?? p['change']);
-          coin.volume = _toDouble(p['volume_24h'] ?? p['volume'] ?? p['base_volume']);
+          coin.price = double.tryParse(
+                p['last_price']?.toString() ??
+                p['current_price']?.toString() ??
+                p['price']?.toString() ??
+                '0') ?? 0;
+          coin.change = double.tryParse(
+                p['price_change_percent']?.toString() ??
+                p['change_24h']?.toString() ??
+                p['price_change_24h']?.toString() ??
+                p['change']?.toString() ??
+                '0') ?? 0;
+          coin.volume = double.tryParse(
+                p['volume_24h']?.toString() ??
+                p['volume']?.toString() ??
+                p['base_volume']?.toString() ??
+                '0') ?? 0;
           coin.coinIcon = p['icon'] ?? p['logo'] ?? p['image'] ?? p['icon_url'] ?? '';
           return coin;
         }).toList();
@@ -185,10 +203,9 @@ class MarketSpotController extends GetxController implements SocketListener {
         marketFullList..clear()..addAll(list);
         applyFiltersAndSort();
 
-        // Connect direct WS for ms-level updates
-        _wsDisposed = false;
-        _connectWs();
-        _startFallback();
+        // ── Pehli load ke baad auto refresh shuru karo ──
+        startAutoRefresh();
+
       } else {
         showToast(resp.message);
       }
@@ -202,34 +219,53 @@ class MarketSpotController extends GetxController implements SocketListener {
     List<MarketCoin> currentList = List.from(marketFullList);
 
     if (selectedFilterIndex.value > 0) {
-      final filter = getFilterList()[selectedFilterIndex.value];
-      currentList = currentList.where((c) => c.baseCoinType == filter).toList();
+      String selectedFilter = getFilterList()[selectedFilterIndex.value];
+      currentList = currentList
+          .where((coin) => coin.baseCoinType == selectedFilter)
+          .toList();
     }
 
-    final query = searchController.text.trim().toLowerCase();
+    String query = searchController.text.trim().toLowerCase();
     if (query.isNotEmpty) {
-      currentList = currentList.where((c) =>
-          (c.coinType?.toLowerCase().contains(query) ?? false) ||
-          (c.baseCoinType?.toLowerCase().contains(query) ?? false)).toList();
+      currentList = currentList
+          .where((coin) =>
+              (coin.coinType?.toLowerCase().contains(query) ?? false) ||
+              (coin.baseCoinType?.toLowerCase().contains(query) ?? false))
+          .toList();
     }
 
-    final s = marketSort.value;
-    if (s.pair != null) {
-      currentList.sort((a, b) => s.pair! ? (a.coinType ?? '').compareTo(b.coinType ?? '')
-          : (b.coinType ?? '').compareTo(a.coinType ?? ''));
-    } else if (s.volume != null) {
-      currentList.sort((a, b) => s.volume! ? (a.volume ?? 0).compareTo(b.volume ?? 0)
-          : (b.volume ?? 0).compareTo(a.volume ?? 0));
-    } else if (s.price != null) {
-      currentList.sort((a, b) => s.price! ? (a.price ?? 0).compareTo(b.price ?? 0)
-          : (b.price ?? 0).compareTo(a.price ?? 0));
-    } else if (s.capital != null) {
-      currentList.sort((a, b) => s.capital! ? (a.totalBalance ?? 0).compareTo(b.totalBalance ?? 0)
-          : (b.totalBalance ?? 0).compareTo(a.totalBalance ?? 0));
-    } else if (s.change != null) {
-      currentList.sort((a, b) => s.change! ? (a.change ?? 0).compareTo(b.change ?? 0)
-          : (b.change ?? 0).compareTo(a.change ?? 0));
+    if (marketSort.value.pair != null) {
+      if (marketSort.value.pair == true) {
+        currentList.sort((a, b) => (a.coinType ?? '').compareTo(b.coinType ?? ''));
+      } else {
+        currentList.sort((a, b) => (b.coinType ?? '').compareTo(a.coinType ?? ''));
+      }
+    } else if (marketSort.value.volume != null) {
+      if (marketSort.value.volume == true) {
+        currentList.sort((a, b) => (a.volume ?? 0).compareTo(b.volume ?? 0));
+      } else {
+        currentList.sort((a, b) => (b.volume ?? 0).compareTo(a.volume ?? 0));
+      }
+    } else if (marketSort.value.price != null) {
+      if (marketSort.value.price == true) {
+        currentList.sort((a, b) => (a.price ?? 0).compareTo(b.price ?? 0));
+      } else {
+        currentList.sort((a, b) => (b.price ?? 0).compareTo(a.price ?? 0));
+      }
+    } else if (marketSort.value.capital != null) {
+      if (marketSort.value.capital == true) {
+        currentList.sort((a, b) => (a.totalBalance ?? 0).compareTo(b.totalBalance ?? 0));
+      } else {
+        currentList.sort((a, b) => (b.totalBalance ?? 0).compareTo(a.totalBalance ?? 0));
+      }
+    } else if (marketSort.value.change != null) {
+      if (marketSort.value.change == true) {
+        currentList.sort((a, b) => (a.change ?? 0).compareTo(b.change ?? 0));
+      } else {
+        currentList.sort((a, b) => (b.change ?? 0).compareTo(a.change ?? 0));
+      }
     } else {
+      // Default: price high to low
       currentList.sort((a, b) => (b.price ?? 0).compareTo(a.price ?? 0));
     }
 
@@ -238,14 +274,13 @@ class MarketSpotController extends GetxController implements SocketListener {
 
   @override
   void onClose() {
-    _disconnectWs();
-    _fallbackTimer?.cancel();
+    // Controller destroy hone par timer band karo — memory leak nahi hoga
+    stopAutoRefresh();
     _searchTimer?.cancel();
     searchController.dispose();
     super.onClose();
   }
 
-  // ── Pusher socket (kept for compatibility) ──────────────────────────────────
   @override
   void onDataGet(channel, event, data) {
     if (channel == SocketConstants.channelMarketOverviewTopCoinListData &&
@@ -253,38 +288,34 @@ class MarketSpotController extends GetxController implements SocketListener {
       if (data is Map<String, dynamic>) {
         final details = data[APIKeyConstants.coinPairDetails];
         if (details is Map<String, dynamic>) {
-          final coin = MarketCoin.fromJson(details);
-          _updateCoin(coin);
+          final coin = MarketCoin.fromJson(data[APIKeyConstants.coinPairDetails]);
+          findAndUpdateListData(coin);
         }
       }
     }
   }
 
-  void _updateCoin(MarketCoin? coin) {
-    if (coin == null || marketFullList.isEmpty) return;
-    final idx = marketFullList.indexWhere(
-        (e) => e.coinType == coin.coinType && e.baseCoinType == coin.baseCoinType);
-    if (idx != -1) {
-      coin.baseCoinType = marketFullList[idx].baseCoinType;
-      marketFullList[idx] = coin;
-      applyFiltersAndSort();
-    }
-  }
-
   void subscribeSocketChannels() {
-    APIRepository().subscribeEvent(SocketConstants.channelMarketOverviewTopCoinListData, this);
+    APIRepository().subscribeEvent(
+      SocketConstants.channelMarketOverviewTopCoinListData, this);
   }
 
   void unSubscribeChannel() {
-    APIRepository().unSubscribeEvent(SocketConstants.channelMarketOverviewTopCoinListData, this);
-    _disconnectWs();
-    _fallbackTimer?.cancel();
+    APIRepository().unSubscribeEvent(
+      SocketConstants.channelMarketOverviewTopCoinListData, this);
+    stopAutoRefresh(); // Screen se bahar jaane par timer band
   }
 
-  double _toDouble(dynamic v) {
-    if (v == null) return 0.0;
-    if (v is double) return v;
-    if (v is int)    return v.toDouble();
-    return double.tryParse(v.toString()) ?? 0.0;
+  void findAndUpdateListData(MarketCoin? coin) {
+    if (coin == null) return;
+    if (marketFullList.isNotEmpty) {
+      final index = marketFullList.indexWhere((element) =>
+          element.coinType == coin.coinType && element.baseCoinType == coin.baseCoinType);
+      if (index != -1) {
+        coin.baseCoinType = marketFullList[index].baseCoinType;
+        marketFullList[index] = coin;
+        applyFiltersAndSort();
+      }
+    }
   }
 }
