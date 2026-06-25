@@ -639,7 +639,7 @@ class TotalBalanceView extends StatelessWidget {
 
                   if (!isHide)
                     GestureDetector(
-                      onTap: () => Get.to(() => const WalletPnlScreen()),
+                      onTap: () => Get.to(() => WalletPnlScreen(futureBalance: Get.find<WalletController>().futureWalletBalance.value)),
                       child: RichText(
                         text: TextSpan(
                           children: [

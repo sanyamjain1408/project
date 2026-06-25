@@ -129,7 +129,8 @@ class _TradePnl {
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 class WalletPnlScreen extends StatefulWidget {
-  const WalletPnlScreen({super.key});
+  final double futureBalance; // wallet screen ka Future card value (86.85)
+  const WalletPnlScreen({super.key, this.futureBalance = 0});
   @override
   State<WalletPnlScreen> createState() => _WalletPnlState();
 }
@@ -165,6 +166,8 @@ class _WalletPnlState extends State<WalletPnlScreen> {
   }
 
   Future<double> _fetchFutureTotal() async {
+    // If wallet screen already has the value, use it directly
+    if (widget.futureBalance > 0) return widget.futureBalance;
     try {
       final token = getFutureToken();
       if (token.isEmpty) return 0;
@@ -176,9 +179,10 @@ class _WalletPnlState extends State<WalletPnlScreen> {
         final j = jsonDecode(res.body) as Map<String, dynamic>;
         if (j['success'] == true) {
           final d = j['data'] ?? {};
-          final avail = double.tryParse(d['balance']?.toString() ?? '0') ?? 0;
+          // wallet_balance = actual wallet balance shown in wallet screen
           final wb = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
-          return avail > 0 ? avail : wb;
+          final avail = double.tryParse(d['available']?.toString() ?? '0') ?? 0;
+          return wb > 0 ? wb : avail;
         }
       }
     } catch (_) {}
