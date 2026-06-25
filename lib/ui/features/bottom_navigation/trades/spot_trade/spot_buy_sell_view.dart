@@ -351,9 +351,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       final amountInQuote = quoteAvail * percent;
       final amount = amountInQuote / price;
 
-      // Use dynamic amount precision from pair
-      final amountPrecision = _controller.amountPrecision.value;
-      amountEditController.text = coinFormat(amount, fixed: amountPrecision);
+      amountEditController.text = coinFormat(amount);
       if (selectedBuySubTabIndex.value != 1) {
         totalEditController.text = coinFormat(amountInQuote);
       }
@@ -378,9 +376,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       final baseAvail = _controller.selfBalance.value.total?.tradeWallet?.balance ?? 0;
       final amountPercentage = baseAvail * percent;
 
-      // Use dynamic amount precision from pair
-      final amountPrecision = _controller.amountPrecision.value;
-      amountEditController.text = coinFormat(amountPercentage, fixed: amountPrecision);
+      amountEditController.text = coinFormat(amountPercentage);
       if (selectedSellSubTabIndex.value != 1) {
         totalEditController.text = coinFormat(amountPercentage * price);
       }
