@@ -139,7 +139,13 @@ class _WalletOverviewPageState extends State<WalletOverviewPage> {
             children: [
               _buildTopHero(data),
               const SizedBox(height: 20),
-              Obx(() => _buildStackedCards(data, settings)),
+              Obx(() {
+                // Read all reactive values so this rebuilds when any changes
+                _controller.spotWalletTotal.value;
+                _controller.futureWalletBalance.value;
+                _controller.earnWalletTotal.value;
+                return _buildStackedCards(data, settings);
+              }),
               const SizedBox(height: 20),
               Obx(() {
                 final deps = depositList.toList();
