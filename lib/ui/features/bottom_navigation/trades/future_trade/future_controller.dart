@@ -287,13 +287,12 @@ class NewFutureController extends GetxController {
           final d = data['data'] ?? {};
           // print('[FutureBalance] raw data: $d');
           // backend fields: balance=available(free), margin_used=locked, total=grand total
-          final legacyBalance = double.tryParse(d['balance']?.toString() ?? '0') ?? 0;
           final avail = double.tryParse(d['available']?.toString() ?? '0') ?? 0;
           final margin = double.tryParse(d['margin_used']?.toString() ?? '0') ?? 0;
           final total = double.tryParse(d['total']?.toString() ?? '0') ?? 0;
           final wb = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
           final upnl = double.tryParse(d['unrealized_pnl']?.toString() ?? '0') ?? 0;
-          availableBalance.value = avail > 0 ? avail : legacyBalance;
+          availableBalance.value = avail;
           marginUsed.value = margin;
           balance.value = total > 0 ? total : (availableBalance.value + margin);
           walletBalance.value = wb > 0 ? wb : (availableBalance.value + margin);
