@@ -304,7 +304,7 @@ class WalletController extends GetxController
         final data = json['data'] as List? ?? [];
         double total = 0;
         for (final p in data) {
-          total += double.tryParse(p['amount']?.toString() ?? '0') ?? 0;
+          total += double.tryParse(p['accrued_interest']?.toString() ?? '0') ?? 0;
         }
         return total;
       }
