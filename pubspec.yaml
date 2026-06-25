@@ -3,7 +3,7 @@ description: A new Flutter project for crypto exchange.
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 4.3.0
+version: 1.0.21+6
 
 environment:
   sdk: '>=3.9.2 <4.0.0'
@@ -173,3 +173,4 @@ flutter_native_splash:
   image_dark: assets/icons/blogo.png
   color_dark: "#0F0F0F"
   #icon_background_color_dark: "#17202A"
+
