@@ -65,9 +65,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
     );
     super.initState();
     void _applyPrice(double price) {
-      // Use dynamic price precision from pair, default to 2
-      final pricePrecision = _controller.pricePrecision.value;
-      final formatted = price.toStringAsFixed(pricePrecision);
+      final formatted = price.toStringAsFixed(2);
       final subIndex = _controller.selectedBuySellTab.value == 0
           ? selectedBuySubTabIndex.value
           : selectedSellSubTabIndex.value;
@@ -351,9 +349,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       final amountInQuote = quoteAvail * percent;
       final amount = amountInQuote / price;
 
-      // Use dynamic amount precision from pair
-      final amountPrecision = _controller.amountPrecision.value;
-      amountEditController.text = coinFormat(amount, fixed: amountPrecision);
+      amountEditController.text = coinFormat(amount);
       if (selectedBuySubTabIndex.value != 1) {
         totalEditController.text = coinFormat(amountInQuote);
       }
@@ -378,9 +374,7 @@ class SpotTradeBuySellViewState extends State<SpotTradeBuySellView>
       final baseAvail = _controller.selfBalance.value.total?.tradeWallet?.balance ?? 0;
       final amountPercentage = baseAvail * percent;
 
-      // Use dynamic amount precision from pair
-      final amountPrecision = _controller.amountPrecision.value;
-      amountEditController.text = coinFormat(amountPercentage, fixed: amountPrecision);
+      amountEditController.text = coinFormat(amountPercentage);
       if (selectedSellSubTabIndex.value != 1) {
         totalEditController.text = coinFormat(amountPercentage * price);
       }
