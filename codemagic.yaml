@@ -12,8 +12,6 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.trapix.app
-      vars:
-        BUNDLE_ID: com.trapix.app
     scripts:
       - name: Create .env file
         script: |
@@ -24,6 +22,9 @@ workflows:
           secretPaypal = EH5HavBNDK58og9i8OiJH0HkWRLTPxDG-IL5yMHMLWUEbIguZIq45NJ-SlWmngUWN3r6sGmaNrwHZdCh
           modePaypal = sandbox
           ENVEOF
+      - name: Set up automatic code signing
+        script: |
+          xcode-project use-profiles --export-options-plist=/Users/builder/export_options.plist
       - name: Get Flutter packages
         script: flutter pub get
       - name: Install CocoaPods
