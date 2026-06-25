@@ -137,13 +137,11 @@ class MarketSpotController extends GetxController implements SocketListener {
       for (final p in raw) {
         final base  = (p['base_currency']  ?? p['base']  ?? p['base_asset']  ?? '') as String;
         final quote = (p['quote_currency'] ?? p['quote'] ?? p['quote_asset'] ?? '') as String;
-        final price  = _toDouble(p['current_price'] ?? p['last_price'] ?? p['price']);
-        final change = _toDouble(p['price_change_24h'] ?? p['price_change_percent'] ?? p['change_24h'] ?? p['change']);
+        final price = _toDouble(p['last_price'] ?? p['current_price'] ?? p['price']);
         final idx = marketFullList.indexWhere(
             (c) => c.coinType == base && c.baseCoinType == quote);
-        if (idx != -1) {
-          marketFullList[idx].price  = price;
-          marketFullList[idx].change = change;
+        if (idx != -1 && marketFullList[idx].price != price) {
+          marketFullList[idx].price = price;
           changed = true;
         }
       }
@@ -172,7 +170,7 @@ class MarketSpotController extends GetxController implements SocketListener {
           coin.coinType     = p['base_currency']  ?? p['base']  ?? p['base_asset']  ?? '';
           coin.baseCoinType = p['quote_currency'] ?? p['quote'] ?? p['quote_asset'] ?? '';
           coin.price  = _toDouble(p['last_price'] ?? p['current_price'] ?? p['price']);
-          coin.change = _toDouble(p['price_change_24h'] ?? p['price_change_percent'] ?? p['change_24h'] ?? p['change']);
+          coin.change = _toDouble(p['price_change_percent'] ?? p['change_24h'] ?? p['change']);
           coin.volume = _toDouble(p['volume_24h'] ?? p['volume'] ?? p['base_volume']);
           coin.coinIcon = p['icon'] ?? p['logo'] ?? p['image'] ?? p['icon_url'] ?? '';
           return coin;
