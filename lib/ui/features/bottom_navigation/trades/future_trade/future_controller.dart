@@ -269,10 +269,10 @@ class NewFutureController extends GetxController {
           final total = double.tryParse(d['total']?.toString() ?? '0') ?? 0;
           final wb = double.tryParse(d['wallet_balance']?.toString() ?? '0') ?? 0;
           final upnl = double.tryParse(d['unrealized_pnl']?.toString() ?? '0') ?? 0;
-          availableBalance.value = avail > 0 ? avail : legacyBalance;
+          availableBalance.value = avail;
           marginUsed.value = margin;
-          balance.value = total > 0 ? total : (availableBalance.value + margin);
-          walletBalance.value = wb > 0 ? wb : (availableBalance.value + margin);
+          balance.value = total;
+          walletBalance.value = wb;
           unrealizedPnl.value = upnl;
           realMarginBalance.value = double.tryParse(d['real_margin_balance']?.toString() ?? '0') ?? 0;
           realUnrealizedPnl.value = double.tryParse(d['real_unrealized_pnl']?.toString() ?? '0') ?? 0;
