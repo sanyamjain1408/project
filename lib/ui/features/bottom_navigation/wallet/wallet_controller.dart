@@ -36,6 +36,7 @@ class WalletController extends GetxController
   Timer? searchTimer;
   Timer? _spotTimer;
   Timer? _futurePnlTimer;
+  Timer? _earnTimer;
 
   // Stored once — like web's spotYesterday state + pnlInitDoneRef
   double _spotYesterday = 0;
@@ -71,6 +72,7 @@ class WalletController extends GetxController
   void onClose() {
     _spotTimer?.cancel();
     _futurePnlTimer?.cancel();
+    _earnTimer?.cancel();
     searchTimer?.cancel();
     super.onClose();
   }
@@ -103,6 +105,13 @@ class WalletController extends GetxController
     });
     _futurePnlTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
       await _refreshFuturePnl(); // updates balance + PNL in one call
+      _recomputePnl();
+    });
+    _earnTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      final userId = gUserRx.value.id;
+      if (userId == 0) return;
+      final earn = await _fetchEarnTotal(userId);
+      earnWalletTotal.value = earn;
       _recomputePnl();
     });
   }
