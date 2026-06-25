@@ -81,8 +81,9 @@ class FutureController extends GetxController implements SocketListener {
 
       final idx = pairFullList.indexWhere((p) => (p.coinPair ?? '').toUpperCase().replaceAll('_', '') == symbol);
       if (idx == -1) return;
-      if (price  > 0) pairFullList[idx].lastPrice   = price;
-      pairFullList[idx].priceChange = change;
+      if (pairFullList[idx].lastPrice == price) return;
+      pairFullList[idx].lastPrice = price > 0 ? price : pairFullList[idx].lastPrice;
+      if (change != 0) pairFullList[idx].priceChange = change;
       if (volume > 0) pairFullList[idx].volume = volume;
       sortFutureMarketList();
     } catch (_) {}
