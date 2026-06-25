@@ -135,8 +135,35 @@ class _NewFutureScreenState extends State<NewFutureScreen>
         : markPrice;
     setState(() {
       _sliderPct = pct;
-      final m = _ctrl.balance.value * (pct / 100);
-      _qty = (m > 0 && activePrice > 0) ? ((m * _leverage) / activePrice).toStringAsFixed(qp) : '';
+      final availBal = _ctrl.availableBalance.value;
+      final feePercent = pair?.takerFee ?? 0.05;
+      final lev = _leverage.toDouble();
+      final fee = feePercent / 100;
+      final levSettings = _ctrl.leverageSettings;
+      Map<String, dynamic>? levData;
+      if (levSettings.isNotEmpty) {
+        final sorted = List<Map<String, dynamic>>.from(levSettings)
+          ..sort((a, b) => (a['max_leverage'] as num).compareTo(b['max_leverage'] as num));
+        for (final tier in sorted) {
+          if (_leverage <= (tier['max_leverage'] as num).toInt()) { levData = tier; break; }
+        }
+        levData ??= sorted.last;
+      }
+      final maxPositionAmount = double.tryParse(levData?['max_position_amount']?.toString() ?? '0') ?? 0;
+      final maintenanceMarginRate = double.tryParse(levData?['maintenance_margin_rate']?.toString() ?? '0') ?? 0;
+      final maintenanceAmount = double.tryParse(levData?['maintenance_amount']?.toString() ?? '0') ?? 0;
+      double maxQtyVal = 0;
+      if (activePrice > 0) {
+        final denom = (1.0 / lev) - maintenanceMarginRate + fee;
+        if (denom > 0) {
+          final maxNotional = (availBal - maintenanceAmount) / denom;
+          maxQtyVal = maxNotional > 0 ? maxNotional / activePrice : 0;
+        }
+        if (maxPositionAmount > 0 && maxQtyVal > maxPositionAmount) maxQtyVal = maxPositionAmount;
+        if (maxQtyVal < 0) maxQtyVal = 0;
+      }
+      final qty = maxQtyVal * (pct / 100);
+      _qty = qty > 0 ? qty.toStringAsFixed(qp) : '';
     });
   }
 
@@ -366,10 +393,49 @@ class _NewFutureScreenState extends State<NewFutureScreen>
       final activePrice = (_orderType == 'limit' || _orderType == 'stop_limit') && double.tryParse(_limitPx) != null && double.parse(_limitPx) > 0
           ? double.parse(_limitPx) : markPrice;
       final qtyD = double.tryParse(_qty) ?? 0;
+      // availBal from /wallet-details (same as website avbl)
+      final availBal = _ctrl.availableBalance.value;
+      final feePercent = pair?.takerFee ?? 0.05;
+      // Cost = initial_margin + fee  (website formula)
       final marginVal = activePrice > 0 && qtyD > 0 ? (qtyD * activePrice) / _leverage : 0.0;
-      final fee = marginVal * _leverage * ((pair?.takerFee ?? 0.05) / 100);
-      final cost = (marginVal + fee).toStringAsFixed(2);
-      final maxQty = activePrice > 0 ? (_ctrl.balance.value * _leverage / activePrice).toStringAsFixed(qp) : '0.0000';
+      final feeAmt = activePrice > 0 && qtyD > 0 ? (qtyD * activePrice) * (feePercent / 100) : 0.0;
+      final cost = (marginVal + feeAmt).toStringAsFixed(2);
+      // Max = calculateMaxAmount (website formula)
+      final levSettings = _ctrl.leverageSettings;
+      Map<String, dynamic>? levData;
+      if (levSettings.isNotEmpty) {
+        // getLeverageSettingsByLeverage: find tier where leverage <= max_leverage
+        final sorted = List<Map<String, dynamic>>.from(levSettings)
+          ..sort((a, b) => (a['max_leverage'] as num).compareTo(b['max_leverage'] as num));
+        for (final tier in sorted) {
+          if (_leverage <= (tier['max_leverage'] as num).toInt()) {
+            levData = tier;
+            break;
+          }
+        }
+        levData ??= sorted.last;
+      }
+      final maxPositionAmount = double.tryParse(levData?['max_position_amount']?.toString() ?? '0') ?? 0;
+      final maintenanceMarginRate = double.tryParse(levData?['maintenance_margin_rate']?.toString() ?? '0') ?? 0;
+      final maintenanceAmount = double.tryParse(levData?['maintenance_amount']?.toString() ?? '0') ?? 0;
+      double maxQtyVal = 0;
+      if (activePrice > 0) {
+        // calculateMaxAmount formula from website helpers/functions
+        final lev = _leverage.toDouble();
+        final fee = feePercent / 100;
+        // max_notional = (available_balance - maintenance_amount) / (1/lev - maintenance_margin_rate + fee)
+        final denom = (1.0 / lev) - maintenanceMarginRate + fee;
+        if (denom > 0) {
+          final maxNotional = (availBal - maintenanceAmount) / denom;
+          maxQtyVal = maxNotional > 0 ? maxNotional / activePrice : 0;
+        }
+        // cap by max_position_amount
+        if (maxPositionAmount > 0 && maxQtyVal > maxPositionAmount) {
+          maxQtyVal = maxPositionAmount;
+        }
+        if (maxQtyVal < 0) maxQtyVal = 0;
+      }
+      final maxQty = maxQtyVal.toStringAsFixed(qp);
 
       if (_subTab == 'Earn') return Column(children: [if (widget.showTopTabs) _buildTopTabs(), Expanded(child: EarnScreen(key: const ValueKey('future_earn')))]);
       if (_subTab == 'Staking') return Column(children: [if (widget.showTopTabs) _buildTopTabs(), Expanded(child: EarnScreen(key: const ValueKey('future_staking'), initialTab: 3))]);

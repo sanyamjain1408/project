@@ -14,9 +14,18 @@ class NewFutureController extends GetxController {
   final trades = <FutureTrade>[].obs;
   final positionHistory = <FuturePositionHistory>[].obs;
   final balance = 0.0.obs;              // total equity (margin balance)
-  final availableBalance = 0.0.obs;    // data['available']
+  final availableBalance = 0.0.obs;    // from /wallet-details available_balance
   final marginUsed = 0.0.obs;          // data['margin_used']
   final walletBalance = 0.0.obs;       // data['wallet_balance']
+  // /wallet-details fields (website avbl source)
+  final walletDetailsAvailable = 0.0.obs;
+  final walletDetailsTotal = 0.0.obs;
+  // /get-all-leverage-settings data (for calculateMaxAmount)
+  final leverageSettings = <Map<String, dynamic>>[].obs;
+  // /open-order-and-position-amount (for calcCost)
+  final openPositionsTotalAmount = 0.0.obs;
+  final openBuyTotalAmount = 0.0.obs;
+  final openSellTotalAmount = 0.0.obs;
   final unrealizedPnl = 0.0.obs;      // data['unrealized_pnl']
   // Real USDT wallet
   final realMarginBalance = 0.0.obs;  // data['real_margin_balance']
@@ -69,9 +78,15 @@ class NewFutureController extends GetxController {
 
   void refreshAll() {
     fetchBalance();
+    fetchWalletDetails();
     fetchPositions();
     fetchOrders();
     fetchFuturePnl();
+    final p = currentPair.value;
+    if (p != null) {
+      fetchLeverageSettings(p.id.toString());
+      fetchOpenOrderAndPositionAmount(p.id.toString());
+    }
   }
 
   void _checkLogin() {
@@ -79,12 +94,14 @@ class NewFutureController extends GetxController {
     isLoggedIn.value = token.isNotEmpty;
     if (isLoggedIn.value) {
       fetchBalance();
+      fetchWalletDetails();
       fetchPositions();
       fetchOrders();
       fetchFuturePnl();
       _balanceTimer?.cancel();
       _balanceTimer = Timer.periodic(const Duration(seconds: 10), (_) {
         fetchBalance();
+        fetchWalletDetails();
         fetchFuturePnl();
       });
     }
@@ -140,6 +157,8 @@ class NewFutureController extends GetxController {
     lastTrades.clear();
     _fallbackTimer?.cancel();
     fetchMaxLeverage(pair.symbol);
+    fetchLeverageSettings(pair.id.toString());
+    fetchOpenOrderAndPositionAmount(pair.id.toString());
 
     if (_ws.isAlive) {
       _ws.changeSymbol(pair.symbol);
@@ -280,6 +299,68 @@ class NewFutureController extends GetxController {
           bonusBalance.value = double.tryParse(d['bonus_balance']?.toString() ?? '0') ?? 0;
           bonusMarginUsed.value = double.tryParse(d['bonus_margin_used']?.toString() ?? '0') ?? 0;
           bonusUnrealizedPnl.value = double.tryParse(d['bonus_unrealized_pnl']?.toString() ?? '0') ?? 0;
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> fetchWalletDetails() async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      final res = await http.get(
+        Uri.parse('$_base/wallet-details'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true) {
+          final d = data['data'] ?? {};
+          final avail = double.tryParse(d['available_balance']?.toString() ?? '0') ?? 0;
+          final total = double.tryParse(d['total_balance']?.toString() ?? '0') ?? 0;
+          walletDetailsAvailable.value = avail;
+          walletDetailsTotal.value = total;
+          // Override availableBalance with wallet-details source (matches website)
+          availableBalance.value = avail;
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> fetchLeverageSettings(String coinPairUid) async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      final res = await http.get(
+        Uri.parse('$_base/get-all-leverage-settings?coin_pair_uid=$coinPairUid'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          leverageSettings.value = (data['data'] as List)
+              .map((e) => e as Map<String, dynamic>)
+              .toList();
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> fetchOpenOrderAndPositionAmount(String coinPairUid) async {
+    try {
+      final token = getFutureToken();
+      if (token.isEmpty) return;
+      final res = await http.get(
+        Uri.parse('$_base/open-order-and-position-amount?coin_pair_uid=$coinPairUid'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['data'] != null) {
+          final d = data['data'] as Map<String, dynamic>;
+          openPositionsTotalAmount.value = double.tryParse(d['open_positions_total_amount']?.toString() ?? '0') ?? 0;
+          openBuyTotalAmount.value = double.tryParse(d['open_buy_total_amount']?.toString() ?? '0') ?? 0;
+          openSellTotalAmount.value = double.tryParse(d['open_sell_total_amount']?.toString() ?? '0') ?? 0;
         }
       }
     } catch (_) {}
