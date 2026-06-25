@@ -29,8 +29,9 @@ workflows:
       - name: Flutter build iOS archive
         script: |
           flutter build ios --release --no-codesign
-          # Write API key to file
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/AuthKey.p8
+          # Write API key to file preserving format
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8
           cd ios
           xcodebuild -workspace Runner.xcworkspace \
             -scheme Runner \
@@ -42,7 +43,7 @@ workflows:
             PROVISIONING_PROFILE_SPECIFIER="" \
             DEVELOPMENT_TEAM=2M5D9H262M \
             -allowProvisioningUpdates \
-            -authenticationKeyPath /tmp/AuthKey.p8 \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8 \
             -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
             -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
       - name: Export IPA
