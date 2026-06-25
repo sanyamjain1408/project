@@ -29,17 +29,26 @@ workflows:
         script: flutter pub get
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
-      - name: Flutter build iOS
+      - name: Flutter build iOS archive
         script: |
-          flutter build ipa --release
-      - name: Find IPA
+          flutter build ios --release --no-codesign
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath "$CM_BUILD_DIR/Runner.xcarchive" \
+            archive \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM=2M5D9H262M
+      - name: Export IPA
         script: |
-          echo "Searching for IPA files..."
-          find . -name "*.ipa" -type f
+          xcode-project build-ipa \
+            --workspace "$CM_BUILD_DIR/ios/Runner.xcworkspace" \
+            --archive-path "$CM_BUILD_DIR/Runner.xcarchive"
     artifacts:
-      - "**/*.ipa"
       - build/ios/ipa/*.ipa
-      - build/ios/archive/*.xcarchive
+      - "**/*.ipa"
     publishing:
       app_store_connect:
         auth: integration
