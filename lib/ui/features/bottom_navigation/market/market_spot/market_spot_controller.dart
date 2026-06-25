@@ -96,10 +96,31 @@ class MarketSpotController extends GetxController implements SocketListener {
       final idx = marketFullList.indexWhere((c) =>
           '${c.coinType ?? ''}${c.baseCoinType ?? ''}'.toUpperCase() == symbol);
 
-      if (idx == -1) return;
-      if (price  > 0) marketFullList[idx].price  = price;
-      marketFullList[idx].change = change;
-      if (volume > 0) marketFullList[idx].volume = volume;
+      if (idx == -1) {
+        // New pair from WS not yet in list — add it
+        // Try to split symbol into base+quote using known quote currencies
+        String base = symbol, quote = '';
+        for (final q in ['USDT','USDC','BTC','ETH','BNB']) {
+          if (symbol.endsWith(q)) { base = symbol.substring(0, symbol.length - q.length); quote = q; break; }
+        }
+        if (base.isNotEmpty && quote.isNotEmpty) {
+          final coin = MarketCoin()
+            ..coinType     = base
+            ..baseCoinType = quote
+            ..price        = price
+            ..change       = change
+            ..volume       = volume
+            ..coinIcon     = _iconCache[symbol] ?? '';
+          marketFullList.add(coin);
+        }
+      } else {
+        if (price  > 0) marketFullList[idx].price  = price;
+        marketFullList[idx].change = change;
+        if (volume > 0) marketFullList[idx].volume = volume;
+        if (marketFullList[idx].coinIcon?.isEmpty ?? true) {
+          marketFullList[idx].coinIcon = _iconCache[symbol] ?? '';
+        }
+      }
 
       // Debounce: batch all ticks arriving within 100ms into one render
       _renderTimer?.cancel();
@@ -166,46 +187,59 @@ class MarketSpotController extends GetxController implements SocketListener {
     }
     isLoading.value = true;
 
+    // Connect WS immediately — first batch of ticks arrives in ~250ms
+    _wsDisposed = false;
+    _connectWs();
+
+    // Load REST in parallel for icons + initial prices, but don't block on it
     APIRepository().getSpotMarketPairs().then((resp) {
-      isLoading.value = false;
       if (resp.success) {
         List raw = resp.data is List ? resp.data as List
             : (resp.data['data'] ?? resp.data['pairs'] ?? resp.data['result'] ?? resp.data['markets'] ?? []) as List;
 
-        // Build icon cache keyed by symbol e.g. "BTCUSDT"
+        // Build icon cache
         for (final p in raw) {
           final base  = (p['base_currency']  ?? p['base']  ?? '') as String;
           final quote = (p['quote_currency'] ?? p['quote'] ?? '') as String;
           final icon  = (p['icon'] ?? p['logo'] ?? p['image'] ?? '') as String;
-          if (base.isNotEmpty && quote.isNotEmpty) {
+          if (base.isNotEmpty && quote.isNotEmpty && icon.isNotEmpty) {
             _iconCache['$base$quote'.toUpperCase()] = icon;
           }
         }
 
-        final list = raw.map<MarketCoin>((p) {
-          final coin = MarketCoin();
-          coin.coinType     = p['base_currency']  ?? p['base']  ?? '';
-          coin.baseCoinType = p['quote_currency'] ?? p['quote'] ?? '';
-          coin.price  = _toDouble(p['current_price'] ?? p['last_price'] ?? p['price']);
-          coin.change = _toDouble(p['price_change_24h'] ?? p['price_change_percent'] ?? p['change']);
-          coin.volume = _toDouble(p['volume_24h'] ?? p['volume']);
-          coin.coinIcon = p['icon'] ?? p['logo'] ?? p['image'] ?? '';
-          return coin;
-        }).toList();
-
-        marketFullList..clear()..addAll(list);
-        applyFiltersAndSort();
-
-        // Now connect WS for live ms-level updates on top of REST data
-        _wsDisposed = false;
-        _connectWs();
+        // If WS hasn't populated the list yet, seed from REST
+        if (marketFullList.isEmpty) {
+          final list = raw.map<MarketCoin>((p) {
+            final coin = MarketCoin();
+            coin.coinType     = p['base_currency']  ?? p['base']  ?? '';
+            coin.baseCoinType = p['quote_currency'] ?? p['quote'] ?? '';
+            coin.price  = _toDouble(p['current_price'] ?? p['last_price'] ?? p['price']);
+            coin.change = _toDouble(p['price_change_24h'] ?? p['price_change_percent'] ?? p['change']);
+            coin.volume = _toDouble(p['volume_24h'] ?? p['volume']);
+            coin.coinIcon = p['icon'] ?? p['logo'] ?? p['image'] ?? '';
+            return coin;
+          }).toList();
+          marketFullList..clear()..addAll(list);
+          applyFiltersAndSort();
+        } else {
+          // Patch icons into WS-populated list
+          for (final coin in marketFullList) {
+            if (coin.coinIcon?.isEmpty ?? true) {
+              coin.coinIcon = _iconCache['${coin.coinType}${coin.baseCoinType}'.toUpperCase()] ?? '';
+            }
+          }
+          applyFiltersAndSort();
+        }
         _startFallback();
-      } else {
-        showToast(resp.message);
       }
-    }, onError: (err) {
       isLoading.value = false;
-      showToast(err.toString());
+    }, onError: (_) {
+      isLoading.value = false;
+    });
+
+    // Stop spinner after 1s max even if REST is slow (WS data already showing)
+    Timer(const Duration(seconds: 1), () {
+      if (isLoading.value && marketFullList.isNotEmpty) isLoading.value = false;
     });
   }
 
