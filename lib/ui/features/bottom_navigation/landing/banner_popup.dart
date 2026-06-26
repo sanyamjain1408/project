@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -214,18 +215,12 @@ class _BannerPopupState extends State<BannerPopup> with SingleTickerProviderStat
                             child: Stack(
                               children: [
                                 if (banner.imageUrl != null && banner.imageUrl!.isNotEmpty)
-                                  Image.network(
-                                    banner.imageUrl!,
+                                  CachedNetworkImage(
+                                    imageUrl: banner.imageUrl!,
                                     width: cardW,
                                     fit: BoxFit.fitWidth,
-                                    frameBuilder: (ctx, child, frame, _) {
-                                      if (frame == null) {
-                                        // Image not yet loaded — show shimmer placeholder
-                                        return _Shimmer(width: cardW, height: 300);
-                                      }
-                                      return child;
-                                    },
-                                    errorBuilder: (_, __, ___) => Container(height: 300, color: const Color(0xFF1a1a1a)),
+                                    placeholder: (ctx, url) => _Shimmer(width: cardW, height: 300),
+                                    errorWidget: (ctx, url, err) => Container(height: 300, color: const Color(0xFF1a1a1a)),
                                   )
                                 else
                                   Container(height: 300, color: const Color(0xFF1a1a1a)),

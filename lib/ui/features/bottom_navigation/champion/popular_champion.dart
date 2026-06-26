@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/champion_controller.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/champion/competition_deposit_history_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
 
 // ─── Data Models (replace with API models later) ──────────────────────────────
 
@@ -207,6 +208,23 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
     }
   }
 
+  double _getPairChange(String base, String quote) {
+    try {
+      if (!Get.isRegistered<LandingController>()) return 0;
+      final lc = Get.find<LandingController>();
+      final allPairs = [
+        ...?lc.landingList.value.assetCoinPairs,
+        ...?lc.landingList.value.hourlyCoinPairs,
+      ];
+      final match = allPairs.firstWhereOrNull((p) =>
+          (p.childCoinName ?? '').toUpperCase() == base.toUpperCase() &&
+          (p.parentCoinName ?? '').toUpperCase() == quote.toUpperCase());
+      return match?.priceChange ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   ContestModel _apiToContest(ApiCompetition d, List<ApiLeaderboardEntry> lb) {
     final endAt = d.endAt != null ? DateTime.tryParse(d.endAt!) : null;
     final startAt = d.startAt != null ? DateTime.tryParse(d.startAt!) : null;
@@ -227,8 +245,10 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
           TradingPairModel(symbol: c.trim().toUpperCase(), changePercent: 0),
         );
       }
-    } else if (d.pairRestriction == 'any') {
-      pairs.add(const TradingPairModel(symbol: 'All Pairs', changePercent: 0));
+    } else {
+      // 'any' or no restriction — show top default pairs like web
+      pairs.add(TradingPairModel(symbol: 'BTC/USDT', changePercent: _getPairChange('BTC', 'USDT')));
+      pairs.add(TradingPairModel(symbol: 'ETH/USDT', changePercent: _getPairChange('ETH', 'USDT')));
     }
 
     final prizes = d.prizes;
@@ -930,43 +950,61 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
               ],
             ),
             const SizedBox(height: 20),
+            // Figma: outer container 362x120, inner pair cards 151x40
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
+                color: const Color(0xFF111111),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Wrap(
-                spacing: 24,
-                runSpacing: 10,
+              child: Row(
                 children: _contest.tradingPairs.map((p) {
                   final isPos = p.changePercent >= 0;
-
-                  return RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '${p.symbol}  ',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            height: 20 / 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: _dmSans,
+                  final pctColor = isPos ? const Color(0xFF00B052) : Colors.redAccent;
+                  return Expanded(
+                    child: Container(
+                      height: 40,
+                      margin: EdgeInsets.only(
+                        right: p == _contest.tradingPairs.last ? 0 : 12,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              p.symbol,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontFamily: _dmSans,
+                                fontWeight: FontWeight.w700,
+                                height: 1.25,
+                              ),
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text:
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
                               '${isPos ? '+' : ''}${p.changePercent.toStringAsFixed(2)}%',
-                          style: TextStyle(
-                            color: isPos ? Color(0xFF00B052) : Colors.redAccent,
-                            fontSize: 16,
-                            height: 20 / 16,
-                            fontWeight: FontWeight.w400,
-                            fontFamily: _dmSans,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: pctColor,
+                                fontSize: 13,
+                                fontFamily: _dmSans,
+                                fontWeight: FontWeight.w400,
+                                height: 1.25,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 }).toList(),
@@ -1138,13 +1176,14 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
       rankWidget = _medalBadge('🥉', const Color(0xFFCD7F32));
     } else {
       rankWidget = SizedBox(
-        width: 30,
+        width: 34,
         child: Text(
           '${e.rank}',
+          textAlign: TextAlign.center,
           style: const TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
             fontFamily: _dmSans,
           ),
         ),
@@ -1155,7 +1194,7 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
       padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
         children: [
-          SizedBox(width: 44, child: rankWidget),
+          SizedBox(width: 34, child: rankWidget),
 
           const SizedBox(width: 12),
 
@@ -1209,15 +1248,30 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
   }
 
   Widget _medalBadge(String emoji, Color color) {
+    // rank 1=gold, 2=silver, 3=bronze — web-style circular badge with ribbon icon
+    final List<Color> gradColors = color == const Color(0xFFFFD700)
+        ? [const Color(0xFFFFE066), const Color(0xFFB8860B)]
+        : color == const Color(0xFFB0B0B0)
+            ? [const Color(0xFFE0E0E0), const Color(0xFF808080)]
+            : [const Color(0xFFE8A060), const Color(0xFF7B3F00)];
     return Container(
-      width: 30,
-      height: 30,
+      width: 34,
+      height: 34,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color.withValues(alpha: 0.2),
-        border: Border.all(color: color, width: 1.5),
+        gradient: LinearGradient(
+          colors: gradColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 6, spreadRadius: 1)],
       ),
-      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 14))),
+      child: Center(
+        child: Text(
+          emoji,
+          style: const TextStyle(fontSize: 18),
+        ),
+      ),
     );
   }
 
