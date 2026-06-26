@@ -29,7 +29,8 @@ class LandingController extends GetxController implements SocketListener {
   }
 
   void getLandingSettings() async {
-    isLoading.value = true;
+    // Never show shimmer — screen renders immediately with empty state, data fills in
+    isLoading.value = false;
     APIRepository().getCommonSettings().then(
       (resp) {
         if (resp.success && resp.data != null && resp.data is Map<String, dynamic>) {

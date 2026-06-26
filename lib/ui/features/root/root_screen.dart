@@ -61,6 +61,7 @@ import 'root_controller.dart';
 import 'prefetch_service.dart';
 import '../bottom_navigation/landing/banner_popup.dart';
 import '../bottom_navigation/landing/deposit_contest_popup.dart';
+import '../bottom_navigation/landing/landing_controller.dart';
 import 'dart:async';
 import 'dart:ui';
 
@@ -104,6 +105,10 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     currentContext = context;
     super.initState();
     _controller.changeBottomNavIndex = changeBottomNavTab;
+    // Start landing data fetch immediately — before user reaches home screen
+    if (!Get.isRegistered<LandingController>()) {
+      Get.put(LandingController()).getLandingSettings();
+    }
     // Pre-fetch banners immediately so popup is fast when it mounts
     BannerPopup.prefetch();
     // Show popup only once per app session — static flag prevents re-showing on rebuild

@@ -20,7 +20,6 @@ import '../../../../utils/decorations.dart';
 import '../../../../utils/dimens.dart';
 import '../../../../utils/extensions.dart';
 import '../../../../utils/image_util.dart';
-import '../../../../utils/shimmer_loading/shimmer_view.dart';
 import '../../../../utils/spacers.dart';
 import '../../../../utils/text_util.dart';
 import '../../../../utils/web_view.dart';
@@ -80,9 +79,7 @@ class _LandingScreenState extends State<LandingScreen> {
   Widget build(BuildContext context) {
     return Obx(() {
           final lData = _controller.landingData.value;
-          return _controller.isLoading.value
-              ? const ShimmerViewLanding()
-              : CustomScrollView(
+          return CustomScrollView(
                   slivers: [
                     SliverAppBar(
                       backgroundColor: Colors.black,
@@ -175,10 +172,10 @@ class _LandingScreenState extends State<LandingScreen> {
                     ),
                     SliverList(
                       delegate: SliverChildListDelegate([
-                        if (lData.landingSecondSectionStatus == 1) const CryptoTrustBannerView(),
+                        const CryptoTrustBannerView(),
                         buildViewCard(),
                         if (lData.announcementList.isValid) AnnouncementView(announcementList: lData.announcementList!),
-                        if (lData.landingThirdSectionStatus == 1) const LandingMarketView(),
+                        const LandingMarketView(),
                         const DiscoverTabsWidget(),
                       ]),
                     ),
