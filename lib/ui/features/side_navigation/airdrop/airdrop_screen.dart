@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/ui/features/root/prefetch_service.dart';
 
 // ─────────────────────────── CONFIG ──────────────────────────────────────────
 const _kBase = 'https://api.trapix.com';
@@ -464,19 +465,29 @@ class _AirdropScreenState extends State<AirdropScreen> {
   @override
   void initState() {
     super.initState();
+    if (Get.isRegistered<PrefetchService>()) {
+      final cached = PrefetchService.to.airdropList;
+      if (cached.isNotEmpty) {
+        _airdrops = List.from(cached);
+        _loading = false;
+      }
+    }
     _load();
   }
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      if (_airdrops.isEmpty) _loading = true;
       _error = null;
     });
     try {
       final data = await _get('/api/airdrops?user_id=$_uid');
       final list =
           (data['data'] ?? data['airdrops'] ?? data['result'] ?? []) as List;
-      if (mounted) setState(() => _airdrops = list);
+      if (mounted) {
+        setState(() => _airdrops = list);
+        if (Get.isRegistered<PrefetchService>()) PrefetchService.to.airdropList.assignAll(list);
+      }
     } catch (e) {
       debugPrint('[AirdropScreen] ERROR: $e');
       if (mounted) setState(() => _error = e.toString());

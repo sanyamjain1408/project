@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/reward_hub/reward_hub_screen.dart';
+import 'package:tradexpro_flutter/ui/features/root/prefetch_service.dart';
 
 const _kBg    = Color(0xFF0A0B0D);
 const _kCard  = Color(0xFF1A1A1A);
@@ -40,10 +41,21 @@ class _SignupBonusScreenState extends State<SignupBonusScreen> {
   };
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    if (Get.isRegistered<PrefetchService>()) {
+      final svc = PrefetchService.to;
+      if (svc.signupBonusStatus.value != null) {
+        _status = svc.signupBonusStatus.value;
+        _referralNetwork = List.from(svc.signupBonusCoupons);
+        _loading = false;
+      }
+    }
+    _load();
+  }
 
   Future<void> _load() async {
-    setState(() { _loading = true; });
+    setState(() { if (_status == null) _loading = true; });
     await Future.wait([_fetchStatus(), _fetchCoupons(), _fetchReferralNetwork()]);
     if (mounted) setState(() { _loading = false; });
   }

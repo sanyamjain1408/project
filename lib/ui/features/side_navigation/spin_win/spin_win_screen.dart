@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/constants.dart';
+import 'package:tradexpro_flutter/ui/features/root/prefetch_service.dart';
 
 const _kApiBase = 'https://api.trapix.com/api';
 const _lime = Color(0xFFCCFF00);
@@ -120,6 +121,15 @@ class _SpinWinScreenState extends State<SpinWinScreen>
     _confettiCtrl = ConfettiController(
       duration: const Duration(seconds: 4),
     );
+    // Use prefetched cache for instant display
+    if (Get.isRegistered<PrefetchService>()) {
+      final cached = PrefetchService.to.spinStatus.value;
+      if (cached != null) {
+        _applySpinStatus(cached);
+        _loading = false;
+        _startCooldownTimer();
+      }
+    }
     _fetchStatus();
   }
 
@@ -131,92 +141,64 @@ class _SpinWinScreenState extends State<SpinWinScreen>
     super.dispose();
   }
 
+  void _applySpinStatus(Map<String, dynamic> data) {
+    _spinsLeft = (data['bonus_spins'] ?? 0) as int;
+    _spinsUsedToday = (data['spins_used_today'] ?? 0) as int;
+    _cooldownMs = (data['cooldown_ms'] ?? 0) as int;
+    _cumVolume = (data['cumulative_volume'] ?? 0.0).toDouble();
+    _maxSpinsPerDay = (data['max_per_day'] ?? data['max_spins_per_day'] ?? 10) as int;
+
+    final rawTiers = data['deposit_tiers'] ?? data['deposit_spin_tiers'] ?? [];
+    _depositTiers = (rawTiers is List && rawTiers.isNotEmpty)
+        ? rawTiers.map((e) => Map<String, dynamic>.from(e as Map)).toList()
+        : [
+            {'range': '\$1 – \$20', 'spins': 1},
+            {'range': '\$21 – \$50', 'spins': 2},
+            {'range': '\$51 – \$100', 'spins': 3},
+            {'range': '\$101 – \$200', 'spins': 5},
+            {'range': '\$201 – \$500', 'spins': 7},
+            {'range': '\$500+', 'spins': 10},
+          ];
+
+    final rawSteps = data['spot_milestones'] ?? data['trading_steps'] ?? data['trading_milestones'] ?? [];
+    _spotSteps = (rawSteps is List && rawSteps.isNotEmpty)
+        ? rawSteps.map((e) => Map<String, dynamic>.from(e as Map)).toList()
+        : [
+            {'target': 500, 'spins': 1},
+            {'target': 1000, 'spins': 2},
+            {'target': 2000, 'spins': 4},
+            {'target': 5000, 'spins': 10},
+            {'target': 10000, 'spins': 20},
+            {'target': 20000, 'spins': 50},
+            {'target': 30000, 'spins': 75},
+            {'target': 50000, 'spins': 100},
+          ];
+
+    final rawFaqs = data['faqs'] ?? data['faq'] ?? [];
+    _faqs = (rawFaqs is List && rawFaqs.isNotEmpty)
+        ? rawFaqs.map((e) => Map<String, dynamic>.from(e as Map)).toList()
+        : [
+            {'q': 'How long does it take for rewards to be distributed?', 'a': 'Tokens and futures bonuses are distributed in real time (a few minutes).'},
+            {'q': 'Where can I view the status of my rewards?', 'a': 'You can view the reward distribution status in your rewards history.'},
+            {'q': 'Who should I contact if I encounter any issues?', 'a': 'Please contact our customer support if you have any questions or issues.'},
+          ];
+  }
+
   Future<void> _fetchStatus() async {
     if (_uid.isEmpty) {
       if (mounted) setState(() => _loading = false);
       return;
     }
-    setState(() => _loading = true);
+    if (mounted && _loading) setState(() => _loading = true);
     try {
-      final res = await http.get(
-        Uri.parse('$_kApiBase/spin/status?user_id=$_uid'),
-      );
+      final res = await http.get(Uri.parse('$_kApiBase/spin/status?user_id=$_uid'));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
         if (data['success'] == true && mounted) {
-          setState(() {
-            _spinsLeft = (data['bonus_spins'] ?? 0) as int;
-            _spinsUsedToday = (data['spins_used_today'] ?? 0) as int;
-            _cooldownMs = (data['cooldown_ms'] ?? 0) as int;
-            _cumVolume = (data['cumulative_volume'] ?? 0.0).toDouble();
-            _maxSpinsPerDay =
-                (data['max_per_day'] ?? data['max_spins_per_day'] ?? 10) as int;
-
-            final rawTiers =
-                data['deposit_tiers'] ?? data['deposit_spin_tiers'] ?? [];
-            if (rawTiers is List && rawTiers.isNotEmpty) {
-              _depositTiers = rawTiers
-                  .map((e) => Map<String, dynamic>.from(e as Map))
-                  .toList();
-            } else {
-              _depositTiers = [
-                {'range': '\$1 – \$20', 'spins': 1},
-                {'range': '\$21 – \$50', 'spins': 2},
-                {'range': '\$51 – \$100', 'spins': 3},
-                {'range': '\$101 – \$200', 'spins': 5},
-                {'range': '\$201 – \$500', 'spins': 7},
-                {'range': '\$500+', 'spins': 10},
-              ];
-            }
-
-            final rawSteps =
-                data['spot_milestones'] ??
-                data['trading_steps'] ??
-                data['trading_milestones'] ??
-                [];
-            if (rawSteps is List && rawSteps.isNotEmpty) {
-              _spotSteps = rawSteps
-                  .map((e) => Map<String, dynamic>.from(e as Map))
-                  .toList();
-            } else {
-              _spotSteps = [
-                {'target': 500, 'spins': 1},
-                {'target': 1000, 'spins': 2},
-                {'target': 2000, 'spins': 4},
-                {'target': 5000, 'spins': 10},
-                {'target': 10000, 'spins': 20},
-                {'target': 20000, 'spins': 50},
-                {'target': 30000, 'spins': 75},
-                {'target': 50000, 'spins': 100},
-              ];
-            }
-
-            final rawFaqs = data['faqs'] ?? data['faq'] ?? [];
-            if (rawFaqs is List && rawFaqs.isNotEmpty) {
-              _faqs = rawFaqs
-                  .map((e) => Map<String, dynamic>.from(e as Map))
-                  .toList();
-            } else {
-              _faqs = [
-                {
-                  'q': 'How long does it take for rewards to be distributed?',
-                  'a':
-                      'Tokens and futures bonuses are distributed in real time (a few minutes).',
-                },
-                {
-                  'q': 'Where can I view the status of my rewards?',
-                  'a':
-                      'You can view the reward distribution status in your rewards history.',
-                },
-                {
-                  'q': 'Who should I contact if I encounter any issues?',
-                  'a':
-                      'Please contact our customer support if you have any questions or issues.',
-                },
-              ];
-            }
-          });
+          setState(() => _applySpinStatus(data));
           _startCooldownTimer();
+          // Update prefetch cache
+          if (Get.isRegistered<PrefetchService>()) PrefetchService.to.spinStatus.value = data;
         }
       }
     } catch (e) {

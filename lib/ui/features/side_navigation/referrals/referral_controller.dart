@@ -60,10 +60,10 @@ class ReferralController extends GetxController {
 
   static const String _baseUrl = 'https://api.trapix.com/api/simple-referral';
 
-  void getReferralData() {
-    showLoadingDialog();
+  void getReferralData({bool silent = false}) {
+    if (!silent) showLoadingDialog();
     APIRepository().getReferralApp().then((resp) {
-      hideLoadingDialog();
+      if (!silent) hideLoadingDialog();
       if (resp.success) {
         final data = ReferralData.fromJson(resp.data);
         referralData.value = data;
@@ -75,8 +75,7 @@ class ReferralController extends GetxController {
         showToast(resp.message);
       }
     }, onError: (err) {
-      hideLoadingDialog();
-      showToast(err.toString());
+      if (!silent) hideLoadingDialog();
     });
   }
 

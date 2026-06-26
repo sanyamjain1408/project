@@ -5,6 +5,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/ui/features/bottom_navigation/landing/landing_controller.dart';
+import 'package:tradexpro_flutter/ui/features/root/prefetch_service.dart';
 
 const _kBg    = Color(0xFF0A0B0D);
 const _kCard  = Color(0xFF1A1A1A);
@@ -35,6 +36,14 @@ class _RewardHubScreenState extends State<RewardHubScreen>
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
+    if (Get.isRegistered<PrefetchService>()) {
+      final svc = PrefetchService.to;
+      if (svc.rewardTasks.isNotEmpty) {
+        _tasks = List.from(svc.rewardTasks);
+        _myRewards = svc.myRewards.value ?? {};
+        _loading = false;
+      }
+    }
     _load();
   }
 
@@ -47,7 +56,7 @@ class _RewardHubScreenState extends State<RewardHubScreen>
   };
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() { if (_tasks.isEmpty) _loading = true; _error = null; });
     try {
       final results = await Future.wait([
         http.get(Uri.parse('$_base/api/v1/rewards/tasks'), headers: _headers),
@@ -55,11 +64,15 @@ class _RewardHubScreenState extends State<RewardHubScreen>
       ]);
       final t = jsonDecode(results[0].body);
       final r = jsonDecode(results[1].body);
-      if (mounted) setState(() {
-        _tasks      = t['data'] ?? [];
-        _myRewards  = r['data'] ?? {};
-        _loading    = false;
-      });
+      if (mounted) {
+        final tasks = (t['data'] ?? []) as List;
+        final rewards = (r['data'] ?? {}) as Map<String, dynamic>;
+        setState(() { _tasks = tasks; _myRewards = rewards; _loading = false; });
+        if (Get.isRegistered<PrefetchService>()) {
+          PrefetchService.to.rewardTasks.assignAll(tasks);
+          PrefetchService.to.myRewards.value = rewards;
+        }
+      }
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }

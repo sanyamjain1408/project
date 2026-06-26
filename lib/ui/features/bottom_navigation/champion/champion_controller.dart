@@ -246,6 +246,12 @@ class ChampionController extends GetxController {
 
   var competitions     = <ApiCompetition>[].obs;
   var isLoadingList    = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchCompetitions();
+  }
   var isLoadingDetail  = false.obs;
   var isJoining        = false.obs;
 
@@ -255,8 +261,8 @@ class ChampionController extends GetxController {
   var isLoadingHistory = false.obs;
 
   // ── Fetch competitions list ───────────────────────────────────────────────
-  Future<void> fetchCompetitions() async {
-    isLoadingList.value = true;
+  Future<void> fetchCompetitions({bool silent = false}) async {
+    if (!silent && competitions.isEmpty) isLoadingList.value = true;
     try {
       final userId = gUserRx.value.id;
       final url = '$_base/competitions?user_id=$userId';
@@ -279,7 +285,7 @@ class ChampionController extends GetxController {
     } catch (e) {
       // debugPrint('fetchCompetitions error: $e');
     } finally {
-      isLoadingList.value = false;
+      if (isLoadingList.value) isLoadingList.value = false;
     }
   }
 

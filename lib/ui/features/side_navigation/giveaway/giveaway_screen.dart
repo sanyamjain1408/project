@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tradexpro_flutter/data/models/giveaway.dart';
 import 'package:tradexpro_flutter/data/remote/api_repository.dart';
+import 'package:tradexpro_flutter/ui/features/root/prefetch_service.dart';
 import 'giveaway_detail_screen.dart';
 
 const _bg    = Color(0xFF0B0B0F);
@@ -24,6 +25,13 @@ class _GiveawayScreenState extends State<GiveawayScreen> {
   @override
   void initState() {
     super.initState();
+    if (Get.isRegistered<PrefetchService>()) {
+      final cached = PrefetchService.to.giveawayList;
+      if (cached.isNotEmpty) {
+        _list = List.from(cached);
+        _loading = false;
+      }
+    }
     _load();
   }
 
@@ -35,6 +43,7 @@ class _GiveawayScreenState extends State<GiveawayScreen> {
           if (r.success && r.data != null) {
             final raw = r.data is List ? r.data : (r.data['data'] ?? []);
             _list = (raw as List).map((e) => Giveaway.fromJson(e)).toList();
+            if (Get.isRegistered<PrefetchService>()) PrefetchService.to.giveawayList.assignAll(_list);
           }
         });
       }

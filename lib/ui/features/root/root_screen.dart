@@ -51,10 +51,17 @@ import '../side_navigation/official_verification/official_verification_screen.da
 import '../auth/sign_in/sign_in_screen.dart';
 import '../auth/sign_up/sign_up_screen.dart';
 import '../bottom_navigation/champion/champion_screen.dart';
+import '../bottom_navigation/champion/champion_controller.dart';
 import '../side_navigation/price_alerts/price_alerts_screen.dart';
+import '../side_navigation/referrals/referral_controller.dart';
+import '../side_navigation/ib_program/ib_program_controller.dart';
+import '../side_navigation/earn/earn_controller.dart';
+import '../side_navigation/staking/staking_controller.dart';
 import 'root_controller.dart';
+import 'prefetch_service.dart';
 import '../bottom_navigation/landing/banner_popup.dart';
 import '../bottom_navigation/landing/deposit_contest_popup.dart';
+import 'dart:async';
 import 'dart:ui';
 
 // ── EXACT FIGMA COLORS ───────────────────────────────────────────────────────
@@ -87,6 +94,8 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   static bool _popupShownThisSession = false;
   bool _showPopup = false;
   int _popupKey = 0;
+  Timer? _screenRefreshTimer;
+  Worker? _loginWatcher;
   final autoSizeGroup = AutoSizeGroup();
   List<AppBottomNav> navList = AppBottomNavHelper.getBottomNavList();
 
@@ -102,10 +111,56 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
       _popupShownThisSession = true;
       _showPopup = true;
     }
+    _prefetchAllScreenData();
+  }
+
+  void _prefetchAllScreenData() {
+    if (!Get.isRegistered<PrefetchService>()) Get.put(PrefetchService());
+
+    _runFetch();
+    _screenRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) => _runFetch());
+
+    // Jaise hi login ho turant fetch karo (timer ka wait nahi)
+    _loginWatcher = ever(gUserRx, (user) {
+      if (user.id != 0) _runFetch();
+    });
+  }
+
+  void _runFetch() {
+    final userId = gUserRx.value.id;
+    if (userId == 0) return;
+
+    // Champion — onInit auto-fetches, just ensure it's registered
+    if (!Get.isRegistered<ChampionController>()) Get.put(ChampionController());
+
+    // Referral
+    final referral = Get.isRegistered<ReferralController>()
+        ? Get.find<ReferralController>()
+        : Get.put(ReferralController());
+    referral.getReferralData(silent: true);
+
+    // IB Program
+    final ib = Get.isRegistered<IBController>()
+        ? Get.find<IBController>()
+        : Get.put(IBController());
+    ib.getIBData(silent: true);
+
+    // Earn
+    final earn = Get.isRegistered<EarnController>()
+        ? Get.find<EarnController>()
+        : Get.put(EarnController());
+    earn.fetchProducts();
+    earn.fetchBalances();
+    earn.fetchPositions();
+
+    // Staking
+    if (!Get.isRegistered<StakingController>()) Get.put(StakingController());
   }
 
   @override
   void dispose() {
+    _screenRefreshTimer?.cancel();
+    _loginWatcher?.dispose();
     hideKeyboard();
     super.dispose();
     currentContext = null;

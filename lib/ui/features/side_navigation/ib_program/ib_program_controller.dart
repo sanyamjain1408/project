@@ -40,10 +40,10 @@ class IBController extends GetxController {
   static const String _apiBase = 'https://api.trapix.com/api';
 
   // ── Load initial data then fetch from /referral/stats + /referral/tree ─────
-  void getIBData() {
-    showLoadingDialog();
+  void getIBData({bool silent = false}) {
+    if (!silent) showLoadingDialog();
     APIRepository().getReferralApp().then((resp) {
-      hideLoadingDialog();
+      if (!silent) hideLoadingDialog();
       if (resp.success) {
         final data = ReferralData.fromJson(resp.data);
 
@@ -69,8 +69,7 @@ class IBController extends GetxController {
         showToast(resp.message);
       }
     }, onError: (err) {
-      hideLoadingDialog();
-      showToast(err.toString());
+      if (!silent) hideLoadingDialog();
     });
   }
 

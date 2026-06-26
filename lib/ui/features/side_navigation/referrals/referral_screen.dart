@@ -160,9 +160,12 @@ class _ReferralScreenState extends State<ReferralScreen> {
   @override
   void initState() {
     super.initState();
-    _ctrl = Get.put(ReferralController());
+    _ctrl = Get.isRegistered<ReferralController>()
+        ? Get.find<ReferralController>()
+        : Get.put(ReferralController());
+    final hasCache = _ctrl.referralData.value.user != null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ctrl.getReferralData();
+      _ctrl.getReferralData(silent: hasCache);
     });
   }
 

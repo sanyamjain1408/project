@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -29,8 +30,9 @@ class _ChampionScreenState extends State<ChampionScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _ctrl = Get.put(ChampionController());
-    WidgetsBinding.instance.addPostFrameCallback((_) => _ctrl.fetchCompetitions());
+    _ctrl = Get.isRegistered<ChampionController>()
+        ? Get.find<ChampionController>()
+        : Get.put(ChampionController());
   }
 
   @override
@@ -161,11 +163,13 @@ class _ChampionScreenState extends State<ChampionScreen>
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: comp.bannerImage != null && comp.bannerImage!.isNotEmpty
-                ? Image.network(
-                    comp.bannerImage!,
+                ? CachedNetworkImage(
+                    imageUrl: comp.bannerImage!,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, err, stack) =>
+                    placeholder: (context, url) =>
+                        _fallbackImage(_fallbackPosters[index % _fallbackPosters.length]),
+                    errorWidget: (context, url, err) =>
                         _fallbackImage(_fallbackPosters[index % _fallbackPosters.length]),
                   )
                 : _fallbackImage(_fallbackPosters[index % _fallbackPosters.length]),

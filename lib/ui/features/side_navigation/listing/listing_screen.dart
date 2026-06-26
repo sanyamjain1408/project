@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:tradexpro_flutter/ui/features/root/prefetch_service.dart';
 
 const _kBase = 'https://api.trapix.com';
 const _lime = Color(0xFFCCFF00);
@@ -34,6 +35,26 @@ class _ListingScreenState extends State<ListingScreen> {
   @override
   void initState() {
     super.initState();
+    if (Get.isRegistered<PrefetchService>()) {
+      final cached = PrefetchService.to.listingFormSections;
+      if (cached.isNotEmpty) {
+        _sections = List.from(cached);
+        _loading = false;
+        // Pre-select first option for select/radio fields from cache
+        for (final section in _sections) {
+          for (final q in (section['questions'] as List? ?? [])) {
+            final ft = q['field_type'] as String? ?? '';
+            if (ft == 'select' || ft == 'radio') {
+              final qId = q['id'] as int;
+              final opts = (q['options'] as List?)?.cast<String>() ?? [];
+              if (opts.isNotEmpty && !_answers.containsKey(qId)) {
+                _answers[qId] = opts.first;
+              }
+            }
+          }
+        }
+      }
+    }
     _loadForm();
   }
 
@@ -44,7 +65,7 @@ class _ListingScreenState extends State<ListingScreen> {
   }
 
   Future<void> _loadForm() async {
-    setState(() => _loading = true);
+    setState(() { if (_sections.isEmpty) _loading = true; });
     try {
       final res = await http.get(Uri.parse('$_kBase/api/v1/listing-form'));
       if (res.statusCode == 200) {
@@ -63,7 +84,10 @@ class _ListingScreenState extends State<ListingScreen> {
             }
           }
         }
-        if (mounted) setState(() => _sections = sections);
+        if (mounted) {
+          setState(() => _sections = sections);
+          if (Get.isRegistered<PrefetchService>()) PrefetchService.to.listingFormSections.assignAll(sections);
+        }
       }
     } catch (_) {}
     if (mounted) setState(() => _loading = false);

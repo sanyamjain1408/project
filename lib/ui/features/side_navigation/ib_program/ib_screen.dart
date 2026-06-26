@@ -39,7 +39,7 @@ class IBScreen extends StatefulWidget {
 }
 
 class _IBScreenState extends State<IBScreen> {
-  final _ctrl = Get.put(IBController());
+  late final IBController _ctrl;
   DateTime? _startDate;
   DateTime? _endDate;
 
@@ -50,7 +50,12 @@ class _IBScreenState extends State<IBScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _ctrl.getIBData());
+    _ctrl = Get.isRegistered<IBController>()
+        ? Get.find<IBController>()
+        : Get.put(IBController());
+    final hasCache = _ctrl.stats.value.userId != null;
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _ctrl.getIBData(silent: hasCache));
   }
 
   // ── Tier helpers ──────────────────────────────────────────────────────────
