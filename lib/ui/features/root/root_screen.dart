@@ -336,7 +336,7 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                               const SizedBox(height: 5),
                               Row(
                                 children: [
-                                  Text("UID: ${user.id}", style: const TextStyle(color: _textWhite, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dmSans)),
+                                  Flexible(child: Text("UID: TRPX${user.id.toString().padLeft(6, '0')}", style: const TextStyle(color: _textWhite, fontSize: 12, fontWeight: FontWeight.w400, fontFamily: _dmSans))),
                                   const SizedBox(width: 5),
                                   Image.asset('assets/icons/uid.png', height: 14, width: 13),
                                 ],
@@ -344,7 +344,6 @@ class RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const Spacer(),
                         const Icon(Icons.chevron_right, color: _green, size: 30),
                       ],
                     ),
@@ -1150,7 +1149,6 @@ class _VerificationAvatarState extends State<VerificationAvatar> {
     final steps = [phoneDone, emailDone, kycDone];
     final doneCount = steps.where((v) => v).length;
     final allDone = doneCount == steps.length;
-    final percent = (doneCount / steps.length * 100).round();
     const pi = 3.14159265;
     const fullSweep = 2 * pi;
 
@@ -1194,47 +1192,7 @@ class _VerificationAvatarState extends State<VerificationAvatar> {
                   child: showCircleAvatar(widget.user.photo, size: widget.size),
                 ),
               ),
-              // % badge at bottom
-              Positioned(
-                bottom: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFF2A2A2A)),
-                  ),
-                  child: Text(
-                    '$percent%',
-                    style: const TextStyle(
-                      color: Color(0xFFCCFF00),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'DMSans',
-                    ),
-                  ),
-                ),
-              ),
             ],
-          ),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-          decoration: BoxDecoration(
-            color: allDone
-                ? const Color(0xFF015629).withValues(alpha: 0.4)
-                : const Color(0xFF5A1A1A).withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            allDone ? 'Verified' : 'Not Verified',
-            style: TextStyle(
-              color: allDone ? const Color(0xFF00FF4D) : const Color(0xFFFF4D4D),
-              fontSize: 10,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'DMSans',
-            ),
           ),
         ),
       ],
