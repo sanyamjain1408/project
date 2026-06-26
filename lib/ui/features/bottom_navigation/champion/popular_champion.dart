@@ -1417,6 +1417,20 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
   // PRIZE POOLS
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildPrizePools() {
+    // Hardcoded — Figma exact design
+    const rows = [
+      (rank: 1, volume: '10,00,000 USDT', reward: 'Iphone 17',  icon: Icons.smartphone),
+      (rank: 2, volume: '5,00,000 USDT',  reward: 'Ipad Air',   icon: Icons.tablet_mac),
+      (rank: 3, volume: '2,50,000 USDT',  reward: 'Airpods',    icon: Icons.headphones),
+    ];
+
+    final medalEmoji  = ['🥇', '🥈', '🥉'];
+    final medalGrad   = [
+      [const Color(0xFFFFE066), const Color(0xFFB8860B)],
+      [const Color(0xFFE0E0E0), const Color(0xFF808080)],
+      [const Color(0xFFE8A060), const Color(0xFF7B3F00)],
+    ];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -1428,135 +1442,136 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Title
             const Text(
               'Prize Pools',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,
-                height: 20 / 16,
-                fontWeight: FontWeight.w700,
                 fontFamily: _dmSans,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
+            const SizedBox(height: 8),
+            // Subtitle
+            const Text(
               'Participants are divided into 3 tiers, based on trading volume achieved during the event:',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontFamily: _dmSans,
-                height: 16/12,
                 fontWeight: FontWeight.w400,
+                height: 1.33,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             // Header
             Row(
               children: [
-                 Expanded(
+                // "Price" label above medal col
+                SizedBox(
+                  width: 44,
                   child: Text(
                     'Price',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 12,
-                      height: 16 / 12,
-                      fontWeight: FontWeight.w400,
                       fontFamily: _dmSans,
+                      fontWeight: FontWeight.w400,
+                      height: 1.33,
                     ),
                   ),
                 ),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     'Volume Required',
+                    textAlign: TextAlign.left,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 12,
-                      height: 16 / 12,
-                      fontWeight: FontWeight.w400,
                       fontFamily: _dmSans,
+                      fontWeight: FontWeight.w400,
+                      height: 1.33,
                     ),
                   ),
                 ),
-                SizedBox(
-                  width: 90,
-                  child: Text(
-                    'Rewards',
-                    textAlign: TextAlign.right,
-                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 12,
-                      height: 16 / 12,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: _dmSans,
-                    ),
+                Text(
+                  'Rewards',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    fontFamily: _dmSans,
+                    fontWeight: FontWeight.w400,
+                    height: 1.33,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            ..._contest.prizeTiers.map(_prizeRow),
+            const SizedBox(height: 8),
+            // Data rows
+            ...rows.map((t) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                children: [
+                  // Medal badge
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: medalGrad[t.rank - 1],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [BoxShadow(color: medalGrad[t.rank - 1][0].withValues(alpha: 0.5), blurRadius: 6)],
+                    ),
+                    child: Center(child: Text(medalEmoji[t.rank - 1], style: const TextStyle(fontSize: 16))),
+                  ),
+                  const SizedBox(width: 26),
+                  // Volume
+                  Expanded(
+                    child: Text(
+                      t.volume,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontFamily: _dmSans,
+                        fontWeight: FontWeight.w400,
+                        height: 1.33,
+                      ),
+                    ),
+                  ),
+                  // Device icon + reward
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(t.icon, color: Colors.white, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        t.reward,
+                        style: const TextStyle(
+                          color: _green,
+                          fontSize: 12,
+                          fontFamily: _dmSans,
+                          fontWeight: FontWeight.w700,
+                          height: 1.33,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            )),
           ],
         ),
       ),
     );
   }
 
-  Widget _prizeRow(PrizePoolTier tier) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24,
-            child: tier.rank <= 3
-                ? _medalBadge(
-                    ['🥇', '🥈', '🥉'][tier.rank - 1],
-                    [
-                      const Color(0xFFFFD700),
-                      const Color(0xFFB0B0B0),
-                      const Color(0xFFCD7F32),
-                    ][tier.rank - 1],
-                  )
-                : Text(
-                    '${tier.rank}',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-          ),
-          const SizedBox(width: 90),
-          Expanded(
-            child: Text(
-              tier.volumeRequired,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                height: 16 / 12,
-                fontWeight: FontWeight.w400,
-                fontFamily: _dmSans,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 90,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  tier.reward,
-                  style: const TextStyle(
-                    color: _green,
-                    fontSize: 12,
-                    height: 16 / 12,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: _dmSans,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // RULES
