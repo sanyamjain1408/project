@@ -59,7 +59,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     super.initState();
     _rotationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15),
+      duration: const Duration(seconds: 20),
+      lowerBound: 0.0,
+      upperBound: 1.0,
     )..repeat();
 
     SystemChrome.setSystemUIOverlayStyle(
@@ -159,11 +161,17 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                       child: IgnorePointer(
                         ignoring: true,
                         child: RotationTransition(
-                          turns: _rotationController,
-                          child: Image.asset(
-                            'assets/images/circle.png',
-                            fit: BoxFit.cover,
-                            errorBuilder: (c, e, s) => const SizedBox(),
+                          turns: CurvedAnimation(
+                            parent: _rotationController,
+                            curve: Curves.linear,
+                          ),
+                          child: Opacity(
+                            opacity: 0.2,
+                            child: Image.asset(
+                              'assets/images/circle.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (c, e, s) => const SizedBox(),
+                            ),
                           ),
                         ),
                       ),
