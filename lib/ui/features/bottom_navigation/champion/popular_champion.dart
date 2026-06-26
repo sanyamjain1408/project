@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -157,8 +158,18 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
     ]).animate(CurvedAnimation(parent: _circleSpinCtrl, curve: Curves.easeInOut));
     _circleSpinCtrl.repeat();
     if (widget.competitionId != null) {
-      _apiLoading = true;
       _ctrl = Get.find<ChampionController>();
+      // Instantly render from cached list data — no loading wait
+      final cached = _ctrl!.competitions.firstWhereOrNull(
+          (c) => c.id == widget.competitionId);
+      if (cached != null) {
+        _contest = _apiToContest(cached, List.from(_ctrl!.leaderboard));
+        _hasData = true;
+        _apiLoading = false;
+        _startTimer();
+      } else {
+        _apiLoading = true;
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadFromApi());
     } else if (widget.contest != null) {
       _contest = widget.contest!;
@@ -175,7 +186,8 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
       return;
     }
     _ctrl ??= Get.find<ChampionController>();
-    setState(() => _apiLoading = true);
+    // Only show loading if no cached data yet
+    if (!_hasData) setState(() => _apiLoading = true);
     // fetchDetail also calls fetchLeaderboard internally
     await _ctrl!.fetchDetail(id);
     if (!mounted) return;
@@ -288,7 +300,7 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
       title: d.title.toUpperCase(),
       prizePool: topPrize.isNotEmpty ? topPrize : 'Prize Pool',
       subtitle: '${d.participantsCount} Participants',
-      heroImage: 'assets/images/champion4.png',
+      heroImage: d.bannerImage ?? 'assets/images/champion4.png',
       endsAt: endAt,
       participantsCount: d.participantsCount,
       marqueeText: d.participantsCount > 0
@@ -456,12 +468,23 @@ class _PopularChampionScreenState extends State<PopularChampionScreen>
         SizedBox(
           height: 300,
           width: double.infinity,
-          child: Image.asset(
-            _contest.heroImage,
-            fit: BoxFit.cover,
-            errorBuilder: (context, err, stack) =>
-                Container(height: 300, color: const Color(0xFF111111)),
-          ),
+          child: _contest.heroImage.startsWith('http')
+              ? CachedNetworkImage(
+                  imageUrl: _contest.heroImage,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 300,
+                  placeholder: (context, url) =>
+                      Container(height: 300, color: const Color(0xFF111111)),
+                  errorWidget: (context, url, err) =>
+                      Container(height: 300, color: const Color(0xFF111111)),
+                )
+              : Image.asset(
+                  _contest.heroImage,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, err, stack) =>
+                      Container(height: 300, color: const Color(0xFF111111)),
+                ),
         ),
         // Bottom fade so curved container blends in
         Positioned(
