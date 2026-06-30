@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 import 'package:tradexpro_flutter/data/local/constants.dart';
 import 'package:tradexpro_flutter/ui/features/side_navigation/deposit_bonus/deposit_bonus_screen.dart';
+import 'package:tradexpro_flutter/ui/features/bottom_navigation/wallet/wallet_crypto_deposit/wallet_crypto_deposit_screen.dart';
 
 // Global controller — tracks inactivity across all screens
 class InactivityController extends GetxController {
@@ -182,7 +183,7 @@ class _DepositContestPopupState extends State<DepositContestPopup>
           mainAxisSize: MainAxisSize.min,
           children: [
             GestureDetector(
-              onTap: () => Get.to(() => const DepositBonusScreen()),
+              onTap: () => Get.to(() => WalletCryptoDepositScreen()),
               child: Container(
                 width: 240,
                 padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
