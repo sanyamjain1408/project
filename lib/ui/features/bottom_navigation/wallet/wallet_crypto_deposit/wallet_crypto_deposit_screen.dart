@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:tradexpro_flutter/utils/button_util.dart';
 import 'package:tradexpro_flutter/utils/date_util.dart';
 
@@ -764,6 +767,12 @@ class _WalletCryptoDepositDetailScreenState
                   const SizedBox(height: 20),
                 ],
 
+                // ── DEPOSIT BONUS BOXES ──────────────────────────────────
+                if (showNetwork) ...[
+                  const _DepositBonusBoxes(),
+                  const SizedBox(height: 20),
+                ],
+
                 // ── WARNING + QR ─────────────────────────────────────────
                 if (showQR) ...[
                   CryptoDepositAddressView(
@@ -1392,6 +1401,134 @@ class CryptoDepositAddressView extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+// ── DEPOSIT BONUS BOXES ───────────────────────────────────────────────────────
+class _DepositBonusBoxes extends StatefulWidget {
+  const _DepositBonusBoxes();
+
+  @override
+  State<_DepositBonusBoxes> createState() => _DepositBonusBoxesState();
+}
+
+class _DepositBonusBoxesState extends State<_DepositBonusBoxes> {
+  int _yourDeposits = 0;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  String _userId() {
+    final obj = GetStorage().read(PreferenceKey.userObject);
+    if (obj != null) {
+      try { return obj['id']?.toString() ?? ''; } catch (_) {}
+    }
+    return '';
+  }
+
+  Future<void> _fetch() async {
+    final uid = _userId();
+    if (uid.isEmpty) { setState(() => _loaded = true); return; }
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.trapix.com/api/deposit-bonus/status?user_id=$uid'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final d = jsonDecode(res.body);
+        if (mounted) setState(() { _yourDeposits = (d['your_deposits'] ?? 0) as int; _loaded = true; });
+      } else {
+        if (mounted) setState(() => _loaded = true);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loaded = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const levels = [
+      {'pct': '100%', 'label': '1st Deposit'},
+      {'pct': '200%', 'label': '2nd Deposit'},
+      {'pct': '300%', 'label': '3rd Deposit'},
+    ];
+
+    return Row(
+      children: List.generate(3, (i) {
+        final isClaimed = _yourDeposits > i;
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isClaimed
+                    ? const Color(0xFFCCFF00).withOpacity(0.5)
+                    : Colors.white.withOpacity(0.08),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  levels[i]['pct']!,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: isClaimed ? const Color(0xFFCCFF00) : const Color(0xFFCCFF00),
+                    fontFamily: _dmSans,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  levels[i]['label']!,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF8A8A8A),
+                    fontFamily: _dmSans,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Bonus',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF8A8A8A),
+                    fontFamily: _dmSans,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isClaimed
+                        ? const Color(0xFFCCFF00).withOpacity(0.15)
+                        : Colors.white.withOpacity(0.07),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    isClaimed ? 'Claimed' : 'Pending',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isClaimed ? const Color(0xFFCCFF00) : const Color(0xFF8A8A8A),
+                      fontFamily: _dmSans,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 }
