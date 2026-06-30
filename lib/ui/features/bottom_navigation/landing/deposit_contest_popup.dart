@@ -169,8 +169,8 @@ class _DepositContestPopupState extends State<DepositContestPopup>
     if (_dismissed) return const SizedBox.shrink();
 
     final title = _participated
-        ? '🏆 Deposit Contest — Leaderboard'
-        : '🏆 Participate now in Deposit Contest';
+        ? '🎉 You earned a bonus! Deposit more to claim'
+        : '🎁 Claim your Deposit Bonus — Up to 300%';
 
     return AnimatedBuilder(
       animation: _slide,
